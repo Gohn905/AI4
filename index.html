@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Facility energy planner (prototype)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#eef3f6;--panel:#fff;--ink:#12303f;--mute:#5b7280;--line:#d3dee4;--sun:#f2a900;--bat:#1f8a8a;--grid:#b5483a;--accent:#12303f}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1b22;--panel:#15262f;--ink:#e4eef2;--mute:#8ea4af;--line:#2a3f4a;--accent:#e4eef2}}
+:root[data-theme="dark"]{--bg:#0e1b22;--panel:#15262f;--ink:#e4eef2;--mute:#8ea4af;--line:#2a3f4a;--accent:#e4eef2}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*,*:before,*:after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 'IBM Plex Sans',system-ui,sans-serif}
+header{padding:20px 20px 4px;max-width:1100px;margin:auto}
+h1{font-size:26px;margin:0 0 4px;font-weight:600;letter-spacing:-.01em}
+header p{margin:0;color:var(--mute);max-width:70ch}
+main{display:grid;grid-template-columns:280px 1fr;gap:16px;max-width:1100px;margin:auto;padding:16px 20px 32px}
+@media(max-width:800px){main{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px}
+.ctl label{display:flex;justify-content:space-between;font-weight:500;margin-top:12px}
+.ctl label:first-child{margin-top:0}.ctl output{color:var(--mute);font-weight:400}
+input[type=range]{width:100%;accent-color:var(--sun)}
+h2{font-size:15px;margin:0 0 8px;font-weight:600}
+.assump{display:grid;grid-template-columns:1fr 70px;gap:6px 8px;align-items:center;font-size:13px;margin-top:6px}
+.assump input{width:100%;padding:3px 5px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);font:inherit}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tabs button{font:inherit;padding:6px 10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;cursor:pointer}
+.tabs button[aria-pressed=true]{background:var(--accent);color:var(--panel);border-color:var(--accent)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
+svg{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--mute);margin-top:6px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left}
+th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(--sun) 14%,transparent)}
+.good{color:#1c7c4f;font-weight:600}@media(prefers-color-scheme:dark){.good{color:#6fd3a0}}
+.note{font-size:13px;color:var(--mute);margin:10px 0 0}.stack{display:grid;gap:16px}
+</style></head><body>
+<header><h1>Facility energy planner</h1>
+<p>One factory, one day. Move the sliders and compare four ways of running it. Data is synthetic and the tariff and emission figures are placeholders to replace with real values.</p></header>
+<main>
+<aside class="stack">
+<section class="panel ctl"><h2>Facility</h2>
+<label>Solar capacity <output id="o1"></output></label><input id="solar" type="range" min="100" max="800" step="10" value="450">
+<label>Cloud cover <output id="o2"></output></label><input id="cloud" type="range" min="0" max="80" step="5" value="30">
+<label>Battery size <output id="o3"></output></label><input id="bat" type="range" min="0" max="1000" step="50" value="400">
+<label>Shiftable load per day <output id="o4"></output></label><input id="flex" type="range" min="0" max="800" step="50" value="400">
+<p class="note">Shiftable load can run any 4 hours between 09:00 and 17:00. Everything else stays fixed, so production is not disturbed.</p></section>
+<section class="panel"><h2>Assumptions (editable)</h2><div class="assump">
+<span>Peak tariff, RM/kWh</span><input id="tp" type="number" step="0.01" value="0.45">
+<span>Off-peak tariff, RM/kWh</span><input id="to" type="number" step="0.01" value="0.30">
+<span>Demand charge, RM/kW/month</span><input id="td" type="number" step="1" value="30">
+<span>Grid emissions, kg CO₂/kWh</span><input id="ef" type="number" step="0.01" value="0.60">
+</div><p class="note">Peak hours are 08:00 to 22:00. Battery round-trip efficiency is 90%.</p></section>
+</aside>
+<div class="stack">
+<section class="panel"><h2>Where the power comes from, hour by hour</h2>
+<div class="tabs" id="tabs" role="group" aria-label="Strategy"></div>
+<svg id="chart" viewBox="0 0 760 290" role="img" aria-label="Hourly demand split by source"></svg>
+<div class="legend"><span><i style="background:var(--sun)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid</span><span><i style="background:none;border-top:2px solid var(--ink);height:0;width:14px"></i>Solar generated</span></div></section>
+<section class="panel"><h2>Strategy comparison, one day</h2><div class="scroll"><table id="tbl"></table></div>
+<p class="note" id="ann"></p>
+<p class="note">Strategies are rule-based for now. The next version replaces them with a forecasting model and an optimiser, and compares against this baseline.</p></section>
+</div></main>
+<script>
+const $=id=>document.getElementById(id), N=[...Array(24).keys()];
+const S=[{k:'base',n:'Baseline',shift:0,batt:0},{k:'shift',n:'Shift loads',shift:1,batt:0},{k:'batt',n:'Battery only',shift:0,batt:1},{k:'both',n:'Shift + battery',shift:1,batt:1}];
+let sel='both';
+const isPeak=h=>h>=8&&h<22;
+function params(){return{kwp:+$('solar').value,cloud:+$('cloud').value/100,cap:+$('bat').value,flex:+$('flex').value,tp:+$('tp').value,to:+$('to').value,td:+$('td').value,ef:+$('ef').value}}
+function solarAt(h,p){const t=h+.5;if(t<7||t>19)return 0;const b=Math.pow(Math.sin(Math.PI*(t-7)/12),1.4);
+return Math.max(0,p.kwp*.85*b*(1-p.cloud*.7)*(1+p.cloud*.35*Math.sin(h*2.3)))}
+function baseAt(h){const w=h>=8&&h<17?280:(h>=6&&h<8)||(h>=17&&h<19)?180:110;return w+8*Math.sin(h*1.7)}
+function sim(st,p){const sol=N.map(h=>solarAt(h,p)),base=N.map(baseAt),fl=p.flex/4;
+let hrs=[18,19,20,21];
+if(st.shift){hrs=N.filter(h=>h>=9&&h<17).sort((a,b)=>(sol[b]-base[b])-(sol[a]-base[a])).slice(0,4)}
+const load=base.map((b,h)=>b+(hrs.includes(h)?fl:0));
+const cap=st.batt?p.cap:0,P=cap/2,e=Math.sqrt(.9);let soc=0;
+const r={sol,load,direct:[],bat:[],grid:[]};
+N.forEach(h=>{const net=load[h]-sol[h];let d=Math.min(sol[h],load[h]),b=0,g=0;
+if(net<0){const ch=Math.min(-net,P,(cap-soc)/e);soc+=ch*e;d+=ch}
+else{if(isPeak(h)){b=Math.min(net,P,soc*e);soc-=b/e}g=net-b}
+r.direct.push(d);r.bat.push(b);r.grid.push(g)});
+const gen=sol.reduce((a,b)=>a+b,0)||1;
+r.cost=r.grid.reduce((a,g,h)=>a+g*(isPeak(h)?p.tp:p.to),0)+Math.max(...r.grid)*p.td/30;
+r.util=r.direct.reduce((a,b)=>a+b,0)/gen*100;r.peak=Math.max(...r.grid);r.co2=r.grid.reduce((a,b)=>a+b,0)*p.ef;return r}
+function draw(r){const W=760,H=290,L=46,B=28,T=10,bw=(W-L-8)/24,mx=Math.max(...r.load,...r.sol)*1.1,y=v=>H-B-(v/mx)*(H-B-T);
+let s='';for(let i=0;i<=4;i++){const v=mx*i/4;s+=`<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--mute)">${Math.round(v)}</text>`}
+s+=`<rect x="${L+8*bw}" y="${H-B+3}" width="${14*bw}" height="3" fill="var(--grid)" opacity=".5"/>`;
+N.forEach(h=>{const x=L+h*bw+2,w=bw-4;let base=0;[[r.direct[h],'--sun'],[r.bat[h],'--bat'],[r.grid[h],'--grid']].forEach(([v,c])=>{if(v>0.5){s+=`<rect x="${x}" y="${y(base+v)}" width="${w}" height="${y(base)-y(base+v)}" fill="var(${c})"/>`;base+=v}});
+if(h%3==0)s+=`<text x="${x+w/2}" y="${H-12}" text-anchor="middle" font-size="11" fill="var(--mute)">${String(h).padStart(2,'0')}</text>`});
+s+=`<polyline fill="none" stroke="var(--ink)" stroke-width="2" points="${N.map(h=>`${L+h*bw+bw/2},${y(r.sol[h])}`).join(' ')}"/>`;
+s+=`<text x="${L}" y="${H-1}" font-size="10" fill="var(--mute)">kW. Red bar under the axis marks peak tariff hours.</text>`;$('chart').innerHTML=s}
+function render(){const p=params();$('o1').textContent=p.kwp+' kWp';$('o2').textContent=Math.round(p.cloud*100)+'%';$('o3').textContent=p.cap+' kWh';$('o4').textContent=p.flex+' kWh';
+const R={};S.forEach(s=>R[s.k]=sim(s,p));const b=R.base;
+$('tabs').innerHTML=S.map(s=>`<button aria-pressed="${s.k==sel}" data-k="${s.k}">${s.n}</button>`).join('');
+$('tbl').innerHTML=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Peak grid, kW</th><th>CO₂, kg</th></tr>`+S.map(s=>{const r=R[s.k],sv=(1-r.cost/b.cost)*100;
+return`<tr class="${s.k==sel?'sel':''}"><td>${s.n}</td><td>${r.cost.toFixed(0)}</td><td class="${sv>0.5?'good':''}">${s.k=='base'?'—':sv.toFixed(1)+'%'}</td><td>${r.util.toFixed(0)}%</td><td>${r.peak.toFixed(0)}</td><td>${r.co2.toFixed(0)}</td></tr>`}).join('');
+const a=(b.cost-R[sel].cost)*300;$('ann').textContent=sel=='base'?'Baseline: the facility runs unchanged.':`Saving versus baseline: about RM ${Math.round(a).toLocaleString()} a year if 300 days looked like this one. Treat as a rough guide only.`;
+draw(R[sel])}
+document.addEventListener('input',render);document.addEventListener('click',e=>{if(e.target.dataset.k){sel=e.target.dataset.k;render()}});render();
+</script></body></html>
