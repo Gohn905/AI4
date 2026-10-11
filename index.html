@@ -69,8 +69,8 @@ th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(
 <svg id="chart" viewBox="0 0 760 290" role="img" aria-label="Hourly supply split by source"></svg>
 <div class="legend"><span><i style="background:var(--sun)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border-top:2px solid var(--ink);height:0;width:14px"></i>Solar generated</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span></div></section>
 <section class="panel"><h2>Strategy comparison, one weekday</h2><div class="scroll"><table id="tbl"></table></div>
-<p class="note" id="ann"></p><p class="note" id="alt"></p>
-<p class="note">Strategies are rule-based (peak shaving by battery, load shifting by solar surplus). The Python MILP optimiser will replace them and be measured against this baseline.</p></section>
+<p class="note" id="ann"></p><p class="note" id="alt"></p><p class="note" id="ostat"></p>
+<p class="note">The first four strategies are simple rules. The optimiser row comes from a linear program on an Azure Function that picks the cheapest battery and load schedule for the same tariff, and is compared against this baseline.</p></section>
 </div></main>
 <script>
 const $=id=>document.getElementById(id),N=[...Array(24).keys()],isPk=h=>h>=14&&h<22;
@@ -84,7 +84,8 @@ MVT:{ep:31.32,eo:27.23,md:97.06,ad:0,t:'MV ToU: peak 31.32, off-peak 27.23 sen/k
 HVG:{ep:43.03,eo:43.03,md:31.21,ad:0,t:'HV General: 43.03 sen/kWh. Maximum demand RM31.21/kW/month (16.68 + 14.53). Retail RM250/month.'},
 HVT:{ep:44.52,eo:40.43,md:44.82,ad:0,t:'HV ToU: peak 44.52, off-peak 40.43 sen/kWh. Maximum demand RM44.82/kW/month (21.76 + 23.06), peak-period demand only. Retail RM250/month.'}};
 const S=[{k:'base',n:'Baseline',shift:0,batt:0},{k:'shift',n:'Shift loads',shift:1,batt:0},{k:'batt',n:'Battery',shift:0,batt:1},{k:'both',n:'Shift + battery',shift:1,batt:1}];
-let sel='both';
+let sel='both',OPT=null,optKey='',optTimer=null,optMsg='';
+const OPTS={k:'opt',n:'Optimiser (LP)'};
 function applyTariff(){const t=TF[$('volt').value+$('struct').value];['ep','eo','md','ad'].forEach(k=>$(k).value=t[k]);$('tcard').textContent=t.t}
 function params(){const g=id=>+$(id).value;return{prof:$('prof').value,tou:$('struct').value=='T',peak:g('peak'),kwp:g('kwp'),cloud:g('cloud')/100,cap:g('bat'),flex:g('flex')/100,
 ep:g('ep'),eo:g('eo'),md:g('md'),ad:g('ad'),afa:g('afa'),ef:g('ef')}}
@@ -116,15 +117,21 @@ if(h%3==0)s+=`<text x="${x+w/2}" y="${H-12}" text-anchor="middle" font-size="11"
 s+=`<polyline fill="none" stroke="var(--ink)" stroke-width="2" points="${N.map(h=>`${L+h*bw+bw/2},${y(r.sol[h])}`).join(' ')}"/>`;
 s+=`<line x1="${L}" x2="${W}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/>`;
 s+=`<text x="${L}" y="${H-1}" font-size="10" fill="var(--mute)">kW. Red bar under the axis marks the ToU peak window (14:00 to 22:00, weekdays).</text>`;$('chart').innerHTML=s}
-function render(){const p=params();$('o1').textContent=p.peak+' kW';$('o2').textContent=p.kwp+' kWp';$('o3').textContent=Math.round(p.cloud*100)+'%';$('o4').textContent=p.cap+' kWh';$('o5').textContent=Math.round(p.flex*100)+'%';
-const R={};S.forEach(s=>R[s.k]=sim(s,p));const b=R.base;
-$('tabs').innerHTML=S.map(s=>`<button aria-pressed="${s.k==sel}" data-k="${s.k}">${s.n}</button>`).join('');
-$('tbl').innerHTML=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Billed peak, kW</th><th>CO₂, kg</th></tr>`+S.map(s=>{const r=R[s.k],sv=(1-r.cost/b.cost)*100;
+function reqOpt(p){const key=JSON.stringify(p);if(key===optKey)return;optKey=key;OPT=null;optMsg='Optimiser: running...';clearTimeout(optTimer);
+optTimer=setTimeout(async()=>{try{const L0=p.prof=='campus'?CAMP:FAC,m=Math.max(...L0),L=L0.map(v=>v/m*p.peak),sol=N.map(h=>p.kwp*SH[h]*(1-.7*p.cloud));
+const body={load:L,pv:sol,rates:N.map(h=>((isPk(h)?p.ep:p.eo)+p.ad+p.afa)/100),md_rate_day:p.md/30,md_hours:N.filter(h=>p.tou?isPk(h):true),batt_kwh:p.cap,flex_share:p.flex};
+const res=await fetch('/api/optimise',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!res.ok)throw 0;const o=await res.json();if(key!==optKey)return;
+const tot=a=>a.reduce((x,y)=>x+y,0);OPT={d:o.pv_used,b:o.dis,g:o.grid,ld:o.ld,sol,cost:o.cost,peak:o.peak,util:tot(o.pv_used)/(tot(sol)||1)*100,co2:tot(o.grid)*p.ef};optMsg='';render()}
+catch(e){if(key===optKey){optMsg='Optimiser service offline, so only the rule-based strategies are shown.';render()}}},300)}
+function render(){const p=params();reqOpt(p);$('o1').textContent=p.peak+' kW';$('o2').textContent=p.kwp+' kWp';$('o3').textContent=Math.round(p.cloud*100)+'%';$('o4').textContent=p.cap+' kWh';$('o5').textContent=Math.round(p.flex*100)+'%';
+const R={};S.forEach(s=>R[s.k]=sim(s,p));const b=R.base;const rows=OPT?[...S,OPTS]:S;if(OPT)R.opt=OPT;if(!R[sel])sel='both';
+$('tabs').innerHTML=rows.map(s=>`<button aria-pressed="${s.k==sel}" data-k="${s.k}">${s.n}</button>`).join('');
+$('tbl').innerHTML=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Billed peak, kW</th><th>CO₂, kg</th></tr>`+rows.map(s=>{const r=R[s.k],sv=(1-r.cost/b.cost)*100;
 return`<tr class="${s.k==sel?'sel':''}"><td>${s.n}</td><td>${r.cost.toFixed(2)}</td><td class="${sv>0.05?'good':''}">${s.k=='base'?'—':sv.toFixed(1)+'%'}</td><td>${r.util.toFixed(0)}%</td><td>${r.peak.toFixed(0)}</td><td>${r.co2.toFixed(0)}</td></tr>`}).join('');
 const a=(b.cost-R[sel].cost)*300;$('ann').textContent=sel=='base'?'Baseline: solar only, no battery, no load shifting.':`Saving versus baseline: about RM ${Math.round(a).toLocaleString()} a year if 300 weekdays looked like this one. Rough guide only, and battery purchase cost is not included.`;
 const v=$('volt').value,alt=TF[v+(p.tou?'G':'T')],q={...p,ep:alt.ep,eo:alt.eo,md:alt.md,ad:alt.ad,tou:!p.tou},c2=sim(S[0],q).cost;
 $('alt').textContent=`Tariff check (baseline, same load): ${p.tou?'ToU':'General'} RM ${b.cost.toFixed(2)} vs ${p.tou?'General':'ToU'} RM ${c2.toFixed(2)} per weekday. ${c2<b.cost-0.5?'The other tariff looks cheaper for this profile, so worth checking with TNB.':'The selected tariff is the cheaper one for this profile.'}`;
-draw(R[sel])}
+$('ostat').textContent=optMsg;draw(R[sel])}
 document.addEventListener('input',e=>{if(e.target.id=='volt'||e.target.id=='struct')applyTariff();render()});
 document.addEventListener('click',e=>{if(e.target.dataset.k){sel=e.target.dataset.k;render()}
 if(e.target.id=='preset'){$('volt').value='MV';$('struct').value='T';$('prof').value='campus';$('peak').value=1050;$('kwp').value=100;$('cloud').value=0;$('bat').value=0;$('flex').value=0;$('afa').value=0;applyTariff();render()}});
