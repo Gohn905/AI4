@@ -37,6 +37,8 @@ def optimise(d):
     md_rate = _num(d, "md_rate_day", 0, 1000)  # RM/kW/day
     cap = _num(d, "batt_kwh", 0, 20000)
     share = _num(d, "flex_share", 0, 0.5)
+    carbon = _num(d, "carbon_adder", 0, 10)   # RM/kWh of grid energy (carbon price x emission factor)
+    wear = _num(d, "wear", 0, 10)             # RM per kWh of battery throughput
     md_hours = [int(h) for h in d.get("md_hours", []) if 0 <= int(h) < N]
     P = cap / 2.0
     win = list(range(9, 17))                  # shiftable only 09:00-17:00
@@ -51,7 +53,8 @@ def optimise(d):
                        ("SOC", N + 1), ("Flex", N), ("PVu", N)]:
         ix[name] = np.arange(k, k + size); k += size
     nv = k
-    c = np.zeros(nv); c[ix["Imp"]] = rate; c[ix["MD"]] = md_rate
+    c = np.zeros(nv); c[ix["Imp"]] = rate + carbon; c[ix["MD"]] = md_rate
+    c[ix["Ch"]] = wear; c[ix["Dis"]] = wear
 
     bounds = [(0, None)] * nv
     for t in range(N):
@@ -90,6 +93,7 @@ def optimise(d):
     g = lambda n_: [round(float(v), 3) for v in x[ix[n_]]]
     grid = x[ix["Imp"]]
     peak = float(max(grid[h] for h in md_hours)) if md_hours else float(grid.max())
-    return {"cost": float(res.fun), "peak": peak, "grid": g("Imp"), "dis": g("Dis"),
+    bill = float(rate @ grid + md_rate * peak)      # true bill, without carbon or wear weights
+    return {"cost": bill, "peak": peak, "grid": g("Imp"), "dis": g("Dis"),
             "ch": g("Ch"), "flex": g("Flex"), "pv_used": g("PVu"),
             "ld": [round(float(v), 3) for v in fixed + x[ix["Flex"]]]}
