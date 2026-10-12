@@ -21,6 +21,7 @@ HOURLY = "temperature_2m,cloud_cover,shortwave_radiation"
 URL_FORECAST = "https://api.open-meteo.com/v1/forecast"
 URL_ARCHIVE = "https://archive-api.open-meteo.com/v1/archive"
 URL_HIST_FORECAST = "https://historical-forecast-api.open-meteo.com/v1/forecast"
+URL_PREVIOUS = "https://previous-runs-api.open-meteo.com/v1/forecast"
 
 # PV physics (typical crystalline-silicon module, tilt ignored: GHI is used as plane irradiance)
 NOCT = 45.0        # deg C, nominal operating cell temperature
@@ -38,14 +39,16 @@ class ForecastUnavailable(Exception):
 
 
 # ---------- weather ----------
-def _fetch(url, params):
-    params = dict(params, hourly=HOURLY, timezone="Asia/Kuala_Lumpur")
+def _fetch(url, params, suffix=""):
+    hourly = ",".join(v + suffix for v in HOURLY.split(","))
+    params = dict(params, hourly=hourly, timezone="Asia/Kuala_Lumpur")
     req = Request(url + "?" + urlencode(params), headers={"User-Agent": "facility-energy-planner"})
     try:
         with urlopen(req, timeout=20) as r:
             h = json.loads(r.read().decode("utf-8"))["hourly"]
         out = {}
-        for t, T, C, G in zip(h["time"], h["temperature_2m"], h["cloud_cover"], h["shortwave_radiation"]):
+        for t, T, C, G in zip(h["time"], h["temperature_2m" + suffix], h["cloud_cover" + suffix],
+                              h["shortwave_radiation" + suffix]):
             if T is None or C is None or G is None:
                 continue
             out[datetime.strptime(t, "%Y-%m-%dT%H:%M")] = (float(T), float(C), float(G))
@@ -64,6 +67,11 @@ def fetch_archive(lat, lon, start, end):          # reanalysis, used as the "act
 
 def fetch_hist_forecast(lat, lon, start, end):    # what the forecast said at the time
     return _fetch(URL_HIST_FORECAST, {"latitude": lat, "longitude": lon, "start_date": str(start), "end_date": str(end)})
+
+
+def fetch_previous_day(lat, lon, start, end):     # the forecast issued the day before
+    return _fetch(URL_PREVIOUS, {"latitude": lat, "longitude": lon, "start_date": str(start), "end_date": str(end)},
+                  suffix="_previous_day1")
 
 
 # ---------- small maths helpers ----------
