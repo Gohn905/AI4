@@ -1,0 +1,92 @@
+"""Audit log: one row per optimise / forecast call, kept in Azure Table Storage.
+
+Why: every recommendation can be traced later (who asked, what went in, what came out, how long).
+Needs the app setting AUDIT_STORAGE_CONNECTION. Without it the API still works and only
+writes a structured log line (which Application Insights collects when it is switched on).
+Logging must never break a request, so every storage call is wrapped.
+"""
+import base64
+import json
+import logging
+import os
+import uuid
+from datetime import datetime, timedelta, timezone
+
+TABLE = "audit"
+_state = {"table": None, "failed": False}
+
+
+def enabled():
+    return bool(os.environ.get("AUDIT_STORAGE_CONNECTION")) and not _state["failed"]
+
+
+def _table():
+    if _state["table"] is not None:
+        return _state["table"]
+    cs = os.environ.get("AUDIT_STORAGE_CONNECTION")
+    if not cs or _state["failed"]:
+        return None
+    try:
+        from azure.data.tables import TableServiceClient
+        _state["table"] = TableServiceClient.from_connection_string(cs).create_table_if_not_exists(TABLE)
+        return _state["table"]
+    except Exception as e:  # never let logging break the API
+        logging.warning("audit storage disabled: %s", e)
+        _state["failed"] = True
+        return None
+
+
+def caller(req):
+    """Opaque user id from the Static Web Apps sign-in header (no email stored)."""
+    raw = req.headers.get("x-ms-client-principal")
+    if not raw:
+        return "anonymous"
+    try:
+        return str(json.loads(base64.b64decode(raw)).get("userId") or "unknown")
+    except Exception:
+        return "unknown"
+
+
+def _clip(obj, n=30000):
+    s = json.dumps(obj, separators=(",", ":"), default=str) if obj is not None else ""
+    return s[:n]
+
+
+def record(route, req, status, ms, request=None, result=None, model="", summary=""):
+    who = caller(req)
+    logging.info("audit %s", json.dumps({"route": route, "status": status, "ms": int(ms), "user": who,
+                                         "model": model, "summary": summary}))
+    table = _table()
+    if table is None:
+        return
+    now = datetime.now(timezone.utc)
+    try:
+        table.create_entity({
+            "PartitionKey": now.strftime("%Y-%m-%d"),
+            "RowKey": now.strftime("%H%M%S%f") + "-" + uuid.uuid4().hex[:6],
+            "route": route, "status": int(status), "ms": int(ms), "user": who, "model": model or "",
+            "summary": summary[:500], "request": _clip(request), "result": _clip(result),
+        })
+    except Exception as e:
+        logging.warning("audit write failed: %s", e)
+
+
+def recent(limit=15):
+    table = _table()
+    if table is None:
+        return []
+    now = datetime.now(timezone.utc)
+    rows = []
+    try:
+        for day in ((now - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(2)):
+            for n, e in enumerate(table.query_entities("PartitionKey eq @d", parameters={"d": day})):
+                if n >= 2000:
+                    break
+                rows.append(e)
+    except Exception as e:
+        logging.warning("audit read failed: %s", e)
+        return []
+    rows.sort(key=lambda e: (e["PartitionKey"], e["RowKey"]), reverse=True)
+    return [{"time": e["PartitionKey"] + " " + e["RowKey"][:2] + ":" + e["RowKey"][2:4] + ":" + e["RowKey"][4:6] + " UTC",
+             "route": e.get("route"), "user": str(e.get("user", ""))[:8], "status": e.get("status"),
+             "ms": e.get("ms"), "model": e.get("model"), "summary": e.get("summary")} for e in rows[:limit]]
