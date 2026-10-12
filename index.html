@@ -133,12 +133,12 @@ r.cost=r.g.reduce((a,g,h)=>a+g*rate(h)/100,0)+mdkw*p.md/30;r.peak=mdkw;r.sol=sol
 r.util=r.d.reduce((a,b)=>a+b,0)/(sol.reduce((a,b)=>a+b,0)||1)*100;r.co2=r.g.reduce((a,b)=>a+b,0)*p.ef;return r}
 function draw(r){const W=760,H=290,L=46,B=28,T=10,bw=(W-L-8)/24,mx=Math.max(...r.ld,...r.sol,...r.g.map((g,h)=>g+r.d[h]*0+r.b[h]))*1.1||1,y=v=>H-B-(v/mx)*(H-B-T);let s='';
 for(let i=0;i<=4;i++){const v=mx*i/4;s+=`<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--mute)">${Math.round(v)}</text>`}
-s+=`<rect x="${L+WIN[0]*bw}" y="${T}" width="${(WIN[1]-WIN[0])*bw}" height="${H-B-T}" fill="var(--grid)" opacity=".07"/>`;
+s+=`<rect x="${L+WIN[0]*bw}" y="${T}" width="${(WIN[1]-WIN[0])*bw}" height="${H-B-T}" fill="var(--grid)" opacity=".15"/>`;
 s+=`<rect x="${L+WIN[0]*bw}" y="${H-B+3}" width="${(WIN[1]-WIN[0])*bw}" height="3" fill="var(--grid)" opacity=".5"/>`;
 N.forEach(h=>{const x=L+h*bw+2,w=bw-4;let base=0;[[r.g[h],'--grid'],[r.b[h],'--bat'],[r.d[h],'--sun']].forEach(([v,c])=>{if(v>0.5){s+=`<rect x="${x}" y="${y(base+v)}" width="${w}" height="${y(base)-y(base+v)}" fill="var(${c})"/>`;base+=v}});
 const un=r.sol[h]-r.d[h];if(un>0.5)s+=`<rect x="${x}" y="${y(base+un)}" width="${w}" height="${y(base)-y(base+un)}" fill="none" stroke="var(--sun)" stroke-dasharray="3 2"/>`;
 if(h%3==0)s+=`<text x="${x+w/2}" y="${H-12}" text-anchor="middle" font-size="11" fill="var(--mute)">${String(h).padStart(2,'0')}</text>`});
-s+=`<line x1="${L}" x2="${W}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${W}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)">billed peak ${Math.round(r.peak)} kW</text>`;
+s+=`<line x1="${L+WIN[0]*bw}" x2="${L+WIN[1]*bw}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${L+WIN[1]*bw-4}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)">billed peak ${Math.round(r.peak)} kW</text>`;
 s+=`<text x="${L}" y="${H-1}" font-size="10" fill="var(--mute)">kW. Shaded hours = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;$('chart').innerHTML=s}
 function reqOpt(p){const key=JSON.stringify(p);if(key===optKey)return;optKey=key;OPT=null;optMsg='Optimiser: running...';clearTimeout(optTimer);
 optTimer=setTimeout(async()=>{try{const L0=p.prof=='campus'?CAMP:FAC,m=Math.max(...L0),L=FC?FC.load.slice():L0.map(v=>v/m*p.peak),sol=FC?FC.pv.slice():N.map(h=>p.kwp*SH[h]*(1-.7*p.cloud)),tot=a=>a.reduce((x,y)=>x+y,0),out={};
