@@ -34,6 +34,7 @@ th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line)}th:f
 th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(--sun) 14%,transparent)}
 .good{color:#1c7c4f;font-weight:600}@media(prefers-color-scheme:dark){.good{color:#6fd3a0}}
 .note{font-size:13px;color:var(--mute);margin:10px 0 0}.stack{display:grid;gap:16px}
+.ctl label.chk{justify-content:flex-start;gap:8px;font-weight:400;margin-top:6px}.chk.off{color:var(--mute)}
 .card{font-size:13px;background:var(--bg);border-radius:6px;padding:8px 10px;margin-top:10px}
 </style></head><body>
 <header><h1>Facility energy planner</h1>
@@ -53,6 +54,11 @@ th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(
 <label>Battery size <output id="o4"></output></label><input id="bat" type="range" min="0" max="2000" step="50" value="500">
 <label>Shiftable share of daytime load <output id="o5"></output></label><input id="flex" type="range" min="0" max="30" step="5" value="10">
 <p class="note">Shiftable load only moves inside 09:00 to 17:00 so operations are not disturbed.</p>
+<h2 style="margin-top:14px">Customer assets</h2>
+<label class="chk"><input type="checkbox" id="hasBat" checked> Battery storage</label>
+<label class="chk"><input type="checkbox" id="hasFlex" checked> Shiftable equipment</label>
+<label class="chk off"><input type="checkbox" disabled> Diesel generator (planned)</label>
+<label class="chk off"><input type="checkbox" disabled> Gas / CHP (planned)</label>
 <button id="preset" style="margin-top:10px;width:100%">Load APU case-study settings</button></section>
 <section class="panel"><h2>Rates (editable)</h2><div class="assump">
 <span>Peak energy (14:00-22:00), sen/kWh</span><input id="ep" type="number" step="0.01">
@@ -70,7 +76,9 @@ th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(
 <div class="legend"><span><i style="background:var(--sun)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border-top:2px solid var(--ink);height:0;width:14px"></i>Solar generated</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span></div></section>
 <section class="panel"><h2>Strategy comparison, one weekday</h2><div class="scroll"><table id="tbl"></table></div>
 <p class="note" id="ann"></p><p class="note" id="alt"></p><p class="note" id="ostat"></p>
-<p class="note">The first four strategies are simple rules. The optimiser row comes from a linear program on an Azure Function that picks the cheapest battery and load schedule for the same tariff, and is compared against this baseline.</p></section>
+<p class="note">The first four rows are simple rules. The three optimiser rows come from a linear program on an Azure Function. Cost-saving minimises the bill. Balanced moves half as much equipment and adds a carbon price (RM 0.10/kg) and a small battery wear cost. Production-first moves no equipment at all. Those weights are placeholders to tune with the customer.</p></section>
+<section class="panel"><h2>Recommended actions</h2><ul id="recs" style="margin:0;padding-left:18px"></ul>
+<p class="note">Generated from the selected optimiser schedule. Solar and demand are placeholder profiles until the forecasting models are added. Plain-language AI explanations come later.</p></section>
 </div></main>
 <script>
 const $=id=>document.getElementById(id),N=[...Array(24).keys()],isPk=h=>h>=14&&h<22;
@@ -84,10 +92,10 @@ MVT:{ep:31.32,eo:27.23,md:97.06,ad:0,t:'MV ToU: peak 31.32, off-peak 27.23 sen/k
 HVG:{ep:43.03,eo:43.03,md:31.21,ad:0,t:'HV General: 43.03 sen/kWh. Maximum demand RM31.21/kW/month (16.68 + 14.53). Retail RM250/month.'},
 HVT:{ep:44.52,eo:40.43,md:44.82,ad:0,t:'HV ToU: peak 44.52, off-peak 40.43 sen/kWh. Maximum demand RM44.82/kW/month (21.76 + 23.06), peak-period demand only. Retail RM250/month.'}};
 const S=[{k:'base',n:'Baseline',shift:0,batt:0},{k:'shift',n:'Shift loads',shift:1,batt:0},{k:'batt',n:'Battery',shift:0,batt:1},{k:'both',n:'Shift + battery',shift:1,batt:1}];
-let sel='both',OPT=null,optKey='',optTimer=null,optMsg='';
-const OPTS={k:'opt',n:'Optimiser (LP)'};
+let sel='bal',OPT=null,optKey='',optTimer=null,optMsg='';
+const MODES=[{k:'cost',n:'Optimiser: Cost-saving',fx:1,cp:0,wr:0},{k:'bal',n:'Optimiser: Balanced',fx:.5,cp:.1,wr:.02},{k:'prod',n:'Optimiser: Production-first',fx:0,cp:0,wr:0}];
 function applyTariff(){const t=TF[$('volt').value+$('struct').value];['ep','eo','md','ad'].forEach(k=>$(k).value=t[k]);$('tcard').textContent=t.t}
-function params(){const g=id=>+$(id).value;return{prof:$('prof').value,tou:$('struct').value=='T',peak:g('peak'),kwp:g('kwp'),cloud:g('cloud')/100,cap:g('bat'),flex:g('flex')/100,
+function params(){const g=id=>+$(id).value;return{prof:$('prof').value,tou:$('struct').value=='T',peak:g('peak'),kwp:g('kwp'),cloud:g('cloud')/100,cap:$('hasBat').checked?g('bat'):0,flex:$('hasFlex').checked?g('flex')/100:0,
 ep:g('ep'),eo:g('eo'),md:g('md'),ad:g('ad'),afa:g('afa'),ef:g('ef')}}
 function sim(st,p){const L0=p.prof=='campus'?CAMP:FAC,m=Math.max(...L0),L=L0.map(v=>v/m*p.peak),sol=N.map(h=>p.kwp*SH[h]*(1-.7*p.cloud));
 const win=[9,10,11,12,13,14,15,16],fixed=L.slice(),flex=Array(24).fill(0),fe=p.flex*win.reduce((a,h)=>a+L[h],0);
@@ -118,20 +126,28 @@ s+=`<polyline fill="none" stroke="var(--ink)" stroke-width="2" points="${N.map(h
 s+=`<line x1="${L}" x2="${W}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/>`;
 s+=`<text x="${L}" y="${H-1}" font-size="10" fill="var(--mute)">kW. Red bar under the axis marks the ToU peak window (14:00 to 22:00, weekdays).</text>`;$('chart').innerHTML=s}
 function reqOpt(p){const key=JSON.stringify(p);if(key===optKey)return;optKey=key;OPT=null;optMsg='Optimiser: running...';clearTimeout(optTimer);
-optTimer=setTimeout(async()=>{try{const L0=p.prof=='campus'?CAMP:FAC,m=Math.max(...L0),L=L0.map(v=>v/m*p.peak),sol=N.map(h=>p.kwp*SH[h]*(1-.7*p.cloud));
-const body={load:L,pv:sol,rates:N.map(h=>((isPk(h)?p.ep:p.eo)+p.ad+p.afa)/100),md_rate_day:p.md/30,md_hours:N.filter(h=>p.tou?isPk(h):true),batt_kwh:p.cap,flex_share:p.flex};
-const res=await fetch('/api/optimise',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!res.ok)throw 0;const o=await res.json();if(key!==optKey)return;
-const tot=a=>a.reduce((x,y)=>x+y,0);OPT={d:o.pv_used,b:o.dis,g:o.grid,ld:o.ld,sol,cost:o.cost,peak:o.peak,util:tot(o.pv_used)/(tot(sol)||1)*100,co2:tot(o.grid)*p.ef};optMsg='';render()}
+optTimer=setTimeout(async()=>{try{const L0=p.prof=='campus'?CAMP:FAC,m=Math.max(...L0),L=L0.map(v=>v/m*p.peak),sol=N.map(h=>p.kwp*SH[h]*(1-.7*p.cloud)),tot=a=>a.reduce((x,y)=>x+y,0),out={};
+await Promise.all(MODES.map(async md=>{const body={load:L,pv:sol,rates:N.map(h=>((isPk(h)?p.ep:p.eo)+p.ad+p.afa)/100),md_rate_day:p.md/30,md_hours:N.filter(h=>p.tou?isPk(h):true),batt_kwh:p.cap,flex_share:p.flex*md.fx,carbon_adder:md.cp*p.ef,wear:md.wr};
+const res=await fetch('/api/optimise',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!res.ok)throw 0;const o=await res.json();
+out[md.k]={d:o.pv_used,b:o.dis,g:o.grid,ld:o.ld,sol,cost:o.cost,peak:o.peak,util:tot(o.pv_used)/(tot(sol)||1)*100,co2:tot(o.grid)*p.ef,ch:o.ch,fl:o.flex}}));
+if(key!==optKey)return;OPT=out;optMsg='';render()}
 catch(e){if(key===optKey){optMsg='Optimiser service offline, so only the rule-based strategies are shown.';render()}}},300)}
+function recs(r,b,p){const f=h=>String(h).padStart(2,'0')+':00',rg=(a,t)=>{const o=[];let s=null;for(let h=0;h<=24;h++){const on=h<24&&a[h]>t;if(on&&s===null)s=h;if(!on&&s!==null){o.push(f(s)+' to '+f(h));s=null}}return o.join(', ')},L=[];
+if(!r.ch)L.push('Select one of the three optimiser strategies to see its action plan.');
+else{const fl=rg(r.fl,1);L.push(fl?`Run flexible equipment between ${fl}. Production stays inside the allowed 09:00 to 17:00 window.`:'No equipment is moved. Operations keep their normal schedule.');
+if(p.cap>0){const c=rg(r.ch,1),d=rg(r.b,1);L.push((c?`Charge the battery ${c}. `:'')+(d?`Discharge it ${d} to cap the billed grid peak.`:'The battery is not needed in this plan.'))}else L.push('No battery in this plan.');
+L.push(`Hold billed grid demand to ${r.peak.toFixed(0)} kW (baseline ${b.peak.toFixed(0)} kW).`);
+const su=rg(r.sol.map((s,h)=>s-r.ld[h]),0);L.push(su?`Solar surplus expected ${su}: store it or run flexible load then.`:'Solar never exceeds site load, so all of it is used on site and the grid covers the shortfall.')}
+$('recs').innerHTML=L.map(t=>`<li>${t}</li>`).join('')}
 function render(){const p=params();reqOpt(p);$('o1').textContent=p.peak+' kW';$('o2').textContent=p.kwp+' kWp';$('o3').textContent=Math.round(p.cloud*100)+'%';$('o4').textContent=p.cap+' kWh';$('o5').textContent=Math.round(p.flex*100)+'%';
-const R={};S.forEach(s=>R[s.k]=sim(s,p));const b=R.base;const rows=OPT?[...S,OPTS]:S;if(OPT)R.opt=OPT;if(!R[sel])sel='both';
-$('tabs').innerHTML=rows.map(s=>`<button aria-pressed="${s.k==sel}" data-k="${s.k}">${s.n}</button>`).join('');
-$('tbl').innerHTML=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Billed peak, kW</th><th>CO₂, kg</th></tr>`+rows.map(s=>{const r=R[s.k],sv=(1-r.cost/b.cost)*100;
-return`<tr class="${s.k==sel?'sel':''}"><td>${s.n}</td><td>${r.cost.toFixed(2)}</td><td class="${sv>0.05?'good':''}">${s.k=='base'?'—':sv.toFixed(1)+'%'}</td><td>${r.util.toFixed(0)}%</td><td>${r.peak.toFixed(0)}</td><td>${r.co2.toFixed(0)}</td></tr>`}).join('');
-const a=(b.cost-R[sel].cost)*300;$('ann').textContent=sel=='base'?'Baseline: solar only, no battery, no load shifting.':`Saving versus baseline: about RM ${Math.round(a).toLocaleString()} a year if 300 weekdays looked like this one. Rough guide only, and battery purchase cost is not included.`;
+const R={};S.forEach(s=>R[s.k]=sim(s,p));const b=R.base;const om=OPT?MODES.filter(m=>OPT[m.k]):[];om.forEach(m=>R[m.k]=OPT[m.k]);const rows=[...S,...om.map(m=>({k:m.k,n:m.n}))],cur=R[sel]?sel:'both';
+$('tabs').innerHTML=rows.map(s=>`<button aria-pressed="${s.k==cur}" data-k="${s.k}">${s.n}</button>`).join('');
+$('tbl').innerHTML=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Grid share</th><th>Billed peak, kW</th><th>CO₂, kg</th></tr>`+rows.map(s=>{const r=R[s.k],sv=(1-r.cost/b.cost)*100;
+return`<tr class="${s.k==cur?'sel':''}"><td>${s.n}</td><td>${r.cost.toFixed(2)}</td><td class="${sv>0.05?'good':''}">${s.k=='base'?'—':sv.toFixed(1)+'%'}</td><td>${r.util.toFixed(0)}%</td><td>${(r.g.reduce((x,y)=>x+y,0)/r.ld.reduce((x,y)=>x+y,0)*100).toFixed(0)}%</td><td>${r.peak.toFixed(0)}</td><td>${r.co2.toFixed(0)}</td></tr>`}).join('');
+const a=(b.cost-R[cur].cost)*300;$('ann').textContent=cur=='base'?'Baseline: solar only, no battery, no load shifting.':`Saving versus baseline: about RM ${Math.round(a).toLocaleString()} a year if 300 weekdays looked like this one. Rough guide only, and battery purchase cost is not included.`;
 const v=$('volt').value,alt=TF[v+(p.tou?'G':'T')],q={...p,ep:alt.ep,eo:alt.eo,md:alt.md,ad:alt.ad,tou:!p.tou},c2=sim(S[0],q).cost;
 $('alt').textContent=`Tariff check (baseline, same load): ${p.tou?'ToU':'General'} RM ${b.cost.toFixed(2)} vs ${p.tou?'General':'ToU'} RM ${c2.toFixed(2)} per weekday. ${c2<b.cost-0.5?'The other tariff looks cheaper for this profile, so worth checking with TNB.':'The selected tariff is the cheaper one for this profile.'}`;
-$('ostat').textContent=optMsg;draw(R[sel])}
+$('ostat').textContent=optMsg;recs(R[cur],b,p);draw(R[cur])}
 document.addEventListener('input',e=>{if(e.target.id=='volt'||e.target.id=='struct')applyTariff();render()});
 document.addEventListener('click',e=>{if(e.target.dataset.k){sel=e.target.dataset.k;render()}
 if(e.target.id=='preset'){$('volt').value='MV';$('struct').value='T';$('prof').value='campus';$('peak').value=1050;$('kwp').value=100;$('cloud').value=0;$('bat').value=0;$('flex').value=0;$('afa').value=0;applyTariff();render()}});
