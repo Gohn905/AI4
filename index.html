@@ -38,7 +38,7 @@ th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(
 .card{font-size:13px;background:var(--bg);border-radius:6px;padding:8px 10px;margin-top:10px}
 </style></head><body>
 <header><h1>Facility energy planner</h1>
-<p>Pick the customer's supply voltage and tariff, set the facility size, then compare four ways of running one day. Load profiles are synthetic or from a case study. Check every rate against the customer's own TNB bill.</p></header>
+<p>Pick the customer's supply voltage and tariff, set the facility size, then compare the baseline with three optimiser strategies for one day. Load profiles are synthetic or from a case study. Check every rate against the customer's own TNB bill.</p></header>
 <main>
 <aside class="stack">
 <section class="panel ctl"><h2>Customer tariff (TNB non-domestic)</h2>
@@ -63,11 +63,11 @@ th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(
 <label class="chk off"><input type="checkbox" disabled> Diesel generator (planned)</label>
 <label class="chk off"><input type="checkbox" disabled> Gas / CHP (planned)</label>
 <button id="preset" style="margin-top:10px;width:100%">Load APU case-study settings</button></section>
-<section class="panel"><h2>Rates (editable)</h2><div class="assump">
-<span>Peak energy (14:00-22:00), sen/kWh</span><input id="ep" type="number" step="0.01">
-<span>Off-peak energy, sen/kWh</span><input id="eo" type="number" step="0.01">
-<span>Max demand, RM/kW/month</span><input id="md" type="number" step="0.01">
-<span>Capacity + network, sen/kWh</span><input id="ad" type="number" step="0.01">
+<section class="panel"><h2>Rates (TNB RP4 schedule)</h2><div class="assump">
+<span>Peak energy (14:00-22:00), sen/kWh</span><input id="ep" type="number" step="0.01" readonly style="opacity:.75;cursor:default">
+<span>Off-peak energy, sen/kWh</span><input id="eo" type="number" step="0.01" readonly style="opacity:.75;cursor:default">
+<span>Max demand, RM/kW/month</span><input id="md" type="number" step="0.01" readonly style="opacity:.75;cursor:default">
+<span>Capacity + network, sen/kWh</span><input id="ad" type="number" step="0.01" readonly style="opacity:.75;cursor:default">
 <span>AFA, sen/kWh</span><input id="afa" type="number" step="0.01" value="0">
 <span>Grid emissions, kg CO₂/kWh</span><input id="ef" type="number" step="0.01" value="0.60"></div>
 <p class="note">Rates are the RP4 non-domestic figures from published summaries. Verify on mytnb.com.my. AFA changes monthly, so enter the current value. Retail charge, the 1.6% KWTBB levy and tax are not modelled. Emission factor is a placeholder.</p></section>
@@ -91,6 +91,7 @@ th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(
 <li><b>Solar:</b> all of it is used on site first. No export is assumed.</li>
 </ul>
 <p class="note"><b>Goal:</b> lowest bill (hourly energy charge plus maximum demand charge). Balanced also adds a carbon price and a battery wear cost. Production-first moves no equipment.</p>
+<p class="note">Rates follow the TNB RP4 schedule (1 Jul 2025 to 31 Dec 2027) and are fixed here. AFA changes every month, so it stays editable. The monthly retail charge is the same under every strategy, so it does not change the savings and is left out.</p>
 <p class="note"><b>Not included yet:</b> diesel generator or gas, individual machines with start and stop rules, real meter history for the demand forecast (it is trained on synthetic history for now), export income, forecast uncertainty, and the month-long demand record.</p></section>
 </div></main>
 <script>
@@ -163,14 +164,14 @@ if(ld)t+=` Demand error ${ld.model_mae_pct}% of peak vs ${ld.naive_mae_pct}% for
 if(o.model.data_note)t+=' '+o.model.data_note;$('fcstat').textContent=t;render()}
 catch(e){if(key===fcKey){FC=null;$('fcstat').textContent='Forecast service unavailable, so the built-in profiles are used.';render()}}},300)}
 function render(){reqFc(params());const p=params();reqOpt(p);$('o1').textContent=p.peak+' kW';$('o2').textContent=p.kwp+' kWp';$('o3').textContent=Math.round(p.cloud*100)+'%';$('o4').textContent=p.cap+' kWh';$('o5').textContent=Math.round(p.flex*100)+'%';$('o6').textContent=Math.round(p.lim*100)+'% ('+Math.round(p.lim*p.peak)+' kW)';WIN=p.tou?[14,22]:[0,24];
-const R={};S.forEach(s=>R[s.k]=sim(s,p));const b=R.base;const om=OPT?MODES.filter(m=>OPT[m.k]):[];om.forEach(m=>R[m.k]=OPT[m.k]);const rows=[...S,...om.map(m=>({k:m.k,n:m.n}))],cur=R[sel]?sel:'both';
+const R={};S.forEach(s=>R[s.k]=sim(s,p));const b=R.base;const om=OPT?MODES.filter(m=>OPT[m.k]):[];om.forEach(m=>R[m.k]=OPT[m.k]);const off=optMsg.startsWith('Optimiser service offline'),rows=om.length?[S[0],...om.map(m=>({k:m.k,n:m.n}))]:off?S:[S[0]],cur=rows.some(x=>x.k==sel)?sel:(om.length?'cost':off?'both':'base');
 $('tabs').innerHTML=rows.map(s=>`<button aria-pressed="${s.k==cur}" data-k="${s.k}">${s.n}</button>`).join('');
 $('tbl').innerHTML=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Grid share</th><th>Billed peak, kW</th><th>CO₂, kg</th></tr>`+rows.map(s=>{const r=R[s.k],sv=(1-r.cost/b.cost)*100;
 return`<tr class="${s.k==cur?'sel':''}"><td>${s.n}</td><td>${r.cost.toFixed(2)}</td><td class="${sv>0.05?'good':''}">${s.k=='base'?'—':sv.toFixed(1)+'%'}</td><td>${r.util.toFixed(0)}%</td><td>${(r.g.reduce((x,y)=>x+y,0)/r.ld.reduce((x,y)=>x+y,0)*100).toFixed(0)}%</td><td>${r.peak.toFixed(0)}</td><td>${r.co2.toFixed(0)}</td></tr>`}).join('');
 const a=(b.cost-R[cur].cost)*300;$('ann').textContent=cur=='base'?'Baseline: solar only, no battery, no load shifting.':`Saving versus baseline: about RM ${Math.round(a).toLocaleString()} a year if 300 weekdays looked like this one. Rough guide only, and battery purchase cost is not included.`;
 const v=$('volt').value,alt=TF[v+(p.tou?'G':'T')],q={...p,ep:alt.ep,eo:alt.eo,md:alt.md,ad:alt.ad,tou:!p.tou},c2=sim(S[0],q).cost;
 $('alt').textContent=`Tariff check (baseline, same load): ${p.tou?'ToU':'General'} RM ${b.cost.toFixed(2)} vs ${p.tou?'General':'ToU'} RM ${c2.toFixed(2)} per weekday. ${c2<b.cost-0.5?'The other tariff looks cheaper for this profile, so worth checking with TNB.':'The selected tariff is the cheaper one for this profile.'}`;
-$('ostat').textContent=optMsg;recs(R[cur],b,p);draw(R[cur])}
+$('ostat').textContent=optMsg||(p.cap||p.flex?`Optimiser is using: ${p.cap?'battery '+p.cap+' kWh':'no battery'}, ${p.flex?'shiftable load '+Math.round(p.flex*100)+'% of daytime load':'no shiftable load'}.`:'No battery or shiftable load ticked, so there is nothing to optimise yet. Tick an asset to see savings.');recs(R[cur],b,p);draw(R[cur])}
 document.addEventListener('input',e=>{if(e.target.id=='volt'||e.target.id=='struct')applyTariff();render()});
 document.addEventListener('click',e=>{if(e.target.dataset.k){sel=e.target.dataset.k;render()}
 if(e.target.id=='preset'){$('volt').value='MV';$('struct').value='T';$('prof').value='campus';$('peak').value=1050;$('kwp').value=100;$('cloud').value=0;$('bat').value=0;$('flex').value=0;$('afa').value=0;applyTariff();render()}});
