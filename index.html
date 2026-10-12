@@ -80,6 +80,16 @@ th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(
 <p class="note">The first four rows are simple rules. The three optimiser rows come from a linear program on an Azure Function. Cost-saving minimises the bill. Balanced moves half as much equipment and adds a carbon price (RM 0.10/kg) and a small battery wear cost. Production-first moves no equipment at all. Those weights are placeholders to tune with the customer.</p></section>
 <section class="panel"><h2>Recommended actions</h2><ul id="recs" style="margin:0;padding-left:18px"></ul>
 <p class="note">Generated from the selected optimiser schedule. Solar and demand are placeholder profiles until the forecasting models are added. Plain-language AI explanations come later.</p></section>
+<section class="panel"><h2>What the optimiser decides</h2>
+<p class="note" style="margin-top:0">For every hour of the day, the optimiser chooses all of these together, so it can plan the battery and the equipment around the highest billed hour.</p>
+<ul style="margin:8px 0 0;padding-left:18px;font-size:14px">
+<li><b>Battery:</b> when to charge, when to discharge, and how full it is. It starts the day half full and must end at least half full. Round-trip efficiency is 90%.</li>
+<li><b>Shiftable equipment:</b> how much of the flexible load runs in each hour, only between 09:00 and 17:00, with total energy unchanged.</li>
+<li><b>Grid:</b> how much to import each hour, within the grid limit, with the highest billed hour as the maximum demand.</li>
+<li><b>Solar:</b> all of it is used on site first. No export is assumed.</li>
+</ul>
+<p class="note"><b>Goal:</b> lowest bill (hourly energy charge plus maximum demand charge). Balanced also adds a carbon price and a battery wear cost. Production-first moves no equipment.</p>
+<p class="note"><b>Not included yet:</b> diesel generator or gas, individual machines with start and stop rules, solar and demand forecasting (profiles are placeholders), export income, forecast uncertainty, and the month-long demand record.</p></section>
 </div></main>
 <script>
 const $=id=>document.getElementById(id),N=[...Array(24).keys()],isPk=h=>h>=14&&h<22;
