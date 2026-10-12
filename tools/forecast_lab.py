@@ -164,6 +164,8 @@ def main():
     ap.add_argument("--days", type=int, default=150)
     ap.add_argument("--holdout", type=int, default=28)
     ap.add_argument("--offline", action="store_true", help="use mock weather (self-test only)")
+    ap.add_argument("--forecast-source", default="historical", choices=["historical", "previous"],
+                    help="where the past forecasts come from (try 'previous' if solar results look too perfect)")
     ap.add_argument("--meter", help="CSV with columns timestamp,kw (real demand history)")
     ap.add_argument("--meter-as", default="campus", choices=["campus", "factory"])
     ap.add_argument("--out", default=fc.MODEL_PATH)
@@ -176,7 +178,8 @@ def main():
         print("OFFLINE self-test with mock weather: numbers below are NOT real.")
     else:
         print(f"Downloading Open-Meteo history {start} to {end} ...")
-        F = fc.fetch_hist_forecast(a.lat, a.lon, start, end)
+        fetch = fc.fetch_previous_day if a.forecast_source == "previous" else fc.fetch_hist_forecast
+        F = fetch(a.lat, a.lon, start, end)
         A = fc.fetch_archive(a.lat, a.lon, start, end)
 
     both = set(F) & set(A)
@@ -187,8 +190,17 @@ def main():
         sys.exit(f"Only {len(full)} complete days of weather; need at least {a.holdout + 30}.")
     print(f"{len(full)} complete days, last {a.holdout} held back for testing.\n")
 
+    same = max(abs(F[t][2] - A[t][2]) for t in times) < 1e-6
     out = {"trained": str(datetime.now(fc.KL).date()), "lat": a.lat, "lon": a.lon,
-           "solar": solar_stage(times, F, A, a.holdout), "demand": {}}
+           "solar": None if same else solar_stage(times, F, A, a.holdout), "demand": {}}
+    if same:
+        print("WARNING: the past forecast and the 'actual' weather are IDENTICAL, so the solar forecast cannot be tested.")
+        print("The solar fix is skipped (the page will say 'physics only'). Sample rows, forecast vs actual:")
+        shown = [t for t in times if F[t][2] > 100][:3]
+        for t in shown:
+            print(f"  {t}  forecast {F[t]}  actual {A[t]}")
+        if a.forecast_source == "historical":
+            print("Try again with:  python forecast_lab.py --forecast-source previous\n")
     if a.meter:
         out["demand"][a.meter_as] = demand_stage(times, F, meter_truth(a.meter), a.holdout)
         out["data_note"] = NOTE_METER
@@ -199,11 +211,12 @@ def main():
     if a.offline:
         out["data_note"] = "OFFLINE SELF-TEST MODEL, do not deploy. " + out["data_note"]
 
-    s = out["solar"]["metrics"]
-    print("SOLAR (error on the held-back days, lower is better)")
-    print(f"  yesterday's output      MAE {s['naive_mae_pct']:5.2f}%   daily energy error {s['naive_day_energy_err_pct']:.1f}%")
-    print(f"  weather forecast only   MAE {s['raw_mae_pct']:5.2f}%")
-    print(f"  forecast + learned fix  MAE {s['model_mae_pct']:5.2f}%   daily energy error {s['model_day_energy_err_pct']:.1f}%")
+    if out["solar"]:
+        s = out["solar"]["metrics"]
+        print("SOLAR (error on the held-back days, lower is better)")
+        print(f"  yesterday's output      MAE {s['naive_mae_pct']:5.2f}%   daily energy error {s['naive_day_energy_err_pct']:.1f}%")
+        print(f"  weather forecast only   MAE {s['raw_mae_pct']:5.2f}%")
+        print(f"  forecast + learned fix  MAE {s['model_mae_pct']:5.2f}%   daily energy error {s['model_day_energy_err_pct']:.1f}%")
     for prof, d in out["demand"].items():
         m = d["metrics"]
         print(f"\nDEMAND {prof} (error as % of peak demand)")
