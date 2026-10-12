@@ -76,7 +76,7 @@ th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(
 <section class="panel"><h2>Where the power comes from, hour by hour</h2>
 <div class="tabs" id="tabs" role="group" aria-label="Strategy"></div>
 <svg id="chart" viewBox="0 0 760 290" role="img" aria-label="Hourly supply split by source"></svg>
-<div class="legend"><span><i style="background:var(--sun)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border-top:2px solid var(--ink);height:0;width:14px"></i>Solar generated</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span></div></section>
+<div class="legend"><span><i style="background:var(--sun)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border:1px dashed var(--sun)"></i>Unused solar</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span></div></section>
 <section class="panel"><h2>Strategy comparison, one weekday</h2><div class="scroll"><table id="tbl"></table></div>
 <p class="note" id="ann"></p><p class="note" id="alt"></p><p class="note" id="ostat"></p>
 <p class="note">The first four rows are simple rules. The three optimiser rows come from a linear program on an Azure Function. Cost-saving minimises the bill. Balanced moves half as much equipment and adds a carbon price (RM 0.10/kg) and a small battery wear cost. Production-first moves no equipment at all. Those weights are placeholders to tune with the customer.</p></section>
@@ -135,10 +135,10 @@ function draw(r){const W=760,H=290,L=46,B=28,T=10,bw=(W-L-8)/24,mx=Math.max(...r
 for(let i=0;i<=4;i++){const v=mx*i/4;s+=`<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--mute)">${Math.round(v)}</text>`}
 s+=`<rect x="${L+WIN[0]*bw}" y="${T}" width="${(WIN[1]-WIN[0])*bw}" height="${H-B-T}" fill="var(--grid)" opacity=".07"/>`;
 s+=`<rect x="${L+WIN[0]*bw}" y="${H-B+3}" width="${(WIN[1]-WIN[0])*bw}" height="3" fill="var(--grid)" opacity=".5"/>`;
-N.forEach(h=>{const x=L+h*bw+2,w=bw-4;let base=0;[[r.d[h],'--sun'],[r.b[h],'--bat'],[r.g[h],'--grid']].forEach(([v,c])=>{if(v>0.5){s+=`<rect x="${x}" y="${y(base+v)}" width="${w}" height="${y(base)-y(base+v)}" fill="var(${c})"/>`;base+=v}});
+N.forEach(h=>{const x=L+h*bw+2,w=bw-4;let base=0;[[r.g[h],'--grid'],[r.b[h],'--bat'],[r.d[h],'--sun']].forEach(([v,c])=>{if(v>0.5){s+=`<rect x="${x}" y="${y(base+v)}" width="${w}" height="${y(base)-y(base+v)}" fill="var(${c})"/>`;base+=v}});
+const un=r.sol[h]-r.d[h];if(un>0.5)s+=`<rect x="${x}" y="${y(base+un)}" width="${w}" height="${y(base)-y(base+un)}" fill="none" stroke="var(--sun)" stroke-dasharray="3 2"/>`;
 if(h%3==0)s+=`<text x="${x+w/2}" y="${H-12}" text-anchor="middle" font-size="11" fill="var(--mute)">${String(h).padStart(2,'0')}</text>`});
-s+=`<polyline fill="none" stroke="var(--ink)" stroke-width="2" points="${N.map(h=>`${L+h*bw+bw/2},${y(r.sol[h])}`).join(' ')}"/>`;
-s+=`<line x1="${L}" x2="${W}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/>`;
+s+=`<line x1="${L}" x2="${W}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${W}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)">billed peak ${Math.round(r.peak)} kW</text>`;
 s+=`<text x="${L}" y="${H-1}" font-size="10" fill="var(--mute)">kW. Shaded hours = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;$('chart').innerHTML=s}
 function reqOpt(p){const key=JSON.stringify(p);if(key===optKey)return;optKey=key;OPT=null;optMsg='Optimiser: running...';clearTimeout(optTimer);
 optTimer=setTimeout(async()=>{try{const L0=p.prof=='campus'?CAMP:FAC,m=Math.max(...L0),L=FC?FC.load.slice():L0.map(v=>v/m*p.peak),sol=FC?FC.pv.slice():N.map(h=>p.kwp*SH[h]*(1-.7*p.cloud)),tot=a=>a.reduce((x,y)=>x+y,0),out={};
