@@ -49,6 +49,7 @@ th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(
 <section class="panel ctl"><h2>Facility</h2>
 <label for="prof">Load shape</label><select id="prof"><option value="campus">Campus / office (case study)</option><option value="factory">Factory (two-shift)</option></select>
 <label>Peak demand <output id="o1"></output></label><input id="peak" type="range" min="100" max="3000" step="50" value="1050">
+<label>Grid import limit, any hour <output id="o6"></output></label><input id="lim" type="range" min="80" max="150" step="5" value="100">
 <label>Solar capacity <output id="o2"></output></label><input id="kwp" type="range" min="0" max="2000" step="10" value="300">
 <label>Cloud cover <output id="o3"></output></label><input id="cloud" type="range" min="0" max="80" step="5" value="0">
 <label>Battery size <output id="o4"></output></label><input id="bat" type="range" min="0" max="2000" step="50" value="500">
@@ -92,10 +93,10 @@ MVT:{ep:31.32,eo:27.23,md:97.06,ad:0,t:'MV ToU: peak 31.32, off-peak 27.23 sen/k
 HVG:{ep:43.03,eo:43.03,md:31.21,ad:0,t:'HV General: 43.03 sen/kWh. Maximum demand RM31.21/kW/month (16.68 + 14.53). Retail RM250/month.'},
 HVT:{ep:44.52,eo:40.43,md:44.82,ad:0,t:'HV ToU: peak 44.52, off-peak 40.43 sen/kWh. Maximum demand RM44.82/kW/month (21.76 + 23.06), peak-period demand only. Retail RM250/month.'}};
 const S=[{k:'base',n:'Baseline',shift:0,batt:0},{k:'shift',n:'Shift loads',shift:1,batt:0},{k:'batt',n:'Battery',shift:0,batt:1},{k:'both',n:'Shift + battery',shift:1,batt:1}];
-let sel='bal',OPT=null,optKey='',optTimer=null,optMsg='';
+let WIN=[14,22],sel='bal',OPT=null,optKey='',optTimer=null,optMsg='';
 const MODES=[{k:'cost',n:'Optimiser: Cost-saving',fx:1,cp:0,wr:0},{k:'bal',n:'Optimiser: Balanced',fx:.5,cp:.1,wr:.02},{k:'prod',n:'Optimiser: Production-first',fx:0,cp:0,wr:0}];
 function applyTariff(){const t=TF[$('volt').value+$('struct').value];['ep','eo','md','ad'].forEach(k=>$(k).value=t[k]);$('tcard').textContent=t.t}
-function params(){const g=id=>+$(id).value;return{prof:$('prof').value,tou:$('struct').value=='T',peak:g('peak'),kwp:g('kwp'),cloud:g('cloud')/100,cap:$('hasBat').checked?g('bat'):0,flex:$('hasFlex').checked?g('flex')/100:0,
+function params(){const g=id=>+$(id).value;return{prof:$('prof').value,tou:$('struct').value=='T',peak:g('peak'),kwp:g('kwp'),cloud:g('cloud')/100,lim:g('lim')/100,cap:$('hasBat').checked?g('bat'):0,flex:$('hasFlex').checked?g('flex')/100:0,
 ep:g('ep'),eo:g('eo'),md:g('md'),ad:g('ad'),afa:g('afa'),ef:g('ef')}}
 function sim(st,p){const L0=p.prof=='campus'?CAMP:FAC,m=Math.max(...L0),L=L0.map(v=>v/m*p.peak),sol=N.map(h=>p.kwp*SH[h]*(1-.7*p.cloud));
 const win=[9,10,11,12,13,14,15,16],fixed=L.slice(),flex=Array(24).fill(0),fe=p.flex*win.reduce((a,h)=>a+L[h],0);
@@ -119,15 +120,16 @@ r.cost=r.g.reduce((a,g,h)=>a+g*rate(h)/100,0)+mdkw*p.md/30;r.peak=mdkw;r.sol=sol
 r.util=r.d.reduce((a,b)=>a+b,0)/(sol.reduce((a,b)=>a+b,0)||1)*100;r.co2=r.g.reduce((a,b)=>a+b,0)*p.ef;return r}
 function draw(r){const W=760,H=290,L=46,B=28,T=10,bw=(W-L-8)/24,mx=Math.max(...r.ld,...r.sol,...r.g.map((g,h)=>g+r.d[h]*0+r.b[h]))*1.1||1,y=v=>H-B-(v/mx)*(H-B-T);let s='';
 for(let i=0;i<=4;i++){const v=mx*i/4;s+=`<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--mute)">${Math.round(v)}</text>`}
-s+=`<rect x="${L+8*bw}" y="${H-B+3}" width="${14*bw}" height="3" fill="var(--grid)" opacity=".5"/>`;
+s+=`<rect x="${L+WIN[0]*bw}" y="${T}" width="${(WIN[1]-WIN[0])*bw}" height="${H-B-T}" fill="var(--grid)" opacity=".07"/>`;
+s+=`<rect x="${L+WIN[0]*bw}" y="${H-B+3}" width="${(WIN[1]-WIN[0])*bw}" height="3" fill="var(--grid)" opacity=".5"/>`;
 N.forEach(h=>{const x=L+h*bw+2,w=bw-4;let base=0;[[r.d[h],'--sun'],[r.b[h],'--bat'],[r.g[h],'--grid']].forEach(([v,c])=>{if(v>0.5){s+=`<rect x="${x}" y="${y(base+v)}" width="${w}" height="${y(base)-y(base+v)}" fill="var(${c})"/>`;base+=v}});
 if(h%3==0)s+=`<text x="${x+w/2}" y="${H-12}" text-anchor="middle" font-size="11" fill="var(--mute)">${String(h).padStart(2,'0')}</text>`});
 s+=`<polyline fill="none" stroke="var(--ink)" stroke-width="2" points="${N.map(h=>`${L+h*bw+bw/2},${y(r.sol[h])}`).join(' ')}"/>`;
 s+=`<line x1="${L}" x2="${W}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/>`;
-s+=`<text x="${L}" y="${H-1}" font-size="10" fill="var(--mute)">kW. Red bar under the axis marks the ToU peak window (14:00 to 22:00, weekdays).</text>`;$('chart').innerHTML=s}
+s+=`<text x="${L}" y="${H-1}" font-size="10" fill="var(--mute)">kW. Shaded hours = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;$('chart').innerHTML=s}
 function reqOpt(p){const key=JSON.stringify(p);if(key===optKey)return;optKey=key;OPT=null;optMsg='Optimiser: running...';clearTimeout(optTimer);
 optTimer=setTimeout(async()=>{try{const L0=p.prof=='campus'?CAMP:FAC,m=Math.max(...L0),L=L0.map(v=>v/m*p.peak),sol=N.map(h=>p.kwp*SH[h]*(1-.7*p.cloud)),tot=a=>a.reduce((x,y)=>x+y,0),out={};
-await Promise.all(MODES.map(async md=>{const body={load:L,pv:sol,rates:N.map(h=>((isPk(h)?p.ep:p.eo)+p.ad+p.afa)/100),md_rate_day:p.md/30,md_hours:N.filter(h=>p.tou?isPk(h):true),batt_kwh:p.cap,flex_share:p.flex*md.fx,carbon_adder:md.cp*p.ef,wear:md.wr};
+await Promise.all(MODES.map(async md=>{const body={load:L,pv:sol,rates:N.map(h=>((isPk(h)?p.ep:p.eo)+p.ad+p.afa)/100),md_rate_day:p.md/30,md_hours:N.filter(h=>p.tou?isPk(h):true),batt_kwh:p.cap,grid_limit:p.lim*p.peak,flex_share:p.flex*md.fx,carbon_adder:md.cp*p.ef,wear:md.wr};
 const res=await fetch('/api/optimise',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!res.ok)throw 0;const o=await res.json();
 out[md.k]={d:o.pv_used,b:o.dis,g:o.grid,ld:o.ld,sol,cost:o.cost,peak:o.peak,util:tot(o.pv_used)/(tot(sol)||1)*100,co2:tot(o.grid)*p.ef,ch:o.ch,fl:o.flex}}));
 if(key!==optKey)return;OPT=out;optMsg='';render()}
@@ -136,10 +138,10 @@ function recs(r,b,p){const f=h=>String(h).padStart(2,'0')+':00',rg=(a,t)=>{const
 if(!r.ch)L.push('Select one of the three optimiser strategies to see its action plan.');
 else{const fl=rg(r.fl,1);L.push(fl?`Run flexible equipment between ${fl}. Production stays inside the allowed 09:00 to 17:00 window.`:'No equipment is moved. Operations keep their normal schedule.');
 if(p.cap>0){const c=rg(r.ch,1),d=rg(r.b,1);L.push((c?`Charge the battery ${c}. `:'')+(d?`Discharge it ${d} to cap the billed grid peak.`:'The battery is not needed in this plan.'))}else L.push('No battery in this plan.');
-L.push(`Hold billed grid demand to ${r.peak.toFixed(0)} kW (baseline ${b.peak.toFixed(0)} kW).`);
+L.push(`Hold billed grid demand to ${r.peak.toFixed(0)} kW (baseline ${b.peak.toFixed(0)} kW). Highest draw in any hour is ${Math.max(...r.g).toFixed(0)} kW, against a grid limit of ${Math.round(p.lim*p.peak)} kW.`);
 const su=rg(r.sol.map((s,h)=>s-r.ld[h]),0);L.push(su?`Solar surplus expected ${su}: store it or run flexible load then.`:'Solar never exceeds site load, so all of it is used on site and the grid covers the shortfall.')}
 $('recs').innerHTML=L.map(t=>`<li>${t}</li>`).join('')}
-function render(){const p=params();reqOpt(p);$('o1').textContent=p.peak+' kW';$('o2').textContent=p.kwp+' kWp';$('o3').textContent=Math.round(p.cloud*100)+'%';$('o4').textContent=p.cap+' kWh';$('o5').textContent=Math.round(p.flex*100)+'%';
+function render(){const p=params();reqOpt(p);$('o1').textContent=p.peak+' kW';$('o2').textContent=p.kwp+' kWp';$('o3').textContent=Math.round(p.cloud*100)+'%';$('o4').textContent=p.cap+' kWh';$('o5').textContent=Math.round(p.flex*100)+'%';$('o6').textContent=Math.round(p.lim*100)+'% ('+Math.round(p.lim*p.peak)+' kW)';WIN=p.tou?[14,22]:[0,24];
 const R={};S.forEach(s=>R[s.k]=sim(s,p));const b=R.base;const om=OPT?MODES.filter(m=>OPT[m.k]):[];om.forEach(m=>R[m.k]=OPT[m.k]);const rows=[...S,...om.map(m=>({k:m.k,n:m.n}))],cur=R[sel]?sel:'both';
 $('tabs').innerHTML=rows.map(s=>`<button aria-pressed="${s.k==cur}" data-k="${s.k}">${s.n}</button>`).join('');
 $('tbl').innerHTML=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Grid share</th><th>Billed peak, kW</th><th>CO₂, kg</th></tr>`+rows.map(s=>{const r=R[s.k],sv=(1-r.cost/b.cost)*100;
