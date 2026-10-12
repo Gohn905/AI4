@@ -55,6 +55,8 @@ th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(
 <label>Battery size <output id="o4"></output></label><input id="bat" type="range" min="0" max="2000" step="50" value="500">
 <label>Shiftable share of daytime load <output id="o5"></output></label><input id="flex" type="range" min="0" max="30" step="5" value="10">
 <p class="note">Shiftable load only moves inside 09:00 to 17:00 so operations are not disturbed.</p>
+<label class="chk"><input type="checkbox" id="useFc"> Use tomorrow's forecast (solar and demand)</label>
+<p class="note" id="fcstat"></p>
 <h2 style="margin-top:14px">Customer assets</h2>
 <label class="chk"><input type="checkbox" id="hasBat" checked> Battery storage</label>
 <label class="chk"><input type="checkbox" id="hasFlex" checked> Shiftable equipment</label>
@@ -89,11 +91,12 @@ th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(
 <li><b>Solar:</b> all of it is used on site first. No export is assumed.</li>
 </ul>
 <p class="note"><b>Goal:</b> lowest bill (hourly energy charge plus maximum demand charge). Balanced also adds a carbon price and a battery wear cost. Production-first moves no equipment.</p>
-<p class="note"><b>Not included yet:</b> diesel generator or gas, individual machines with start and stop rules, solar and demand forecasting (profiles are placeholders), export income, forecast uncertainty, and the month-long demand record.</p></section>
+<p class="note"><b>Not included yet:</b> diesel generator or gas, individual machines with start and stop rules, real meter history for the demand forecast (it is trained on synthetic history for now), export income, forecast uncertainty, and the month-long demand record.</p></section>
 </div></main>
 <script>
 const $=id=>document.getElementById(id),N=[...Array(24).keys()],isPk=h=>h>=14&&h<22;
 const SH=[0,0,0,0,0,0,0,0,20,50,80,95,100,90,80,60,40,10,0,0,0,0,0,0].map(v=>v/100);
+let FC=null,fcKey='',fcTimer;
 const CAMP=[350,345,345,345,345,345,380,450,700,850,880,900,780,970,1050,1010,880,750,600,500,420,380,360,355];
 const FAC=[.4,.4,.4,.4,.4,.4,.6,.6,1,1,1,1,.9,1,1,1,1,1,.7,.7,.7,.7,.45,.45];
 const TF={LVG:{ep:27.03,eo:27.03,md:0,ad:23.65,t:'LV General: 27.03 sen/kWh energy, plus capacity 8.83 and network 14.82 sen/kWh. No maximum demand charge. Retail RM20/month.'},
@@ -107,8 +110,8 @@ let WIN=[14,22],sel='bal',OPT=null,optKey='',optTimer=null,optMsg='';
 const MODES=[{k:'cost',n:'Optimiser: Cost-saving',fx:1,cp:0,wr:0},{k:'bal',n:'Optimiser: Balanced',fx:.5,cp:.1,wr:.02},{k:'prod',n:'Optimiser: Production-first',fx:0,cp:0,wr:0}];
 function applyTariff(){const t=TF[$('volt').value+$('struct').value];['ep','eo','md','ad'].forEach(k=>$(k).value=t[k]);$('tcard').textContent=t.t}
 function params(){const g=id=>+$(id).value;return{prof:$('prof').value,tou:$('struct').value=='T',peak:g('peak'),kwp:g('kwp'),cloud:g('cloud')/100,lim:g('lim')/100,cap:$('hasBat').checked?g('bat'):0,flex:$('hasFlex').checked?g('flex')/100:0,
-ep:g('ep'),eo:g('eo'),md:g('md'),ad:g('ad'),afa:g('afa'),ef:g('ef')}}
-function sim(st,p){const L0=p.prof=='campus'?CAMP:FAC,m=Math.max(...L0),L=L0.map(v=>v/m*p.peak),sol=N.map(h=>p.kwp*SH[h]*(1-.7*p.cloud));
+ep:g('ep'),eo:g('eo'),md:g('md'),ad:g('ad'),afa:g('afa'),ef:g('ef'),fc:FC?FC.stamp:0}}
+function sim(st,p){const L0=p.prof=='campus'?CAMP:FAC,m=Math.max(...L0),L=FC?FC.load.slice():L0.map(v=>v/m*p.peak),sol=FC?FC.pv.slice():N.map(h=>p.kwp*SH[h]*(1-.7*p.cloud));
 const win=[9,10,11,12,13,14,15,16],fixed=L.slice(),flex=Array(24).fill(0),fe=p.flex*win.reduce((a,h)=>a+L[h],0);
 win.forEach(h=>{fixed[h]=L[h]*(1-p.flex);flex[h]=L[h]*p.flex});
 if(st.shift&&fe>0){win.forEach(h=>flex[h]=0);const cp=1.5*fe/win.length;let rem=fe;
@@ -138,7 +141,7 @@ s+=`<polyline fill="none" stroke="var(--ink)" stroke-width="2" points="${N.map(h
 s+=`<line x1="${L}" x2="${W}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/>`;
 s+=`<text x="${L}" y="${H-1}" font-size="10" fill="var(--mute)">kW. Shaded hours = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;$('chart').innerHTML=s}
 function reqOpt(p){const key=JSON.stringify(p);if(key===optKey)return;optKey=key;OPT=null;optMsg='Optimiser: running...';clearTimeout(optTimer);
-optTimer=setTimeout(async()=>{try{const L0=p.prof=='campus'?CAMP:FAC,m=Math.max(...L0),L=L0.map(v=>v/m*p.peak),sol=N.map(h=>p.kwp*SH[h]*(1-.7*p.cloud)),tot=a=>a.reduce((x,y)=>x+y,0),out={};
+optTimer=setTimeout(async()=>{try{const L0=p.prof=='campus'?CAMP:FAC,m=Math.max(...L0),L=FC?FC.load.slice():L0.map(v=>v/m*p.peak),sol=FC?FC.pv.slice():N.map(h=>p.kwp*SH[h]*(1-.7*p.cloud)),tot=a=>a.reduce((x,y)=>x+y,0),out={};
 await Promise.all(MODES.map(async md=>{const body={load:L,pv:sol,rates:N.map(h=>((isPk(h)?p.ep:p.eo)+p.ad+p.afa)/100),md_rate_day:p.md/30,md_hours:N.filter(h=>p.tou?isPk(h):true),batt_kwh:p.cap,grid_limit:p.lim*p.peak,flex_share:p.flex*md.fx,carbon_adder:md.cp*p.ef,wear:md.wr};
 const res=await fetch('/api/optimise',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!res.ok)throw 0;const o=await res.json();
 out[md.k]={d:o.pv_used,b:o.dis,g:o.grid,ld:o.ld,sol,cost:o.cost,peak:o.peak,util:tot(o.pv_used)/(tot(sol)||1)*100,co2:tot(o.grid)*p.ef,ch:o.ch,fl:o.flex}}));
@@ -151,7 +154,15 @@ if(p.cap>0){const c=rg(r.ch,1),d=rg(r.b,1);L.push((c?`Charge the battery ${c}. `
 L.push(`Hold billed grid demand to ${r.peak.toFixed(0)} kW (baseline ${b.peak.toFixed(0)} kW). Highest draw in any hour is ${Math.max(...r.g).toFixed(0)} kW, against a grid limit of ${Math.round(p.lim*p.peak)} kW.`);
 const su=rg(r.sol.map((s,h)=>s-r.ld[h]),0);L.push(su?`Solar surplus expected ${su}: store it or run flexible load then.`:'Solar never exceeds site load, so all of it is used on site and the grid covers the shortfall.')}
 $('recs').innerHTML=L.map(t=>`<li>${t}</li>`).join('')}
-function render(){const p=params();reqOpt(p);$('o1').textContent=p.peak+' kW';$('o2').textContent=p.kwp+' kWp';$('o3').textContent=Math.round(p.cloud*100)+'%';$('o4').textContent=p.cap+' kWh';$('o5').textContent=Math.round(p.flex*100)+'%';$('o6').textContent=Math.round(p.lim*100)+'% ('+Math.round(p.lim*p.peak)+' kW)';WIN=p.tou?[14,22]:[0,24];
+function reqFc(p){if(!$('useFc').checked){if(FC){FC=null;fcKey=''}$('fcstat').textContent='';return}
+const key=[p.kwp,p.peak,p.prof].join('|');if(key===fcKey)return;fcKey=key;$('fcstat').textContent='Loading forecast...';clearTimeout(fcTimer);
+fcTimer=setTimeout(async()=>{try{const r=await fetch(`/api/forecast?kwp=${p.kwp}&peak=${p.peak}&prof=${p.prof}&day=1`);if(!r.ok)throw 0;const o=await r.json();if(key!==fcKey)return;
+FC=o;FC.stamp=o.date+'|'+key;const m=o.metrics||{},sp=m.pv,ld=m.load;let t=`Forecast for ${o.date}. Solar: ${o.model.pv}. Demand: ${o.model.demand}. Cloud-cover slider is ignored.`;
+if(sp)t+=` Solar error ${sp.model_mae_pct}% of kWp vs ${sp.naive_mae_pct}% for yesterday's output.`;
+if(ld)t+=` Demand error ${ld.model_mae_pct}% of peak vs ${ld.naive_mae_pct}% for same-as-last-week.`;
+if(o.model.data_note)t+=' '+o.model.data_note;$('fcstat').textContent=t;render()}
+catch(e){if(key===fcKey){FC=null;$('fcstat').textContent='Forecast service unavailable, so the built-in profiles are used.';render()}}},300)}
+function render(){reqFc(params());const p=params();reqOpt(p);$('o1').textContent=p.peak+' kW';$('o2').textContent=p.kwp+' kWp';$('o3').textContent=Math.round(p.cloud*100)+'%';$('o4').textContent=p.cap+' kWh';$('o5').textContent=Math.round(p.flex*100)+'%';$('o6').textContent=Math.round(p.lim*100)+'% ('+Math.round(p.lim*p.peak)+' kW)';WIN=p.tou?[14,22]:[0,24];
 const R={};S.forEach(s=>R[s.k]=sim(s,p));const b=R.base;const om=OPT?MODES.filter(m=>OPT[m.k]):[];om.forEach(m=>R[m.k]=OPT[m.k]);const rows=[...S,...om.map(m=>({k:m.k,n:m.n}))],cur=R[sel]?sel:'both';
 $('tabs').innerHTML=rows.map(s=>`<button aria-pressed="${s.k==cur}" data-k="${s.k}">${s.n}</button>`).join('');
 $('tbl').innerHTML=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Grid share</th><th>Billed peak, kW</th><th>CO₂, kg</th></tr>`+rows.map(s=>{const r=R[s.k],sv=(1-r.cost/b.cost)*100;
