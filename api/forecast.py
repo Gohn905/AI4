@@ -61,6 +61,32 @@ def fetch_forecast(lat, lon):
     return _fetch(URL_FORECAST, {"latitude": lat, "longitude": lon, "forecast_days": 3})
 
 
+_WX = {}                                   # (lat, lon rounded to ~1 km) -> (time, data)
+WX_FRESH, WX_STALE = 1800, 6 * 3600        # seconds: reuse for 30 min; if the service is down, reuse up to 6 h
+
+
+def fetch_forecast_cached(lat, lon, now_s=None, fetcher=None):
+    """Weather forecast with a short cache, so repeated clicks do not hit the weather service each time.
+    The coordinates are rounded to 2 decimals (about 1 km) before they leave our server.
+    If the service is down, the last good copy is reused and flagged as stale."""
+    import time
+    now_s = time.time() if now_s is None else now_s
+    key = (round(lat, 2), round(lon, 2))
+    hit = _WX.get(key)
+    if hit and now_s - hit[0] < WX_FRESH:
+        return hit[1], {"cached": True, "stale": False, "age_min": round((now_s - hit[0]) / 60)}
+    try:
+        data = (fetcher or fetch_forecast)(key[0], key[1])
+    except ForecastUnavailable:
+        if hit and now_s - hit[0] < WX_STALE:
+            return hit[1], {"cached": True, "stale": True, "age_min": round((now_s - hit[0]) / 60)}
+        raise
+    if len(_WX) >= 50:
+        _WX.pop(min(_WX, key=lambda k: _WX[k][0]))
+    _WX[key] = (now_s, data)
+    return data, {"cached": False, "stale": False, "age_min": 0}
+
+
 def fetch_archive(lat, lon, start, end):          # reanalysis, used as the "actual" weather
     return _fetch(URL_ARCHIVE, {"latitude": lat, "longitude": lon, "start_date": str(start), "end_date": str(end)})
 
@@ -153,7 +179,10 @@ def forecast(q, weather=None, now=None):
         raise ValueError("prof must be campus or factory")
 
     target = ((now or datetime.now(KL)) + timedelta(days=day)).date()
-    wx = weather if weather is not None else fetch_forecast(lat, lon)
+    if weather is not None:
+        wx, wxinfo = weather, {"cached": False, "stale": False, "age_min": 0}
+    else:
+        wx, wxinfo = fetch_forecast_cached(lat, lon)
     rows = [wx.get(datetime(target.year, target.month, target.day, h)) for h in range(24)]
     if any(r is None for r in rows):
         raise ForecastUnavailable("incomplete weather data for " + str(target))
@@ -161,7 +190,10 @@ def forecast(q, weather=None, now=None):
 
     model = load_model() or {}
     sm = model.get("solar")
-    ghi_c = correct_ghi(sm, ghi, cloud)
+    sme = (sm or {}).get("metrics") or {}
+    # Use the learned irradiance fix only if it beat the plain weather forecast on the held-back days.
+    use_corr = bool(sm) and sme.get("model_mae_pct", 1e9) <= sme.get("raw_mae_pct", -1)
+    ghi_c = correct_ghi(sm if use_corr else None, ghi, cloud)
     pv = kwp * pv_per_kwp(ghi_c, temp)
     band = (sm or {}).get("band")
 
@@ -181,8 +213,11 @@ def forecast(q, weather=None, now=None):
         "pv_p90": r3(pv * band["p90"]) if band else None,
         "load": r3(load),
         "ghi": r3(ghi), "temp": r3(temp), "cloud": r3(cloud),
-        "model": {"pv": "learned correction + physics" if sm else "physics only",
+        "weather": wxinfo,
+        "model": {"pv": ("learned correction + physics" if use_corr else
+                         "weather forecast + physics (learned fix tested, did not beat it, so not used)") if sm else "physics only",
                   "demand": "ridge regression" if dm else "built-in profile",
                   "trained": model.get("trained"), "data_note": model.get("data_note")},
-        "metrics": {"pv": (sm or {}).get("metrics"), "load": (dm or {}).get("metrics")},
+        "metrics": {"pv": (dict(sme, shown_mae_pct=sme["model_mae_pct"] if use_corr else sme["raw_mae_pct"]) if sme else None),
+                    "load": (dm or {}).get("metrics")},
     }
