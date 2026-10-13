@@ -6,13 +6,16 @@ writes a structured log line (which Application Insights collects when it is swi
 Logging must never break a request, so every storage call is wrapped.
 """
 import base64
+import hashlib
 import json
 import logging
 import os
+import random
 import uuid
 from datetime import datetime, timedelta, timezone
 
 TABLE = "audit"
+RETENTION_DAYS = int(os.environ.get("AUDIT_RETENTION_DAYS", "30"))
 _state = {"table": None, "failed": False}
 
 
@@ -42,9 +45,45 @@ def caller(req):
     if not raw:
         return "anonymous"
     try:
-        return str(json.loads(base64.b64decode(raw)).get("userId") or "unknown")
+        uid = json.loads(base64.b64decode(raw)).get("userId")
+        if not uid:
+            return "unknown"
+        salt = os.environ.get("AUDIT_SALT", "facility-planner")      # one-way: the platform user id is not stored
+        return hashlib.sha256((salt + ":" + str(uid)).encode()).hexdigest()[:16]
     except Exception:
         return "unknown"
+
+
+def _private(obj):
+    """Coarsen anything that locates a customer site before it is stored (0.1 degree, about 11 km)."""
+    if isinstance(obj, dict):
+        o = dict(obj)
+        for k in ("lat", "lon"):
+            if k in o:
+                try:
+                    o[k] = round(float(o[k]), 1)
+                except (TypeError, ValueError):
+                    o[k] = None
+        return o
+    return obj
+
+
+def purge(days=None):
+    """Delete audit rows older than the retention period (default 30 days). Never raises."""
+    table = _table()
+    if table is None:
+        return 0
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days or RETENTION_DAYS)).strftime("%Y-%m-%d")
+    n = 0
+    try:
+        for e in table.query_entities("PartitionKey lt @c", parameters={"c": cutoff}, select=["PartitionKey", "RowKey"]):
+            table.delete_entity(partition_key=e["PartitionKey"], row_key=e["RowKey"])
+            n += 1
+            if n >= 200:
+                break
+    except Exception as ex:
+        logging.warning("audit purge failed: %s", ex)
+    return n
 
 
 def _clip(obj, n=30000):
@@ -65,10 +104,12 @@ def record(route, req, status, ms, request=None, result=None, model="", summary=
             "PartitionKey": now.strftime("%Y-%m-%d"),
             "RowKey": now.strftime("%H%M%S%f") + "-" + uuid.uuid4().hex[:6],
             "route": route, "status": int(status), "ms": int(ms), "user": who, "model": model or "",
-            "summary": summary[:500], "request": _clip(request), "result": _clip(result),
+            "summary": summary[:500], "request": _clip(_private(request)), "result": _clip(result),
         })
     except Exception as e:
         logging.warning("audit write failed: %s", e)
+    if random.random() < 0.02:          # housekeeping: now and then, remove rows past the retention period
+        purge()
 
 
 def recent(limit=15):
