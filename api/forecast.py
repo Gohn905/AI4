@@ -31,7 +31,10 @@ SYS_EFF = 0.88     # inverter, wiring, soiling, mismatch combined (assumption)
 # Same weekday shapes as the dashboard (kW, kW-relative), used when no trained model exists
 _CAMP = [350, 345, 345, 345, 345, 345, 380, 450, 700, 850, 880, 900, 780, 970, 1050, 1010, 880, 750, 600, 500, 420, 380, 360, 355]
 _FAC = [.4, .4, .4, .4, .4, .4, .6, .6, 1, 1, 1, 1, .9, 1, 1, 1, 1, 1, .7, .7, .7, .7, .45, .45]
-SHAPES = {"campus": [v / max(_CAMP) for v in _CAMP], "factory": [v / max(_FAC) for v in _FAC]}
+_RET = [.30, .30, .30, .30, .30, .30, .32, .40, .62, .80, .88, .92, .95, .95, .97, 1.0, .98, .95, .92, .90, .85, .70, .45, .32]
+_PRC = [.88, .87, .87, .87, .87, .88, .90, .93, .97, .99, 1, 1, .98, 1, 1, .99, .98, .96, .94, .92, .91, .90, .89, .88]
+SHAPES = {"campus": [v / max(_CAMP) for v in _CAMP], "factory": [v / max(_FAC) for v in _FAC],
+          "retail": [v / max(_RET) for v in _RET], "process": [v / max(_PRC) for v in _PRC]}
 
 
 class ForecastUnavailable(Exception):
