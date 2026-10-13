@@ -11,7 +11,7 @@
       "statusCode": 302
     },
     {
-      "route": "/api/*",
+      "route": "/api/audit",
       "allowedRoles": [
         "authenticated"
       ]
