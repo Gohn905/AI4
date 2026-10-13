@@ -47,14 +47,18 @@ th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(
 <div class="card" id="tcard"></div>
 <p class="note">The tariff follows the supply voltage on the bill, not the size alone. Small shops and offices are usually LV, factories, malls and campuses MV, very large sites HV.</p></section>
 <section class="panel ctl"><h2>Facility</h2>
-<label for="prof">Load shape</label><select id="prof"><option value="campus">Campus / office (case study)</option><option value="factory">Factory (two-shift)</option></select>
-<label>Peak demand <output id="o1"></output></label><input id="peak" type="range" min="100" max="3000" step="50" value="1050">
+<label for="ex">Example customer</label><select id="ex"><option value="">Choose an example...</option><option value="lv">LV: retail or office building</option><option value="mv">MV: two-shift factory</option><option value="hv">HV: continuous process plant</option></select>
+<p class="note" id="exnote" style="margin-top:6px">Examples are illustrative, with assumed sizes. Replace them with the customer's own data.</p>
+<label for="prof">Load shape</label><select id="prof"><option value="campus">Campus / office (APU case study)</option><option value="retail">Retail or office building (LV example)</option><option value="factory">Factory, two-shift (MV example)</option><option value="process">Continuous process plant (HV example)</option></select>
+<label>Peak demand <output id="o1"></output></label><input id="peak" type="range" min="50" max="20000" step="10" value="1050">
 <label>Grid import limit, any hour <output id="o6"></output></label><input id="lim" type="range" min="80" max="150" step="5" value="100">
-<label>Solar capacity <output id="o2"></output></label><input id="kwp" type="range" min="0" max="2000" step="10" value="300">
+<label>Solar capacity <output id="o2"></output></label><input id="kwp" type="range" min="0" max="8000" step="10" value="300">
 <label>Cloud cover <output id="o3"></output></label><input id="cloud" type="range" min="0" max="80" step="5" value="0">
-<label>Battery size <output id="o4"></output></label><input id="bat" type="range" min="0" max="2000" step="50" value="500">
+<label>Battery size <output id="o4"></output></label><input id="bat" type="range" min="0" max="10000" step="50" value="500">
 <label>Shiftable share of daytime load <output id="o5"></output></label><input id="flex" type="range" min="0" max="30" step="5" value="10">
 <p class="note">Shiftable load only moves inside 09:00 to 17:00 so operations are not disturbed.</p>
+<label class="chk"><input type="checkbox" id="apu"> Use the APU case-study solar shape</label>
+<p class="note" style="margin-top:4px">Off = typical tropical day: about 5.0 kWh per kWp when clear and about 4.0 at 30% cloud (my assumption, check PVGIS for the real site).</p>
 <label class="chk"><input type="checkbox" id="useFc"> Use tomorrow's forecast (solar and demand)</label>
 <p class="note" id="fcstat"></p>
 <h2 style="margin-top:14px">Customer assets</h2>
@@ -101,8 +105,15 @@ th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(
 const $=id=>document.getElementById(id),N=[...Array(24).keys()],isPk=h=>h>=14&&h<22;
 const SH=[0,0,0,0,0,0,0,0,20,50,80,95,100,90,80,60,40,10,0,0,0,0,0,0].map(v=>v/100);
 let FC=null,fcKey='',fcTimer;
+const SY=[0,0,0,0,0,0,.02,.10,.27,.45,.60,.69,.72,.69,.60,.45,.29,.13,.03,0,0,0,0,0];
+const RET=[.30,.30,.30,.30,.30,.30,.32,.40,.62,.80,.88,.92,.95,.95,.97,1,.98,.95,.92,.90,.85,.70,.45,.32];
+const PRC=[.88,.87,.87,.87,.87,.88,.90,.93,.97,.99,1,1,.98,1,1,.99,.98,.96,.94,.92,.91,.90,.89,.88];
 const CAMP=[350,345,345,345,345,345,380,450,700,850,880,900,780,970,1050,1010,880,750,600,500,420,380,360,355];
 const FAC=[.4,.4,.4,.4,.4,.4,.6,.6,1,1,1,1,.9,1,1,1,1,1,.7,.7,.7,.7,.45,.45];
+const EX={
+lv:{volt:'LV',struct:'T',prof:'retail',peak:180,kwp:120,cloud:30,bat:0,flex:20,lim:100,hasBat:false,hasFlex:true,note:'LV retail or office building: 180 kW peak, 120 kWp rooftop solar (about 17% of daily energy), LV ToU tariff. LV has no maximum demand charge, so a battery only earns the small peak and off-peak price gap. Battery is switched off here because it does not pay.'},
+mv:{volt:'MV',struct:'T',prof:'factory',peak:2000,kwp:1000,cloud:30,bat:1000,flex:10,lim:100,hasBat:true,hasFlex:true,note:'MV two-shift factory: 2,000 kW peak, 1,000 kWp rooftop solar (about 12% of daily energy), 1,000 kWh battery, 10% shiftable load, MV ToU tariff. Here the maximum demand charge (RM97.06/kW) is large, so peak shaving pays.'},
+hv:{volt:'HV',struct:'T',prof:'process',peak:12000,kwp:5000,cloud:30,bat:5000,flex:5,lim:100,hasBat:true,hasFlex:true,note:'HV continuous process plant: 12 MW peak, 5 MWp solar (about 7% of daily energy), 5 MWh battery, 5% shiftable load, HV ToU tariff. Load is flat 24 hours and the demand charge per kW is lower (RM44.82), so expect small percentage savings.'}};
 const TF={LVG:{ep:27.03,eo:27.03,md:0,ad:23.65,t:'LV General: 27.03 sen/kWh energy, plus capacity 8.83 and network 14.82 sen/kWh. No maximum demand charge. Retail RM20/month.'},
 LVT:{ep:28.52,eo:24.43,md:0,ad:23.65,t:'LV ToU: peak 28.52, off-peak 24.43 sen/kWh, plus capacity and network 23.65 sen/kWh. No maximum demand charge. Retail RM20/month.'},
 MVG:{ep:29.83,eo:29.83,md:89.27,ad:0,t:'MV General: 29.83 sen/kWh. Maximum demand RM89.27/kW/month (capacity 29.43 + network 59.84), billed on all-day peak demand. Retail RM200/month.'},
@@ -112,10 +123,11 @@ HVT:{ep:44.52,eo:40.43,md:44.82,ad:0,t:'HV ToU: peak 44.52, off-peak 40.43 sen/k
 const S=[{k:'base',n:'Baseline',shift:0,batt:0},{k:'shift',n:'Shift loads',shift:1,batt:0},{k:'batt',n:'Battery',shift:0,batt:1},{k:'both',n:'Shift + battery',shift:1,batt:1}];
 let WIN=[14,22],sel='bal',OPT=null,optKey='',optTimer=null,optMsg='';
 const MODES=[{k:'cost',n:'Optimiser: Cost-saving',fx:1,cp:0,wr:0},{k:'bal',n:'Optimiser: Balanced',fx:.5,cp:.1,wr:.02},{k:'prod',n:'Optimiser: Production-first',fx:0,cp:0,wr:0}];
+const PROF={campus:CAMP,retail:RET,factory:FAC,process:PRC};
 function applyTariff(){const t=TF[$('volt').value+$('struct').value];['ep','eo','md','ad'].forEach(k=>$(k).value=t[k]);$('tcard').textContent=t.t}
-function params(){const g=id=>+$(id).value;return{prof:$('prof').value,tou:$('struct').value=='T',peak:g('peak'),kwp:g('kwp'),cloud:g('cloud')/100,lim:g('lim')/100,cap:$('hasBat').checked?g('bat'):0,flex:$('hasFlex').checked?g('flex')/100:0,
+function params(){const g=id=>+$(id).value;return{prof:$('prof').value,apu:$('apu').checked,tou:$('struct').value=='T',peak:g('peak'),kwp:g('kwp'),cloud:g('cloud')/100,lim:g('lim')/100,cap:$('hasBat').checked?g('bat'):0,flex:$('hasFlex').checked?g('flex')/100:0,
 ep:g('ep'),eo:g('eo'),md:g('md'),ad:g('ad'),afa:g('afa'),ef:g('ef'),fc:FC?FC.stamp:0}}
-function sim(st,p){const L0=p.prof=='campus'?CAMP:FAC,m=Math.max(...L0),L=FC?FC.load.slice():L0.map(v=>v/m*p.peak),sol=FC?FC.pv.slice():N.map(h=>p.kwp*SH[h]*(1-.7*p.cloud));
+function sim(st,p){const L0=PROF[p.prof],m=Math.max(...L0),L=FC?FC.load.slice():L0.map(v=>v/m*p.peak),sol=FC?FC.pv.slice():N.map(h=>p.kwp*(p.apu?SH:SY)[h]*(1-.7*p.cloud));
 const win=[9,10,11,12,13,14,15,16],fixed=L.slice(),flex=Array(24).fill(0),fe=p.flex*win.reduce((a,h)=>a+L[h],0);
 win.forEach(h=>{fixed[h]=L[h]*(1-p.flex);flex[h]=L[h]*p.flex});
 if(st.shift&&fe>0){win.forEach(h=>flex[h]=0);const cp=1.5*fe/win.length;let rem=fe;
@@ -148,7 +160,7 @@ if(h%3==0)s+=`<text x="${x+w/2}" y="${H-12}" text-anchor="middle" font-size="11"
 s+=`<line x1="${L+WIN[0]*bw}" x2="${L+WIN[1]*bw}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${L+WIN[1]*bw-4}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)">billed peak ${Math.round(r.peak)} kW</text>`;
 s+=`<text x="${L}" y="${H-1}" font-size="10" fill="var(--mute)">kW. Shaded hours = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;$('chart').innerHTML=s}
 function reqOpt(p){const key=JSON.stringify(p);if(key===optKey)return;optKey=key;OPT=null;optMsg='Optimiser: running...';clearTimeout(optTimer);
-optTimer=setTimeout(async()=>{try{const L0=p.prof=='campus'?CAMP:FAC,m=Math.max(...L0),L=FC?FC.load.slice():L0.map(v=>v/m*p.peak),sol=FC?FC.pv.slice():N.map(h=>p.kwp*SH[h]*(1-.7*p.cloud)),tot=a=>a.reduce((x,y)=>x+y,0),out={};
+optTimer=setTimeout(async()=>{try{const L0=PROF[p.prof],m=Math.max(...L0),L=FC?FC.load.slice():L0.map(v=>v/m*p.peak),sol=FC?FC.pv.slice():N.map(h=>p.kwp*(p.apu?SH:SY)[h]*(1-.7*p.cloud)),tot=a=>a.reduce((x,y)=>x+y,0),out={};
 await Promise.all(MODES.map(async md=>{const body={load:L,pv:sol,rates:N.map(h=>((isPk(h)?p.ep:p.eo)+p.ad+p.afa)/100),md_rate_day:p.md/30,md_hours:N.filter(h=>p.tou?isPk(h):true),batt_kwh:p.cap,grid_limit:p.lim*p.peak,flex_share:p.flex*md.fx,carbon_adder:md.cp*p.ef,wear:md.wr};
 const res=await fetch('/api/optimise',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!res.ok)throw res.status;const o=await res.json();
 out[md.k]={d:o.pv_used,b:o.dis,g:o.grid,ld:o.ld,sol,cost:o.cost,peak:o.peak,util:tot(o.pv_used)/(tot(sol)||1)*100,co2:tot(o.grid)*p.ef,ch:o.ch,fl:o.flex}}));
@@ -182,11 +194,14 @@ $('alt').textContent=`Tariff check (baseline, same load): ${p.tou?'ToU':'General
 $('ostat').textContent=optMsg||(p.cap||p.flex?`Optimiser is using: ${p.cap?'battery '+p.cap+' kWh':'no battery'}, ${p.flex?'shiftable load '+Math.round(p.flex*100)+'% of daytime load':'no shiftable load'}.`:'No battery or shiftable load ticked, so there is nothing to optimise yet. Tick an asset to see savings.');const mvIn=cur=='base'?0:R[cur].ld.reduce((a,v,h)=>a+Math.max(v-b.ld[h],0),0),pool=b.ld.slice(9,17).reduce((x,y)=>x+y,0)||1;
 $('moved').textContent=cur=='base'?'':(mvIn>0.5?`Work moved by this strategy: ${Math.round(mvIn)} kWh, ${(mvIn/pool*100).toFixed(0)}% of the 09:00 to 17:00 load. Striped purple = moved into that hour, dashed purple = moved out of it.`:(p.flex?'No equipment is moved in this strategy, so operations keep their normal schedule.':'No shiftable equipment is ticked, so nothing is moved.'));
 recs(R[cur],b,p);draw(R[cur],cur=='base'?null:b)}
+document.addEventListener('change',e=>{if(e.target.id!='ex'||!EX[e.target.value])return;const x=EX[e.target.value];
+['volt','struct','prof','peak','kwp','cloud','bat','flex','lim'].forEach(k=>{if(x[k]!==undefined)$(k).value=x[k]});
+$('hasBat').checked=x.hasBat;$('hasFlex').checked=x.hasFlex;$('apu').checked=false;$('afa').value=0;$('useFc').checked=false;$('exnote').textContent=x.note;applyTariff();render()});
 document.addEventListener('input',e=>{if(e.target.id=='volt'||e.target.id=='struct')applyTariff();render()});
 document.addEventListener('click',e=>{if(e.target.dataset.k){sel=e.target.dataset.k;render()}
 if(e.target.id=='auditBtn')loadAudit();
-if(e.target.id=='preset2'){$('volt').value='MV';$('struct').value='T';$('prof').value='campus';$('peak').value=250;$('kwp').value=300;$('cloud').value=0;$('bat').value=200;$('flex').value=20;$('lim').value=150;$('hasBat').checked=true;$('hasFlex').checked=true;$('afa').value=0;applyTariff();render()}
-if(e.target.id=='preset'){$('volt').value='MV';$('struct').value='T';$('prof').value='campus';$('peak').value=1050;$('kwp').value=100;$('cloud').value=0;$('bat').value=0;$('flex').value=0;$('afa').value=0;applyTariff();render()}});
+if(e.target.id=='preset2'){$('apu').checked=false;$('volt').value='MV';$('struct').value='T';$('prof').value='campus';$('peak').value=250;$('kwp').value=300;$('cloud').value=0;$('bat').value=200;$('flex').value=20;$('lim').value=150;$('hasBat').checked=true;$('hasFlex').checked=true;$('afa').value=0;applyTariff();render()}
+if(e.target.id=='preset'){$('apu').checked=true;$('volt').value='MV';$('struct').value='T';$('prof').value='campus';$('peak').value=1050;$('kwp').value=100;$('cloud').value=0;$('bat').value=0;$('flex').value=0;$('afa').value=0;applyTariff();render()}});
 
 const btn='display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:6px;color:inherit;text-decoration:none';
 function showAuth(u){$('auth').innerHTML=u?`<span>Signed in as ${String(u.userDetails).replace(/</g,'&lt;')}</span><a style="${btn}" href="/.auth/logout?post_logout_redirect_uri=/">Sign out</a>`:`<a style="${btn}" href="/.auth/login/github?post_login_redirect_uri=/">Sign in with GitHub</a><a style="${btn}" href="/.auth/login/aad?post_login_redirect_uri=/">Sign in with Microsoft</a><span class="note" style="margin:0">Sign-in is only needed to view the audit log.</span>`}
