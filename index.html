@@ -165,8 +165,8 @@ function reqFc(p){if(!$('useFc').checked){if(FC){FC=null;fcKey=''}$('fcstat').te
 const key=[p.kwp,p.peak,p.prof].join('|');if(key===fcKey)return;fcKey=key;$('fcstat').textContent='Loading forecast...';clearTimeout(fcTimer);
 fcTimer=setTimeout(async()=>{try{const r=await fetch(`/api/forecast?kwp=${p.kwp}&peak=${p.peak}&prof=${p.prof}&day=1`);if(!r.ok)throw r.status;const o=await r.json();if(key!==fcKey)return;
 FC=o;FC.stamp=o.date+'|'+key;const m=o.metrics||{},sp=m.pv,ld=m.load;let t=`Forecast for ${o.date}. Solar: ${o.model.pv}. Demand: ${o.model.demand}. Cloud-cover slider is ignored.`;
-if(sp)t+=` Solar error ${sp.model_mae_pct}% of kWp vs ${sp.naive_mae_pct}% for yesterday's output.`;
-if(ld)t+=` Demand error ${ld.model_mae_pct}% of peak vs ${ld.naive_mae_pct}% for same-as-last-week.`;
+if(sp)t+=` Solar error ${sp.shown_mae_pct??sp.model_mae_pct}% of kWp vs ${sp.naive_mae_pct}% for yesterday's output.`;
+if(ld)t+=` Demand error ${ld.model_mae_pct}% of peak vs ${ld.naive_mae_pct}% for same-as-last-week${/SYNTHETIC/.test(o.model.data_note||'')?' (measured on SYNTHETIC history, not real accuracy)':''}.`;
 if(o.model.data_note)t+=' '+o.model.data_note;$('fcstat').textContent=t;render()}
 catch(e){if(key===fcKey){FC=null;$('fcstat').textContent=e===401?'Sign in (top of the page) to use the forecast.':'Forecast service unavailable, so the built-in profiles are used.';render()}}},300)}
 function render(){reqFc(params());const p=params();reqOpt(p);$('o1').textContent=p.peak+' kW';$('o2').textContent=p.kwp+' kWp';$('o3').textContent=Math.round(p.cloud*100)+'%';$('o4').textContent=p.cap+' kWh';$('o5').textContent=Math.round(p.flex*100)+'%';$('o6').textContent=Math.round(p.lim*100)+'% ('+Math.round(p.lim*p.peak)+' kW)';WIN=p.tou?[14,22]:[0,24];
