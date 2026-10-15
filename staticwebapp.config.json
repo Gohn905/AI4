@@ -15,6 +15,12 @@
       "allowedRoles": [
         "authenticated"
       ]
+    },
+    {
+      "route": "/api/profile",
+      "allowedRoles": [
+        "authenticated"
+      ]
     }
   ]
 }
