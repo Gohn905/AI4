@@ -20,10 +20,10 @@ TABLE = "profiles"
 MAX_SITES, MAX_BYTES = 5, 10000
 _state = {"table": None}
 
-NUM = {"peak": (1, 1e5), "lim": (80, 150), "kwp": (0, 1e5), "cloud": (0, 80), "bat": (0, 20000), "flex": (0, 30),
-       "afa": (-20, 20), "ef": (0, 2), "billKwh": (0, 1e8), "billMd": (0, 1e6), "capex": (0, 1e5), "life": (1, 25)}
-CHOICE = {"volt": ("LV", "MV", "HV"), "struct": ("G", "T"), "prof": ("campus", "retail", "factory", "process", "meter")}
-BOOL = ("hasBat", "hasFlex", "apu")
+NUM = {"peak": (1, 1e5), "kwp": (0, 1e5), "bat": (0, 20000), "flex": (0, 30), "afa": (-20, 20), "ef": (0, 2), "lim": (0, 1e6)}
+CHOICE = {"volt": ("LV", "MV", "HV"), "struct": ("G", "T"), "prof": ("campus", "factory"),
+          "follow": ("base", "cost", "bal", "prod"), "loc": ("3.0553,101.7003", "5.41,100.33")}
+BOOL = ()
 
 
 class Unavailable(Exception):
