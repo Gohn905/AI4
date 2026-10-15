@@ -23,7 +23,8 @@ summary{cursor:pointer;font-weight:600}.err{color:var(--bad)}.scroll{overflow-x:
 td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}td:first-child,th:first-child{text-align:left}th{font-weight:500;color:var(--mut)}tr.sel td{background:color-mix(in srgb,var(--sun) 16%,transparent)}
 #qbtn{border-radius:50%;width:28px;height:28px;padding:0;font-weight:700}@media(max-width:600px){.c{min-height:60px;font-size:12px}}
 </style></head><body><main>
-<h1>Facility Energy Planner</h1>
+<div class="bar"><h1>Facility Energy Planner</h1><span class="sp"></span><span id="auth" class="note"></span></div>
+<div id="amsg" class="note" style="margin:0 0 6px"></div>
 <p class="sub">Pick a day, week or month and a strategy. See what the plan saves compared with the baseline.</p>
 
 <details class="card" id="setup"><summary id="fsum">My facility</summary>
@@ -39,11 +40,13 @@ td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}td:fi
 <div><label>Solar size, kWp</label><input id="f_kwp" type="number" min="0"></div>
 <div><label>Battery, kWh (0 = none)</label><input id="f_bat" type="number" min="0"></div>
 <div><label>Shiftable daytime load, % (0 to 30)</label><input id="f_flex" type="number" min="0" max="30"></div>
+<div><label>Strategy I follow (keeps past days fixed)</label><select id="f_follow"><option value="base">None (baseline)</option><option value="cost">Cost-saving</option><option value="bal">Balanced</option><option value="prod">Production-first</option></select></div>
 <div><label>Grid import limit, kW (blank = none)</label><input id="f_lim" type="number" min="0"></div>
 <div><label>Grid emissions, kg CO&#8322;/kWh</label><input id="f_ef" type="number" step="0.01"></div>
 </div>
 <p class="note">Emission factor is a placeholder. Rates come from the TNB table below.</p>
-<button class="on" id="fsave" style="margin-top:8px">Save facility</button> <span id="fmsg" class="note"></span></details>
+<p class="note" id="signhint">Without sign-in, your facility is kept in this browser only. Sign in (top right) to keep it in your account.</p>
+<button class="on" id="fsave" style="margin-top:8px">Save facility</button> <span id="acctBtns" hidden><button id="sdel">Delete selected saved facility</button> <button id="sall">Delete all my saved data</button></span> <span id="fmsg" class="note"></span></details>
 
 <div class="card" id="rates"></div>
 
@@ -80,8 +83,8 @@ HVG:{n:'HV General',ep:43.03,eo:43.03,md:31.21,ad:0,t:'HV General: 43.03 sen/kWh
 HVT:{n:'HV Time-of-Use',ep:44.52,eo:40.43,md:44.82,ad:0,t:'HV ToU: peak 44.52, off-peak 40.43 sen/kWh. Maximum demand RM44.82/kW/month (21.76 + 23.06), peak-period demand only. Retail RM250/month.'}};
 const MODES=[{k:'cost',n:'Cost-saving',fx:1,cp:0,wr:0},{k:'bal',n:'Balanced',fx:.5,cp:.1,wr:.02},{k:'prod',n:'Production-first',fx:0,cp:0,wr:0}];
 const NAMES={base:'Baseline',cost:'Optimiser: Cost-saving',bal:'Optimiser: Balanced',prod:'Optimiser: Production-first'};
-const DEF={name:'APU',loc:'3.0553,101.7003',prof:'campus',volt:'MV',struct:'T',afa:0,peak:1050,kwp:300,bat:500,flex:10,lim:'',ef:0.6};
-const FIELDS=['name','loc','prof','volt','struct','afa','peak','kwp','bat','flex','lim','ef'],NUMS=['afa','peak','kwp','bat','flex','ef'];
+const DEF={name:'APU',loc:'3.0553,101.7003',prof:'campus',follow:'bal',volt:'MV',struct:'T',afa:0,peak:1050,kwp:300,bat:500,flex:10,lim:'',ef:0.6};
+const FIELDS=['name','loc','prof','follow','volt','struct','afa','peak','kwp','bat','flex','lim','ef'],NUMS=['afa','peak','kwp','bat','flex','ef'];
 const iso=d=>d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate()),parse=s=>new Date(s+'T12:00:00');
 const addD=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return iso(d)},diff=(a,b)=>Math.round((parse(a)-parse(b))/864e5);
 const TODAY=iso(new Date()),MIN=addD(TODAY,-31),MAX=addD(TODAY,2),isWk=s=>{const g=parse(s).getDay();return g>0&&g<6};
@@ -162,14 +165,16 @@ function periodHtml(dates,items){
  const ok=items.filter(x=>x&&x.r);if(!ok.length)return '<div class="card err">No data for these dates. Data is available from 31 days ago to 2 days ahead.</div>';
  const n=ok.length,t=tf(),tot=(w,k)=>sum(ok.map(x=>x[w][k])),pkb=Math.max(...ok.map(x=>x.b.peak)),pk=Math.max(...ok.map(x=>x.r.peak));
  const base=tot('b','en')+t.md*pkb*n/30,opt=tot('r','en')+t.md*pk*n/30,pvT=tot('r','sol'),pvU=sum(ok.map(x=>sum(x.r.d))),pvA=sum(ok.map(x=>sum(x.r.sol)));
- const head=kpis([['Baseline cost',money(base),'',n+' days'],[NAMES[sel],money(opt)],['You save',money(base-opt),'good',(base>0?(100*(base-opt)/base).toFixed(1):0)+'%'],
+ const head=kpis([['Baseline cost',money(base),'',n+' days'],['With strategy',money(opt)],['You save',money(base-opt),'good',(base>0?(100*(base-opt)/base).toFixed(1):0)+'%'],
   ['Highest billed peak',Math.round(pk)+' kW','','baseline '+Math.round(pkb)+' kW'],['Solar used',pvA>0?Math.round(100*pvU/pvA)+'%':'-']]);
+ const past=dates.some(d=>d<TODAY&&d>=MIN),live=dates.some(d=>d>=TODAY&&d<=MAX);
+ const notes=(past?`Past days are fixed to the strategy you follow (${NAMES[F.follow]}, set in My facility), so changing the tab does not rewrite history. `:'')+(live?`Today and forecast days use the ${NAMES[sel]} tab. `:'');
  let cells='';
  if(view=='month'){cells+=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<div class="dh">${x}</div>`).join('');cells+='<div></div>'.repeat((parse(dates[0]).getDay()+6)%7)}
  dates.forEach((d,i)=>{const x=items[i],tg=rel(d)[0],has=x&&x.r;
   const body=has?`<b class="good">${money(x.b.cost-x.r.cost)}</b><small>${tg=='Past'?'':tg}</small>`:'<small>no data</small>';
   cells+=`<button class="c${d==cur?' sel':''}${has?'':' na'}" data-d="${d}"><small>${view=='week'?parse(d).toLocaleDateString('en-GB',{weekday:'short'})+' ':''}${parse(d).getDate()}${isWk(d)?'':' (wknd)'}</small>${body}</button>`});
- return `<div class="card"><h2>${NAMES[sel]} vs baseline</h2>${head}<p class="note">Demand charge is prorated by the days shown, using the highest peak in the period. Tap a day to open it with the full comparison.</p></div>
+ return `<div class="card"><h2>Strategy vs baseline</h2>${head}<p class="note">${notes}Demand charge is prorated by the days shown, using the highest peak in the period. Tap a day to open it with the full comparison.</p></div>
  <div class="card"><div class="cal" style="${view=='week'?'grid-template-columns:repeat(auto-fit,minmax(100px,1fr))':''}">${cells}</div></div>`}
 
 function span(){if(view=='day')return [cur];const d=parse(cur);
@@ -191,7 +196,7 @@ async function render(){
  const f=(x,o)=>parse(x).toLocaleDateString('en-GB',o);
  $('ttl').textContent=view=='day'?f(cur,{weekday:'long',day:'numeric',month:'long',year:'numeric'}):view=='week'?'Week of '+f(dates[0],{day:'numeric',month:'short'})+' to '+f(dates[6],{day:'numeric',month:'short'}):f(cur,{month:'long',year:'numeric'});
  const [bt,bc]=rel(cur);$('badge').innerHTML=view=='day'?`<span class="tag ${bc}">${bt}</span>`:'';
- $('info').textContent=view=='day'?(cur<TODAY?'Looking back: solar is rebuilt from recorded weather. Demand is modelled from your peak demand because no meter data is loaded, so treat it as an estimate.':'Forecast: weather from Open-Meteo. Demand comes from a calendar-and-temperature model trained on synthetic history, so it is not yet real-world accuracy.'):'Days before today are estimates from recorded weather. Days after today are forecasts (up to 2 days ahead). Other days show no data.';
+ $('info').textContent=view=='day'?(cur<TODAY?'Looking back: solar is rebuilt from recorded weather. Demand is modelled from your peak demand because no meter data is loaded, so treat it as an estimate. The strategy tabs show what each strategy would have saved on this day.':'Forecast: weather from Open-Meteo. Demand comes from a calendar-and-temperature model trained on synthetic history, so it is not yet real-world accuracy.'):'Days before today are estimates from recorded weather. Days after today are forecasts (up to 2 days ahead). Other days show no data.';
  $('out').innerHTML='<div class="card note">Working it out&hellip;</div>';
  try{
   if(view=='day'){
@@ -202,7 +207,7 @@ async function render(){
    const miss=res.filter(x=>x.status!='fulfilled').length;
    $('out').innerHTML=(miss?`<div class="card err">The optimiser did not answer, so only the baseline is shown. Refresh in a minute.</div>`:'')+dayHtml(R,ok);return}
   const items=dates.map(()=>null),idx=dates.map((x,i)=>i).filter(i=>dates[i]>=MIN&&dates[i]<=MAX);
-  const run=async i=>{try{items[i]={b:await getRun(dates[i],'base'),r:await getRun(dates[i],sel)}}catch(e){items[i]=null}};
+  const run=async i=>{try{items[i]={b:await getRun(dates[i],'base'),r:await getRun(dates[i],dates[i]<TODAY?F.follow:sel)}}catch(e){items[i]=null}};
   if(idx.length){await run(idx[0]);for(let k=1;k<idx.length;k+=6){await Promise.all(idx.slice(k,k+6).map(run));if(my!=tok)return}}
   if(my!=tok)return;$('out').innerHTML=periodHtml(dates,items)
  }catch(e){if(my==tok)$('out').innerHTML=`<div class="card err">${esc(e.message)}</div>`}}
@@ -216,12 +221,29 @@ $('out').onclick=e=>{const b=e.target.closest('[data-d]');if(b&&!b.classList.con
 $('tabs').onclick=e=>{const b=e.target.closest('[data-s]');if(b){sel=b.dataset.s;render()}};
 $('qbtn').onclick=()=>{const w=$('why');w.hidden=!w.hidden;$('qbtn').setAttribute('aria-expanded',String(!w.hidden))};
 
-function fill(){FIELDS.forEach(k=>$('f_'+k).value=F[k]);$('fsum').textContent=`My facility: ${F.name}, ${F.volt} ${F.struct=='T'?'ToU':'General'}, ${F.peak} kW peak, ${F.kwp} kWp solar, ${F.bat} kWh battery (tap to edit)`;ratesCard()}
-$('fsave').onclick=()=>{const n=Object.assign({},F);FIELDS.forEach(k=>n[k]=$('f_'+k).value.trim());
+function fill(){FIELDS.forEach(k=>$('f_'+k).value=F[k]);fillSites();$('fsum').textContent=`My facility: ${F.name}, ${F.volt} ${F.struct=='T'?'ToU':'General'}, ${F.peak} kW peak, ${F.kwp} kWp solar, ${F.bat} kWh battery (tap to edit)`;ratesCard()}
+let user=null,sites=[];
+const say=t=>{$('fmsg').textContent=t;$('amsg').textContent=t},persist=()=>{try{localStorage.setItem('facility',JSON.stringify(F))}catch(e){}};
+function fillSites(){const s=$('sites');if(!s)return;s.innerHTML=sites.length?sites.map(x=>`<option value="${esc(x.name)}"${x.name==F.name?' selected':''}>${esc(x.name)}</option>`).join(''):'<option value="">No saved facilities yet</option>'}
+function authUi(){const a=$('auth');
+ if(user){a.innerHTML=`Signed in as <b>${esc(user.userDetails||'user')}</b> <select id="sites" aria-label="My saved facilities"></select> <button id="sload">Load</button> <a href="/.auth/logout?post_logout_redirect_uri=/">Sign out</a>`;
+  $('sload').onclick=()=>{const n=$('sites').value;if(n)loadSite(n)};fillSites()}
+ else a.innerHTML='<a href="/.auth/login/github?post_login_redirect_uri=/">Sign in with GitHub</a> &middot; <a href="/.auth/login/aad?post_login_redirect_uri=/">Microsoft</a>';
+ $('acctBtns').hidden=!user;$('signhint').hidden=!!user}
+async function loadSite(name){try{const j=await api('/api/profile?site='+encodeURIComponent(name));F=Object.assign({},DEF,j.data,{name});persist();cache.clear();fill();render();say('Loaded '+name+'.')}catch(e){say(e.message)}}
+async function whoami(){try{const j=await (await fetch('/.auth/me')).json();user=j.clientPrincipal||null}catch(e){user=null}
+ authUi();if(user){try{const j=await api('/api/profile');sites=j.sites||[];fillSites();if(!saved&&sites.length)loadSite(sites[0].name)}catch(e){say(e.message)}}}
+function readForm(){const n=Object.assign({},F);FIELDS.forEach(k=>n[k]=$('f_'+k).value.trim());
  const bad=NUMS.find(k=>n[k]===''||!isFinite(+n[k])||(k!='afa'&&+n[k]<0));
- if(bad||!n.name||+n.peak<1||+n.flex>30||(n.lim!==''&&!(+n.lim>=0))){$('fmsg').textContent='Please check the numbers: all fields except the grid limit are needed.';return}
- NUMS.forEach(k=>n[k]=+n[k]);n.lim=n.lim===''?'':+n.lim;F=n;
- try{localStorage.setItem('facility',JSON.stringify(F))}catch(e){}
- cache.clear();fill();$('fmsg').textContent='Saved.';$('setup').open=false;render()};
-fill();if(!saved)$('setup').open=true;render();
+ if(bad||!n.name||+n.peak<1||+n.flex>30||(n.lim!==''&&!(+n.lim>=0))){say('Please check the numbers: all fields except the grid limit are needed.');return null}
+ NUMS.forEach(k=>n[k]=+n[k]);n.lim=n.lim===''?'':+n.lim;return n}
+$('fsave').onclick=async()=>{const n=readForm();if(!n)return;F=n;persist();cache.clear();fill();$('setup').open=false;render();
+ if(!user){say('Saved on this device. Sign in to keep it in your account.');return}
+ try{const j=await api('/api/profile',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n.name,data:n})});sites=j.sites||[];fillSites();say('Saved to your account.')}
+ catch(e){say('Saved on this device only: '+e.message)}};
+$('sdel').onclick=async()=>{const n=$('sites')&&$('sites').value;if(!n||!confirm('Delete saved facility "'+n+'"?'))return;
+ try{const j=await api('/api/profile?site='+encodeURIComponent(n),{method:'DELETE'});sites=j.sites||[];fillSites();say('Deleted '+n+'.')}catch(e){say(e.message)}};
+$('sall').onclick=async()=>{if(!confirm('Delete ALL your saved facilities from the account?'))return;
+ try{const j=await api('/api/profile?all=1',{method:'DELETE'});sites=j.sites||[];fillSites();say('All saved data deleted.')}catch(e){say(e.message)}};
+fill();if(!saved)$('setup').open=true;render();whoami();
 </script></body></html>
