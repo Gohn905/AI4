@@ -36,11 +36,26 @@ th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(
 .note{font-size:13px;color:var(--mute);margin:10px 0 0}.stack{display:grid;gap:16px}
 .ctl label.chk{justify-content:flex-start;gap:8px;font-weight:400;margin-top:6px}.chk.off{color:var(--mute)}
 .card{font-size:13px;background:var(--bg);border-radius:6px;padding:8px 10px;margin-top:10px}
-</style></head><body>
+body.setup main>div.stack{display:none}body.setup main{grid-template-columns:minmax(0,560px)}
+#seePlan{display:none}body.setup #seePlan{display:block}body.setup #toStart{display:none}
+#welcome{max-width:1060px;width:calc(100% - 40px);margin:16px auto 0}button.pri{background:var(--accent);color:var(--panel);border-color:var(--accent)}
+</style></head><body class="setup">
 <header><h1>Facility energy planner</h1>
 <p>Pick the customer's supply voltage and tariff, set the facility size, then compare the baseline with three optimiser strategies for one day. Load profiles are synthetic or from a case study. Check every rate against the customer's own TNB bill.</p><div id="auth" style="margin-top:10px;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"></div></header>
+<section class="panel" id="welcome"><h2>Start here</h2>
+<p class="note" style="margin-top:0">Set up a facility in a few steps: tariff, facility size, assets, and optional meter data. Your plan appears when you press "See my plan". Signing in lets you save facilities privately and reload them next time.</p>
+<div class="tabs"><button class="pri" id="startOwn">Enter my own facility</button><button data-ex="lv">Try the LV example</button><button data-ex="mv">Try the MV example</button><button data-ex="hv">Try the HV example</button></div>
+<div id="welcomeSites"></div></section>
 <main>
 <aside class="stack">
+<section class="panel ctl" id="siteBox"><h2>My saved facilities</h2>
+<div id="siteOut" class="note" style="margin-top:0">Sign in (top of the page) to save your facility and reload it next time. Your saved data is private to your account.</div>
+<div id="siteTools" style="display:none"><select id="siteSel"></select>
+<div style="display:flex;gap:6px;margin-top:6px"><button id="siteLoad" style="flex:1">Load</button><button id="siteDel" style="flex:1">Delete</button></div>
+<input id="siteName" placeholder="Name this facility" maxlength="40" style="width:100%;margin-top:8px;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)">
+<button id="siteSave" style="margin-top:6px;width:100%">Save current settings</button>
+<button id="siteWipe" style="margin-top:6px;width:100%">Delete all my saved data</button>
+<p class="note">Stored under your account only and encrypted at rest by Azure Storage. Saved: your settings and a 24-hour typical-day profile. Never saved: the raw meter file. Up to 5 facilities.</p></div></section>
 <section class="panel ctl"><h2>Customer tariff (TNB non-domestic)</h2>
 <label for="volt">Supply voltage</label><select id="volt"><option value="LV">Low voltage (LV)</option><option value="MV" selected>Medium voltage (MV)</option><option value="HV">High voltage (HV)</option></select>
 <label for="struct">Tariff type</label><select id="struct"><option value="G">General (flat energy rate)</option><option value="T" selected>Time-of-Use (peak / off-peak)</option></select>
@@ -84,7 +99,7 @@ th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(
 <p class="note">Rates are the RP4 non-domestic figures from published summaries. Verify on mytnb.com.my. AFA changes monthly, so enter the current value. Retail charge, the 1.6% KWTBB levy and tax are not modelled. Emission factor is a placeholder.</p></section>
 <section class="panel"><h2>Audit log</h2><p class="note" style="margin-top:0">Every optimise and forecast call is recorded with who asked, what went in and what came out.</p>
 <button id="auditBtn" style="margin-top:10px;width:100%">Show latest calls</button><div class="note" id="auditOut"></div></section>
-</aside>
+<button id="seePlan" class="pri" style="width:100%;font-size:16px;padding:10px">See my plan</button><button id="toStart" style="width:100%">Back to start</button></aside>
 <div class="stack">
 <section class="panel"><h2>Where the power comes from, hour by hour</h2>
 <div class="tabs" id="tabs" role="group" aria-label="Strategy"></div>
@@ -196,7 +211,7 @@ if(sp)t+=` Solar error ${sp.shown_mae_pct??sp.model_mae_pct}% of kWp vs ${sp.nai
 if(ld)t+=` Demand error ${ld.model_mae_pct}% of peak vs ${ld.naive_mae_pct}% for same-as-last-week${/SYNTHETIC/.test(o.model.data_note||'')?' (measured on SYNTHETIC history, not real accuracy)':''}.`;
 if(o.model.data_note)t+=' '+o.model.data_note;$('fcstat').textContent=t;render()}
 catch(e){if(key===fcKey){FC=null;$('fcstat').textContent=e===401?'Sign in (top of the page) to use the forecast.':'Forecast service unavailable, so the built-in profiles are used.';render()}}},300)}
-function render(){reqFc(params());const p=params();reqOpt(p);reqStress(p);$('o1').textContent=p.peak+' kW';$('o2').textContent=p.kwp+' kWp';$('o3').textContent=Math.round(p.cloud*100)+'%';$('o4').textContent=p.cap+' kWh';$('o5').textContent=Math.round(p.flex*100)+'%';$('o6').textContent=Math.round(p.lim*100)+'% ('+Math.round(p.lim*p.peak)+' kW)';WIN=p.tou?[14,22]:[0,24];
+function render(){const p=params();if(!document.body.classList.contains('setup')){reqFc(p);reqOpt(p);reqStress(p)}$('o1').textContent=p.peak+' kW';$('o2').textContent=p.kwp+' kWp';$('o3').textContent=Math.round(p.cloud*100)+'%';$('o4').textContent=p.cap+' kWh';$('o5').textContent=Math.round(p.flex*100)+'%';$('o6').textContent=Math.round(p.lim*100)+'% ('+Math.round(p.lim*p.peak)+' kW)';WIN=p.tou?[14,22]:[0,24];
 const R={};S.forEach(s=>R[s.k]=sim(s,p));const b=R.base;const om=OPT?MODES.filter(m=>OPT[m.k]):[];om.forEach(m=>R[m.k]=OPT[m.k]);const rows=om.length?[S[0],...om.map(m=>({k:m.k,n:m.n}))]:[S[0]],cur=rows.some(x=>x.k==sel)?sel:(om.length?'cost':'base');
 $('tabs').innerHTML=rows.map(s=>`<button aria-pressed="${s.k==cur}" data-k="${s.k}">${s.n}</button>`).join('');
 $('tbl').innerHTML=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Grid share</th><th>Billed peak, kW</th><th>CO₂, kg</th><th>CO₂ vs baseline</th></tr>`+rows.map(s=>{const r=R[s.k],sv=(1-r.cost/b.cost)*100;
@@ -275,9 +290,32 @@ if(e.target.id=='preset'){$('apu').checked=true;$('volt').value='MV';$('struct')
 
 const btn='display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:6px;color:inherit;text-decoration:none';
 function showAuth(u){$('auth').innerHTML=u?`<span>Signed in as ${String(u.userDetails).replace(/</g,'&lt;')}</span><a style="${btn}" href="/.auth/logout?post_logout_redirect_uri=/">Sign out</a>`:`<a style="${btn}" href="/.auth/login/github?post_login_redirect_uri=/">Sign in with GitHub</a><a style="${btn}" href="/.auth/login/aad?post_login_redirect_uri=/">Sign in with Microsoft</a><span class="note" style="margin:0">Sign-in is only needed to view the audit log.</span>`}
-fetch('/.auth/me').then(r=>r.json()).then(j=>showAuth(j.clientPrincipal)).catch(()=>{$('auth').textContent=''});
+fetch('/.auth/me').then(r=>r.json()).then(j=>{ME=j.clientPrincipal;showAuth(ME);onAuth()}).catch(()=>{$('auth').textContent=''});
 async function loadAudit(){const o=$('auditOut');o.textContent='Loading...';try{const r=await fetch('/api/audit');if(r.status===401){o.textContent='Sign in to view the audit log.';return}if(!r.ok)throw 0;const j=await r.json();
 if(!j.enabled){o.textContent='Audit storage is not connected yet (app setting AUDIT_STORAGE_CONNECTION).';return}
 o.innerHTML=j.items.length?'<table style="font-size:12px">'+j.items.map(i=>`<tr><td>${String(i.time).slice(11,19)}</td><td>${i.route}</td><td>${i.status}</td><td>${String(i.summary||'').replace(/</g,'&lt;')}</td></tr>`).join('')+'</table>':'No calls logged yet.'}catch(e){o.textContent='Audit log unavailable.'}}
+let ME=null;
+const SNAP_N=['volt','struct','prof','peak','lim','kwp','cloud','bat','flex','afa','ef','billKwh','billMd','capex','life'],SNAP_B=['hasBat','hasFlex','apu'],esc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function snap(){const o={};SNAP_N.forEach(k=>{const v=$(k).value;if(v!==''&&v!=null)o[k]=isNaN(+v)?v:+v});SNAP_B.forEach(k=>o[k]=!!$(k).checked);if(o.prof=='meter'&&PROF.meter)o.meter=PROF.meter.map(v=>Math.round(v*100)/100);return o}
+function applySnap(o){if(o.meter){PROF.meter=o.meter.slice();if(![...$('prof').options].some(x=>x.value=='meter'))$('prof').add(new Option('Uploaded meter data','meter'))}else if(o.prof=='meter')o.prof='campus';
+SNAP_N.forEach(k=>{if(o[k]!==undefined)$(k).value=o[k]});SNAP_B.forEach(k=>{if(o[k]!==undefined)$(k).checked=!!o[k]});$('useFc').checked=false;applyTariff();render()}
+async function pf(m,q,body){const r=await fetch('/api/profile'+(q||''),{method:m,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});let j={};try{j=await r.json()}catch(_){}if(!r.ok)throw new Error(j.error||('Error '+r.status));return j}
+function enterPlan(){document.body.classList.remove('setup');$('welcome').style.display='none';render()}
+function showSites(l){$('siteSel').innerHTML=l.map(s=>`<option value="${esc(s.name)}">${esc(s.name)} (${esc(s.updated)})</option>`).join('');
+$('welcomeSites').innerHTML=l.length?'<p class="note">Your saved facilities:</p><div class="tabs">'+l.map(s=>`<button data-site="${esc(s.name)}">Open ${esc(s.name)}</button>`).join('')+'</div>':''}
+async function refreshSites(){try{showSites((await pf('GET')).sites)}catch(e){$('siteOut').textContent='Saved facilities unavailable: '+e.message}}
+function onAuth(){const on=!!ME;$('siteTools').style.display=on?'':'none';$('siteOut').textContent=on?'Signed in. Save this setup under a name, or load one you saved before.':'Sign in (top of the page) to save your facility and reload it next time. Your saved data is private to your account.';if(on)refreshSites()}
+async function openSite(n){try{applySnap((await pf('GET','?site='+encodeURIComponent(n))).data);enterPlan()}catch(e){$('siteOut').textContent=e.message}}
+document.addEventListener('click',async e=>{const t=e.target,id=t.id,sel=$('siteSel').value;
+if(t.dataset&&t.dataset.site)return openSite(t.dataset.site);
+if(t.dataset&&t.dataset.ex){$('ex').value=t.dataset.ex;$('ex').dispatchEvent(new Event('change',{bubbles:true}));return enterPlan()}
+try{if(id=='startOwn')$('welcome').style.display='none';
+else if(id=='seePlan')enterPlan();
+else if(id=='toStart'){document.body.classList.add('setup');$('welcome').style.display=''}
+else if(id=='siteSave'){const n=$('siteName').value.trim()||sel;showSites((await pf('PUT','',{name:n,data:snap()})).sites);$('siteOut').textContent='Saved "'+n+'".'}
+else if(id=='siteLoad'&&sel)openSite(sel);
+else if(id=='siteDel'&&sel&&confirm('Delete this saved facility?'))showSites((await pf('DELETE','?site='+encodeURIComponent(sel))).sites);
+else if(id=='siteWipe'&&confirm('Delete ALL your saved data?')){await pf('DELETE','?all=1');showSites([]);$('siteOut').textContent='All your saved data was deleted.'}}
+catch(err){$('siteOut').textContent=err.message}});
 applyTariff();render();
 </script></body></html>
