@@ -1,321 +1,172 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Facility energy planner (prototype v2)</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Facility Energy Planner</title>
 <style>
-:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
---bg:#eef3f6;--panel:#fff;--ink:#12303f;--mute:#5b7280;--line:#d3dee4;--sun:#f2a900;--bat:#1f8a8a;--grid:#b5483a;--shift:#b24fc9;--accent:#12303f}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1b22;--panel:#15262f;--ink:#e4eef2;--mute:#8ea4af;--line:#2a3f4a;--accent:#e4eef2}}
-:root[data-theme="dark"]{--bg:#0e1b22;--panel:#15262f;--ink:#e4eef2;--mute:#8ea4af;--line:#2a3f4a;--accent:#e4eef2}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}*,*:before,*:after{box-sizing:inherit}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 'IBM Plex Sans',system-ui,sans-serif}
-header{padding:20px 20px 4px;max-width:1100px;margin:auto}
-h1{font-size:26px;margin:0 0 4px;font-weight:600;letter-spacing:-.01em}
-header p{margin:0;color:var(--mute);max-width:72ch}
-main{display:grid;grid-template-columns:300px 1fr;gap:16px;max-width:1100px;margin:auto;padding:16px 20px 32px}
-@media(max-width:820px){main{grid-template-columns:1fr}}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px}
-.ctl label{display:flex;justify-content:space-between;font-weight:500;margin-top:12px}
-.ctl label:first-of-type{margin-top:0}.ctl output{color:var(--mute);font-weight:400}
-input[type=range]{width:100%;accent-color:var(--sun)}
-select,.assump input{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);width:100%}
-h2{font-size:15px;margin:0 0 8px;font-weight:600}
-.assump{display:grid;grid-template-columns:1fr 84px;gap:6px 8px;align-items:center;font-size:13px;margin-top:8px}
-.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-button{font:inherit;padding:6px 10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;cursor:pointer}
-.tabs button[aria-pressed=true]{background:var(--accent);color:var(--panel);border-color:var(--accent)}
-button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
-svg{width:100%;height:auto;display:block}
-.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--mute);margin-top:6px}
-.legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px}
-.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
-th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left}
-th{font-weight:500;color:var(--mute)}tr.sel td{background:color-mix(in srgb,var(--sun) 14%,transparent)}
-.good{color:#1c7c4f;font-weight:600}@media(prefers-color-scheme:dark){.good{color:#6fd3a0}}
-.note{font-size:13px;color:var(--mute);margin:10px 0 0}.stack{display:grid;gap:16px}
-.ctl label.chk{justify-content:flex-start;gap:8px;font-weight:400;margin-top:6px}.chk.off{color:var(--mute)}
-.card{font-size:13px;background:var(--bg);border-radius:6px;padding:8px 10px;margin-top:10px}
-body.setup main>div.stack{display:none}body.setup main{grid-template-columns:minmax(0,560px)}
-#seePlan{display:none}body.setup #seePlan{display:block}body.setup #toStart{display:none}
-#welcome{max-width:1060px;width:calc(100% - 40px);margin:16px auto 0}button.pri{background:var(--accent);color:var(--panel);border-color:var(--accent)}
-</style></head><body class="setup">
-<header><h1>Facility energy planner</h1>
-<p>Pick the customer's supply voltage and tariff, set the facility size, then compare the baseline with three optimiser strategies for one day. Load profiles are synthetic or from a case study. Check every rate against the customer's own TNB bill.</p><div id="auth" style="margin-top:10px;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"></div></header>
-<section class="panel" id="welcome"><h2>Start here</h2>
-<p class="note" style="margin-top:0">Set up a facility in a few steps: tariff, facility size, assets, and optional meter data. Your plan appears when you press "See my plan". Signing in lets you save facilities privately and reload them next time.</p>
-<div class="tabs"><button class="pri" id="startOwn">Enter my own facility</button><button data-ex="lv">Try the LV example</button><button data-ex="mv">Try the MV example</button><button data-ex="hv">Try the HV example</button></div>
-<div id="welcomeSites"></div></section>
-<main>
-<aside class="stack">
-<section class="panel ctl" id="siteBox"><h2>My saved facilities</h2>
-<div id="siteOut" class="note" style="margin-top:0">Sign in (top of the page) to save your facility and reload it next time. Your saved data is private to your account.</div>
-<div id="siteTools" style="display:none"><select id="siteSel"></select>
-<div style="display:flex;gap:6px;margin-top:6px"><button id="siteLoad" style="flex:1">Load</button><button id="siteDel" style="flex:1">Delete</button></div>
-<input id="siteName" placeholder="Name this facility" maxlength="40" style="width:100%;margin-top:8px;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)">
-<button id="siteSave" style="margin-top:6px;width:100%">Save current settings</button>
-<button id="siteWipe" style="margin-top:6px;width:100%">Delete all my saved data</button>
-<p class="note">Stored under your account only and encrypted at rest by Azure Storage. Saved: your settings and a 24-hour typical-day profile. Never saved: the raw meter file. Up to 5 facilities.</p></div></section>
-<section class="panel ctl"><h2>Customer tariff (TNB non-domestic)</h2>
-<label for="volt">Supply voltage</label><select id="volt"><option value="LV">Low voltage (LV)</option><option value="MV" selected>Medium voltage (MV)</option><option value="HV">High voltage (HV)</option></select>
-<label for="struct">Tariff type</label><select id="struct"><option value="G">General (flat energy rate)</option><option value="T" selected>Time-of-Use (peak / off-peak)</option></select>
-<div class="card" id="tcard"></div>
-<p class="note">The tariff follows the supply voltage on the bill, not the size alone. Small shops and offices are usually LV, factories, malls and campuses MV, very large sites HV.</p></section>
-<section class="panel ctl"><h2>Facility</h2>
-<label for="ex">Example customer</label><select id="ex"><option value="">Choose an example...</option><option value="lv">LV: retail or office building</option><option value="mv">MV: two-shift factory</option><option value="hv">HV: continuous process plant</option></select>
-<p class="note" id="exnote" style="margin-top:6px">Examples are illustrative, with assumed sizes. Replace them with the customer's own data.</p>
-<label for="prof">Load shape</label><select id="prof"><option value="campus">Campus / office (APU case study)</option><option value="retail">Retail or office building (LV example)</option><option value="factory">Factory, two-shift (MV example)</option><option value="process">Continuous process plant (HV example)</option></select>
-<label>Peak demand <output id="o1"></output></label><input id="peak" type="range" min="50" max="20000" step="10" value="1050">
-<label>Grid import limit, any hour <output id="o6"></output></label><input id="lim" type="range" min="80" max="150" step="5" value="100">
-<label>Solar capacity <output id="o2"></output></label><input id="kwp" type="range" min="0" max="8000" step="10" value="300">
-<label>Cloud cover <output id="o3"></output></label><input id="cloud" type="range" min="0" max="80" step="5" value="0">
-<label>Battery size <output id="o4"></output></label><input id="bat" type="range" min="0" max="10000" step="50" value="500">
-<label>Shiftable share of daytime load <output id="o5"></output></label><input id="flex" type="range" min="0" max="30" step="5" value="10">
-<p class="note">Shiftable load only moves inside 09:00 to 17:00 so operations are not disturbed.</p>
-<label class="chk"><input type="checkbox" id="apu"> Use the APU case-study solar shape</label>
-<p class="note" style="margin-top:4px">Off = typical tropical day: about 5.0 kWh per kWp when clear and about 4.0 at 30% cloud (my assumption, check PVGIS for the real site).</p>
-<label class="chk"><input type="checkbox" id="useFc"> Use tomorrow's forecast (solar and demand)</label>
-<p class="note" id="fcstat"></p>
-<h2 style="margin-top:14px">Customer assets</h2>
-<label class="chk"><input type="checkbox" id="hasBat" checked> Battery storage</label>
-<label class="chk"><input type="checkbox" id="hasFlex" checked> Shiftable equipment</label>
-<label class="chk off"><input type="checkbox" disabled> Diesel generator (planned)</label>
-<label class="chk off"><input type="checkbox" disabled> Gas / CHP (planned)</label>
-<button id="preset" style="margin-top:10px;width:100%">Load APU case-study settings</button>
-<button id="preset2" style="margin-top:8px;width:100%">Load solar-rich example (250 kW, 300 kWp, 200 kWh battery)</button></section>
-<section class="panel ctl"><h2>Your data (optional)</h2>
-<label for="meterFile">Meter data, CSV: timestamp,kw</label><input type="file" id="meterFile" accept=".csv,.txt">
-<label for="billKwh">Bill: monthly kWh</label><input type="number" id="billKwh" min="0" placeholder="e.g. 450000" style="width:100%">
-<label for="billMd">Bill: maximum demand, kW</label><input type="number" id="billMd" min="0" placeholder="e.g. 1250" style="width:100%">
-<button id="scaleBill" style="margin-top:8px;width:100%">Scale profile to bill kWh</button>
-<p class="note" id="meterNote">Example row: 2026-10-12 14:30,830. The file is read in your browser and is not uploaded or stored. When you plan, the hourly profile is sent to our API to compute the schedule, and the audit log keeps the results for 30 days.</p></section>
-<section class="panel"><h2>Rates (TNB RP4 schedule)</h2><div class="assump">
-<span>Peak energy (14:00-22:00), sen/kWh</span><input id="ep" type="number" step="0.01" readonly style="opacity:.75;cursor:default">
-<span>Off-peak energy, sen/kWh</span><input id="eo" type="number" step="0.01" readonly style="opacity:.75;cursor:default">
-<span>Max demand, RM/kW/month</span><input id="md" type="number" step="0.01" readonly style="opacity:.75;cursor:default">
-<span>Capacity + network, sen/kWh</span><input id="ad" type="number" step="0.01" readonly style="opacity:.75;cursor:default">
-<span>AFA, sen/kWh</span><input id="afa" type="number" step="0.01" value="0">
-<span>Grid emissions, kg CO₂/kWh</span><input id="ef" type="number" step="0.01" value="0.60"></div>
-<p class="note">Rates are the RP4 non-domestic figures from published summaries. Verify on mytnb.com.my. AFA changes monthly, so enter the current value. Retail charge, the 1.6% KWTBB levy and tax are not modelled. Emission factor is a placeholder.</p></section>
-<section class="panel"><h2>Audit log</h2><p class="note" style="margin-top:0">Every optimise and forecast call is recorded with who asked, what went in and what came out.</p>
-<button id="auditBtn" style="margin-top:10px;width:100%">Show latest calls</button><div class="note" id="auditOut"></div></section>
-<button id="seePlan" class="pri" style="width:100%;font-size:16px;padding:10px">See my plan</button><button id="toStart" style="width:100%">Back to start</button></aside>
-<div class="stack">
-<section class="panel"><h2>Where the power comes from, hour by hour</h2>
-<div class="tabs" id="tabs" role="group" aria-label="Strategy"></div>
-<svg id="chart" viewBox="0 0 760 290" role="img" aria-label="Hourly supply split by source"></svg>
-<div class="legend"><span><i style="background:var(--sun)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border:1px dashed var(--sun)"></i>Unused solar</span><span><i style="background:repeating-linear-gradient(45deg,var(--shift) 0 2px,transparent 2px 5px);border:1px solid var(--shift)"></i>Work moved into this hour</span><span><i style="background:none;border:1px dashed var(--shift)"></i>Work moved out of this hour</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span></div></section>
-<section class="panel"><h2>Strategy comparison, one weekday</h2><div class="scroll"><table id="tbl"></table></div>
-<p class="note" id="ann"></p><p class="note" id="alt"></p><p class="note" id="carbon"></p><p class="note" id="moved"></p><p class="note" id="ostat"></p>
-<p class="note">The baseline is solar only. The three optimiser rows come from a linear program on an Azure Function. Cost-saving minimises the bill. Balanced moves half as much equipment and adds a carbon price (RM 0.10/kg) and a small battery wear cost. Production-first moves no equipment at all. Those weights are placeholders to tune with the customer.</p></section>
-<section class="panel"><h2>Stress test: what if the forecast is wrong?</h2>
-<label for="mg" style="font-size:13px">Planning margin <select id="mg" style="width:auto"><option value="5">5%</option><option value="10" selected>10%</option><option value="15">15%</option></select></label>
-<div class="scroll"><table id="stbl"></table></div><p class="note" id="stnote"></p></section>
-<section class="panel"><h2>Battery size sweep and payback</h2>
-<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-size:13px">
-<label>Battery cost, RM/kWh <input id="capex" type="number" value="1500" min="0" step="50" style="width:90px"></label>
-<label>Battery life, years <input id="life" type="number" value="10" min="1" max="25" style="width:60px"></label>
-<button id="sweepBtn">Run sweep</button></div>
-<div class="scroll"><table id="swtbl"></table></div><p class="note" id="swnote">Tries six battery sizes with the same tariff, solar and load, using the optimiser. Battery cost is a placeholder, so replace it with a quote.</p></section>
-<section class="panel"><h2>Recommended actions</h2><ul id="recs" style="margin:0;padding-left:18px"></ul>
-<p class="note">Generated from the selected optimiser schedule. Solar and demand use built-in profiles unless you tick tomorrow's forecast. Plain-language AI explanations come later.</p></section>
-<section class="panel"><h2>What the optimiser decides</h2>
-<p class="note" style="margin-top:0">For every hour of the day, the optimiser chooses all of these together, so it can plan the battery and the equipment around the highest billed hour.</p>
-<ul style="margin:8px 0 0;padding-left:18px;font-size:14px">
-<li><b>Battery:</b> when to charge, when to discharge, and how full it is. It starts the day half full and must end at least half full. Round-trip efficiency is 90%.</li>
-<li><b>Shiftable equipment:</b> how much of the flexible load runs in each hour, only between 09:00 and 17:00, with total energy unchanged.</li>
-<li><b>Grid:</b> how much to import each hour, within the grid limit, with the highest billed hour as the maximum demand.</li>
-<li><b>Solar:</b> all of it is used on site first. No export is assumed.</li>
-</ul>
-<p class="note"><b>Goal:</b> lowest bill (hourly energy charge plus maximum demand charge). Balanced also adds a carbon price and a battery wear cost. Production-first moves no equipment.</p>
-<p class="note">Rates follow the TNB RP4 schedule (1 Jul 2025 to 31 Dec 2027) and are fixed here. AFA changes every month, so it stays editable. The monthly retail charge is the same under every strategy, so it does not change the savings and is left out.</p>
-<p class="note"><b>Not included yet:</b> diesel generator or gas, individual machines with start and stop rules, real meter history for the demand forecast (it is trained on synthetic history for now), export income, forecast uncertainty, and the month-long demand record.</p></section>
-</div></main>
+:root{--bg:#f4f6f8;--card:#fff;--ink:#1c2430;--mut:#667085;--line:#e1e5ea;--acc:#0f766e;--load:#667085;--pv:#f59e0b;--grid:#2563eb;--good:#15803d;--bad:#b42318}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1419;--card:#182029;--ink:#e6eaf0;--mut:#93a0b1;--line:#2a3441;--acc:#2dd4bf;--load:#a3b0c2;--pv:#fbbf24;--grid:#60a5fa;--good:#4ade80;--bad:#f87171}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:16px}h1{font-size:22px;margin:0}h2{font-size:16px;margin:0 0 8px}
+.sub{color:var(--mut);font-size:13px;margin:2px 0 14px}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+button,input,select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+button{cursor:pointer}button:hover{border-color:var(--acc)}button.on{background:var(--acc);color:#fff;border-color:var(--acc)}button:disabled{opacity:.4;cursor:default}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}.sp{flex:1}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--line)}.tag.f{background:var(--grid);color:#fff}.tag.t{background:var(--acc);color:#fff}
+.note{color:var(--mut);font-size:13px}.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.k{border:1px solid var(--line);border-radius:8px;padding:10px}.k b{display:block;font-size:20px}.k span{font-size:12px;color:var(--mut)}.good{color:var(--good)}
+svg{width:100%;height:auto}.ax{font-size:11px;fill:var(--mut)}.lg{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin-top:4px}.lg i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:5px}
+ul{margin:6px 0 0;padding-left:20px}.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.dh{font-size:12px;color:var(--mut);text-align:center}
+.c{min-height:74px;text-align:left;padding:6px;display:flex;flex-direction:column;gap:2px}.c.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}.c.na{opacity:.35;cursor:default}.c small{color:var(--mut)}.c b{font-size:14px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.form label{font-size:12px;color:var(--mut);display:block}.form input,.form select{width:100%}
+summary{cursor:pointer;font-weight:600}.err{color:var(--bad)}@media(max-width:600px){.c{min-height:60px;font-size:12px}}
+</style></head><body><main>
+<h1>Facility Energy Planner</h1>
+<p class="sub">Pick a day, week or month. See what the plan saves compared with doing nothing.</p>
+
+<details class="card" id="setup"><summary id="fsum">My facility</summary>
+<p class="note">One-time setup, saved in this browser. Use the numbers from your latest TNB bill.</p>
+<div class="form">
+<div><label>Facility name</label><input id="f_name"></div>
+<div><label>Location</label><select id="f_loc"><option value="3.0553,101.7003">Kuala Lumpur (APU)</option><option value="5.41,100.33">Penang</option></select></div>
+<div><label>Type of load</label><select id="f_prof"><option value="campus">Campus / office</option><option value="factory">Factory</option></select></div>
+<div><label>Peak demand, kW (bill: maximum demand)</label><input id="f_peak" type="number" min="1"></div>
+<div><label>Solar size, kWp</label><input id="f_kwp" type="number" min="0"></div>
+<div><label>Battery, kWh (0 = none)</label><input id="f_bat" type="number" min="0"></div>
+<div><label>Shiftable daytime load, % (0 to 30)</label><input id="f_flex" type="number" min="0" max="30"></div>
+<div><label>Grid import limit, kW (blank = none)</label><input id="f_lim" type="number" min="0"></div>
+<div><label>Peak rate, RM/kWh</label><input id="f_ep" type="number" step="0.0001"></div>
+<div><label>Off-peak rate, RM/kWh</label><input id="f_eo" type="number" step="0.0001"></div>
+<div><label>Max demand charge, RM/kW/month</label><input id="f_md" type="number" step="0.01"></div>
+</div>
+<p class="note">Rates are filled with the MV time-of-use example (peak 14:00 to 22:00 on weekdays). Replace them with your own bill.</p>
+<button class="on" id="fsave">Save facility</button> <span id="fmsg" class="note"></span></details>
+
+<div class="card">
+<div class="bar">
+<button id="yes">Yesterday</button><button id="tod">Today</button><button id="tom">Tomorrow</button><span class="sp"></span>
+<button id="vday">Day</button><button id="vweek">Week</button><button id="vmonth">Month</button></div>
+<div class="bar"><button id="prev" aria-label="Previous">&#9664;</button><input type="date" id="dt"><button id="next" aria-label="Next">&#9654;</button>
+<b id="ttl"></b> <span id="badge"></span></div>
+<div class="note" id="info"></div></div>
+
+<div id="out"><div class="card note">Loading&hellip;</div></div>
+</main>
 <script>
-const $=id=>document.getElementById(id),N=[...Array(24).keys()],isPk=h=>h>=14&&h<22;
-const SH=[0,0,0,0,0,0,0,0,20,50,80,95,100,90,80,60,40,10,0,0,0,0,0,0].map(v=>v/100);
-let FC=null,fcKey='',fcTimer;
-const SY=[0,0,0,0,0,0,.02,.10,.27,.45,.60,.69,.72,.69,.60,.45,.29,.13,.03,0,0,0,0,0];
-const RET=[.30,.30,.30,.30,.30,.30,.32,.40,.62,.80,.88,.92,.95,.95,.97,1,.98,.95,.92,.90,.85,.70,.45,.32];
-const PRC=[.88,.87,.87,.87,.87,.88,.90,.93,.97,.99,1,1,.98,1,1,.99,.98,.96,.94,.92,.91,.90,.89,.88];
-const CAMP=[350,345,345,345,345,345,380,450,700,850,880,900,780,970,1050,1010,880,750,600,500,420,380,360,355];
-const FAC=[.4,.4,.4,.4,.4,.4,.6,.6,1,1,1,1,.9,1,1,1,1,1,.7,.7,.7,.7,.45,.45];
-const EX={
-lv:{volt:'LV',struct:'T',prof:'retail',peak:180,kwp:120,cloud:30,bat:0,flex:20,lim:100,hasBat:false,hasFlex:true,note:'LV retail or office building: 180 kW peak, 120 kWp rooftop solar (about 17% of daily energy), LV ToU tariff. LV has no maximum demand charge, so a battery only earns the small peak and off-peak price gap. Battery is switched off here because it does not pay.'},
-mv:{volt:'MV',struct:'T',prof:'factory',peak:2000,kwp:1000,cloud:30,bat:1000,flex:10,lim:100,hasBat:true,hasFlex:true,note:'MV two-shift factory: 2,000 kW peak, 1,000 kWp rooftop solar (about 12% of daily energy), 1,000 kWh battery, 10% shiftable load, MV ToU tariff. Here the maximum demand charge (RM97.06/kW) is large, so peak shaving pays.'},
-hv:{volt:'HV',struct:'T',prof:'process',peak:12000,kwp:5000,cloud:30,bat:5000,flex:5,lim:100,hasBat:true,hasFlex:true,note:'HV continuous process plant: 12 MW peak, 5 MWp solar (about 7% of daily energy), 5 MWh battery, 5% shiftable load, HV ToU tariff. Load is flat 24 hours and the demand charge per kW is lower (RM44.82), so expect small percentage savings.'}};
-const TF={LVG:{ep:27.03,eo:27.03,md:0,ad:23.65,t:'LV General: 27.03 sen/kWh energy, plus capacity 8.83 and network 14.82 sen/kWh. No maximum demand charge. Retail RM20/month.'},
-LVT:{ep:28.52,eo:24.43,md:0,ad:23.65,t:'LV ToU: peak 28.52, off-peak 24.43 sen/kWh, plus capacity and network 23.65 sen/kWh. No maximum demand charge. Retail RM20/month.'},
-MVG:{ep:29.83,eo:29.83,md:89.27,ad:0,t:'MV General: 29.83 sen/kWh. Maximum demand RM89.27/kW/month (capacity 29.43 + network 59.84), billed on all-day peak demand. Retail RM200/month.'},
-MVT:{ep:31.32,eo:27.23,md:97.06,ad:0,t:'MV ToU: peak 31.32, off-peak 27.23 sen/kWh. Maximum demand RM97.06/kW/month (30.19 + 66.87), billed on peak-period demand only. Retail RM200/month.'},
-HVG:{ep:43.03,eo:43.03,md:31.21,ad:0,t:'HV General: 43.03 sen/kWh. Maximum demand RM31.21/kW/month (16.68 + 14.53). Retail RM250/month.'},
-HVT:{ep:44.52,eo:40.43,md:44.82,ad:0,t:'HV ToU: peak 44.52, off-peak 40.43 sen/kWh. Maximum demand RM44.82/kW/month (21.76 + 23.06), peak-period demand only. Retail RM250/month.'}};
-const S=[{k:'base',n:'Baseline',shift:0,batt:0},{k:'shift',n:'Shift loads',shift:1,batt:0},{k:'batt',n:'Battery',shift:0,batt:1},{k:'both',n:'Shift + battery',shift:1,batt:1}];
-let WIN=[14,22],sel='bal',OPT=null,optKey='',optTimer=null,optMsg='';
-const MODES=[{k:'cost',n:'Optimiser: Cost-saving',fx:1,cp:0,wr:0},{k:'bal',n:'Optimiser: Balanced',fx:.5,cp:.1,wr:.02},{k:'prod',n:'Optimiser: Production-first',fx:0,cp:0,wr:0}];
-const PROF={campus:CAMP,retail:RET,factory:FAC,process:PRC};
-function applyTariff(){const t=TF[$('volt').value+$('struct').value];['ep','eo','md','ad'].forEach(k=>$(k).value=t[k]);$('tcard').textContent=t.t}
-function params(){const g=id=>+$(id).value;return{prof:$('prof').value,apu:$('apu').checked,tou:$('struct').value=='T',peak:g('peak'),kwp:g('kwp'),cloud:g('cloud')/100,lim:g('lim')/100,cap:$('hasBat').checked?g('bat'):0,flex:$('hasFlex').checked?g('flex')/100:0,
-ep:g('ep'),eo:g('eo'),md:g('md'),ad:g('ad'),afa:g('afa'),ef:g('ef'),fc:FC?FC.stamp:0}}
-function sim(st,p){const L0=PROF[p.prof],m=Math.max(...L0),L=FC?FC.load.slice():L0.map(v=>v/m*p.peak),sol=FC?FC.pv.slice():N.map(h=>p.kwp*(p.apu?SH:SY)[h]*(1-.7*p.cloud));
-const win=[9,10,11,12,13,14,15,16],fixed=L.slice(),flex=Array(24).fill(0),fe=p.flex*win.reduce((a,h)=>a+L[h],0);
-win.forEach(h=>{fixed[h]=L[h]*(1-p.flex);flex[h]=L[h]*p.flex});
-if(st.shift&&fe>0){win.forEach(h=>flex[h]=0);const cp=1.5*fe/win.length;let rem=fe;
-[...win].sort((a,b)=>(fixed[a]-sol[a])-(fixed[b]-sol[b])).forEach(h=>{const a=Math.min(cp,rem);flex[h]=a;rem-=a})}
-const ld=fixed.map((v,h)=>v+flex[h]),cap=st.batt?p.cap:0,P=cap/2,e=Math.sqrt(.9),mdOn=p.md>0,inW=h=>p.tou?isPk(h):true;
-function run(T){let soc=cap/2,ok=true;const d=[],b=[],g=[];
-N.forEach(h=>{const net=ld[h]-sol[h];let dr=Math.min(sol[h],ld[h]),bt=0,gr=0;
-if(net<0){const c=Math.min(-net,P,(cap-soc)/e);soc+=c*e;dr+=c}
-else if(cap>0){
-if(mdOn){if(inW(h)){if(net>T){const nd=net-T,x=Math.min(nd,P,soc*e);soc-=x/e;bt=x;if(x<nd-1e-9)ok=false;gr=net-x}else{const c=Math.min(P,(cap-soc)/e,T-net);soc+=c*e;gr=net+c}}
-else{const c=Math.min(P,(cap-soc)/e);soc+=c*e;gr=net+c}}
-else{const x=(!p.tou||isPk(h))?Math.min(net,P,soc*e):0;soc-=x/e;bt=x;gr=net-x}}
-else gr=net;
-d.push(dr);b.push(bt);g.push(gr)});
-return{d,b,g,ok:ok&&soc>=cap/2-1e-6}}
-let r;if(cap>0&&mdOn){let lo=0,hi=Math.max(0,...ld.map((v,h)=>v-sol[h]));for(let i=0;i<40;i++){const mid=(lo+hi)/2;run(mid).ok?hi=mid:lo=mid}r=run(hi)}else r=run(0);
-const rate=h=>(isPk(h)?p.ep:p.eo)+p.ad+p.afa,mdkw=Math.max(...r.g.filter((_,h)=>inW(h)));
-r.cost=r.g.reduce((a,g,h)=>a+g*rate(h)/100,0)+mdkw*p.md/30;r.peak=mdkw;r.sol=sol;r.ld=ld;
-r.util=r.d.reduce((a,b)=>a+b,0)/(sol.reduce((a,b)=>a+b,0)||1)*100;r.co2=r.g.reduce((a,b)=>a+b,0)*p.ef;return r}
-function draw(r,b0){const W=760,H=290,L=46,B=28,T=10,bw=(W-L-8)/24,mx=Math.max(...r.ld,...(b0?b0.ld:[]),...r.sol,...r.g.map((g,h)=>g+r.d[h]*0+r.b[h]))*1.1||1,y=v=>H-B-(v/mx)*(H-B-T);let s='<defs><pattern id="mv" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--shift)" opacity=".30"/><rect width="2.5" height="6" fill="var(--shift)"/></pattern></defs>';
-for(let i=0;i<=4;i++){const v=mx*i/4;s+=`<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--mute)">${Math.round(v)}</text>`}
-s+=`<rect x="${L+WIN[0]*bw}" y="${T}" width="${(WIN[1]-WIN[0])*bw}" height="${H-B-T}" fill="var(--grid)" opacity=".15"/>`;
-s+=`<rect x="${L+WIN[0]*bw}" y="${H-B+3}" width="${(WIN[1]-WIN[0])*bw}" height="3" fill="var(--grid)" opacity=".5"/>`;
-N.forEach(h=>{const x=L+h*bw+2,w=bw-4;let base=0;[[r.g[h],'--grid'],[r.b[h],'--bat'],[r.d[h],'--sun']].forEach(([v,c])=>{if(v>0.5){s+=`<rect x="${x}" y="${y(base+v)}" width="${w}" height="${y(base)-y(base+v)}" fill="var(${c})"/>`;base+=v}});
-const un=r.sol[h]-r.d[h];if(un>0.5)s+=`<rect x="${x}" y="${y(base+un)}" width="${w}" height="${y(base)-y(base+un)}" fill="none" stroke="var(--sun)" stroke-dasharray="3 2"/>`;
-const dl=b0?r.ld[h]-b0.ld[h]:0;
-if(dl>0.5){const m=Math.min(dl,base);s+=`<rect x="${x}" y="${y(base)}" width="${w}" height="${y(base-m)-y(base)}" fill="url(#mv)" stroke="var(--shift)"/>`}
-if(dl<-0.5){const t0=base+Math.max(un,0);s+=`<rect x="${x}" y="${y(t0-dl)}" width="${w}" height="${y(t0)-y(t0-dl)}" fill="none" stroke="var(--shift)" stroke-width="1.5" stroke-dasharray="3 2"/>`}
-if(h%3==0)s+=`<text x="${x+w/2}" y="${H-12}" text-anchor="middle" font-size="11" fill="var(--mute)">${String(h).padStart(2,'0')}</text>`});
-s+=`<line x1="${L+WIN[0]*bw}" x2="${L+WIN[1]*bw}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${L+WIN[1]*bw-4}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)">billed peak ${Math.round(r.peak)} kW</text>`;
-s+=`<text x="${L}" y="${H-1}" font-size="10" fill="var(--mute)">kW. Shaded hours = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;$('chart').innerHTML=s}
-function reqOpt(p){const key=JSON.stringify(p);if(key===optKey)return;optKey=key;OPT=null;optMsg='Optimiser: running...';clearTimeout(optTimer);
-optTimer=setTimeout(async()=>{try{const L0=PROF[p.prof],m=Math.max(...L0),L=FC?FC.load.slice():L0.map(v=>v/m*p.peak),sol=FC?FC.pv.slice():N.map(h=>p.kwp*(p.apu?SH:SY)[h]*(1-.7*p.cloud)),tot=a=>a.reduce((x,y)=>x+y,0),out={};
-await Promise.all(MODES.map(async md=>{const body={load:L,pv:sol,rates:N.map(h=>((isPk(h)?p.ep:p.eo)+p.ad+p.afa)/100),md_rate_day:p.md/30,md_hours:N.filter(h=>p.tou?isPk(h):true),batt_kwh:p.cap,grid_limit:p.lim*p.peak,flex_share:p.flex*md.fx,carbon_adder:md.cp*p.ef,wear:md.wr};
-const res=await fetch('/api/optimise',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!res.ok)throw res.status;const o=await res.json();
-out[md.k]={d:o.pv_used,b:o.dis,g:o.grid,ld:o.ld,sol,cost:o.cost,peak:o.peak,util:tot(o.pv_used)/(tot(sol)||1)*100,co2:tot(o.grid)*p.ef,ch:o.ch,fl:o.flex}}));
-if(key!==optKey)return;OPT=out;optMsg='';render()}
-catch(e){if(key===optKey){optMsg=e===401?'Sign in (top of the page) to run the optimiser. Only the baseline is shown until then.':'The optimiser service is not responding, so only the baseline is shown. Refresh in a minute; if this stays, the API is down.';render()}}},300)}
-function recs(r,b,p){const f=h=>String(h).padStart(2,'0')+':00',rg=(a,t)=>{const o=[];let s=null;for(let h=0;h<=24;h++){const on=h<24&&a[h]>t;if(on&&s===null)s=h;if(!on&&s!==null){o.push(f(s)+' to '+f(h));s=null}}return o.join(', ')},L=[];
-if(!r.ch)L.push('Select one of the three optimiser strategies to see its action plan.');
-else{const fl=rg(r.fl,1);L.push(fl?`Run flexible equipment between ${fl}. Production stays inside the allowed 09:00 to 17:00 window.`:'No equipment is moved. Operations keep their normal schedule.');
-if(p.cap>0){const c=rg(r.ch,1),d=rg(r.b,1);L.push((c?`Charge the battery ${c}. `:'')+(d?`Discharge it ${d} to cap the billed grid peak.`:'The battery is not needed in this plan.'))}else L.push('No battery in this plan.');
-L.push(`Hold billed grid demand to ${r.peak.toFixed(0)} kW (baseline ${b.peak.toFixed(0)} kW). Highest draw in any hour is ${Math.max(...r.g).toFixed(0)} kW, against a grid limit of ${Math.round(p.lim*p.peak)} kW.`);
-const su=rg(r.sol.map((s,h)=>s-r.ld[h]),0);L.push(su?`Solar surplus expected ${su}: store it or run flexible load then.`:'Solar never exceeds site load, so all of it is used on site and the grid covers the shortfall.')}
-$('recs').innerHTML=L.map(t=>`<li>${t}</li>`).join('')}
-function reqFc(p){if(!$('useFc').checked){if(FC){FC=null;fcKey=''}$('fcstat').textContent='';return}
-const key=[p.kwp,p.peak,p.prof].join('|');if(key===fcKey)return;fcKey=key;$('fcstat').textContent='Loading forecast...';clearTimeout(fcTimer);
-fcTimer=setTimeout(async()=>{try{const r=await fetch(`/api/forecast?kwp=${p.kwp}&peak=${p.peak}&prof=${p.prof}&day=1`);if(!r.ok)throw r.status;const o=await r.json();if(key!==fcKey)return;
-FC=o;FC.stamp=o.date+'|'+key;const m=o.metrics||{},sp=m.pv,ld=m.load;let t=`Forecast for ${o.date}. Solar: ${o.model.pv}. Demand: ${o.model.demand}. Cloud-cover slider is ignored.`;
-if(sp)t+=` Solar error ${sp.shown_mae_pct??sp.model_mae_pct}% of kWp vs ${sp.naive_mae_pct}% for yesterday's output.`;
-if(ld)t+=` Demand error ${ld.model_mae_pct}% of peak vs ${ld.naive_mae_pct}% for same-as-last-week${/SYNTHETIC/.test(o.model.data_note||'')?' (measured on SYNTHETIC history, not real accuracy)':''}.`;
-if(o.model.data_note)t+=' '+o.model.data_note;$('fcstat').textContent=t;render()}
-catch(e){if(key===fcKey){FC=null;$('fcstat').textContent=e===401?'Sign in (top of the page) to use the forecast.':'Forecast service unavailable, so the built-in profiles are used.';render()}}},300)}
-function render(){const p=params();if(!document.body.classList.contains('setup')){reqFc(p);reqOpt(p);reqStress(p)}$('o1').textContent=p.peak+' kW';$('o2').textContent=p.kwp+' kWp';$('o3').textContent=Math.round(p.cloud*100)+'%';$('o4').textContent=p.cap+' kWh';$('o5').textContent=Math.round(p.flex*100)+'%';$('o6').textContent=Math.round(p.lim*100)+'% ('+Math.round(p.lim*p.peak)+' kW)';WIN=p.tou?[14,22]:[0,24];
-const R={};S.forEach(s=>R[s.k]=sim(s,p));const b=R.base;const om=OPT?MODES.filter(m=>OPT[m.k]):[];om.forEach(m=>R[m.k]=OPT[m.k]);const rows=om.length?[S[0],...om.map(m=>({k:m.k,n:m.n}))]:[S[0]],cur=rows.some(x=>x.k==sel)?sel:(om.length?'cost':'base');
-$('tabs').innerHTML=rows.map(s=>`<button aria-pressed="${s.k==cur}" data-k="${s.k}">${s.n}</button>`).join('');
-$('tbl').innerHTML=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Grid share</th><th>Billed peak, kW</th><th>CO₂, kg</th><th>CO₂ vs baseline</th></tr>`+rows.map(s=>{const r=R[s.k],sv=(1-r.cost/b.cost)*100;
-return`<tr class="${s.k==cur?'sel':''}"><td>${s.n}</td><td>${r.cost.toFixed(2)}</td><td class="${sv>0.05?'good':''}">${s.k=='base'?'—':sv.toFixed(1)+'%'}</td><td>${r.util.toFixed(0)}%</td><td>${(r.g.reduce((x,y)=>x+y,0)/r.ld.reduce((x,y)=>x+y,0)*100).toFixed(0)}%</td><td>${r.peak.toFixed(0)}</td><td>${r.co2.toFixed(0)}</td><td style="${s.k!='base'&&r.co2>b.co2*1.0005?'color:#d9a441':''}" class="${s.k!='base'&&r.co2<b.co2*0.9995?'good':''}">${s.k=='base'||!b.co2?'—':((r.co2/b.co2-1)*100>=0?'+':'')+((r.co2/b.co2-1)*100).toFixed(1)+'%'}</td></tr>`}).join('');
-const ng=b.ld.reduce((x,y)=>x+y,0)*p.ef,nm=rows.find(x=>x.k==cur).n,cc=b.co2?(R[cur].co2/b.co2-1)*100:0;
-$('carbon').textContent=(ng>0?`Carbon: solar already cuts CO₂ by ${((1-b.co2/ng)*100).toFixed(0)}% versus buying everything from the grid (${Math.round(ng-b.co2)} kg avoided per weekday). `:'')+(cur=='base'?'':(Math.abs(cc)<0.05?`${nm} leaves CO₂ unchanged versus the baseline. `:cc<0?`${nm} cuts CO₂ by a further ${(-cc).toFixed(1)}% versus the baseline. `:`${nm} adds ${cc.toFixed(1)}% CO₂ versus the baseline: charging the battery from the grid loses about 10% of the energy, so here the saving is money, not carbon. `))+`Uses one flat grid factor (${p.ef} kg/kWh), so it cannot tell cleaner hours from dirtier ones.`;
-const a=(b.cost-R[cur].cost)*300;$('ann').textContent=cur=='base'?'Baseline: solar only, no battery, no load shifting.':`Saving versus baseline: about RM ${Math.round(a).toLocaleString()} a year if 300 weekdays looked like this one. Rough guide only, and battery purchase cost is not included.`;
-const v=$('volt').value,alt=TF[v+(p.tou?'G':'T')],q={...p,ep:alt.ep,eo:alt.eo,md:alt.md,ad:alt.ad,tou:!p.tou},c2=sim(S[0],q).cost;
-$('alt').textContent=`Tariff check (baseline, same load): ${p.tou?'ToU':'General'} RM ${b.cost.toFixed(2)} vs ${p.tou?'General':'ToU'} RM ${c2.toFixed(2)} per weekday. ${c2<b.cost-0.5?'The other tariff looks cheaper for this profile, so worth checking with TNB.':'The selected tariff is the cheaper one for this profile.'}`;
-$('ostat').textContent=optMsg||(p.cap||p.flex?`Optimiser is using: ${p.cap?'battery '+p.cap+' kWh':'no battery'}, ${p.flex?'shiftable load '+Math.round(p.flex*100)+'% of daytime load':'no shiftable load'}.`:'No battery or shiftable load ticked, so there is nothing to optimise yet. Tick an asset to see savings.');const mvIn=cur=='base'?0:R[cur].ld.reduce((a,v,h)=>a+Math.max(v-b.ld[h],0),0),pool=b.ld.slice(9,17).reduce((x,y)=>x+y,0)||1;
-$('moved').textContent=cur=='base'?'':(mvIn>0.5?`Work moved by this strategy: ${Math.round(mvIn)} kWh, ${(mvIn/pool*100).toFixed(0)}% of the 09:00 to 17:00 load. Striped purple = moved into that hour, dashed purple = moved out of it.`:(p.flex?'No equipment is moved in this strategy, so operations keep their normal schedule.':'No shiftable equipment is ticked, so nothing is moved.'));
-recs(R[cur],b,p);draw(R[cur],cur=='base'?null:b);drawStress(p)}
+const $=id=>document.getElementById(id),H=[...Array(24).keys()],p2=n=>String(n).padStart(2,'0');
+const DEF={name:'APU',loc:'3.0553,101.7003',prof:'campus',peak:1050,kwp:300,bat:500,flex:10,lim:'',ep:0.3132,eo:0.2723,md:97.06};
+const FIELDS=['name','loc','prof','peak','kwp','bat','flex','lim','ep','eo','md'];
+const iso=d=>d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate()),parse=s=>new Date(s+'T12:00:00');
+const addD=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return iso(d)},diff=(a,b)=>Math.round((parse(a)-parse(b))/864e5);
+const TODAY=iso(new Date()),MIN=addD(TODAY,-31),MAX=addD(TODAY,2),isWk=s=>{const g=parse(s).getDay();return g>0&&g<6};
+const esc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>'RM '+(Math.abs(n)>=100?Math.round(n).toLocaleString('en-MY'):n.toFixed(2));
+let saved=null;try{saved=JSON.parse(localStorage.getItem('facility'))}catch(e){}
+let F=Object.assign({},DEF,saved||{}),view='day',cur=TODAY,cache=new Map(),tok=0;
 
+async function api(url,opt){const r=await fetch(url,opt);let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw new Error(j.error||'Error '+r.status);return j}
 
-async function runSweep(){const p=params();$('swnote').textContent='Running the optimiser for six battery sizes...';
-try{const L0=PROF[p.prof],m=Math.max(...L0),L=FC?FC.load.slice():L0.map(v=>v/m*p.peak),sol=FC?FC.pv.slice():N.map(h=>p.kwp*(p.apu?SH:SY)[h]*(1-.7*p.cloud));
-const mk=cap=>({load:L,pv:sol,rates:N.map(h=>((isPk(h)?p.ep:p.eo)+p.ad+p.afa)/100),md_rate_day:p.md/30,md_hours:N.filter(h=>p.tou?isPk(h):true),batt_kwh:cap,grid_limit:p.lim*p.peak,flex_share:p.flex,carbon_adder:0,wear:0});
-const sizes=[...new Set([0,.25,.5,1,1.5,2].map(x=>Math.min(20000,Math.round(x*p.peak/10)*10)))];
-const res=await Promise.all(sizes.map(async cap=>{const r=await fetch('/api/optimise',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(mk(cap))});if(!r.ok)throw 0;const o=await r.json();return{cap,c:o.cost,pk:o.peak}}));
-const cx=+$('capex').value||0,life=+$('life').value||10,base=res[0].c;
-const rows=res.map(r=>{const ann=(base-r.c)*300,capex=r.cap*cx;return{...r,ann,capex,pb:ann>0?capex/ann:Infinity,net:ann*life-capex}}),best=rows.reduce((a,b)=>b.net>a.net?b:a);
-const rm=x=>Math.round(x).toLocaleString();
-$('swtbl').innerHTML='<tr><th>Battery, kWh</th><th>Cost, RM/day</th><th>Billed peak, kW</th><th>Saving, RM/yr</th><th>Battery cost, RM</th><th>Payback, years</th><th>Verdict</th></tr>'+rows.map(r=>{
-const v=r.cap==0?'Reference':r.ann<=0?'No saving':r.pb>life?`Longer than the ${life}-year life`:(r===best&&best.net>0?'Best net benefit':'Pays back in time');
-return`<tr><td>${rm(r.cap)}</td><td>${r.c.toFixed(0)}</td><td>${r.pk.toFixed(0)}</td><td>${r.cap?rm(r.ann):'—'}</td><td>${r.cap?rm(r.capex):'—'}</td><td>${r.cap&&isFinite(r.pb)?r.pb.toFixed(1):'—'}</td><td>${v}</td></tr>`}).join('');
-$('swnote').textContent=(best.net>0&&best.cap>0?`Best net benefit over ${life} years: ${rm(best.cap)} kWh (about RM ${rm(best.net)} before discounting). `:'No battery size earns back its cost in this setting. ')+'Assumes 300 weekdays a year that all look like this one, the same peak shaved every day (one missed day sets the month\'s peak), hourly values, and no discounting, degradation, maintenance, replacement or incentives. Battery cost is a placeholder.'}
-catch(e){$('swnote').textContent='The sweep needs the optimiser service, which is offline.'}}
-document.addEventListener('click',e=>{if(e.target.id=='sweepBtn')runSweep()});
-let STR=null,strKey='',strTimer=null,METER=null;
-function reqStress(p){const mg=+$('mg').value/100,key=JSON.stringify([p,mg]);if(key===strKey)return;strKey=key;STR=null;clearTimeout(strTimer);
-strTimer=setTimeout(async()=>{try{const L0=PROF[p.prof],m=Math.max(...L0),L=FC?FC.load.slice():L0.map(v=>v/m*p.peak),sol=FC?FC.pv.slice():N.map(h=>p.kwp*(p.apu?SH:SY)[h]*(1-.7*p.cloud));
-const body={load:L.map(v=>v*(1+mg)),pv:sol,rates:N.map(h=>((isPk(h)?p.ep:p.eo)+p.ad+p.afa)/100),md_rate_day:p.md/30,md_hours:N.filter(h=>p.tou?isPk(h):true),batt_kwh:p.cap,grid_limit:p.lim*p.peak*(1+mg),flex_share:p.flex,carbon_adder:0,wear:0};
-const res=await fetch('/api/optimise',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!res.ok)throw 0;const o=await res.json();
-if(key!==strKey)return;STR={pl:{ld:o.ld,ch:o.ch,b:o.dis,sol},pk:o.peak,mg,L,sol};drawStress(p)}
-catch(e){if(key===strKey){STR={err:1};drawStress(p)}}},400)}
-function drawStress(p){const el=$('stbl');if(!STR){el.innerHTML='';$('stnote').textContent='Stress test: running...';return}
-if(STR.err){el.innerHTML='';$('stnote').textContent='Stress test needs the optimiser service, which is offline.';return}
-const A=OPT&&OPT.cost;if(!A)return;
-const rate=h=>(isPk(h)?p.ep:p.eo)+p.ad+p.afa,inW=h=>p.tou?isPk(h):true;
-const bill=g=>{const pk=Math.max(...N.filter(inW).map(h=>g[h]));return{pk,c:g.reduce((a,x,h)=>a+x*rate(h)/100,0)+pk*p.md/30}};
-const e=Math.sqrt(.9),ctl=(pl,T,div,s,cf)=>{let soc=p.cap/2;const P=p.cap/2;return bill(N.map(h=>{const net=pl.ld[h]/div*(1+s)+pl.ch[h]-pl.sol[h]*cf;soc=Math.min(p.cap,soc+pl.ch[h]*e);let x=0;
-if(p.cap>0&&inW(h)&&net>T){x=Math.min(P,soc*e,net-T);soc-=x/e}return Math.max(0,net-x)}))};
-const base=(s,cf)=>bill(N.map(h=>Math.max(0,STR.L[h]*(1+s)-STR.sol[h]*cf)));
-const SC=[['Forecast is right',0,1],['Demand 10% higher',.1,1],['Cloudy day, solar 60% lower',0,.4],['Both together',.1,.4]],mg=Math.round(STR.mg*100);
-const rows=SC.map(([n,s,cf])=>({n,b:base(s,cf),a:ctl(A,A.peak,1,s,cf),m:ctl(STR.pl,STR.pk,1+STR.mg,s,cf)}));
-const f=x=>`${x.c.toFixed(0)} <small>(${x.pk.toFixed(0)} kW)</small>`;
-el.innerHTML=`<tr><th>Scenario, cost RM/day (billed peak)</th><th>No plan</th><th>Plan, no margin</th><th>Plan, ${mg}% margin</th></tr>`+rows.map(r=>`<tr><td>${r.n}</td><td>${f(r.b)}</td><td>${f(r.a)}</td><td>${f(r.m)}</td></tr>`).join('');
-const prem=rows[0].m.c-rows[0].a.c,g1=rows[1].a.c-rows[1].m.c,g3=rows[3].a.c-rows[3].m.c,sv=x=>x>=1?`saves about RM ${x.toFixed(0)} a day`:(x<=-1?`costs about RM ${(-x).toFixed(0)} a day more`:'makes no difference');
-$('stnote').textContent=`The margin costs about RM ${prem.toFixed(0)} a day when the forecast is right. When demand is 10% higher it ${sv(g1)}, and when demand and cloud both go wrong it ${sv(g3)}. The battery holds each plan's peak ceiling in real time until its charge runs out, with no other re-planning. TNB bills the highest 30-minute peak of the month, and this model uses hourly values.`}
-function parseMeter(txt){const pts=[];for(const l of txt.split(/\r?\n/)){const c=l.trim().split(/[,;\t]/),m=/^"?(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(c[0]||''),v=parseFloat(c[1]);if(m&&isFinite(v))pts.push({y:+m[1],mo:+m[2],d:+m[3],h:+m[4],mi:+m[5],v:Math.max(0,v)})}
-if(pts.length<24)throw new Error('Need at least 24 readings. Format: timestamp,kw, for example 2026-10-12 14:30,830.');
-const t=pts.map(q=>Date.UTC(q.y,q.mo-1,q.d,q.h,q.mi)),df=[];for(let i=1;i<t.length;i++)if(t[i]>t[i-1])df.push((t[i]-t[i-1])/6e4);df.sort((a,b)=>a-b);const iv=df[Math.floor(df.length/2)]||60,n=iv<30?Math.round(30/iv):1;
-let md=0;for(let i=0;i+n<=pts.length;i++){let s=0;for(let j=0;j<n;j++)s+=pts[i+j].v;md=Math.max(md,s/n)}
-const days={};pts.forEach(q=>{const k=q.y+'-'+q.mo+'-'+q.d;(days[k]=days[k]||{wd:new Date(q.y,q.mo-1,q.d).getDay(),h:Array.from({length:24},()=>[])}).h[q.h].push(q.v)});
-const dl=Object.values(days),wk=dl.filter(d=>d.wd>0&&d.wd<6),use=wk.length?wk:dl,avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
-const pr=N.map(h=>{const a=[];use.forEach(d=>a.push(...d.h[h]));return a.length?avg(a):NaN}),ok=pr.filter(isFinite);if(ok.length<20)throw new Error('Readings cover only '+ok.length+' of 24 hours of the day.');
-const mean=avg(ok),prof=pr.map(v=>isFinite(v)?v:mean),daily=avg(dl.map(d=>d.h.reduce((s,a)=>s+(a.length?avg(a):0),0)));
-return{prof,days:dl.length,weekdays:wk.length,iv,md,daily,peakH:Math.max(...prof)}}
-function useMeter(r,note){METER=r;PROF.meter=r.prof.slice();if(![...$('prof').options].some(o=>o.value=='meter'))$('prof').add(new Option('Uploaded meter data','meter'));
-$('prof').value='meter';$('peak').value=Math.min(20000,Math.max(50,Math.round(Math.max(...r.prof))));$('useFc').checked=false;
-const bk=+$('billKwh').value,bm=+$('billMd').value;let t=`${note}${r.days} day(s) read, ${r.weekdays} weekday(s), ${r.iv} min readings. Typical weekday peak ${Math.round(Math.max(...r.prof))} kW, highest 30-minute demand in the file ${Math.round(r.md)} kW, about ${Math.round(r.daily*30).toLocaleString()} kWh a month if every day looked like the average.`;
-if(bk>0)t+=` Bill kWh differs by ${((r.daily*30/bk-1)*100).toFixed(1)}%.`;if(bm>0)t+=` Bill maximum demand differs by ${((r.md/bm-1)*100).toFixed(1)}%.`;
-t+=' Matching the bill shows the file and bill describe the same site. It is a data check, not a forecast test.';$('meterNote').textContent=t;render()}
-document.addEventListener('change',e=>{if(e.target.id!='meterFile'||!e.target.files[0])return;const fr=new FileReader();
-fr.onload=()=>{try{useMeter(parseMeter(String(fr.result)),'')}catch(err){$('meterNote').textContent=err.message}};fr.readAsText(e.target.files[0])});
-document.addEventListener('click',e=>{if(e.target.id!='scaleBill')return;const bk=+$('billKwh').value;if(!METER||!(bk>0)){$('meterNote').textContent='Upload meter data and enter the bill kWh first.';return}
-const f=bk/(METER.daily*30),r=Object.assign({},METER,{prof:METER.prof.map(v=>v*f),daily:METER.daily*f,md:METER.md*f});useMeter(r,`Scaled by x${f.toFixed(2)} to match your bill. This is scaling, not validation. `)});
-document.addEventListener('change',e=>{if(e.target.id!='ex'||!EX[e.target.value])return;const x=EX[e.target.value];
-['volt','struct','prof','peak','kwp','cloud','bat','flex','lim'].forEach(k=>{if(x[k]!==undefined)$(k).value=x[k]});
-$('hasBat').checked=x.hasBat;$('hasFlex').checked=x.hasFlex;$('apu').checked=false;$('afa').value=0;$('useFc').checked=false;$('exnote').textContent=x.note;applyTariff();render()});
-document.addEventListener('input',e=>{if(e.target.id=='volt'||e.target.id=='struct')applyTariff();render()});
-document.addEventListener('click',e=>{if(e.target.dataset.k){sel=e.target.dataset.k;render()}
-if(e.target.id=='auditBtn')loadAudit();
-if(e.target.id=='preset2'){$('apu').checked=false;$('volt').value='MV';$('struct').value='T';$('prof').value='campus';$('peak').value=250;$('kwp').value=300;$('cloud').value=0;$('bat').value=200;$('flex').value=20;$('lim').value=150;$('hasBat').checked=true;$('hasFlex').checked=true;$('afa').value=0;applyTariff();render()}
-if(e.target.id=='preset'){$('apu').checked=true;$('volt').value='MV';$('struct').value='T';$('prof').value='campus';$('peak').value=1050;$('kwp').value=100;$('cloud').value=0;$('bat').value=0;$('flex').value=0;$('afa').value=0;applyTariff();render()}});
+async function plan(date){
+ const key=date+JSON.stringify(F);if(cache.has(key))return cache.get(key);
+ const [lat,lon]=F.loc.split(','),wk=isWk(date);
+ const fc=await api('/api/forecast?'+new URLSearchParams({lat,lon,kwp:F.kwp,peak:F.peak,prof:F.prof,day:diff(date,TODAY)}));
+ const rates=H.map(h=>wk&&h>=14&&h<22?+F.ep:+F.eo),mdH=wk?[14,15,16,17,18,19,20,21]:[],mdd=wk?F.md/30:0;
+ const r=await api('/api/optimise',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+  load:fc.load,pv:fc.pv,rates,md_rate_day:mdd,md_hours:mdH,batt_kwh:+F.bat||0,flex_share:(+F.flex||0)/100,
+  carbon_adder:0,grid_limit:+F.lim||0,wear:0})});
+ const gb=fc.load.map((l,i)=>Math.max(l-fc.pv[i],0)),sum=a=>a.reduce((x,y)=>x+y,0);
+ const pkb=mdH.length?Math.max(...mdH.map(h=>gb[h])):0,pk=mdH.length?r.peak:0;
+ const eb=sum(gb.map((g,i)=>g*rates[i])),eo=r.cost-mdd*pk;
+ const o={date,wk,load:fc.load,pv:fc.pv,base:gb,grid:r.grid,ch:r.ch,dis:r.dis,flex:r.flex,eb,eo,mdd,pkb,pk,
+  pvUsed:sum(r.pv_used),pvTot:sum(fc.pv),stale:fc.weather&&fc.weather.stale};
+ o.save=(eb+mdd*pkb)-(eo+mdd*pk);cache.set(key,o);return o}
 
-const btn='display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:6px;color:inherit;text-decoration:none';
-function showAuth(u){$('auth').innerHTML=u?`<span>Signed in as ${String(u.userDetails).replace(/</g,'&lt;')}</span><a style="${btn}" href="/.auth/logout?post_logout_redirect_uri=/">Sign out</a>`:`<a style="${btn}" href="/.auth/login/github?post_login_redirect_uri=/">Sign in with GitHub</a><a style="${btn}" href="/.auth/login/aad?post_login_redirect_uri=/">Sign in with Microsoft</a><span class="note" style="margin:0">Sign-in is only needed to view the audit log.</span>`}
-fetch('/.auth/me').then(r=>r.json()).then(j=>{ME=j.clientPrincipal;showAuth(ME);onAuth()}).catch(()=>{$('auth').textContent=''});
-async function loadAudit(){const o=$('auditOut');o.textContent='Loading...';try{const r=await fetch('/api/audit');if(r.status===401){o.textContent='Sign in to view the audit log.';return}if(!r.ok)throw 0;const j=await r.json();
-if(!j.enabled){o.textContent='Audit storage is not connected yet (app setting AUDIT_STORAGE_CONNECTION).';return}
-o.innerHTML=j.items.length?'<table style="font-size:12px">'+j.items.map(i=>`<tr><td>${String(i.time).slice(11,19)}</td><td>${i.route}</td><td>${i.status}</td><td>${String(i.summary||'').replace(/</g,'&lt;')}</td></tr>`).join('')+'</table>':'No calls logged yet.'}catch(e){o.textContent='Audit log unavailable.'}}
-let ME=null;
-const SNAP_N=['volt','struct','prof','peak','lim','kwp','cloud','bat','flex','afa','ef','billKwh','billMd','capex','life'],SNAP_B=['hasBat','hasFlex','apu'],esc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function snap(){const o={};SNAP_N.forEach(k=>{const v=$(k).value;if(v!==''&&v!=null)o[k]=isNaN(+v)?v:+v});SNAP_B.forEach(k=>o[k]=!!$(k).checked);if(o.prof=='meter'&&PROF.meter)o.meter=PROF.meter.map(v=>Math.round(v*100)/100);return o}
-function applySnap(o){if(o.meter){PROF.meter=o.meter.slice();if(![...$('prof').options].some(x=>x.value=='meter'))$('prof').add(new Option('Uploaded meter data','meter'))}else if(o.prof=='meter')o.prof='campus';
-SNAP_N.forEach(k=>{if(o[k]!==undefined)$(k).value=o[k]});SNAP_B.forEach(k=>{if(o[k]!==undefined)$(k).checked=!!o[k]});$('useFc').checked=false;applyTariff();render()}
-async function pf(m,q,body){const r=await fetch('/api/profile'+(q||''),{method:m,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});let j={};try{j=await r.json()}catch(_){}if(!r.ok)throw new Error(j.error||('Error '+r.status));return j}
-function enterPlan(){document.body.classList.remove('setup');$('welcome').style.display='none';render()}
-function showSites(l){$('siteSel').innerHTML=l.map(s=>`<option value="${esc(s.name)}">${esc(s.name)} (${esc(s.updated)})</option>`).join('');
-$('welcomeSites').innerHTML=l.length?'<p class="note">Your saved facilities:</p><div class="tabs">'+l.map(s=>`<button data-site="${esc(s.name)}">Open ${esc(s.name)}</button>`).join('')+'</div>':''}
-async function refreshSites(){try{showSites((await pf('GET')).sites)}catch(e){$('siteOut').textContent='Saved facilities unavailable: '+e.message}}
-function onAuth(){const on=!!ME;$('siteTools').style.display=on?'':'none';$('siteOut').textContent=on?'Signed in. Save this setup under a name, or load one you saved before.':'Sign in (top of the page) to save your facility and reload it next time. Your saved data is private to your account.';if(on)refreshSites()}
-async function openSite(n){try{applySnap((await pf('GET','?site='+encodeURIComponent(n))).data);enterPlan()}catch(e){$('siteOut').textContent=e.message}}
-document.addEventListener('click',async e=>{const t=e.target,id=t.id,sel=$('siteSel').value;
-if(t.dataset&&t.dataset.site)return openSite(t.dataset.site);
-if(t.dataset&&t.dataset.ex){$('ex').value=t.dataset.ex;$('ex').dispatchEvent(new Event('change',{bubbles:true}));return enterPlan()}
-try{if(id=='startOwn')$('welcome').style.display='none';
-else if(id=='seePlan')enterPlan();
-else if(id=='toStart'){document.body.classList.add('setup');$('welcome').style.display=''}
-else if(id=='siteSave'){const n=$('siteName').value.trim()||sel;showSites((await pf('PUT','',{name:n,data:snap()})).sites);$('siteOut').textContent='Saved "'+n+'".'}
-else if(id=='siteLoad'&&sel)openSite(sel);
-else if(id=='siteDel'&&sel&&confirm('Delete this saved facility?'))showSites((await pf('DELETE','?site='+encodeURIComponent(sel))).sites);
-else if(id=='siteWipe'&&confirm('Delete ALL your saved data?')){await pf('DELETE','?all=1');showSites([]);$('siteOut').textContent='All your saved data was deleted.'}}
-catch(err){$('siteOut').textContent=err.message}});
-applyTariff();render();
+function rel(d){return d<TODAY?['Past','']:d==TODAY?['Today','t']:d==addD(TODAY,1)?['Tomorrow','f']:['Forecast','f']}
+function runs(a){const o=[];let s=-1;for(let h=0;h<=24;h++){const on=h<24&&a[h]>1;if(on&&s<0)s=h;if(!on&&s>=0){o.push(p2(s)+':00 to '+p2(h)+':00');s=-1}}return o.join(', ')}
+
+function chart(r){
+ const W=720,Hh=250,L=44,R=10,T=10,B=24,mx=Math.max(...r.load,...r.pv,...r.grid,1)*1.1;
+ const x=h=>L+(W-L-R)*h/23,y=v=>T+(Hh-T-B)*(1-v/mx),pa=a=>a.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join('');
+ let s=`<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Hourly demand, solar and grid import">`;
+ if(r.wk)s+=`<rect x="${x(14)}" y="${T}" width="${x(22)-x(14)}" height="${Hh-T-B}" fill="var(--grid)" opacity=".08"/><text x="${x(14)+4}" y="${T+12}" class="ax">Peak-rate window</text>`;
+ for(let i=0;i<=4;i++){const v=mx*i/4;s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" class="ax">${Math.round(v)}</text>`}
+ for(let h=0;h<24;h+=3)s+=`<text x="${x(h)}" y="${Hh-6}" text-anchor="middle" class="ax">${p2(h)}:00</text>`;
+ s+=`<path d="${pa(r.load)}" stroke="var(--load)" stroke-dasharray="5 4" fill="none" stroke-width="2"/>`;
+ s+=`<path d="${pa(r.pv)}" stroke="var(--pv)" fill="none" stroke-width="2.5"/>`;
+ s+=`<path d="${pa(r.base)}" stroke="var(--bad)" fill="none" stroke-width="1.5" opacity=".6"/>`;
+ s+=`<path d="${pa(r.grid)}" stroke="var(--grid)" fill="none" stroke-width="2.5"/></svg>`;
+ return s+`<div class="lg"><span><i style="background:var(--load)"></i>Demand (kW)</span><span><i style="background:var(--pv)"></i>Solar</span><span><i style="background:var(--bad)"></i>Grid import, no plan</span><span><i style="background:var(--grid)"></i>Grid import, with plan</span></div>`}
+
+function kpis(items){return '<div class="kpis">'+items.map(k=>`<div class="k"><span>${k[0]}</span><b class="${k[2]||''}">${k[1]}</b><span>${k[3]||''}</span></div>`).join('')+'</div>'}
+
+function dayHtml(r){
+ const base=r.eb+r.mdd*r.pkb,opt=r.eo+r.mdd*r.pk,pct=base>0?(100*r.save/base).toFixed(1):'0';
+ const ch=runs(r.ch),di=runs(r.dis),fl=runs(r.flex),acts=[];
+ if(ch)acts.push(`Charge the battery ${ch}.`);if(di)acts.push(`Discharge the battery ${di} to cut grid import.`);
+ if(fl)acts.push(`Run the shiftable load ${fl}.`);if(!acts.length)acts.push('No battery or load shifting is needed for this day.');
+ return `<div class="card">${kpis([['Without plan',money(base),'','cost for the day'],['With plan',money(opt),'','cost for the day'],
+ ['You save',money(r.save),'good',pct+'%'],['Highest peak',r.wk?Math.round(r.pk)+' kW':'none','',r.wk?'was '+Math.round(r.pkb)+' kW':'weekend: no demand charge'],
+ ['Solar used',r.pvTot>0?Math.round(100*r.pvUsed/r.pvTot)+'%':'-','',Math.round(r.pvTot)+' kWh available']])}
+ <p class="note">Daily cost includes the monthly demand charge spread over 30 days.${r.stale?' Weather data is a saved copy because the weather service did not answer.':''}</p></div>
+ <div class="card"><h2>Hour by hour</h2>${chart(r)}</div>
+ <div class="card"><h2>What to do</h2><ul>${acts.map(a=>`<li>${a}</li>`).join('')}</ul></div>`}
+
+function periodHtml(dates,res){
+ const ok=res.filter(r=>r&&!r.err);if(!ok.length)return '<div class="card err">No data for these dates. Data is available from 31 days ago to 2 days ahead.</div>';
+ const n=ok.length,sum=k=>ok.reduce((a,r)=>a+r[k],0),pkb=Math.max(...ok.map(r=>r.pkb)),pk=Math.max(...ok.map(r=>r.pk));
+ const mdb=F.md*pkb*n/30,mdo=F.md*pk*n/30,base=sum('eb')+mdb,opt=sum('eo')+mdo,pvT=sum('pvTot'),pvU=sum('pvUsed');
+ const head=kpis([['Without plan',money(base),'',n+' days'],['With plan',money(opt)],['You save',money(base-opt),'good',(base>0?(100*(base-opt)/base).toFixed(1):0)+'%'],
+  ['Highest peak',Math.round(pk)+' kW','','was '+Math.round(pkb)+' kW'],['Solar used',pvT>0?Math.round(100*pvU/pvT)+'%':'-']]);
+ let cells='';
+ if(view=='month'){cells+=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<div class="dh">${d}</div>`).join('');
+  cells+='<div></div>'.repeat((parse(dates[0]).getDay()+6)%7)}
+ dates.forEach((d,i)=>{const r=res[i],t=rel(d)[0];
+  const body=r&&!r.err?`<b class="good">${money(r.save)}</b><small>${t=='Past'?'':t}</small>`:'<small>no data</small>';
+  cells+=`<button class="c${d==cur?' sel':''}${r&&!r.err?'':' na'}" data-d="${d}"><small>${view=='week'?parse(d).toLocaleDateString('en-GB',{weekday:'short'})+' ':''}${parse(d).getDate()}${isWk(d)?'':' (wknd)'}</small>${body}</button>`});
+ return `<div class="card">${head}<p class="note">Demand charge is prorated by the days shown, using the highest peak in the period. Tap a day to open it.</p></div>
+ <div class="card"><div class="cal" style="${view=='week'?'grid-template-columns:repeat(auto-fit,minmax(100px,1fr))':''}">${cells}</div></div>`}
+
+function span(){
+ if(view=='day')return [cur];
+ const d=parse(cur);
+ if(view=='week'){const s=addD(cur,-((d.getDay()+6)%7));return [...Array(7).keys()].map(i=>addD(s,i))}
+ const n=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(),m=cur.slice(0,8);return [...Array(n).keys()].map(i=>m+p2(i+1))}
+
+async function render(){
+ const my=++tok,dates=span();$('dt').value=cur;
+ ['day','week','month'].forEach(v=>$('v'+v).classList.toggle('on',view==v));
+ [['yes',addD(TODAY,-1)],['tod',TODAY],['tom',addD(TODAY,1)]].forEach(([id,d])=>$(id).classList.toggle('on',view=='day'&&cur==d));
+ $('ttl').textContent=view=='day'?parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):
+  view=='week'?'Week of '+parse(dates[0]).toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' to '+parse(dates[6]).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):
+  parse(cur).toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+ const [bt,bc]=rel(cur);$('badge').innerHTML=view=='day'?`<span class="tag ${bc}">${bt}</span>`:'';
+ $('info').textContent=view=='day'?(cur<TODAY?'Looking back: solar is rebuilt from recorded weather. Demand is modelled from your peak demand because no meter data is loaded, so treat it as an estimate.':
+  'Forecast: weather from Open-Meteo. Demand comes from a calendar-and-temperature model trained on synthetic history, so it is not yet real-world accuracy.'):
+  'Days before today are estimates from recorded weather. Days after today are forecasts (up to 2 days ahead). Other days show no data.';
+ $('out').innerHTML='<div class="card note">Working it out&hellip;</div>';
+ const ok=dates.map(d=>d>=MIN&&d<=MAX);let res=dates.map(()=>null);
+ try{
+  const idx=dates.map((d,i)=>i).filter(i=>ok[i]);
+  const run=async i=>{try{res[i]=await plan(dates[i])}catch(e){res[i]={err:e.message}}};
+  if(idx.length){await run(idx[0]);for(let k=1;k<idx.length;k+=6){await Promise.all(idx.slice(k,k+6).map(run));if(my!=tok)return}}
+  if(my!=tok)return;
+  if(view=='day'){const r=res[0];$('out').innerHTML=!ok[0]?'<div class="card err">No data for that date. Choose a day from 31 days ago to 2 days ahead.</div>':r.err?`<div class="card err">${esc(r.err)}</div>`:dayHtml(r)}
+  else $('out').innerHTML=periodHtml(dates,res.map(r=>r&&r.err?{err:1}:r))
+ }catch(e){$('out').innerHTML=`<div class="card err">${esc(e.message)}</div>`}}
+
+function step(n){if(view=='day')cur=addD(cur,n);else if(view=='week')cur=addD(cur,7*n);else{const d=parse(cur);d.setDate(1);d.setMonth(d.getMonth()+n);cur=iso(d)}render()}
+const go=(d)=>{view='day';cur=d;render()};
+$('yes').onclick=()=>go(addD(TODAY,-1));$('tod').onclick=()=>go(TODAY);$('tom').onclick=()=>go(addD(TODAY,1));
+$('vday').onclick=()=>{view='day';render()};$('vweek').onclick=()=>{view='week';render()};$('vmonth').onclick=()=>{view='month';render()};
+$('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);$('dt').onchange=e=>{if(e.target.value){cur=e.target.value;render()}};
+$('out').onclick=e=>{const b=e.target.closest('[data-d]');if(b&&!b.classList.contains('na'))go(b.dataset.d)};
+
+function fill(){FIELDS.forEach(k=>$('f_'+k).value=F[k]);
+ $('fsum').textContent=`My facility: ${F.name}, ${F.peak} kW peak, ${F.kwp} kWp solar, ${F.bat} kWh battery (tap to edit)`}
+$('fsave').onclick=()=>{const n=Object.assign({},F);FIELDS.forEach(k=>n[k]=$('f_'+k).value.trim());
+ const bad=['peak','kwp','bat','flex','ep','eo','md'].find(k=>n[k]===''||!isFinite(+n[k])||+n[k]<0);
+ if(bad||!n.name||+n.peak<1||+n.flex>30||(n.lim!==''&&!(+n.lim>=0))){$('fmsg').textContent='Please check the numbers: all fields except the grid limit are needed.';return}
+ ['peak','kwp','bat','flex','ep','eo','md'].forEach(k=>n[k]=+n[k]);n.lim=n.lim===''?'':+n.lim;F=n;
+ try{localStorage.setItem('facility',JSON.stringify(F))}catch(e){}
+ cache.clear();fill();$('fmsg').textContent='Saved.';$('setup').open=false;render()};
+fill();if(!saved)$('setup').open=true;render();
 </script></body></html>
