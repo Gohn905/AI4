@@ -61,7 +61,7 @@ def _fetch(url, params, suffix=""):
 
 
 def fetch_forecast(lat, lon):
-    return _fetch(URL_FORECAST, {"latitude": lat, "longitude": lon, "forecast_days": 3})
+    return _fetch(URL_FORECAST, {"latitude": lat, "longitude": lon, "forecast_days": 3, "past_days": 31})
 
 
 _WX = {}                                   # (lat, lon rounded to ~1 km) -> (time, data)
@@ -176,7 +176,7 @@ def forecast(q, weather=None, now=None):
     lon = _num(q, "lon", -180, 180, 100.33)
     kwp = _num(q, "kwp", 0, 1e5, 100)
     peak = _num(q, "peak", 0, 1e6, 1000)
-    day = int(_num(q, "day", 0, 2, 1))        # 0 today, 1 tomorrow, 2 day after
+    day = int(_num(q, "day", -31, 2, 1))     # -31..-1 past, 0 today, 1 tomorrow, 2 day after
     prof = q.get("prof", "campus")
     if prof not in SHAPES:
         raise ValueError("prof must be campus or factory")
