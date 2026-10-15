@@ -22,6 +22,13 @@ except Exception as e:                      # pragma: no cover
         pass
 
 
+try:
+    import profiles
+except Exception as e:                      # pragma: no cover
+    logging.warning("profiles module unavailable: %s", e)
+    profiles = None
+
+
 def _log(*args, **kwargs):
     if audit is not None:
         try:
@@ -87,3 +94,42 @@ def audit_http(req: func.HttpRequest) -> func.HttpResponse:
     if audit is None:
         return _json({"enabled": False, "items": []})
     return _json({"enabled": audit.enabled(), "items": audit.recent(15)})
+
+
+@app.route(route="profile", methods=["GET", "PUT", "DELETE"])
+def profile_http(req: func.HttpRequest) -> func.HttpResponse:
+    """Private saved sites. Needs sign-in: the owner id comes from the platform header, never from the request body."""
+    t0 = time.perf_counter()
+    ms = lambda: (time.perf_counter() - t0) * 1000
+    if profiles is None:
+        return _json({"error": "saved sites are not available"}, 503)
+    u = profiles.uid_of(req)
+    if not u:
+        return _json({"error": "sign in required"}, 401)
+    try:
+        if len(req.get_body() or b"") > 12000:
+            return _json({"error": "request too large"}, 413)
+        site = req.params.get("site")
+        if req.method == "GET":
+            return _json({"name": site, "data": profiles.get_site(u, site)} if site else {"sites": profiles.list_sites(u)})
+        if req.method == "PUT":
+            b = req.get_json()
+            profiles.put_site(u, b.get("name"), b.get("data"))
+            _log("profile", req, 200, ms(), summary="site saved")
+            return _json({"saved": True, "sites": profiles.list_sites(u)})
+        if req.params.get("all") == "1":
+            n = profiles.delete_all(u)
+            _log("profile", req, 200, ms(), summary=f"all saved data deleted ({n})")
+            return _json({"deleted": n, "sites": []})
+        profiles.delete_site(u, site)
+        _log("profile", req, 200, ms(), summary="site deleted")
+        return _json({"deleted": 1, "sites": profiles.list_sites(u)})
+    except profiles.NotFound as e:
+        return _json({"error": str(e)}, 404)
+    except profiles.Unavailable as e:
+        return _json({"error": str(e)}, 503)
+    except (ValueError, TypeError, KeyError, AttributeError) as e:
+        return _json({"error": str(e)}, 400)
+    except Exception:
+        logging.exception("profile failed")
+        return _json({"error": "profile request failed"}, 500)
