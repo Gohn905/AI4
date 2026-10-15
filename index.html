@@ -48,6 +48,22 @@ td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}td:fi
 <p class="note" id="signhint">Without sign-in, your facility is kept in this browser only. Sign in (top right) to keep it in your account.</p>
 <button class="on" id="fsave" style="margin-top:8px">Save facility</button> <span id="acctBtns" hidden><button id="sdel">Delete selected saved facility</button> <button id="sall">Delete all my saved data</button></span> <span id="fmsg" class="note"></span></details>
 
+<details class="card" id="fill"><summary>Fill from my bill or meter data</summary>
+<h2 style="margin-top:10px">1. From a TNB bill</h2>
+<p class="note">Copy these from your monthly bill. Bill layouts differ, so look for the words in the labels.</p>
+<div class="form" style="margin-top:8px">
+<div><label>Tariff category (on the bill)</label><select id="b_tar"><option value="LVG">LV General</option><option value="LVT">LV Time-of-Use</option><option value="MVG">MV General</option><option value="MVT" selected>MV Time-of-Use</option><option value="HVG">HV General</option><option value="HVT">HV Time-of-Use</option></select></div>
+<div><label>Maximum demand, kW (bill: "maximum demand")</label><input id="b_md" type="number" min="1"></div>
+<div><label>AFA, sen/kWh (optional)</label><input id="b_afa" type="number" step="0.01"></div>
+<div><label>Energy used, kWh (optional)</label><input id="b_kwh" type="number" min="0"></div>
+<div><label>Days in the billing period</label><input id="b_days" type="number" min="1" value="30"></div></div>
+<p class="note" id="b_out"></p>
+<button class="on" id="b_go" style="margin-top:6px">Apply to my facility</button>
+<h2 style="margin-top:16px">2. From meter data (CSV)</h2>
+<p class="note">One row per reading: a timestamp column and a value column, for example <code>2026-09-01 00:30,412</code>. Day/month/year dates also work. The file is read inside this browser and is never uploaded. Days in the file show your real demand; other days use your typical weekday, Saturday or Sunday pattern.</p>
+<div class="bar" style="margin-top:8px"><input type="file" id="m_file" accept=".csv,.txt,text/csv"> <select id="m_unit"><option value="kw">Values are kW (power)</option><option value="kwh">Values are kWh per interval (energy)</option></select> <button class="on" id="m_go">Use this file</button> <button id="m_clear">Remove meter data</button></div>
+<div class="note" id="m_msg"></div></details>
+
 <div class="card" id="rates"></div>
 
 <div class="card">
@@ -91,13 +107,18 @@ const TODAY=iso(new Date()),MIN=addD(TODAY,-31),MAX=addD(TODAY,2),isWk=s=>{const
 const esc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const money=n=>'RM '+(Math.abs(n)>=100?Math.round(n).toLocaleString('en-MY'):n.toFixed(2));
 let saved=null;try{saved=JSON.parse(localStorage.getItem('facility'))}catch(e){}
+let M=null;try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
 let F=Object.assign({},DEF,saved||{}),view='day',cur=TODAY,sel='bal',cache=new Map(),tok=0;
 const tf=()=>TF[F.volt+F.struct],tou=()=>F.struct=='T';
 
 async function api(url,opt){const r=await fetch(url,opt);let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw new Error(j.error||'Error '+r.status);return j}
 function memo(k,fn){if(cache.has(k))return cache.get(k);const p=fn();cache.set(k,p);p.catch(()=>cache.delete(k));return p}
-const getFc=date=>memo('f|'+date+[F.loc,F.kwp,F.peak,F.prof],()=>{const [lat,lon]=F.loc.split(',');
- return api('/api/forecast?'+new URLSearchParams({lat,lon,kwp:F.kwp,peak:F.peak,prof:F.prof,day:diff(date,TODAY)}))});
+function meterLoad(date){if(!M)return null;if(M.days[date])return{v:M.days[date],k:'actual'};
+ const g=parse(date).getDay(),t=M.typ||{},v=g==6?(t.sat||t.sun||t.wk):g==0?(t.sun||t.sat||t.wk):(t.wk||t.sat||t.sun);return v?{v,k:'typical'}:null}
+const getFc=date=>memo('f|'+date+[F.loc,F.kwp,F.peak,F.prof]+(M?M.stamp:''),async()=>{const [lat,lon]=F.loc.split(',');
+ const fc=await api('/api/forecast?'+new URLSearchParams({lat,lon,kwp:F.kwp,peak:F.peak,prof:F.prof,day:diff(date,TODAY)})),ml=meterLoad(date);
+ if(!ml)return fc;
+ return Object.assign({},fc,{load:ml.v,meter:ml.k,model:Object.assign({},fc.model,{demand:'your meter data ('+ml.k+')',data_note:'Demand comes from your own meter file, which stays in this browser.'}),metrics:Object.assign({},fc.metrics,{load:null})})});
 
 function ctx(date,t=tf(),T=tou()){const wk=isWk(date),win=T?(wk?[14,22]:null):[0,24],mdH=win?N.filter(h=>h>=win[0]&&h<win[1]):[];
  return{wk,win,mdH,mdd:mdH.length?t.md/30:0,rates:N.map(h=>((wk&&isPk(h)?t.ep:t.eo)+t.ad+(+F.afa))/100)}}
@@ -189,6 +210,9 @@ function ratesCard(){const t=tf(),k=F.volt+F.struct;
 
 function tabs(){const k=['base',...MODES.map(m=>m.k)];$('tabs').innerHTML=k.map(x=>`<button data-s="${x}" aria-pressed="${x==sel}" class="${x==sel?'on':''}">${NAMES[x].replace('Optimiser: ','')}</button>`).join('')}
 
+function dayInfo(){const ml=meterLoad(cur),past=cur<TODAY;
+ if(past)return ml&&ml.k=='actual'?'Looking back: demand is your real meter reading and solar is rebuilt from recorded weather. The strategy tabs show what each strategy would have saved on this day.':'Looking back: solar is rebuilt from recorded weather. Demand is modelled from your peak demand because no meter data covers this day, so treat it as an estimate. The strategy tabs show what each strategy would have saved on this day.';
+ return ml?'Forecast: weather from Open-Meteo. Demand is the typical pattern from your meter data for this day of the week.':'Forecast: weather from Open-Meteo. Demand comes from a calendar-and-temperature model trained on synthetic history, so it is not yet real-world accuracy.'}
 async function render(){
  const my=++tok,dates=span();$('dt').value=cur;tabs();
  ['day','week','month'].forEach(v=>$('v'+v).classList.toggle('on',view==v));
@@ -196,7 +220,7 @@ async function render(){
  const f=(x,o)=>parse(x).toLocaleDateString('en-GB',o);
  $('ttl').textContent=view=='day'?f(cur,{weekday:'long',day:'numeric',month:'long',year:'numeric'}):view=='week'?'Week of '+f(dates[0],{day:'numeric',month:'short'})+' to '+f(dates[6],{day:'numeric',month:'short'}):f(cur,{month:'long',year:'numeric'});
  const [bt,bc]=rel(cur);$('badge').innerHTML=view=='day'?`<span class="tag ${bc}">${bt}</span>`:'';
- $('info').textContent=view=='day'?(cur<TODAY?'Looking back: solar is rebuilt from recorded weather. Demand is modelled from your peak demand because no meter data is loaded, so treat it as an estimate. The strategy tabs show what each strategy would have saved on this day.':'Forecast: weather from Open-Meteo. Demand comes from a calendar-and-temperature model trained on synthetic history, so it is not yet real-world accuracy.'):'Days before today are estimates from recorded weather. Days after today are forecasts (up to 2 days ahead). Other days show no data.';
+ $('info').textContent=view=='day'?dayInfo():'Days before today are estimates from recorded weather. Days after today are forecasts (up to 2 days ahead). Other days show no data.';
  $('out').innerHTML='<div class="card note">Working it out&hellip;</div>';
  try{
   if(view=='day'){
@@ -221,6 +245,37 @@ $('out').onclick=e=>{const b=e.target.closest('[data-d]');if(b&&!b.classList.con
 $('tabs').onclick=e=>{const b=e.target.closest('[data-s]');if(b){sel=b.dataset.s;render()}};
 $('qbtn').onclick=()=>{const w=$('why');w.hidden=!w.hidden;$('qbtn').setAttribute('aria-expanded',String(!w.hidden))};
 
+
+function billOut(){const md=+$('b_md').value,kwh=+$('b_kwh').value,d=+$('b_days').value||30;
+ $('b_out').textContent=md>0&&kwh>0?`Average load ${Math.round(kwh/(d*24))} kW, which is ${(100*kwh/(d*24)/md).toFixed(0)}% of the maximum demand (the load factor). A low figure means a spiky load, where a battery helps most.`:''}
+['b_md','b_kwh','b_days'].forEach(i=>$(i).oninput=billOut);
+$('b_go').onclick=()=>{const k=$('b_tar').value,md=+$('b_md').value;if(!(md>=1)){$('b_out').textContent='Enter the maximum demand from your bill (kW).';return}
+ $('f_volt').value=k.slice(0,2);$('f_struct').value=k[2];$('f_peak').value=md;if($('b_afa').value!=='')$('f_afa').value=$('b_afa').value;
+ $('fsave').onclick().then(()=>{$('fill').open=false})};
+
+function tsParts(s){s=String(s).trim().replace(/"/g,'');let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[T ](\d{1,2})/);if(m)return[+m[1],+m[2],+m[3],+m[4]];
+ m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T,]+(\d{1,2})/);return m?[+m[3],+m[2],+m[1],+m[4]]:null}
+function parseMeter(text,unit){const L=text.split(/\r?\n/).filter(x=>x.trim());if(L.length<2)return null;
+ const dl=[',',';','\t'].map(d=>[d,L[0].split(d).length]).sort((a,b)=>b[1]-a[1])[0][0],H=L[0].toLowerCase().split(dl).map(x=>x.replace(/"/g,'').trim());
+ let ti=H.findIndex(x=>/time|date/.test(x)),vi=H.findIndex((x,i)=>i!=ti&&/kw|power|demand|load|energy|value/.test(x));if(ti<0)ti=0;if(vi<0)vi=ti==0?1:0;
+ const day={};let skipped=0;
+ L.slice(1).forEach(r=>{const c=r.split(dl),t=tsParts(c[ti]),v=parseFloat(String(c[vi]).replace(/[", ]/g,''));
+  if(!t||!isFinite(v)){skipped++;return}const key=t[0]+'-'+p2(t[1])+'-'+p2(t[2]),a=day[key]||(day[key]=N.map(()=>({s:0,n:0})));if(t[3]<0||t[3]>23){skipped++;return}a[t[3]].s+=Math.max(v,0);a[t[3]].n++});
+ const days={};Object.keys(day).sort().forEach(k=>{const a=day[k];if(a.every(x=>x.n>0))days[k]=a.map(x=>+(unit=='kwh'?x.s:x.s/x.n).toFixed(1))});
+ const keys=Object.keys(days).slice(-120),out={};keys.forEach(k=>out[k]=days[k]);
+ if(!keys.length)return{err:'No complete days (all 24 hours) were found in the file.',skipped};
+ const grp={wk:[],sat:[],sun:[]};keys.forEach(k=>{const g=parse(k).getDay();grp[g==6?'sat':g==0?'sun':'wk'].push(out[k])});
+ const typ={};for(const t in grp)if(grp[t].length)typ[t]=N.map(h=>+(sum(grp[t].map(a=>a[h]))/grp[t].length).toFixed(1));
+ const mx=Math.max(...(typ.wk||[0]),0);
+ return{days:out,typ,from:keys[0],to:keys[keys.length-1],n:keys.length,max:Math.round(mx),skipped,stamp:Date.now()}}
+function meterMsg(){$('m_msg').textContent=M?`In use: ${M.n} complete days (${M.from} to ${M.to}). Highest hourly average on a typical weekday: ${M.max} kW.`:'No meter data loaded.'}
+$('m_go').onclick=async()=>{const f=$('m_file').files[0];if(!f){$('m_msg').textContent='Choose a CSV file first.';return}
+ let r;try{r=parseMeter(await f.text(),$('m_unit').value)}catch(e){r=null}
+ if(!r||r.err){$('m_msg').textContent=(r&&r.err)||'Could not read the file. It needs a header row, a timestamp column and a value column.';return}
+ M=r;try{localStorage.setItem('meter',JSON.stringify(M))}catch(e){$('m_msg').textContent='Loaded, but this browser could not keep it after you close the page.';}
+ cache.clear();meterMsg();if(r.skipped)$('m_msg').textContent+=` ${r.skipped} unreadable rows were skipped.`;render()};
+$('m_clear').onclick=()=>{M=null;try{localStorage.removeItem('meter')}catch(e){}cache.clear();meterMsg();render()};
+meterMsg();
 function fill(){FIELDS.forEach(k=>$('f_'+k).value=F[k]);fillSites();$('fsum').textContent=`My facility: ${F.name}, ${F.volt} ${F.struct=='T'?'ToU':'General'}, ${F.peak} kW peak, ${F.kwp} kWp solar, ${F.bat} kWh battery (tap to edit)`;ratesCard()}
 let user=null,sites=[];
 const say=t=>{$('fmsg').textContent=t;$('amsg').textContent=t},persist=()=>{try{localStorage.setItem('facility',JSON.stringify(F))}catch(e){}};
