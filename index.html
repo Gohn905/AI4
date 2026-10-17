@@ -6,7 +6,8 @@
 :root{--bg:#eef3f6;--card:#fff;--ink:#12303f;--mut:#5b7280;--mute:#5b7280;--line:#d3dee4;--acc:#12303f;--sun:#f2a900;--bat:#1f8a8a;--grid:#b5483a;--shift:#b24fc9;--blue:#2563eb;--good:#15803d;--bad:#b42318}
 @media(prefers-color-scheme:dark){:root{--bg:#0e1b22;--card:#15262f;--ink:#e4eef2;--mut:#8ea4af;--mute:#8ea4af;--line:#2a3f4a;--acc:#e4eef2;--good:#4ade80;--bad:#f87171}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
-main{max-width:1000px;margin:0 auto;padding:16px}h1{font-size:22px;margin:0}h2{font-size:16px;margin:0 0 8px}
+main{max-width:1320px;margin:0 auto;padding:16px}.layout{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}.mainCol,.side{min-width:0}
+@media(min-width:960px){.layout{grid-template-columns:minmax(0,1fr) 350px;align-items:start}.side{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow-y:auto;padding-right:2px}}h1{font-size:22px;margin:0}h2{font-size:16px;margin:0 0 8px}
 .sub{color:var(--mut);font-size:13px;margin:2px 0 14px}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
 button,input,select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
 button{cursor:pointer}button:hover{border-color:var(--sun)}button.on{background:var(--acc);color:var(--card);border-color:var(--acc)}
@@ -27,45 +28,13 @@ td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}td:fi
 <div id="amsg" class="note" style="margin:0 0 6px"></div>
 <p class="sub">Pick a day, week or month and a strategy. See what the plan saves compared with the baseline.</p>
 
-<details class="card" id="setup"><summary id="fsum">My facility</summary>
-<p class="note">One-time setup, saved in this browser. Use the numbers from your latest TNB bill.</p>
-<div class="form" style="margin-top:10px">
-<div><label>Facility name</label><input id="f_name"></div>
-<div><label>Location</label><select id="f_loc"><option value="3.0553,101.7003">Kuala Lumpur (APU)</option><option value="5.41,100.33">Penang</option></select></div>
-<div><label>Type of load</label><select id="f_prof"><option value="campus">Campus / office</option><option value="factory">Factory</option></select></div>
-<div><label>Supply voltage</label><select id="f_volt"><option value="LV">LV (low)</option><option value="MV">MV (medium)</option><option value="HV">HV (high)</option></select></div>
-<div><label>Tariff type</label><select id="f_struct"><option value="T">Time-of-Use</option><option value="G">General</option></select></div>
-<div><label>AFA, sen/kWh (changes monthly)</label><input id="f_afa" type="number" step="0.01"></div>
-<div><label>Peak demand, kW (bill: maximum demand)</label><input id="f_peak" type="number" min="1"></div>
-<div><label>Solar size, kWp</label><input id="f_kwp" type="number" min="0"></div>
-<div><label>Battery, kWh (0 = none)</label><input id="f_bat" type="number" min="0"></div>
-<div><label>Shiftable daytime load, % (0 to 30)</label><input id="f_flex" type="number" min="0" max="30"></div>
-<div><label>Strategy I follow (keeps past days fixed)</label><select id="f_follow"><option value="base">None (baseline)</option><option value="cost">Cost-saving</option><option value="bal">Balanced</option><option value="prod">Production-first</option></select></div>
-<div><label>Grid import limit, kW (blank = none)</label><input id="f_lim" type="number" min="0"></div>
-<div><label>Grid emissions, kg CO&#8322;/kWh</label><input id="f_ef" type="number" step="0.01"></div>
-</div>
-<p class="note">Emission factor is a placeholder. Rates come from the TNB table below.</p>
-<p class="note" id="signhint">Without sign-in, your facility is kept in this browser only. Sign in (top right) to keep it in your account.</p>
-<button class="on" id="fsave" style="margin-top:8px">Save facility</button> <span id="acctBtns" hidden><button id="sdel">Delete selected saved facility</button> <button id="sall">Delete all my saved data</button></span> <span id="fmsg" class="note"></span></details>
 
-<details class="card" id="fill"><summary>Fill from my bill or meter data</summary>
-<h2 style="margin-top:10px">1. From a TNB bill</h2>
-<p class="note">Copy these from your monthly bill. Bill layouts differ, so look for the words in the labels.</p>
-<div class="form" style="margin-top:8px">
-<div><label>Tariff category (on the bill)</label><select id="b_tar"><option value="LVG">LV General</option><option value="LVT">LV Time-of-Use</option><option value="MVG">MV General</option><option value="MVT" selected>MV Time-of-Use</option><option value="HVG">HV General</option><option value="HVT">HV Time-of-Use</option></select></div>
-<div><label>Maximum demand, kW (bill: "maximum demand")</label><input id="b_md" type="number" min="1"></div>
-<div><label>AFA, sen/kWh (optional)</label><input id="b_afa" type="number" step="0.01"></div>
-<div><label>Energy used, kWh (optional)</label><input id="b_kwh" type="number" min="0"></div>
-<div><label>Days in the billing period</label><input id="b_days" type="number" min="1" value="30"></div></div>
-<p class="note" id="b_out"></p>
-<button class="on" id="b_go" style="margin-top:6px">Apply to my facility</button>
-<h2 style="margin-top:16px">2. From meter data (CSV)</h2>
-<p class="note">One row per reading: a timestamp column and a value column, for example <code>2026-09-01 00:30,412</code>. Day/month/year dates also work. The file is read inside this browser and is never uploaded. Days in the file show your real demand; other days use your typical weekday, Saturday or Sunday pattern.</p>
-<div class="bar" style="margin-top:8px"><input type="file" id="m_file" accept=".csv,.txt,text/csv"> <select id="m_unit"><option value="kw">Values are kW (power)</option><option value="kwh">Values are kWh per interval (energy)</option></select> <button class="on" id="m_go">Use this file</button> <button id="m_clear">Remove meter data</button></div>
-<div class="note" id="m_msg"></div></details>
 
-<div class="card" id="rates"></div>
 
+
+
+
+<div class="layout"><div class="mainCol">
 <div class="card">
 <div class="bar">
 <button id="yes">Yesterday</button><button id="tod">Today</button><button id="tom">Tomorrow</button><span class="sp"></span>
@@ -87,6 +56,45 @@ td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}td:fi
 <p class="note"><b>Not included yet:</b> diesel or gas, individual machines with start and stop rules, real meter history (the demand forecast is trained on synthetic history), export income, forecast uncertainty, the retail charge, the 1.6% KWTBB levy and tax.</p></div>
 
 <div id="out"><div class="card note">Loading&hellip;</div></div>
+</div>
+<aside class="side">
+<details class="card" id="setup"><summary id="fsum">My facility</summary>
+<p class="note">One-time setup, saved in this browser. Use the numbers from your latest TNB bill.</p>
+<div class="form" style="margin-top:10px">
+<div><label>Facility name</label><input id="f_name"></div>
+<div><label>Location</label><select id="f_loc"><option value="3.0553,101.7003">Kuala Lumpur (APU)</option><option value="5.41,100.33">Penang</option></select></div>
+<div><label>Type of load</label><select id="f_prof"><option value="campus">Campus / office</option><option value="factory">Factory</option></select></div>
+<div><label>Supply voltage</label><select id="f_volt"><option value="LV">LV (low)</option><option value="MV">MV (medium)</option><option value="HV">HV (high)</option></select></div>
+<div><label>Tariff type</label><select id="f_struct"><option value="T">Time-of-Use</option><option value="G">General</option></select></div>
+<div><label>AFA, sen/kWh (changes monthly)</label><input id="f_afa" type="number" step="0.01"></div>
+<div><label>Peak demand, kW (bill: maximum demand)</label><input id="f_peak" type="number" min="1"></div>
+<div><label>Solar size, kWp</label><input id="f_kwp" type="number" min="0"></div>
+<div><label>Battery, kWh (0 = none)</label><input id="f_bat" type="number" min="0"></div>
+<div><label>Shiftable daytime load, % (0 to 30)</label><input id="f_flex" type="number" min="0" max="30"></div>
+<div><label>Strategy I follow (keeps past days fixed)</label><select id="f_follow"><option value="base">None (baseline)</option><option value="cost">Cost-saving</option><option value="bal">Balanced</option><option value="prod">Production-first</option></select></div>
+<div><label>Grid import limit, kW (blank = none)</label><input id="f_lim" type="number" min="0"></div>
+<div><label>Grid emissions, kg CO&#8322;/kWh</label><input id="f_ef" type="number" step="0.01"></div>
+</div>
+<p class="note">Emission factor is a placeholder. Rates come from the TNB table below.</p>
+<p class="note" id="signhint">Without sign-in, your facility is kept in this browser only. Sign in (top right) to keep it in your account.</p>
+<button class="on" id="fsave" style="margin-top:8px">Save facility</button> <span id="acctBtns" hidden><button id="sdel">Delete selected saved facility</button> <button id="sall">Delete all my saved data</button></span> <span id="fmsg" class="note"></span></details>
+<details class="card" id="fill"><summary>Fill from my bill or meter data</summary>
+<h2 style="margin-top:10px">1. From a TNB bill</h2>
+<p class="note">Copy these from your monthly bill. Bill layouts differ, so look for the words in the labels.</p>
+<div class="form" style="margin-top:8px">
+<div><label>Tariff category (on the bill)</label><select id="b_tar"><option value="LVG">LV General</option><option value="LVT">LV Time-of-Use</option><option value="MVG">MV General</option><option value="MVT" selected>MV Time-of-Use</option><option value="HVG">HV General</option><option value="HVT">HV Time-of-Use</option></select></div>
+<div><label>Maximum demand, kW (bill: "maximum demand")</label><input id="b_md" type="number" min="1"></div>
+<div><label>AFA, sen/kWh (optional)</label><input id="b_afa" type="number" step="0.01"></div>
+<div><label>Energy used, kWh (optional)</label><input id="b_kwh" type="number" min="0"></div>
+<div><label>Days in the billing period</label><input id="b_days" type="number" min="1" value="30"></div></div>
+<p class="note" id="b_out"></p>
+<button class="on" id="b_go" style="margin-top:6px">Apply to my facility</button>
+<h2 style="margin-top:16px">2. From meter data (CSV)</h2>
+<p class="note">One row per reading: a timestamp column and a value column, for example <code>2026-09-01 00:30,412</code>. Day/month/year dates also work. The file is read inside this browser and is never uploaded. Days in the file show your real demand; other days use your typical weekday, Saturday or Sunday pattern.</p>
+<div class="bar" style="margin-top:8px"><input type="file" id="m_file" accept=".csv,.txt,text/csv"> <select id="m_unit"><option value="kw">Values are kW (power)</option><option value="kwh">Values are kWh per interval (energy)</option></select> <button class="on" id="m_go">Use this file</button> <button id="m_clear">Remove meter data</button></div>
+<div class="note" id="m_msg"></div></details>
+<div class="card" id="rates"></div>
+</aside></div>
 </main>
 <script>
 const $=id=>document.getElementById(id),N=[...Array(24).keys()],p2=n=>String(n).padStart(2,'0'),isPk=h=>h>=14&&h<22,sum=a=>a.reduce((x,y)=>x+y,0);
@@ -107,7 +115,7 @@ const TODAY=iso(new Date()),MIN=addD(TODAY,-31),MAX=addD(TODAY,2),isWk=s=>{const
 const esc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const money=n=>'RM '+(Math.abs(n)>=100?Math.round(n).toLocaleString('en-MY'):n.toFixed(2));
 let saved=null;try{saved=JSON.parse(localStorage.getItem('facility'))}catch(e){}
-let M=null;try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
+let pend=null,last=null,srcNote='',M=null;try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
 let F=Object.assign({},DEF,saved||{}),view='day',cur=TODAY,sel='bal',cache=new Map(),tok=0;
 const tf=()=>TF[F.volt+F.struct],tou=()=>F.struct=='T';
 
@@ -160,7 +168,7 @@ function recs(r,b){const L=[],cap=+F.bat||0;
 function kpis(items){return '<div class="kpis">'+items.map(k=>`<div class="k"><span>${k[0]}</span><b class="${k[2]||''}">${k[1]}</b><span>${k[3]||''}</span></div>`).join('')+'</div>'}
 
 function dayHtml(R,rows){
- if(!R[sel])sel='base';const b=R.base,r=R[sel],sv=(1-r.cost/b.cost)*100||0,c=b.c;
+ if(!R[sel])sel='base';const b=R.base,r=R[sel],sv=(1-r.cost/b.cost)*100||0,c=b.c;last={view:'day',key:cur,base:b.cost,cost:r.cost,save:b.cost-r.cost};
  const tbl=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Grid share</th><th>Billed peak, kW</th><th>CO&#8322;, kg</th><th>CO&#8322; vs baseline</th></tr>`+rows.map(s=>{const x=R[s.k],v=(1-x.cost/b.cost)*100,cd=b.co2?(x.co2/b.co2-1)*100:0;
   return `<tr class="${s.k==sel?'sel':''}"><td>${NAMES[s.k]}</td><td>${x.cost.toFixed(2)}</td><td class="${v>0.05?'good':''}">${s.k=='base'?'&mdash;':v.toFixed(1)+'%'}</td><td>${x.util.toFixed(0)}%</td><td>${(sum(x.g)/sum(x.ld)*100).toFixed(0)}%</td><td>${x.peak.toFixed(0)}</td><td>${x.co2.toFixed(0)}</td><td style="${s.k!='base'&&cd>0.05?'color:#d9a441':''}" class="${s.k!='base'&&cd<-0.05?'good':''}">${s.k=='base'||!b.co2?'&mdash;':(cd>=0?'+':'')+cd.toFixed(1)+'%'}</td></tr>`}).join('');
  const ng=sum(b.ld)*F.ef,cc=b.co2?(r.co2/b.co2-1)*100:0,nm=NAMES[sel];
@@ -186,6 +194,7 @@ function periodHtml(dates,items){
  const ok=items.filter(x=>x&&x.r);if(!ok.length)return '<div class="card err">No data for these dates. Data is available from 31 days ago to 2 days ahead.</div>';
  const n=ok.length,t=tf(),tot=(w,k)=>sum(ok.map(x=>x[w][k])),pkb=Math.max(...ok.map(x=>x.b.peak)),pk=Math.max(...ok.map(x=>x.r.peak));
  const base=tot('b','en')+t.md*pkb*n/30,opt=tot('r','en')+t.md*pk*n/30,pvT=tot('r','sol'),pvU=sum(ok.map(x=>sum(x.r.d))),pvA=sum(ok.map(x=>sum(x.r.sol)));
+ last={view,key:dates[0],base:base,cost:opt,save:base-opt};
  const head=kpis([['Baseline cost',money(base),'',n+' days'],['With strategy',money(opt)],['You save',money(base-opt),'good',(base>0?(100*(base-opt)/base).toFixed(1):0)+'%'],
   ['Highest billed peak',Math.round(pk)+' kW','','baseline '+Math.round(pkb)+' kW'],['Solar used',pvA>0?Math.round(100*pvU/pvA)+'%':'-']]);
  const past=dates.some(d=>d<TODAY&&d>=MIN),live=dates.some(d=>d>=TODAY&&d<=MAX);
@@ -213,6 +222,16 @@ function tabs(){const k=['base',...MODES.map(m=>m.k)];$('tabs').innerHTML=k.map(
 function dayInfo(){const ml=meterLoad(cur),past=cur<TODAY;
  if(past)return ml&&ml.k=='actual'?'Looking back: demand is your real meter reading and solar is rebuilt from recorded weather. The strategy tabs show what each strategy would have saved on this day.':'Looking back: solar is rebuilt from recorded weather. Demand is modelled from your peak demand because no meter data covers this day, so treat it as an estimate. The strategy tabs show what each strategy would have saved on this day.';
  return ml?'Forecast: weather from Open-Meteo. Demand is the typical pattern from your meter data for this day of the week.':'Forecast: weather from Open-Meteo. Demand comes from a calendar-and-temperature model trained on synthetic history, so it is not yet real-world accuracy.'}
+
+const LBL={name:'Facility name',loc:'Location',prof:'Type of load',follow:'Strategy I follow',volt:'Supply voltage',struct:'Tariff type',afa:'AFA (sen/kWh)',peak:'Peak demand (kW)',kwp:'Solar (kWp)',bat:'Battery (kWh)',flex:'Shiftable load (%)',lim:'Grid limit (kW)',ef:'Emission factor (kg CO&#8322;/kWh)'};
+const VAL={name:esc,loc:v=>v=='5.41,100.33'?'Penang':'Kuala Lumpur (APU)',prof:v=>v=='factory'?'Factory':'Campus / office',struct:v=>v=='T'?'Time-of-Use':'General',follow:v=>v=='base'?'None (baseline)':NAMES[v].replace('Optimiser: ',''),lim:v=>v===''?'none':v};
+function diffF(a,b){return FIELDS.filter(k=>String(a[k])!==String(b[k])).map(k=>{const f=VAL[k]||(x=>x);return `<b>${LBL[k]}:</b> ${f(a[k])} &rarr; ${f(b[k])}`})}
+function setPend(items){pend={items:items,before:last}}
+function changeCard(){if(!pend)return;const p=pend;pend=null;const a=p.before,b=last;let num;
+ if(a&&b&&a.view==b.view&&a.key==b.key){const same=Math.abs(a.base-b.base)<0.005&&Math.abs(a.cost-b.cost)<0.005;
+  num=same?'The numbers on this screen did not change, because these settings do not affect them.':`Baseline cost ${money(a.base)} &rarr; ${money(b.base)}. Cost with the strategy ${money(a.cost)} &rarr; ${money(b.cost)}. You save ${money(a.save)} &rarr; ${money(b.save)}.`}
+ else num='The numbers below now use the new settings.';
+ $('out').insertAdjacentHTML('afterbegin',`<div class="card" style="border-color:var(--sun)"><div class="bar" style="margin:0"><h2 style="margin:0">What just changed</h2><span class="sp"></span><button data-x="1">Dismiss</button></div><ul>${p.items.map(x=>`<li>${x}</li>`).join('')}</ul><p class="note">${num}</p></div>`)}
 async function render(){
  const my=++tok,dates=span();$('dt').value=cur;tabs();
  ['day','week','month'].forEach(v=>$('v'+v).classList.toggle('on',view==v));
@@ -229,11 +248,11 @@ async function render(){
    if(res[0].status!='fulfilled')throw res[0].reason;
    const R={},ok=[];res.forEach((x,i)=>{if(x.status=='fulfilled'){R[rows[i].k]=x.value;ok.push(rows[i])}});
    const miss=res.filter(x=>x.status!='fulfilled').length;
-   $('out').innerHTML=(miss?`<div class="card err">The optimiser did not answer, so only the baseline is shown. Refresh in a minute.</div>`:'')+dayHtml(R,ok);return}
+   $('out').innerHTML=(miss?`<div class="card err">The optimiser did not answer, so only the baseline is shown. Refresh in a minute.</div>`:'')+dayHtml(R,ok);changeCard();return}
   const items=dates.map(()=>null),idx=dates.map((x,i)=>i).filter(i=>dates[i]>=MIN&&dates[i]<=MAX);
   const run=async i=>{try{items[i]={b:await getRun(dates[i],'base'),r:await getRun(dates[i],dates[i]<TODAY?F.follow:sel)}}catch(e){items[i]=null}};
   if(idx.length){await run(idx[0]);for(let k=1;k<idx.length;k+=6){await Promise.all(idx.slice(k,k+6).map(run));if(my!=tok)return}}
-  if(my!=tok)return;$('out').innerHTML=periodHtml(dates,items)
+  if(my!=tok)return;$('out').innerHTML=periodHtml(dates,items);changeCard()
  }catch(e){if(my==tok)$('out').innerHTML=`<div class="card err">${esc(e.message)}</div>`}}
 
 function step(n){if(view=='day')cur=addD(cur,n);else if(view=='week')cur=addD(cur,7*n);else{const d=parse(cur);d.setDate(1);d.setMonth(d.getMonth()+n);cur=iso(d)}render()}
@@ -241,7 +260,8 @@ const go=x=>{view='day';cur=x;render()};
 $('yes').onclick=()=>go(addD(TODAY,-1));$('tod').onclick=()=>go(TODAY);$('tom').onclick=()=>go(addD(TODAY,1));
 $('vday').onclick=()=>{view='day';render()};$('vweek').onclick=()=>{view='week';render()};$('vmonth').onclick=()=>{view='month';render()};
 $('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);$('dt').onchange=e=>{if(e.target.value){cur=e.target.value;render()}};
-$('out').onclick=e=>{const b=e.target.closest('[data-d]');if(b&&!b.classList.contains('na'))go(b.dataset.d)};
+$('out').onclick=e=>{const x=e.target.closest('[data-x]');if(x){x.closest('.card').remove();return}
+ const b=e.target.closest('[data-d]');if(b&&!b.classList.contains('na'))go(b.dataset.d)};
 $('tabs').onclick=e=>{const b=e.target.closest('[data-s]');if(b){sel=b.dataset.s;render()}};
 $('qbtn').onclick=()=>{const w=$('why');w.hidden=!w.hidden;$('qbtn').setAttribute('aria-expanded',String(!w.hidden))};
 
@@ -251,7 +271,7 @@ function billOut(){const md=+$('b_md').value,kwh=+$('b_kwh').value,d=+$('b_days'
 ['b_md','b_kwh','b_days'].forEach(i=>$(i).oninput=billOut);
 $('b_go').onclick=()=>{const k=$('b_tar').value,md=+$('b_md').value;if(!(md>=1)){$('b_out').textContent='Enter the maximum demand from your bill (kW).';return}
  $('f_volt').value=k.slice(0,2);$('f_struct').value=k[2];$('f_peak').value=md;if($('b_afa').value!=='')$('f_afa').value=$('b_afa').value;
- $('fsave').onclick().then(()=>{$('fill').open=false})};
+ srcNote='Filled from your bill.';$('fsave').onclick().then(()=>{$('fill').open=false})};
 
 function tsParts(s){s=String(s).trim().replace(/"/g,'');let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[T ](\d{1,2})/);if(m)return[+m[1],+m[2],+m[3],+m[4]];
  m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T,]+(\d{1,2})/);return m?[+m[3],+m[2],+m[1],+m[4]]:null}
@@ -272,9 +292,9 @@ function meterMsg(){$('m_msg').textContent=M?`In use: ${M.n} complete days (${M.
 $('m_go').onclick=async()=>{const f=$('m_file').files[0];if(!f){$('m_msg').textContent='Choose a CSV file first.';return}
  let r;try{r=parseMeter(await f.text(),$('m_unit').value)}catch(e){r=null}
  if(!r||r.err){$('m_msg').textContent=(r&&r.err)||'Could not read the file. It needs a header row, a timestamp column and a value column.';return}
- M=r;try{localStorage.setItem('meter',JSON.stringify(M))}catch(e){$('m_msg').textContent='Loaded, but this browser could not keep it after you close the page.';}
+ M=r;setPend([`<b>Demand source:</b> your meter file, ${r.n} complete days (${r.from} to ${r.to}). Dates inside the file now show your real demand.`,`Other days use your typical weekday, Saturday and Sunday pattern. Highest hourly average on a typical weekday: ${r.max} kW (your peak demand setting is ${F.peak} kW).`]);try{localStorage.setItem('meter',JSON.stringify(M))}catch(e){$('m_msg').textContent='Loaded, but this browser could not keep it after you close the page.';}
  cache.clear();meterMsg();if(r.skipped)$('m_msg').textContent+=` ${r.skipped} unreadable rows were skipped.`;render()};
-$('m_clear').onclick=()=>{M=null;try{localStorage.removeItem('meter')}catch(e){}cache.clear();meterMsg();render()};
+$('m_clear').onclick=()=>{setPend(['<b>Demand source:</b> meter data removed. Demand is back to the modelled profile.']);M=null;try{localStorage.removeItem('meter')}catch(e){}cache.clear();meterMsg();render()};
 meterMsg();
 function fill(){FIELDS.forEach(k=>$('f_'+k).value=F[k]);fillSites();$('fsum').textContent=`My facility: ${F.name}, ${F.volt} ${F.struct=='T'?'ToU':'General'}, ${F.peak} kW peak, ${F.kwp} kWp solar, ${F.bat} kWh battery (tap to edit)`;ratesCard()}
 let user=null,sites=[];
@@ -285,14 +305,14 @@ function authUi(){const a=$('auth');
   $('sload').onclick=()=>{const n=$('sites').value;if(n)loadSite(n)};fillSites()}
  else a.innerHTML='<a href="/.auth/login/github?post_login_redirect_uri=/">Sign in with GitHub</a> &middot; <a href="/.auth/login/aad?post_login_redirect_uri=/">Microsoft</a>';
  $('acctBtns').hidden=!user;$('signhint').hidden=!!user}
-async function loadSite(name){try{const j=await api('/api/profile?site='+encodeURIComponent(name));F=Object.assign({},DEF,j.data,{name});persist();cache.clear();fill();render();say('Loaded '+name+'.')}catch(e){say(e.message)}}
+async function loadSite(name){try{const j=await api('/api/profile?site='+encodeURIComponent(name));{const nf=Object.assign({},DEF,j.data,{name}),ch=diffF(F,nf);setPend(['Loaded <b>'+esc(name)+'</b> from your account.'].concat(ch))}F=Object.assign({},DEF,j.data,{name});persist();cache.clear();fill();render();say('Loaded '+name+'.')}catch(e){say(e.message)}}
 async function whoami(){try{const j=await (await fetch('/.auth/me')).json();user=j.clientPrincipal||null}catch(e){user=null}
  authUi();if(user){try{const j=await api('/api/profile');sites=j.sites||[];fillSites();if(!saved&&sites.length)loadSite(sites[0].name)}catch(e){say(e.message)}}}
 function readForm(){const n=Object.assign({},F);FIELDS.forEach(k=>n[k]=$('f_'+k).value.trim());
  const bad=NUMS.find(k=>n[k]===''||!isFinite(+n[k])||(k!='afa'&&+n[k]<0));
  if(bad||!n.name||+n.peak<1||+n.flex>30||(n.lim!==''&&!(+n.lim>=0))){say('Please check the numbers: all fields except the grid limit are needed.');return null}
  NUMS.forEach(k=>n[k]=+n[k]);n.lim=n.lim===''?'':+n.lim;return n}
-$('fsave').onclick=async()=>{const n=readForm();if(!n)return;F=n;persist();cache.clear();fill();$('setup').open=false;render();
+$('fsave').onclick=async()=>{const n=readForm();if(!n)return;{const ch=diffF(F,n);setPend((srcNote?[srcNote]:[]).concat(ch.length?ch:['No setting was different from before.']));srcNote=''}F=n;persist();cache.clear();fill();$('setup').open=false;render();
  if(!user){say('Saved on this device. Sign in to keep it in your account.');return}
  try{const j=await api('/api/profile',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n.name,data:n})});sites=j.sites||[];fillSites();say('Saved to your account.')}
  catch(e){say('Saved on this device only: '+e.message)}};
