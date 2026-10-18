@@ -27,6 +27,11 @@ try:
 except Exception as e:                      # pragma: no cover
     logging.warning("profiles module unavailable: %s", e)
     profiles = None
+try:
+    import explain
+except Exception as e:                      # pragma: no cover
+    logging.warning("explain module unavailable: %s", e)
+    explain = None
 
 
 def _log(*args, **kwargs):
@@ -86,6 +91,30 @@ def forecast_http(req: func.HttpRequest) -> func.HttpResponse:
     except Exception:
         _log("forecast", req, 500, ms(), request=q, summary="forecast failed")
         return _json({"error": "forecast failed"}, 500)
+
+
+@app.route(route="explain", methods=["POST"])
+def explain_http(req: func.HttpRequest) -> func.HttpResponse:
+    """Plain-language summary of one day's plan. The model only narrates numbers; see explain.py."""
+    t0 = time.perf_counter()
+    ms = lambda: (time.perf_counter() - t0) * 1000
+    if explain is None:
+        return _json({"error": "explanations are not available"}, 503)
+    body = None
+    try:
+        if len(req.get_body() or b"") > 4000:
+            return _json({"error": "request too large"}, 413)
+        body = req.get_json()
+        out = explain.explain(body)
+        _log("explain", req, 200, ms(), request=body, result=out, model=out["source"],
+             summary=out["source"] + (": " + out["note"] if out["note"] else ""))
+        return _json(out)
+    except (ValueError, TypeError, KeyError, AttributeError) as e:
+        _log("explain", req, 400, ms(), summary="rejected: " + str(e))
+        return _json({"error": str(e)}, 400)
+    except Exception:
+        _log("explain", req, 500, ms(), summary="explain failed")
+        return _json({"error": "explain failed"}, 500)
 
 
 @app.route(route="audit", methods=["GET"])
