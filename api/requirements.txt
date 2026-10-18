@@ -2,3 +2,4 @@ azure-functions
 numpy
 scipy
 azure-data-tables>=12.5.0
+azure-identity
