@@ -79,15 +79,13 @@ def _name(n):
 
 def _table():
     if _state["table"] is None:
-        cs = os.environ.get("AUDIT_STORAGE_CONNECTION")
-        if not cs:
-            raise Unavailable("storage is not connected (app setting AUDIT_STORAGE_CONNECTION)")
+        if not audit.configured():
+            raise Unavailable("storage is not connected (app setting AUDIT_STORAGE_CONNECTION or AUDIT_STORAGE_ACCOUNT_URL)")
         try:
-            from azure.data.tables import TableServiceClient
-            _state["table"] = TableServiceClient.from_connection_string(cs).create_table_if_not_exists(TABLE)
+            _state["table"] = audit.open_table(TABLE)
         except Exception as e:
             logging.warning("profile storage unavailable: %s", e)
-            raise Unavailable("storage unavailable")
+            raise Unavailable("storage unavailable (%s: %s)" % (type(e).__name__, str(e).splitlines()[0][:160] if str(e) else ""))
     return _state["table"]
 
 
