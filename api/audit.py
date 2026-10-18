@@ -1,7 +1,11 @@
 """Audit log: one row per optimise / forecast call, kept in Azure Table Storage.
 
 Why: every recommendation can be traced later (who asked, what went in, what came out, how long).
-Needs the app setting AUDIT_STORAGE_CONNECTION. Without it the API still works and only
+Storage access, either way:
+  AUDIT_STORAGE_CONNECTION = full connection string (secret), or
+  AUDIT_STORAGE_ACCOUNT_URL = https://<account>.table.core.windows.net  (managed identity, no secret;
+  the Function App identity needs the role "Storage Table Data Contributor" on the storage account).
+Without either one the API still works and only
 writes a structured log line (which Application Insights collects when it is switched on).
 Logging must never break a request, so every storage call is wrapped.
 """
@@ -19,19 +23,42 @@ RETENTION_DAYS = int(os.environ.get("AUDIT_RETENTION_DAYS", "30"))
 _state = {"table": None, "failed": False}
 
 
+def configured():
+    return bool(os.environ.get("AUDIT_STORAGE_CONNECTION") or os.environ.get("AUDIT_STORAGE_ACCOUNT_URL"))
+
+
 def enabled():
-    return bool(os.environ.get("AUDIT_STORAGE_CONNECTION")) and not _state["failed"]
+    return configured() and not _state["failed"]
+
+
+def open_table(name):
+    """Table client for `name`, or None if no storage is configured. Raises if the storage cannot be used."""
+    cs = os.environ.get("AUDIT_STORAGE_CONNECTION")
+    url = os.environ.get("AUDIT_STORAGE_ACCOUNT_URL")
+    if not cs and not url:
+        return None
+    from azure.data.tables import TableServiceClient
+    if cs:
+        svc = TableServiceClient.from_connection_string(cs)
+    else:
+        from azure.identity import DefaultAzureCredential
+        svc = TableServiceClient(endpoint=url, credential=DefaultAzureCredential())
+    try:
+        return svc.create_table_if_not_exists(name)
+    except Exception as e:
+        if cs:
+            raise
+        logging.info("could not create table %s (%s); using it if it already exists", name, type(e).__name__)
+        return svc.get_table_client(name)
 
 
 def _table():
     if _state["table"] is not None:
         return _state["table"]
-    cs = os.environ.get("AUDIT_STORAGE_CONNECTION")
-    if not cs or _state["failed"]:
+    if not configured() or _state["failed"]:
         return None
     try:
-        from azure.data.tables import TableServiceClient
-        _state["table"] = TableServiceClient.from_connection_string(cs).create_table_if_not_exists(TABLE)
+        _state["table"] = open_table(TABLE)
         return _state["table"]
     except Exception as e:  # never let logging break the API
         logging.warning("audit storage disabled: %s", e)
