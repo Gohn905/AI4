@@ -115,7 +115,7 @@ const TODAY=iso(new Date()),MIN=addD(TODAY,-31),MAX=addD(TODAY,2),isWk=s=>{const
 const esc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const money=n=>'RM '+(Math.abs(n)>=100?Math.round(n).toLocaleString('en-MY'):n.toFixed(2));
 let saved=null;try{saved=JSON.parse(localStorage.getItem('facility'))}catch(e){}
-let pend=null,last=null,srcNote='',M=null;try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
+let pend=null,last=null,srcNote='',M=null,aiFacts=null;const aiCache=new Map();try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
 let F=Object.assign({},DEF,saved||{}),view='day',cur=TODAY,sel='bal',cache=new Map(),tok=0;
 const tf=()=>TF[F.volt+F.struct],tou=()=>F.struct=='T';
 
@@ -169,6 +169,7 @@ function kpis(items){return '<div class="kpis">'+items.map(k=>`<div class="k"><s
 
 function dayHtml(R,rows){
  if(!R[sel])sel='base';const b=R.base,r=R[sel],sv=(1-r.cost/b.cost)*100||0,c=b.c;last={view:'day',key:cur,base:b.cost,cost:r.cost,save:b.cost-r.cost};
+ aiFacts={day:parse(cur).toLocaleDateString('en-GB',{weekday:'long'}),strategy:NAMES[sel].replace('Optimiser: ',''),tariff:tf().n,billed:c.mdH.length>0,base_cost:+b.cost.toFixed(2),plan_cost:+r.cost.toFixed(2),base_peak:+b.peak.toFixed(1),plan_peak:+r.peak.toFixed(1),solar_pct:+r.util.toFixed(1),co2_pct:b.co2?+((r.co2/b.co2-1)*100).toFixed(2):null,charge:rg(r.ch,1),discharge:rg(r.b,1),shift:rg(r.fl,1)};
  const tbl=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Grid share</th><th>Billed peak, kW</th><th>CO&#8322;, kg</th><th>CO&#8322; vs baseline</th></tr>`+rows.map(s=>{const x=R[s.k],v=(1-x.cost/b.cost)*100,cd=b.co2?(x.co2/b.co2-1)*100:0;
   return `<tr class="${s.k==sel?'sel':''}"><td>${NAMES[s.k]}</td><td>${x.cost.toFixed(2)}</td><td class="${v>0.05?'good':''}">${s.k=='base'?'&mdash;':v.toFixed(1)+'%'}</td><td>${x.util.toFixed(0)}%</td><td>${(sum(x.g)/sum(x.ld)*100).toFixed(0)}%</td><td>${x.peak.toFixed(0)}</td><td>${x.co2.toFixed(0)}</td><td style="${s.k!='base'&&cd>0.05?'color:#d9a441':''}" class="${s.k!='base'&&cd<-0.05?'good':''}">${s.k=='base'||!b.co2?'&mdash;':(cd>=0?'+':'')+cd.toFixed(1)+'%'}</td></tr>`}).join('');
  const ng=sum(b.ld)*F.ef,cc=b.co2?(r.co2/b.co2-1)*100:0,nm=NAMES[sel];
@@ -187,7 +188,8 @@ function dayHtml(R,rows){
  <div class="card"><h2>Where the power comes from, hour by hour</h2>${draw(r,b,c.win)}</div>
  <div class="card"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
  <p class="note">${ann}</p><p class="note">${tc}</p><p class="note">${carbon}</p></div>
- <div class="card"><h2>Recommended actions</h2><ul>${recs(r,b)}</ul><p class="note">Generated from the selected strategy's schedule. Plain-language AI explanations come later.</p><p class="note">${esc(fn)}</p></div>`}
+ <div class="card"><h2>Recommended actions</h2><ul>${recs(r,b)}</ul><p class="note">Generated from the selected strategy's schedule.</p><p class="note">${esc(fn)}</p></div>
+ <div class="card"><h2>Plain-English summary</h2><p id="aiTxt" class="note" style="margin-top:0">A short written explanation of this plan, in three sentences.</p><button class="on" id="aiBtn" data-ai="1" style="margin-top:8px">Explain this plan</button></div>`}
 
 function rel(d){return d<TODAY?['Past','']:d==TODAY?['Today','t']:d==addD(TODAY,1)?['Tomorrow','f']:['Forecast','f']}
 function periodHtml(dates,items){
@@ -248,19 +250,29 @@ async function render(){
    if(res[0].status!='fulfilled')throw res[0].reason;
    const R={},ok=[];res.forEach((x,i)=>{if(x.status=='fulfilled'){R[rows[i].k]=x.value;ok.push(rows[i])}});
    const miss=res.filter(x=>x.status!='fulfilled').length;
-   $('out').innerHTML=(miss?`<div class="card err">The optimiser did not answer, so only the baseline is shown. Refresh in a minute.</div>`:'')+dayHtml(R,ok);changeCard();return}
+   $('out').innerHTML=(miss?`<div class="card err">The optimiser did not answer, so only the baseline is shown. Refresh in a minute.</div>`:'')+dayHtml(R,ok);aiRestore();changeCard();return}
   const items=dates.map(()=>null),idx=dates.map((x,i)=>i).filter(i=>dates[i]>=MIN&&dates[i]<=MAX);
   const run=async i=>{try{items[i]={b:await getRun(dates[i],'base'),r:await getRun(dates[i],dates[i]<TODAY?F.follow:sel)}}catch(e){items[i]=null}};
   if(idx.length){await run(idx[0]);for(let k=1;k<idx.length;k+=6){await Promise.all(idx.slice(k,k+6).map(run));if(my!=tok)return}}
   if(my!=tok)return;$('out').innerHTML=periodHtml(dates,items);changeCard()
  }catch(e){if(my==tok)$('out').innerHTML=`<div class="card err">${esc(e.message)}</div>`}}
 
+
+function aiShow(j){$('aiTxt').innerHTML=esc(j.text)+'<br><small>'+(j.source=='ai'?'Written by an AI model (Azure AI Foundry) from the optimiser\'s numbers. Every number in it was checked against those numbers.':'Standard text built from the optimiser\'s numbers. The AI model was not used'+(j.note?' ('+esc(j.note)+')':'')+'.')+'</small>'}
+function aiRestore(){const k=aiFacts&&JSON.stringify(aiFacts);if(k&&aiCache.has(k)&&$('aiTxt'))aiShow(aiCache.get(k))}
+async function explainClick(){if(!aiFacts)return;const k=JSON.stringify(aiFacts),btn=$('aiBtn');
+ if(aiCache.has(k)){aiShow(aiCache.get(k));return}
+ btn.disabled=true;$('aiTxt').textContent='Writing the summary...';
+ try{const j=await api('/api/explain',{method:'POST',headers:{'Content-Type':'application/json'},body:k});aiCache.set(k,j);aiShow(j)}
+ catch(e){$('aiTxt').textContent='The explanation service did not answer ('+e.message+'). The action list above has the same facts.'}
+ btn.disabled=false}
 function step(n){if(view=='day')cur=addD(cur,n);else if(view=='week')cur=addD(cur,7*n);else{const d=parse(cur);d.setDate(1);d.setMonth(d.getMonth()+n);cur=iso(d)}render()}
 const go=x=>{view='day';cur=x;render()};
 $('yes').onclick=()=>go(addD(TODAY,-1));$('tod').onclick=()=>go(TODAY);$('tom').onclick=()=>go(addD(TODAY,1));
 $('vday').onclick=()=>{view='day';render()};$('vweek').onclick=()=>{view='week';render()};$('vmonth').onclick=()=>{view='month';render()};
 $('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);$('dt').onchange=e=>{if(e.target.value){cur=e.target.value;render()}};
-$('out').onclick=e=>{const x=e.target.closest('[data-x]');if(x){x.closest('.card').remove();return}
+$('out').onclick=e=>{if(e.target.closest('[data-ai]')){explainClick();return}
+ const x=e.target.closest('[data-x]');if(x){x.closest('.card').remove();return}
  const b=e.target.closest('[data-d]');if(b&&!b.classList.contains('na'))go(b.dataset.d)};
 $('tabs').onclick=e=>{const b=e.target.closest('[data-s]');if(b){sel=b.dataset.s;render()}};
 $('qbtn').onclick=()=>{const w=$('why');w.hidden=!w.hidden;$('qbtn').setAttribute('aria-expanded',String(!w.hidden))};
