@@ -5,7 +5,7 @@
 <style>
 :root{--bg:#eef3f6;--card:#fff;--ink:#12303f;--mut:#5b7280;--mute:#5b7280;--line:#d3dee4;--acc:#12303f;--sun:#f2a900;--bat:#1f8a8a;--grid:#b5483a;--shift:#b24fc9;--blue:#2563eb;--good:#15803d;--bad:#b42318;--link:#1d4ed8}
 @media(prefers-color-scheme:dark){:root{--bg:#0e1b22;--card:#15262f;--ink:#e4eef2;--mut:#8ea4af;--mute:#8ea4af;--line:#2a3f4a;--acc:#e4eef2;--good:#4ade80;--bad:#f87171;--link:#8ab4ff}}
-a{color:var(--link)}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
+[hidden]{display:none!important}a{color:var(--link)}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
 main{max-width:1320px;margin:0 auto;padding:16px}.layout{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}.mainCol,.side{min-width:0}
 @media(min-width:960px){.layout{grid-template-columns:minmax(0,1fr) 350px;align-items:start}.side{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow-y:auto;padding-right:2px}}h1{font-size:22px;margin:0}h2{font-size:16px;margin:0 0 8px}
 .sub{color:var(--mut);font-size:13px;margin:2px 0 14px}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
@@ -27,7 +27,7 @@ td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}td:fi
 .card.fcast{border-style:dashed;border-color:var(--blue)}.c.fc{border-style:dashed}.stats{display:flex;flex-wrap:wrap;gap:18px;margin-top:8px;font-size:14px}.stats span{color:var(--mut);font-size:12px;display:block}
 #qbtn{border-radius:50%;width:28px;height:28px;padding:0;font-weight:700}@media(max-width:600px){.c{min-height:60px;font-size:12px}}
 </style></head><body><main>
-<div class="bar"><h1>Facility Energy Planner</h1><span class="sp"></span><span id="auth" class="note"></span></div>
+<div class="bar"><h1>Facility Energy Planner</h1><span class="sp"></span><span id="demoTag" class="tag" hidden>DEMO: fictional factory, synthetic data</span> <span id="auth" class="note"></span></div>
 <div id="amsg" class="note" style="margin:0 0 6px"></div>
 <p class="sub">Pick a day, week or month and a strategy. See what the plan saves compared with the baseline.</p>
 
@@ -61,6 +61,7 @@ td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}td:fi
 <div id="out"><div class="card note">Loading&hellip;</div></div>
 </div>
 <aside class="side">
+<div class="card"><b>New here?</b> <span class="note">Load a fictional demo factory with 30 days of synthetic meter readings.</span><br><button class="on" id="demo_go" style="margin-top:8px">Load demo factory</button></div>
 <details class="card" id="setup"><summary id="fsum">My facility</summary>
 <p class="note">One-time setup, saved in this browser. Use the numbers from your latest TNB bill.</p>
 <div class="form" style="margin-top:10px">
@@ -118,7 +119,7 @@ const TODAY=iso(new Date()),MIN=addD(TODAY,-31),MAX=addD(TODAY,2),isWk=s=>{const
 const esc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const money=n=>'RM '+(Math.abs(n)>=100?Math.round(n).toLocaleString('en-MY'):n.toFixed(2));
 let saved=null;try{saved=JSON.parse(localStorage.getItem('facility'))}catch(e){}
-let pend=null,last=null,srcNote='',M=null,aiFacts=null;const aiCache=new Map();try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
+let chartTab='use',pend=null,last=null,srcNote='',M=null,aiFacts=null;const aiCache=new Map();try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
 let F=Object.assign({},DEF,saved||{}),view='day',cur=TODAY,sel='bal',cache=new Map(),tok=0;
 const tf=()=>TF[F.volt+F.struct],tou=()=>F.struct=='T';
 
@@ -179,11 +180,10 @@ function fcCard(fc,past,fn){
  const dl=fc.meter=='actual'?'Demand (your meter reading)':fc.meter=='typical'?'Demand (typical pattern from your meter data)':past?'Demand (modelled)':'Demand (forecast)',
   E=sum(fc.pv),av=a=>sum(a)/a.length;
  const rng=band?` Likely range ${Math.round(sum(fc.pv_p10))} to ${Math.round(sum(fc.pv_p90))} kWh.`:'';
- return `<div class="card${past?'':' fcast'}"><h2>${past?'Weather and solar record':'Forecast inputs: weather, solar and demand'} <span class="tag ${past?'':'f'}">${past?'recorded':'forecast'}</span></h2>
- <svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Solar and demand ${past?'record':'forecast'}">${g}</svg>
+ return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Solar and demand ${past?'record':'forecast'}">${g}</svg>
  <div class="legend"><span><i style="background:var(--sun)"></i>Solar output, kW${past?'':' (expected)'}</span>${band?'<span><i style="background:var(--sun);opacity:.3"></i>Likely range (10% to 90%)</span>':''}<span><i style="background:none;border-top:2px dashed var(--mute);height:0;width:14px"></i>${dl}, kW</span></div>
  <div class="stats"><div><span>Highest temperature</span><b>${Math.max(...fc.temp).toFixed(1)} &deg;C</b></div><div><span>Average cloud cover</span><b>${Math.round(av(fc.cloud))}%</b></div><div><span>Strongest sunshine</span><b>${Math.round(Math.max(...fc.ghi))} W/m&sup2;</b></div><div><span>Solar energy ${past?'':'expected '}</span><b>${Math.round(E)} kWh</b></div></div>
- <p class="note">${past?'Rebuilt from recorded weather, not from an inverter reading.':'Not measured: this is a prediction, so real values will differ.'}${rng}</p><p class="note">${esc(fn)}</p></div>`}
+ <p class="note">${past?'Rebuilt from recorded weather, not from an inverter reading.':'Not measured: this is a prediction, so real values will differ.'}${rng}</p><p class="note">${esc(fn)}</p>`}
 
 function kpis(items){return '<div class="kpis">'+items.map(k=>`<div class="k"><span>${k[0]}</span><b class="${k[2]||''}">${k[1]}</b><span>${k[3]||''}</span></div>`).join('')+'</div>'}
 
@@ -206,8 +206,8 @@ function dayHtml(R,rows){
  return rib+`<div class="card${past?'':' fcast'}"><h2>${nm} <span class="tag ${past?'':'f'}">${past?'recorded weather':'forecast'}</span></h2>${kpis([['Baseline cost',money(b.cost),'','solar only'],['With this strategy',money(r.cost)],['You save',money(b.cost-r.cost),'good',sv.toFixed(1)+'%'],
   ['Billed peak',c.mdH.length?Math.round(r.peak)+' kW':'none','',c.mdH.length?'baseline '+Math.round(b.peak)+' kW':'no demand charge today'],['Solar used',Math.round(r.util)+'%','',Math.round(sum(r.sol))+' kWh available']])}
  <p class="note">Daily cost includes the monthly demand charge spread over 30 days.</p></div>
- <div class="card${past?'':' fcast'}"><h2>Where the power comes from, hour by hour${past?'':' (forecast)'}</h2>${draw(r,b,c.win)}</div>
- ${fcCard(fc,past,fn)}
+ <div class="card${past?'':' fcast'}"><div class="bar" style="margin-bottom:6px"><h2 id="chTitle" style="margin:0">${chartTab=='wx'?(past?'Weather and solar record (recorded)':'Forecast inputs: weather, solar and demand (forecast)'):'Where the power comes from, hour by hour'+(past?'':' (forecast)')}</h2><span class="sp"></span><span id="chTabs"><button data-ct="use" class="${chartTab=='use'?'on':''}" data-tp="${past?1:0}">Energy usage</button> <button data-ct="wx" class="${chartTab=='wx'?'on':''}">${past?'Recorded weather':'Predicted weather'}</button></span></div>
+ <div id="ct_use"${chartTab=='use'?'':' hidden'}>${draw(r,b,c.win)}</div><div id="ct_wx"${chartTab=='wx'?'':' hidden'}>${fcCard(fc,past,fn)}</div></div>
  <div class="card"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
  <p class="note">${ann}</p><p class="note">${tc}</p><p class="note">${carbon}</p></div>
  <div class="card"><h2>Recommended actions</h2><ul>${recs(r,b)}</ul><p class="note">Generated from the selected strategy's schedule.</p></div>
@@ -293,7 +293,10 @@ const go=x=>{view='day';cur=x;render()};
 $('yes').onclick=()=>go(addD(TODAY,-1));$('tod').onclick=()=>go(TODAY);$('tom').onclick=()=>go(addD(TODAY,1));
 $('vday').onclick=()=>{view='day';render()};$('vweek').onclick=()=>{view='week';render()};$('vmonth').onclick=()=>{view='month';render()};
 $('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);$('dt').onchange=e=>{if(e.target.value){cur=e.target.value;render()}};
-$('out').onclick=e=>{if(e.target.closest('[data-ai]')){explainClick();return}
+$('out').onclick=e=>{const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';$('ct_wx').hidden=chartTab!='wx';
+  $('chTitle').textContent=chartTab=='wx'?(past?'Weather and solar record (recorded)':'Forecast inputs: weather, solar and demand (forecast)'):'Where the power comes from, hour by hour'+(past?'':' (forecast)');
+  document.querySelectorAll?document.querySelectorAll('#chTabs button').forEach(b=>b.classList.toggle('on',b.dataset.ct==chartTab)):0;return}
+ if(e.target.closest('[data-ai]')){explainClick();return}
  const x=e.target.closest('[data-x]');if(x){x.closest('.card').remove();return}
  const b=e.target.closest('[data-d]');if(b&&!b.classList.contains('na'))go(b.dataset.d)};
 $('tabs').onclick=e=>{const b=e.target.closest('[data-s]');if(b){sel=b.dataset.s;render()}};
@@ -330,7 +333,26 @@ $('m_go').onclick=async()=>{const f=$('m_file').files[0];if(!f){$('m_msg').textC
  cache.clear();meterMsg();if(r.skipped)$('m_msg').textContent+=` ${r.skipped} unreadable rows were skipped.`;render()};
 $('m_clear').onclick=()=>{setPend(['<b>Demand source:</b> meter data removed. Demand is back to the modelled profile.']);M=null;try{localStorage.removeItem('meter')}catch(e){}cache.clear();meterMsg();render()};
 meterMsg();
-function fill(){FIELDS.forEach(k=>$('f_'+k).value=F[k]);fillSites();$('fsum').textContent=`My facility: ${F.name}, ${F.volt} ${F.struct=='T'?'ToU':'General'}, ${F.peak} kW peak, ${F.kwp} kWp solar, ${F.bat} kWh battery (tap to edit)`;ratesCard()}
+
+const DEMO={name:'Demo Factory Penang',loc:'5.41,100.33',prof:'factory',follow:'bal',volt:'MV',struct:'T',afa:0,peak:1890,kwp:750,bat:1000,flex:8,lim:'',ef:0.6};
+const WD=[.60,.59,.58,.58,.59,.62,.70,.82,.92,.97,.99,.97,.90,.96,1,.98,.95,.90,.84,.80,.76,.72,.68,.63];
+function rng(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function gauss(r){return Math.sqrt(-2*Math.log(r()||1e-9))*Math.cos(2*Math.PI*r())}
+function demoDays(end){const days={};
+ for(let i=30;i>=1;i--){const d=addD(end,-i),r=rng([...d].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7)),g=parse(d).getDay(),t0=27.5+1.4*gauss(r);
+  let lvl=1+0.03*gauss(r);const u=r();if(u<.04)lvl*=.72;else if(u<.10)lvl*=1.07;
+  days[d]=N.map(h=>{const T=h>=8&&h<20?t0+3.5*Math.sin(Math.PI*(h-8)/12):t0-1,cool=1+0.0075*(T-28),
+   base=g==0?Math.max(.5,WD[h]*.68):g==6?Math.max(.55,WD[h]*.82):WD[h];
+   return +Math.max(300,1650*base*lvl*cool*(1+0.02*gauss(r))).toFixed(1)})}
+ return days}
+$('demo_go').onclick=()=>{const days=demoDays(TODAY),keys=Object.keys(days),grp={wk:[],sat:[],sun:[]};
+ keys.forEach(k=>{const g=parse(k).getDay();grp[g==6?'sat':g==0?'sun':'wk'].push(days[k])});
+ const typ={};for(const t in grp)typ[t]=N.map(h=>+(sum(grp[t].map(a=>a[h]))/grp[t].length).toFixed(1));
+ M={days,typ,from:keys[0],to:keys[keys.length-1],n:keys.length,max:Math.round(Math.max(...typ.wk)),skipped:0,stamp:Date.now()};
+ try{localStorage.setItem('meter',JSON.stringify(M))}catch(e){}
+ meterMsg();FIELDS.forEach(k=>$('f_'+k).value=DEMO[k]);srcNote='Loaded the fictional demo factory.';
+ $('fsave').onclick();if(pend)pend.items.push(`<b>Demand source:</b> synthetic meter readings for the last ${M.n} days (fictional factory, not real data).`)};
+function fill(){$('demoTag').hidden=F.name!=DEMO.name;FIELDS.forEach(k=>$('f_'+k).value=F[k]);fillSites();$('fsum').textContent=`My facility: ${F.name}, ${F.volt} ${F.struct=='T'?'ToU':'General'}, ${F.peak} kW peak, ${F.kwp} kWp solar, ${F.bat} kWh battery (tap to edit)`;ratesCard()}
 let user=null,sites=[];
 const say=t=>{$('fmsg').textContent=t;$('amsg').textContent=t},persist=()=>{try{localStorage.setItem('facility',JSON.stringify(F))}catch(e){}};
 function fillSites(){const s=$('sites');if(!s)return;s.innerHTML=sites.length?sites.map(x=>`<option value="${esc(x.name)}"${x.name==F.name?' selected':''}>${esc(x.name)}</option>`).join(''):'<option value="">No saved facilities yet</option>'}
