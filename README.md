@@ -2,7 +2,7 @@
 
 Planning tool for commercial and industrial facilities with on-site solar. It forecasts solar output and demand, then plans when to charge or discharge a battery and when to run shiftable equipment, so the facility buys less grid power at the billed peak. Built for the **AI4Sustainability Hackfest 2026** (Leader Energy challenge: *AI-Powered Facility Energy Monitoring and Optimisation Planner*).
 
-**Live demo:** https://agreeable-grass-0a785fc10.1.azurestaticapps.net
+**Live demo:** https://white-mud-05f2eb810.1.azurestaticapps.net
 
 > Status: prototype. Demand history is synthetic and the grid emission factor is a placeholder. See [Known limitations](#known-limitations).
 
