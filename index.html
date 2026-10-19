@@ -263,7 +263,7 @@ function aiRestore(){const k=aiFacts&&JSON.stringify(aiFacts);if(k&&aiCache.has(
 async function explainClick(){if(!aiFacts)return;const k=JSON.stringify(aiFacts),btn=$('aiBtn');
  if(aiCache.has(k)){aiShow(aiCache.get(k));return}
  btn.disabled=true;$('aiTxt').textContent='Writing the summary...';
- try{const j=await api('/api/explain',{method:'POST',headers:{'Content-Type':'application/json'},body:k});aiCache.set(k,j);aiShow(j)}
+ try{const j=await api('/api/explain',{method:'POST',headers:{'Content-Type':'application/json'},body:k});if(j.source=='ai')aiCache.set(k,j);aiShow(j)}
  catch(e){$('aiTxt').textContent='The explanation service did not answer ('+e.message+'). The action list above has the same facts.'}
  btn.disabled=false}
 function step(n){if(view=='day')cur=addD(cur,n);else if(view=='week')cur=addD(cur,7*n);else{const d=parse(cur);d.setDate(1);d.setMonth(d.getMonth()+n);cur=iso(d)}render()}
