@@ -22,6 +22,9 @@ ul{margin:6px 0 0;padding-left:20px}.cal{display:grid;grid-template-columns:repe
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.form label{font-size:12px;color:var(--mut);display:block}.form input,.form select{width:100%}
 summary{cursor:pointer;font-weight:600}.err{color:var(--bad)}.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
 td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}td:first-child,th:first-child{text-align:left}th{font-weight:500;color:var(--mut)}tr.sel td{background:color-mix(in srgb,var(--sun) 16%,transparent)}
+@media(prefers-color-scheme:dark){.ribbon{background:rgba(96,165,250,.14)}.ribbon.past{background:rgba(147,160,177,.14)}}
+.ribbon{border-left:6px solid var(--blue);background:rgba(37,99,235,.09);padding:9px 12px;border-radius:6px;font-size:14px;margin-bottom:12px}.ribbon b{letter-spacing:.04em}.ribbon.past{border-left-color:var(--mut);background:rgba(102,114,128,.10)}
+.card.fcast{border-style:dashed;border-color:var(--blue)}.c.fc{border-style:dashed}.stats{display:flex;flex-wrap:wrap;gap:18px;margin-top:8px;font-size:14px}.stats span{color:var(--mut);font-size:12px;display:block}
 #qbtn{border-radius:50%;width:28px;height:28px;padding:0;font-weight:700}@media(max-width:600px){.c{min-height:60px;font-size:12px}}
 </style></head><body><main>
 <div class="bar"><h1>Facility Energy Planner</h1><span class="sp"></span><span id="auth" class="note"></span></div>
@@ -165,6 +168,23 @@ function recs(r,b){const L=[],cap=+F.bat||0;
   const su=rg(r.sol.map((s,h)=>s-r.ld[h]),0);L.push(su?`Solar surplus expected ${su}: store it or run flexible load then.`:'Solar never exceeds site load, so all of it is used on site and the grid covers the shortfall.')}
  return L.map(t=>`<li>${t}</li>`).join('')}
 
+function fcCard(fc,past,fn){
+ const W=760,Hh=210,L=46,B=26,T=10,x=h=>L+(W-L-8)*h/23,hi=fc.pv_p90&&!past?fc.pv_p90:fc.pv,mx=Math.max(...fc.load,...hi,1)*1.1,y=v=>Hh-B-(v/mx)*(Hh-B-T);
+ const pa=a=>a.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join('');let g='';
+ for(let i=0;i<=4;i++){const v=mx*i/4;g+=`<line x1="${L}" x2="${W-8}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--mute)">${Math.round(v)}</text>`}
+ for(let h=0;h<24;h+=3)g+=`<text x="${x(h)}" y="${Hh-8}" text-anchor="middle" font-size="11" fill="var(--mute)">${p2(h)}</text>`;
+ const band=fc.pv_p10&&fc.pv_p90&&!past;
+ if(band){const up=fc.pv_p90.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)),dn=fc.pv_p10.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)).reverse();g+=`<path d="M${up.join('L')}L${dn.join('L')}Z" fill="var(--sun)" opacity=".25"/>`}
+ g+=`<path d="${pa(fc.load)}" stroke="var(--mute)" stroke-dasharray="5 4" fill="none" stroke-width="2"/><path d="${pa(fc.pv)}" stroke="var(--sun)" fill="none" stroke-width="2.5"/>`;
+ const dl=fc.meter=='actual'?'Demand (your meter reading)':fc.meter=='typical'?'Demand (typical pattern from your meter data)':past?'Demand (modelled)':'Demand (forecast)',
+  E=sum(fc.pv),av=a=>sum(a)/a.length;
+ const rng=band?` Likely range ${Math.round(sum(fc.pv_p10))} to ${Math.round(sum(fc.pv_p90))} kWh.`:'';
+ return `<div class="card${past?'':' fcast'}"><h2>${past?'Weather and solar record':'Forecast inputs: weather, solar and demand'} <span class="tag ${past?'':'f'}">${past?'recorded':'forecast'}</span></h2>
+ <svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Solar and demand ${past?'record':'forecast'}">${g}</svg>
+ <div class="legend"><span><i style="background:var(--sun)"></i>Solar output, kW${past?'':' (expected)'}</span>${band?'<span><i style="background:var(--sun);opacity:.3"></i>Likely range (10% to 90%)</span>':''}<span><i style="background:none;border-top:2px dashed var(--mute);height:0;width:14px"></i>${dl}, kW</span></div>
+ <div class="stats"><div><span>Highest temperature</span><b>${Math.max(...fc.temp).toFixed(1)} &deg;C</b></div><div><span>Average cloud cover</span><b>${Math.round(av(fc.cloud))}%</b></div><div><span>Strongest sunshine</span><b>${Math.round(Math.max(...fc.ghi))} W/m&sup2;</b></div><div><span>Solar energy ${past?'':'expected '}</span><b>${Math.round(E)} kWh</b></div></div>
+ <p class="note">${past?'Rebuilt from recorded weather, not from an inverter reading.':'Not measured: this is a prediction, so real values will differ.'}${rng}</p><p class="note">${esc(fn)}</p></div>`}
+
 function kpis(items){return '<div class="kpis">'+items.map(k=>`<div class="k"><span>${k[0]}</span><b class="${k[2]||''}">${k[1]}</b><span>${k[3]||''}</span></div>`).join('')+'</div>'}
 
 function dayHtml(R,rows){
@@ -182,16 +202,18 @@ function dayHtml(R,rows){
  if(sp)fn+=` Solar error ${sp.shown_mae_pct??sp.model_mae_pct}% of kWp vs ${sp.naive_mae_pct}% for yesterday's output.`;
  if(ld)fn+=` Demand error ${ld.model_mae_pct}% of peak vs ${ld.naive_mae_pct}% for same-as-last-week${/SYNTHETIC/.test(m.data_note||'')?' (measured on SYNTHETIC history, not real accuracy)':''}.`;
  if(m.data_note)fn+=' '+m.data_note;if(fc.weather&&fc.weather.stale)fn+=' Weather is a saved copy because the weather service did not answer.';
- return `<div class="card"><h2>${nm}</h2>${kpis([['Baseline cost',money(b.cost),'','solar only'],['With this strategy',money(r.cost)],['You save',money(b.cost-r.cost),'good',sv.toFixed(1)+'%'],
+ const past=cur<TODAY,rib=past?`<div class="ribbon past"><b>RECORDED WEATHER.</b> Demand is ${fc.meter=='actual'?'your real meter reading':'modelled, because no meter data covers this day'}. Savings are what each strategy would have achieved.</div>`:`<div class="ribbon"><b>${cur==TODAY?'FORECAST FOR TODAY.':'FORECAST.'}</b> This is a prediction, not a measurement.${cur==TODAY?' Hours that have already passed are still forecast values.':' This day has not happened yet.'} Weather comes from a weather forecast; solar and demand are calculated from it.</div>`;
+ return rib+`<div class="card${past?'':' fcast'}"><h2>${nm} <span class="tag ${past?'':'f'}">${past?'recorded weather':'forecast'}</span></h2>${kpis([['Baseline cost',money(b.cost),'','solar only'],['With this strategy',money(r.cost)],['You save',money(b.cost-r.cost),'good',sv.toFixed(1)+'%'],
   ['Billed peak',c.mdH.length?Math.round(r.peak)+' kW':'none','',c.mdH.length?'baseline '+Math.round(b.peak)+' kW':'no demand charge today'],['Solar used',Math.round(r.util)+'%','',Math.round(sum(r.sol))+' kWh available']])}
  <p class="note">Daily cost includes the monthly demand charge spread over 30 days.</p></div>
- <div class="card"><h2>Where the power comes from, hour by hour</h2>${draw(r,b,c.win)}</div>
+ <div class="card${past?'':' fcast'}"><h2>Where the power comes from, hour by hour${past?'':' (forecast)'}</h2>${draw(r,b,c.win)}</div>
+ ${fcCard(fc,past,fn)}
  <div class="card"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
  <p class="note">${ann}</p><p class="note">${tc}</p><p class="note">${carbon}</p></div>
- <div class="card"><h2>Recommended actions</h2><ul>${recs(r,b)}</ul><p class="note">Generated from the selected strategy's schedule.</p><p class="note">${esc(fn)}</p></div>
+ <div class="card"><h2>Recommended actions</h2><ul>${recs(r,b)}</ul><p class="note">Generated from the selected strategy's schedule.</p></div>
  <div class="card"><h2>Plain-English summary</h2><p id="aiTxt" class="note" style="margin-top:0">A short written explanation of this plan, in three sentences.</p><button class="on" id="aiBtn" data-ai="1" style="margin-top:8px">Explain this plan</button></div>`}
 
-function rel(d){return d<TODAY?['Past','']:d==TODAY?['Today','t']:d==addD(TODAY,1)?['Tomorrow','f']:['Forecast','f']}
+function rel(d){return d<TODAY?['Past (recorded weather)','']:d==TODAY?['Today (forecast)','t']:d==addD(TODAY,1)?['Tomorrow (forecast)','f']:['Forecast','f']}
 function periodHtml(dates,items){
  const ok=items.filter(x=>x&&x.r);if(!ok.length)return '<div class="card err">No data for these dates. Data is available from 31 days ago to 2 days ahead.</div>';
  const n=ok.length,t=tf(),tot=(w,k)=>sum(ok.map(x=>x[w][k])),pkb=Math.max(...ok.map(x=>x.b.peak)),pk=Math.max(...ok.map(x=>x.r.peak));
@@ -204,9 +226,9 @@ function periodHtml(dates,items){
  let cells='';
  if(view=='month'){cells+=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<div class="dh">${x}</div>`).join('');cells+='<div></div>'.repeat((parse(dates[0]).getDay()+6)%7)}
  dates.forEach((d,i)=>{const x=items[i],tg=rel(d)[0],has=x&&x.r;
-  const body=has?`<b class="good">${money(x.b.cost-x.r.cost)}</b><small>${tg=='Past'?'':tg}</small>`:'<small>no data</small>';
-  cells+=`<button class="c${d==cur?' sel':''}${has?'':' na'}" data-d="${d}"><small>${view=='week'?parse(d).toLocaleDateString('en-GB',{weekday:'short'})+' ':''}${parse(d).getDate()}${isWk(d)?'':' (wknd)'}</small>${body}</button>`});
- return `<div class="card"><h2>Strategy vs baseline</h2>${head}<p class="note">${notes}Demand charge is prorated by the days shown, using the highest peak in the period. Tap a day to open it with the full comparison.</p></div>
+  const body=has?`<b class="good">${money(x.b.cost-x.r.cost)}</b><small>${d>=TODAY?'forecast':''}</small>`:'<small>no data</small>';
+  cells+=`<button class="c${d>=TODAY?' fc':''}${d==cur?' sel':''}${has?'':' na'}" data-d="${d}"><small>${view=='week'?parse(d).toLocaleDateString('en-GB',{weekday:'short'})+' ':''}${parse(d).getDate()}${isWk(d)?'':' (wknd)'}</small>${body}</button>`});
+ return `<div class="card"><h2>Strategy vs baseline</h2>${head}<p class="note">${notes}Demand charge is prorated by the days shown, using the highest peak in the period. Dashed days are forecasts, solid days use recorded weather. Tap a day to open it with the full comparison.</p></div>
  <div class="card"><div class="cal" style="${view=='week'?'grid-template-columns:repeat(auto-fit,minmax(100px,1fr))':''}">${cells}</div></div>`}
 
 function span(){if(view=='day')return [cur];const d=parse(cur);
