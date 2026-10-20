@@ -17,6 +17,8 @@ import logging
 import os
 import re
 import time
+
+import aoai
 from collections import deque
 from datetime import date, timedelta
 from urllib.error import HTTPError
@@ -189,8 +191,12 @@ def _endpoint():
 
 
 def call_model(messages):
-    ep, key, dep = _endpoint(), os.environ.get("AZURE_OPENAI_KEY", ""), os.environ.get("AZURE_OPENAI_DEPLOYMENT", "")
-    if not (ep and key and dep):
+    ep, dep = _endpoint(), os.environ.get("AZURE_OPENAI_DEPLOYMENT", "")
+    try:
+        auth = aoai.auth_headers()
+    except Exception as e:
+        raise Unavailable("AI sign-in failed: " + type(e).__name__)
+    if not (ep and dep and auth):
         raise Unavailable("AI model is not configured")
     now = time.time()
     while _calls and now - _calls[0] > 60:
@@ -204,7 +210,7 @@ def call_model(messages):
         body["reasoning_effort"] = eff
     for _ in range(3):
         req = Request(ep + "/openai/v1/chat/completions", data=json.dumps(body).encode(),
-                      headers={"Content-Type": "application/json", "api-key": key})
+                      headers={"Content-Type": "application/json", **auth})
         try:
             with urlopen(req, timeout=25) as r:
                 j = json.loads(r.read().decode("utf-8"))
