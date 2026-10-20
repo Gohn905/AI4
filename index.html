@@ -28,6 +28,12 @@ td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}td:fi
 h3.sec{font-size:14px;margin:14px 0 6px;color:var(--ink)}details.adv{margin-top:12px}details.adv>summary{font-weight:500;color:var(--mut)}
 #tourShade{position:fixed;inset:0;z-index:59}#tourHole{position:fixed;z-index:60;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.62),0 0 0 3px var(--sun);transition:top .25s,left .25s,width .25s,height .25s;pointer-events:none}
 #tourTip{position:fixed;z-index:61;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.4)}#tourTip h3{margin:0 0 4px;font-size:16px}#tourTip p{margin:0 0 12px;font-size:14px}.tbtns{display:flex;gap:8px;align-items:center}
+#chatBtn{position:fixed;right:16px;bottom:16px;z-index:40;border-radius:99px;padding:10px 16px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+#chatPanel{position:fixed;right:16px;bottom:66px;width:min(390px,calc(100vw - 32px));height:min(580px,calc(100vh - 100px));z-index:41;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.chead{display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}#chatLog{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:90%;padding:8px 10px;border-radius:10px;font-size:14px;white-space:pre-wrap}.msg.u{align-self:flex-end;background:var(--acc);color:var(--card)}.msg.b{align-self:flex-start;background:var(--bg);border:1px solid var(--line)}.msg.n{align-self:center;font-size:12px;color:var(--mut)}
+.prop{border:1px dashed var(--sun);border-radius:10px;padding:8px 10px;font-size:13px}.prop ul{margin:4px 0 8px;padding-left:18px}.chips{display:flex;flex-wrap:wrap;gap:6px;padding:6px 12px}.chips button{font-size:12px;padding:4px 8px;border-radius:99px}
+.cin{display:flex;gap:6px;padding:8px 10px;border-top:1px solid var(--line);align-items:flex-end}.cin textarea{flex:1;resize:none;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
 #qbtn{border-radius:50%;width:28px;height:28px;padding:0;font-weight:700}@media(max-width:600px){.c{min-height:60px;font-size:12px}}
 </style></head><body><main>
 <div class="bar"><h1>Facility Energy Planner</h1><span class="sp"></span><button id="tourBtn">Take the tour</button> <span id="auth" class="note"></span></div>
@@ -101,6 +107,14 @@ h3.sec{font-size:14px;margin:14px 0 6px;color:var(--ink)}details.adv{margin-top:
 <div class="card" id="rates"></div>
 </aside></div>
 </main>
+<button id="chatBtn" class="on" aria-expanded="false" aria-controls="chatPanel">Ask the assistant</button>
+<div id="chatPanel" role="dialog" aria-label="Assistant" hidden>
+<div class="chead"><b>Assistant</b><span class="sp"></span><button id="chatX" aria-label="Close assistant">Close</button></div>
+<div id="chatLog" aria-live="polite"></div>
+<div class="note" id="chatTyping" hidden style="padding:0 12px">Thinking&hellip;</div>
+<div id="chatChips" class="chips"><button data-chip="Set up a factory in Penang">Set up a factory in Penang</button><button data-chip="Show this month with the cost-saving strategy">Show this month</button><button data-chip="What does the Balanced strategy do?">What is Balanced?</button></div>
+<p class="note" style="padding:0 12px;margin:4px 0">Messages go to an Azure AI model. Please do not paste names or account numbers. Meter CSV files stay in your browser. I propose, you confirm.</p>
+<div class="cin"><input type="file" id="chatFile" accept=".csv,.txt,text/csv,text/plain" hidden><button id="chatAttach" title="Attach a meter CSV, or a .txt file with the text of your bill">Attach</button><textarea id="chatIn" rows="2" placeholder="Describe your facility, or ask me to show something" aria-label="Message"></textarea><button class="on" id="chatSend">Send</button></div></div>
 <div id="tourShade" hidden></div><div id="tourHole" hidden></div>
 <div id="tourTip" role="dialog" aria-modal="true" aria-labelledby="tourTitle" hidden><h3 id="tourTitle"></h3><p id="tourText"></p><div class="tbtns"><span class="note" id="tourCount" style="margin:0"></span><span class="sp"></span><button id="tourSkip">Skip</button><button id="tourBack">Back</button><button class="on" id="tourNext">Next</button></div></div>
 <script>
@@ -122,7 +136,7 @@ const TODAY=iso(new Date()),MIN=addD(TODAY,-31),MAX=addD(TODAY,2),isWk=s=>{const
 const esc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const money=n=>'RM '+(Math.abs(n)>=100?Math.round(n).toLocaleString('en-MY'):n.toFixed(2));
 let saved=null;try{saved=JSON.parse(localStorage.getItem('facility'))}catch(e){}
-let chartTab='use',pend=null,last=null,srcNote='',M=null,aiFacts=null;const aiCache=new Map();try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
+let lastPlan=null,chartTab='use',pend=null,last=null,srcNote='',M=null,aiFacts=null;const aiCache=new Map();try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
 let F=Object.assign({},DEF,saved||{}),view='day',cur=TODAY,sel='bal',cache=new Map(),tok=0;
 const tf=()=>TF[F.volt+F.struct],tou=()=>F.struct=='T';
 
@@ -204,7 +218,7 @@ function kpis(items){return '<div class="kpis">'+items.map(k=>`<div class="k"><s
 
 function dayHtml(R,rows){
  if(!R[sel])sel='base';const b=R.base,r=R[sel],sv=(1-r.cost/b.cost)*100||0,c=b.c;last={view:'day',key:cur,base:b.cost,cost:r.cost,save:b.cost-r.cost};
- aiFacts={day:parse(cur).toLocaleDateString('en-GB',{weekday:'long'}),strategy:NAMES[sel].replace('Optimiser: ',''),tariff:tf().n,billed:c.mdH.length>0,base_cost:+b.cost.toFixed(2),plan_cost:+r.cost.toFixed(2),base_peak:+b.peak.toFixed(1),plan_peak:+r.peak.toFixed(1),solar_pct:+r.util.toFixed(1),co2_pct:b.co2?+((r.co2/b.co2-1)*100).toFixed(2):null,charge:rg(r.ch,1),discharge:rg(r.b,1),shift:rg(r.fl,1)};
+ aiFacts={day:parse(cur).toLocaleDateString('en-GB',{weekday:'long'}),strategy:NAMES[sel].replace('Optimiser: ',''),tariff:tf().n,billed:c.mdH.length>0,base_cost:+b.cost.toFixed(2),plan_cost:+r.cost.toFixed(2),base_peak:+b.peak.toFixed(1),plan_peak:+r.peak.toFixed(1),solar_pct:+r.util.toFixed(1),co2_pct:b.co2?+((r.co2/b.co2-1)*100).toFixed(2):null,charge:rg(r.ch,1),discharge:rg(r.b,1),shift:rg(r.fl,1)};lastPlan={date:cur,sel,r,b};
  const tbl=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Grid share</th><th>Billed peak, kW</th><th>CO&#8322;, kg</th><th>CO&#8322; vs baseline</th></tr>`+rows.map(s=>{const x=R[s.k],v=(1-x.cost/b.cost)*100,cd=b.co2?(x.co2/b.co2-1)*100:0;
   return `<tr class="${s.k==sel?'sel':''}"><td>${NAMES[s.k]}</td><td>${x.cost.toFixed(2)}</td><td class="${v>0.05?'good':''}">${s.k=='base'?'&mdash;':v.toFixed(1)+'%'}</td><td>${x.util.toFixed(0)}%</td><td>${(sum(x.g)/sum(x.ld)*100).toFixed(0)}%</td><td>${x.peak.toFixed(0)}</td><td>${x.co2.toFixed(0)}</td><td style="${s.k!='base'&&cd>0.05?'color:#d9a441':''}" class="${s.k!='base'&&cd<-0.05?'good':''}">${s.k=='base'||!b.co2?'&mdash;':(cd>=0?'+':'')+cd.toFixed(1)+'%'}</td></tr>`}).join('');
  const ng=sum(b.ld)*F.ef,cc=b.co2?(r.co2/b.co2-1)*100:0,nm=NAMES[sel];
@@ -226,7 +240,7 @@ function dayHtml(R,rows){
  <div class="card" data-tour="compare"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
  <p class="note">${ann}</p><p class="note">${tc}</p><p class="note">${carbon}</p></div>
  <div class="card" data-tour="actions"><h2>Recommended actions</h2><ul>${recs(r,b)}</ul><p class="note">Generated from the selected strategy's schedule.</p></div>
- <div class="card" data-tour="ai"><h2>Plain-English summary</h2><p id="aiTxt" class="note" style="margin-top:0">A short written explanation of this plan, in three sentences.</p><button class="on" id="aiBtn" data-ai="1" style="margin-top:8px">Explain this plan</button></div>`}
+ ${apCard()}<div class="card" data-tour="ai"><h2>Plain-English summary</h2><p id="aiTxt" class="note" style="margin-top:0">A short written explanation of this plan, in three sentences.</p><button class="on" id="aiBtn" data-ai="1" style="margin-top:8px">Explain this plan</button></div>`}
 
 function rel(d){return d<TODAY?['Past (recorded weather)','']:d==TODAY?['Today (forecast)','t']:d==addD(TODAY,1)?['Tomorrow (forecast)','f']:['Forecast','f']}
 function periodHtml(dates,items){
@@ -287,7 +301,7 @@ async function render(){
    if(res[0].status!='fulfilled')throw res[0].reason;
    const R={},ok=[];res.forEach((x,i)=>{if(x.status=='fulfilled'){R[rows[i].k]=x.value;ok.push(rows[i])}});
    const miss=res.filter(x=>x.status!='fulfilled').length;
-   $('out').innerHTML=(miss?`<div class="card err">The optimiser did not answer, so only the baseline is shown. Refresh in a minute.</div>`:'')+dayHtml(R,ok);aiRestore();changeCard();maybeTour();setTimeout(()=>warm(my),1500);return}
+   $('out').innerHTML=(miss?`<div class="card err">The optimiser did not answer, so only the baseline is shown. Refresh in a minute.</div>`:'')+dayHtml(R,ok);aiRestore();apShow();changeCard();maybeTour();setTimeout(()=>warm(my),1500);return}
   const items=dates.map(()=>null),idx=dates.map((x,i)=>i).filter(i=>dates[i]>=MIN&&dates[i]<=MAX);
   let done=0;const run=async i=>{try{items[i]={b:await getRun(dates[i],'base'),r:await getRun(dates[i],dates[i]<TODAY?F.follow:sel)}}catch(e){items[i]=null}done++;const p=$('prog');if(p)p.textContent=`Loading day ${done} of ${idx.length}. A new day takes a few seconds, then it is saved on this device.`};
   if(idx.length){await run(idx[0]);for(let k=1;k<idx.length;k+=6){await Promise.all(idx.slice(k,k+6).map(run));if(my!=tok)return}}
@@ -309,17 +323,19 @@ async function warm(my){if(my!=tok||view=='month')return;const mon=addD(cur,-((p
   await new Promise(r=>setTimeout(r,120))}}
 
 const STEPS=[
- {s:'#dateCard',t:'1. Pick a day',x:'Use Yesterday, Today and Tomorrow, or the arrows and the date box. Day, Week and Month change the view. In Week and Month, tap a day to open it. Dashed boxes are forecasts.'},
- {s:'#tabs',t:'2. Choose a strategy',x:'Baseline is solar only. The three optimiser strategies plan the battery and the flexible equipment. The ? button explains what the optimiser decides.'},
- {s:'[data-tour=ribbon]',t:'3. Forecast or recorded?',x:'This banner always says whether the day is a prediction or recorded weather. Forecast cards have dashed borders.'},
- {s:'[data-tour=kpi]',t:'4. The headline numbers',x:'Cost without the plan, with the plan, what you save, the billed peak and how much solar is used.'},
- {s:'[data-tour=chart]',t:'5. Hour by hour',x:'Energy usage shows where each hour\'s power comes from. Press Predicted weather to see the weather and solar forecast with its likely range.'},
- {s:'[data-tour=compare]',t:'6. Compare strategies',x:'Every strategy side by side: cost, saving, solar used, billed peak and CO2.'},
- {s:'[data-tour=actions]',t:'7. What to do',x:'The schedule for the selected strategy: when to charge, when to discharge and when to run flexible equipment.'},
- {s:'[data-tour=ai]',t:'8. Plain-English summary',x:'An AI model writes three sentences from the optimiser\'s numbers. Every number is checked, so it cannot invent figures.'},
- {s:'#setup',t:'9. Set up your facility',x:'Enter it once: tariff and maximum demand from your bill (or upload meter readings), plus solar and battery sizes. Changes apply straight away.'},
- {s:'#rates',t:'10. TNB rates',x:'The tariff rates behind every calculation, with all tariffs in the table.'},
- {s:'#auth',t:'11. Keep your work',x:'Sign in to save your facility to your account and open it on any device.'}];
+ {s:'#dateCard',t:'Pick a day',x:'Use Yesterday, Today and Tomorrow, or the arrows and the date box. Day, Week and Month change the view. In Week and Month, tap a day to open it. Dashed boxes are forecasts.'},
+ {s:'#tabs',t:'Choose a strategy',x:'Baseline is solar only. The three optimiser strategies plan the battery and the flexible equipment. The ? button explains what the optimiser decides.'},
+ {s:'[data-tour=ribbon]',t:'Forecast or recorded?',x:'This banner always says whether the day is a prediction or recorded weather. Forecast cards have dashed borders.'},
+ {s:'[data-tour=kpi]',t:'The headline numbers',x:'Cost without the plan, with the plan, what you save, the billed peak and how much solar is used.'},
+ {s:'[data-tour=chart]',t:'Hour by hour',x:'Energy usage shows where each hour\'s power comes from. Press Predicted weather to see the weather and solar forecast with its likely range.'},
+ {s:'[data-tour=compare]',t:'Compare strategies',x:'Every strategy side by side: cost, saving, solar used, billed peak and CO2.'},
+ {s:'[data-tour=actions]',t:'What to do',x:'The schedule for the selected strategy: when to charge, when to discharge and when to run flexible equipment.'},
+ {s:'[data-tour=approve]',t:'Approve and export',x:'Approve a plan to record who accepted it, then download the schedule as CSV or JSON for your operators. Nothing is sent to equipment: you stay in control.'},
+ {s:'[data-tour=ai]',t:'Plain-English summary',x:'An AI model writes three sentences from the optimiser\'s numbers. Every number is checked, so it cannot invent figures.'},
+ {s:'#setup',t:'Set up your facility',x:'Enter it once: tariff and maximum demand from your bill (or upload meter readings), plus solar and battery sizes. Changes apply straight away.'},
+ {s:'#rates',t:'TNB rates',x:'The tariff rates behind every calculation, with all tariffs in the table.'},
+ {s:'#chatBtn',t:'Ask the assistant',x:'Type what you need in plain words: describe your facility, open a day or week, switch strategy, or attach a meter CSV. It proposes, and you confirm before anything changes.'},
+ {s:'#auth',t:'Keep your work',x:'Sign in to save your facility to your account and open it on any device.'}];
 let tI=-1,autoTried=false;
 const tOK=i=>{const e=document.querySelector(STEPS[i].s);return !!(e&&e.getClientRects&&e.getClientRects().length)};
 function tPlace(){if(tI<0)return;const el=document.querySelector(STEPS[tI].s);if(!el)return;const r=el.getBoundingClientRect(),p=6,H=$('tourHole'),T=$('tourTip');
@@ -340,8 +356,85 @@ const tNext=()=>{if($('tourNext').textContent=='Done')tEnd();else tShow(tI+1,1)}
 async function tStart(){tEnd();view='day';if(!(isWk(cur)&&cur>=TODAY&&cur<=MAX)||!document.querySelector('[data-tour=kpi]')){cur=isWk(cur)&&cur>=TODAY&&cur<=MAX?cur:([TODAY,addD(TODAY,1),addD(TODAY,2)].find(isWk)||TODAY);await render()}tShow(0,1)}
 function maybeTour(){let seen=null;try{seen=localStorage.getItem('tourDone')}catch(e){}if(seen||tI>=0||autoTried)return;autoTried=true;setTimeout(()=>{if(tI<0&&document.querySelector('[data-tour=kpi]'))tStart()},900)}
 $('tourBtn').onclick=tStart;$('tourNext').onclick=tNext;$('tourBack').onclick=tBack;$('tourSkip').onclick=tEnd;
-document.onkeydown=e=>{if(tI<0)return;if(e.key=='Escape')tEnd();else if(e.key=='ArrowRight')tNext();else if(e.key=='ArrowLeft')tBack()};
+document.onkeydown=e=>{if(tI<0){if(e.key=='Escape'&&!$('chatPanel').hidden)chatOpen(false);return}if(e.key=='Escape')tEnd();else if(e.key=='ArrowRight')tNext();else if(e.key=='ArrowLeft')tBack()};
 if(typeof window!='undefined'&&window.addEventListener){const rp=()=>{if(tI>=0)(window.requestAnimationFrame||setTimeout)(tPlace)};window.addEventListener('scroll',rp,true);window.addEventListener('resize',rp)}
+
+// ---------------- approve and export (autonomy level 1) ----------------
+const apKey=()=>lastPlan?lastPlan.date+'|'+lastPlan.sel+'|'+hk(rkey()):'';
+const apLoad=()=>{try{return JSON.parse(localStorage.getItem('approvals')||'[]')}catch(e){return[]}};
+function apCard(){const p=lastPlan;if(!p||p.sel=='base'||p.date<TODAY)return'';
+ return `<div class="card" data-tour="approve"><h2>Approve this plan</h2><p class="note" style="margin-top:0">You stay in control. Approving records who accepted the plan and prepares a schedule file for your operators or building system. Nothing is sent to any equipment.</p><button class="on" data-ap="approve">Approve and prepare schedule</button><div id="apOut" style="margin-top:8px"></div><p class="note">Autonomy level 1 of 3: advice that a person approves, then an exported schedule. Levels 2 and 3 (automatic control of equipment) need live meter and device links, safety interlocks and sign-off, and are not switched on.</p></div>`}
+function schedule(p,rec){const r=p.r,b=p.b;
+ const hours=N.map(h=>({hour_start:p2(h)+':00',battery_setpoint_kw:+(r.b[h]-r.ch[h]).toFixed(1),flexible_load_kw:+(+r.fl[h]).toFixed(1),planned_grid_import_kw:+r.g[h].toFixed(1),expected_solar_kw:+r.sol[h].toFixed(1),site_demand_kw:+r.ld[h].toFixed(1)}));
+ return{schema:'facility-energy-planner/schedule/v1',advisory:'Forecast-based plan approved by a person. This is not a control signal: check it against live readings before acting.',facility:F.name,tariff:tf().n,date:p.date,strategy:NAMES[p.sel].replace('Optimiser: ',''),
+  expected:{baseline_cost_rm:+b.cost.toFixed(2),plan_cost_rm:+r.cost.toFixed(2),saving_rm:+(b.cost-r.cost).toFixed(2),billed_peak_before_kw:+b.peak.toFixed(0),billed_peak_after_kw:+r.peak.toFixed(0)},
+  units:{battery_setpoint_kw:'positive = battery discharges to the site, negative = battery charges',flexible_load_kw:'flexible load planned in this hour',planned_grid_import_kw:'grid import, including battery charging',expected_solar_kw:'solar forecast',site_demand_kw:'site demand after load shifting'},
+  approved_by:rec.by,approved_at:rec.at,integrity:hk(hours),hours}}
+const csvOf=s=>['date,hour_start,battery_setpoint_kw,flexible_load_kw,planned_grid_import_kw,expected_solar_kw,site_demand_kw'].concat(s.hours.map(h=>[s.date,h.hour_start,h.battery_setpoint_kw,h.flexible_load_kw,h.planned_grid_import_kw,h.expected_solar_kw,h.site_demand_kw].join(','))).join('\n')+'\n';
+function approveNow(){const p=lastPlan;if(!p||p.sel=='base'||p.date<TODAY)return;
+ const s=schedule(p,{by:user?(user.userDetails||'signed-in user'):'local user (not signed in)',at:new Date().toISOString()}),log=apLoad().filter(x=>x.key!=apKey());
+ log.push({key:apKey(),s});while(log.length>40)log.shift();try{localStorage.setItem('approvals',JSON.stringify(log))}catch(e){}apShow()}
+function apShow(){const o=$('apOut');if(!o||!lastPlan)return;const rec=apLoad().find(x=>x.key==apKey());if(!rec)return;const s=rec.s,now=schedule(lastPlan,{by:'',at:''});
+ const changed=now.integrity!==s.integrity;
+ o.innerHTML=`<b class="good">Approved</b> by ${esc(s.approved_by)} at ${esc(new Date(s.approved_at).toLocaleString('en-GB'))}. Reference ${s.integrity}.`+(changed?`<div class="err" style="margin-top:4px">The forecast has changed since you approved this plan. Review it and approve again to export the new schedule.</div>`:'')+`<div class="bar" style="margin-top:6px"><button data-ap="csv">Download CSV</button><button data-ap="json">Download JSON</button><button data-ap="copy">Copy JSON</button></div>`}
+function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+function apClick(k){if(k=='approve'){approveNow();return}const rec=apLoad().find(x=>x.key==apKey());if(!rec)return;const s=rec.s,base=`schedule_${s.date}_${s.strategy.replace(/\W+/g,'-').toLowerCase()}`;
+ if(k=='csv')dl(base+'.csv',csvOf(s),'text/csv');else if(k=='json')dl(base+'.json',JSON.stringify(s,null,1),'application/json');
+ else if(k=='copy'){try{navigator.clipboard.writeText(JSON.stringify(s,null,1));say('Schedule copied to the clipboard.')}catch(e){say('Copy is not available in this browser.')}}}
+
+// ---------------- assistant ----------------
+const chat={hist:[],busy:false,props:new Map(),n:0,greeted:false};
+const redactText=t=>String(t).replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g,'[email]').replace(/\d[\d\s-]{7,}\d/g,'[number]').slice(0,3000);
+const cAdd=(cls,html)=>{$('chatLog').insertAdjacentHTML('beforeend',`<div class="${cls}">${html}</div>`);const L=$('chatLog');L.scrollTop=L.scrollHeight};
+function chatOpen(on){$('chatPanel').hidden=!on;$('chatBtn').setAttribute('aria-expanded',String(on));
+ if(on){if(!chat.greeted){chat.greeted=true;cAdd('msg b','Hi! Tell me about your facility, for example: "a factory in Penang on the MV time-of-use tariff, 750 kWp solar and a 1000 kWh battery". I can also open a day, week or month, switch strategy, or read a meter CSV you attach.')}if($('chatIn').focus)$('chatIn').focus()}}
+const ctxNow=()=>({today:TODAY,view,date:cur,strategy:sel,meter_loaded:!!M,facility:{name:F.name,location:F.loc=='5.41,100.33'?'penang':'kl',load_type:F.prof,tariff:F.volt+F.struct,max_demand_kw:+F.peak,afa_sen_kwh:+F.afa,solar_kwp:+F.kwp,battery_kwh:+F.bat,flex_percent:+F.flex,grid_limit_kw:F.lim===''?null:+F.lim,emission_factor:+F.ef,strategy_followed:F.follow}});
+function localIntent(t){const s=t.toLowerCase(),nav={},fac={},num=x=>+String(x).replace(/,/g,'');let m;
+ if(/\bmonth\b/.test(s))nav.view='month';else if(/\bweek\b/.test(s))nav.view='week';
+ const d=/\btomorrow\b/.test(s)?1:/\byesterday\b/.test(s)?-1:/\btoday\b/.test(s)?0:null;if(d!==null){nav.date=addD(TODAY,d);nav.view=nav.view||'day'}
+ if(/cost[- ]?saving/.test(s))nav.strategy='cost';else if(/balanced/.test(s))nav.strategy='bal';else if(/production/.test(s))nav.strategy='prod';else if(/baseline/.test(s))nav.strategy='base';
+ if(/weather|predicted/.test(s))nav.chart='wx';else if(/energy usage|usage graph/.test(s))nav.chart='use';
+ if(/\btour\b|walk ?through/.test(s))nav.open='tour';
+ if(m=s.match(/(\d[\d,.]*)\s*kwp/))fac.kwp=num(m[1]);if(m=s.match(/(\d[\d,.]*)\s*kwh/))fac.bat=num(m[1]);
+ if(m=s.match(/(?:max(?:imum)?\s*demand|peak)\D{0,12}(\d[\d,.]*)\s*kw\b/))fac.peak=num(m[1]);
+ const out={reply:'The AI model is not reachable, so I used simple keyword matching. Please check what I understood.'};if(Object.keys(nav).length)out.navigate=nav;if(Object.keys(fac).length)out.facility=fac;
+ return out.navigate||out.facility?out:null}
+function applyNav(n){const bits=[];
+ if(n.date&&n.date>=MIN&&n.date<=MAX){cur=n.date;view=n.view||'day';bits.push(n.date)}
+ if(n.view){view=n.view;bits.push(n.view+' view')}
+ if(n.strategy){sel=n.strategy;bits.push(NAMES[sel].replace('Optimiser: ',''))}
+ if(n.chart){chartTab=n.chart;bits.push(n.chart=='wx'?'weather chart':'energy usage chart')}
+ if(n.open=='why'){$('why').hidden=false;$('qbtn').setAttribute('aria-expanded','true');bits.push('what the optimiser decides')}
+ if(n.open=='tour'){chatOpen(false);tStart();return}
+ if(bits.length)cAdd('msg n','Opened: '+esc([...new Set(bits)].join(', ')));render()}
+function propToF(p){const n={};for(const k in p){if(k=='tar'){n.volt=p.tar.slice(0,2);n.struct=p.tar[2]}else if(k=='loc')n.loc=p.loc=='penang'?'5.41,100.33':'3.0553,101.7003';else n[k]=p[k]}return n}
+function propose(p){const nf=Object.assign({},F,propToF(p)),lines=diffF(F,nf);
+ if(!lines.length){cAdd('msg b','Those values already match your settings.');return}
+ const id=++chat.n;chat.props.set(id,nf);
+ cAdd('prop',`<b>Proposed changes</b><ul>${lines.map(l=>`<li>${l}</li>`).join('')}</ul><button class="on" data-cp="a${id}">Apply</button> <button data-cp="d${id}">Dismiss</button>`)}
+function cpClick(c){const id=+c.slice(1),nf=chat.props.get(id);if(!nf)return;chat.props.delete(id);
+ if(c[0]=='d'){cAdd('msg n','Dismissed.');return}
+ FIELDS.forEach(k=>$('f_'+k).value=nf[k]);$('f_tar').value=nf.volt+nf.struct;
+ const n=applyLocal(['<b>Set by the assistant</b>, after you pressed Apply.']);cAdd('msg b',n?'Applied. The dashboard now uses these settings.':'I could not apply that: one of the values did not pass the form checks.')}
+function handleAssist(j,msg){if(j.reply)cAdd('msg b',esc(j.reply));chat.hist.push({role:'user',content:msg},{role:'assistant',content:String(j.reply||'').slice(0,300)});
+ if(j.navigate&&Object.keys(j.navigate).length)applyNav(j.navigate);if(j.facility&&Object.keys(j.facility).length)propose(j.facility)}
+async function chatAsk(msg,doc){chat.busy=true;$('chatTyping').hidden=false;$('chatSend').disabled=true;
+ try{const j=await api('/api/assist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,document:doc,history:chat.hist.slice(-6),context:ctxNow()})});handleAssist(j,msg)}
+ catch(e){const l=localIntent(msg);if(l)handleAssist(l,msg);else cAdd('msg b','The assistant is not available right now ('+esc(e.message)+'). The boxes on the right still work.')}
+ chat.busy=false;$('chatTyping').hidden=true;$('chatSend').disabled=false}
+async function chatSubmit(over){if(chat.busy)return;const raw=(over!=null?over:$('chatIn').value).trim();if(!raw)return;$('chatIn').value='';
+ let msg=raw.slice(0,500),doc='';if(raw.length>500){msg='Here is text from my bill.';doc=redactText(raw)}
+ cAdd('msg u',esc(raw.length>300?raw.slice(0,300)+'...':raw));await chatAsk(msg,doc)}
+$('chatBtn').onclick=()=>chatOpen($('chatPanel').hidden);$('chatX').onclick=()=>chatOpen(false);$('chatSend').onclick=()=>chatSubmit();
+$('chatIn').onkeydown=e=>{if(e.key=='Enter'&&!e.shiftKey){e.preventDefault();chatSubmit()}};
+$('chatChips').onclick=e=>{const b=e.target.closest('[data-chip]');if(b)chatSubmit(b.dataset.chip)};
+$('chatLog').onclick=e=>{const b=e.target.closest('[data-cp]');if(b)cpClick(b.dataset.cp)};
+$('chatAttach').onclick=()=>$('chatFile').click();
+$('chatFile').onchange=async()=>{const f=$('chatFile').files[0];if(!f)return;const text=await f.text();$('chatFile').value='';
+ if(/\.csv$/i.test(f.name)){cAdd('msg u','Attached '+esc(f.name));const x=importMeter(text,'auto');
+  cAdd('msg b',x.err?esc(x.err):`I read your meter file in this browser. It was not sent to the AI. It has ${x.r.n} complete days and the highest reading is ${x.r.pk} kW, which I set as your maximum demand.`)}
+ else if(/\.txt$/i.test(f.name)){cAdd('msg u','Attached '+esc(f.name)+' (text from a bill)');await chatAsk('Here is text from my bill.',redactText(text))}
+ else cAdd('msg b','I can read a meter CSV, or a .txt file with the text of your bill. PDFs and photos are not supported yet.')};
 function step(n){if(view=='day')cur=addD(cur,n);else if(view=='week')cur=addD(cur,7*n);else{const d=parse(cur);d.setDate(1);d.setMonth(d.getMonth()+n);cur=iso(d)}render()}
 const go=x=>{view='day';cur=x;render()};
 $('yes').onclick=()=>go(addD(TODAY,-1));$('tod').onclick=()=>go(TODAY);$('tom').onclick=()=>go(addD(TODAY,1));
@@ -351,6 +444,7 @@ $('out').onclick=e=>{const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.d
   $('chTitle').textContent=chartTab=='wx'?(past?'Weather and solar record (recorded)':'Forecast inputs: weather, solar and demand (forecast)'):'Where the power comes from, hour by hour'+(past?'':' (forecast)');
   document.querySelectorAll?document.querySelectorAll('#chTabs button').forEach(b=>b.classList.toggle('on',b.dataset.ct==chartTab)):0;return}
  if(e.target.closest('[data-ai]')){explainClick();return}
+ const ap=e.target.closest('[data-ap]');if(ap){apClick(ap.dataset.ap);return}
  const x=e.target.closest('[data-x]');if(x){x.closest('.card').remove();return}
  const b=e.target.closest('[data-d]');if(b&&!b.classList.contains('na'))go(b.dataset.d)};
 $('tabs').onclick=e=>{const b=e.target.closest('[data-s]');if(b){sel=b.dataset.s;render()}};
@@ -374,13 +468,14 @@ function parseMeter(text,unit){const L=text.split(/\r?\n/).filter(x=>x.trim());i
  const mx=Math.max(...(typ.wk||[0]),0),pk=Math.max(...keys.map(k=>unit=='kwh'?Math.max(...out[k]):(day[k].mx||0)));
  return{days:out,typ,from:keys[0],to:keys[keys.length-1],n:keys.length,max:Math.round(mx),pk:Math.round(pk),unit,skipped,stamp:Date.now()}}
 function meterMsg(){$('m_msg').textContent=M?`In use: ${M.n} complete days (${M.from} to ${M.to}). Highest reading ${M.pk||M.max} kW; typical weekday peak ${M.max} kW.`:'No meter data loaded.'}
-$('m_go').onclick=async()=>{const f=$('m_file').files[0];if(!f){$('m_msg').textContent='Choose a CSV file first.';return}
- let r;try{r=parseMeter(await f.text(),$('m_unit').value)}catch(e){r=null}
- if(!r||r.err){$('m_msg').textContent=(r&&r.err)||'Could not read the file. It needs a header row, a timestamp column and a value column.';return}
+function importMeter(text,unit){let r;try{r=parseMeter(text,unit)}catch(e){r=null}
+ if(!r||r.err)return{err:(r&&r.err)||'Could not read the file. It needs a header row, a timestamp column and a value column.'};
  M=r;try{localStorage.setItem('meter',JSON.stringify(M))}catch(e){}
  cache.clear();meterMsg();if(r.skipped)$('m_msg').textContent+=` ${r.skipped} unreadable rows were skipped.`;
  $('f_peak').value=r.pk;
- applyLocal([`<b>Demand source:</b> your meter file, ${r.n} complete days (${r.from} to ${r.to}), read as ${r.unit=='kwh'?'kWh per interval':'kW'}. Dates inside the file now show your real demand.`,`<b>Maximum demand</b> was filled in from the file: the highest reading is ${r.pk} kW. Overwrite it with the figure from your bill if they differ.`])};
+ applyLocal([`<b>Demand source:</b> your meter file, ${r.n} complete days (${r.from} to ${r.to}), read as ${r.unit=='kwh'?'kWh per interval':'kW'}. Dates inside the file now show your real demand.`,`<b>Maximum demand</b> was filled in from the file: the highest reading is ${r.pk} kW. Overwrite it with the figure from your bill if they differ.`]);return{r}}
+$('m_go').onclick=async()=>{const f=$('m_file').files[0];if(!f){$('m_msg').textContent='Choose a CSV file first.';return}
+ const x=importMeter(await f.text(),$('m_unit').value);if(x.err)$('m_msg').textContent=x.err};
 $('m_clear').onclick=()=>{setPend(['<b>Demand source:</b> meter data removed. Demand is back to the modelled profile.']);M=null;try{localStorage.removeItem('meter')}catch(e){}cache.clear();meterMsg();render()};
 meterMsg();
 
