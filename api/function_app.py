@@ -32,6 +32,11 @@ try:
 except Exception as e:                      # pragma: no cover
     logging.warning("explain module unavailable: %s", e)
     explain = None
+try:
+    import assist
+except Exception as e:                      # pragma: no cover
+    logging.warning("assist module unavailable: %s", e)
+    assist = None
 
 
 def _log(*args, **kwargs):
@@ -115,6 +120,34 @@ def explain_http(req: func.HttpRequest) -> func.HttpResponse:
     except Exception:
         _log("explain", req, 500, ms(), summary="explain failed")
         return _json({"error": "explain failed"}, 500)
+
+
+@app.route(route="assist", methods=["POST"])
+def assist_http(req: func.HttpRequest) -> func.HttpResponse:
+    """Setup and navigation assistant. The model only proposes; assist.py checks every value. See assist.py."""
+    t0 = time.perf_counter()
+    ms = lambda: (time.perf_counter() - t0) * 1000
+    if assist is None:
+        return _json({"error": "the assistant is not available"}, 503)
+    try:
+        if len(req.get_body() or b"") > 14000:
+            return _json({"error": "request too large"}, 413)
+        body = req.get_json()
+        out = assist.assist(body)
+        # privacy: the text the person typed or pasted is never written to the audit log
+        _log("assist", req, 200, ms(), request={"chars": len(str(body.get("message", ""))), "document": bool(body.get("document"))},
+             result={k: out.get(k) for k in ("facility", "navigate")}, model="ai",
+             summary="proposed: " + ", ".join(k for k in ("facility", "navigate") if out.get(k)) if (out.get("facility") or out.get("navigate")) else "reply only")
+        return _json(out)
+    except assist.Unavailable as e:
+        _log("assist", req, 503, ms(), summary=str(e))
+        return _json({"error": str(e)}, 503)
+    except (ValueError, TypeError, KeyError, AttributeError) as e:
+        _log("assist", req, 400, ms(), summary="rejected: " + str(e))
+        return _json({"error": str(e)}, 400)
+    except Exception:
+        _log("assist", req, 500, ms(), summary="assist failed")
+        return _json({"error": "assist failed"}, 500)
 
 
 @app.route(route="audit", methods=["GET"])
