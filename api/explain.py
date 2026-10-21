@@ -38,7 +38,12 @@ SYSTEM = ("You explain one day's energy plan to a facility manager in plain Engl
           "Never calculate, round, convert or invent a number, and never mention dates. "
           "If a field is missing, do not mention it. If the saving is RM 0, say plainly that this strategy "
           "saves nothing on this day and give the reason from the fields. "
-          "Do not give advice beyond the plan. Do not mention the JSON.")
+          "Do not state differences, reductions, totals, durations or counts of hours: only the values given. "
+          "Do not give advice beyond the plan. Do not mention the JSON. "
+          'Example. Data: {"day": "Tuesday", "strategy": "Cost-saving", "baseline_cost": "RM 2,000", "plan_cost": "RM 1,800", '
+          '"saving": "RM 200", "saving_percent": "10.0%", "billed_peak_before": "500 kW", "billed_peak_after": "400 kW"} '
+          "Answer: On Tuesday, Cost-saving lowers the day's cost from RM 2,000 to RM 1,800, a saving of RM 200 (10.0%). "
+          "The billed peak goes from 500 kW to 400 kW.")
 
 
 class Unavailable(Exception):
@@ -136,15 +141,20 @@ def template(f):
     return " ".join(s)
 
 
-def numbers_ok(text, p):
-    """True only if every number in `text` appears in the allowed phrases."""
+def bad_numbers(text, p):
+    """Numbers in `text` that are not in the allowed phrases."""
     allowed = {0.0}
     for v in p.values():
         for n in NUM.findall(str(v)):
             allowed.add(float(n.replace(",", "")))
+    return [n for n in NUM.findall(text or "") if float(n.replace(",", "")) not in allowed]
+
+
+def numbers_ok(text, p):
+    """True only if every number in `text` appears in the allowed phrases."""
     if not text or len(text) > 900 or "http" in text.lower() or "```" in text:
         return False
-    return all(float(n.replace(",", "")) in allowed for n in NUM.findall(text))
+    return not bad_numbers(text, p)
 
 
 def _endpoint():
@@ -155,7 +165,7 @@ def _endpoint():
     return ep
 
 
-def call_model(p):
+def call_model(p, fix=None):
     ep, dep = _endpoint(), os.environ.get("AZURE_OPENAI_DEPLOYMENT", "")
     try:
         auth = aoai.auth_headers()
@@ -170,7 +180,8 @@ def call_model(p):
         raise Unavailable("AI model is busy")
     _calls.append(now)
     body = {"model": dep, "max_completion_tokens": 900,
-            "messages": [{"role": "system", "content": SYSTEM}, {"role": "user", "content": json.dumps(p)}]}
+            "messages": [{"role": "system", "content": SYSTEM}, {"role": "user", "content": json.dumps(p)}]
+            + ([{"role": "assistant", "content": fix["text"]}, {"role": "user", "content": fix["msg"]}] if fix else [])}
     eff = os.environ.get("AZURE_OPENAI_REASONING", "minimal")
     if eff:
         body["reasoning_effort"] = eff
@@ -215,6 +226,20 @@ def explain(raw, model=call_model):
         base["note"] = "AI model error"
         return base
     if not numbers_ok(text, p):
-        base["note"] = "AI answer was rejected: it contained a number that is not in the plan"
+        bad = bad_numbers(text, p)
+        logging.warning("explain answer rejected (numbers %s): %s", bad[:5], text[:300])
+        if bad:
+            fix = {"text": text, "msg": "Your answer used numbers that are not in the data: " + ", ".join(bad[:5]) +
+                   ". Rewrite it in 3 short sentences using only numbers copied exactly from the JSON. "
+                   "Do not give differences, totals or hour counts."}
+            try:
+                second = " ".join(model(p, fix).split())
+            except Exception:
+                second = ""
+            if second and numbers_ok(second, p):
+                return {"text": second, "source": "ai", "note": ""}
+            base["note"] = "AI answer was rejected: it used numbers that are not in the plan (" + ", ".join(bad[:3]) + ")"
+        else:
+            base["note"] = "AI answer was rejected: it was too long or had a link"
         return base
     return {"text": text, "source": "ai", "note": ""}
