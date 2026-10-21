@@ -174,8 +174,9 @@ def call_model(p):
     eff = os.environ.get("AZURE_OPENAI_REASONING", "minimal")
     if eff:
         body["reasoning_effort"] = eff
-    for _ in range(2):
-        req = Request(ep + "/openai/v1/chat/completions", data=json.dumps(body).encode(),
+    url = ep + "/openai/v1/chat/completions"
+    for _ in range(4):
+        req = Request(url, data=json.dumps(body).encode(),
                       headers={"Content-Type": "application/json", **auth})
         try:
             with urlopen(req, timeout=25) as r:
@@ -186,6 +187,12 @@ def call_model(p):
             if e.code == 400 and "reasoning_effort" in body and "reasoning" in msg.lower():
                 body.pop("reasoning_effort")       # this deployment does not accept it: retry once without
                 continue
+            if e.code == 404 and "/openai/v1/" in url:     # older resources: try the classic address once
+                url = ep + f"/openai/deployments/{dep}/chat/completions?api-version=2025-04-01-preview"
+                continue
+            if e.code == 404:
+                raise Unavailable("AI model error 404: check AZURE_OPENAI_ENDPOINT (it must contain .openai.azure.com) "
+                                  "and AZURE_OPENAI_DEPLOYMENT (the exact deployment name)")
             raise Unavailable(f"AI model error {e.code}")
         except Exception as e:
             raise Unavailable("AI model unreachable: " + type(e).__name__)
