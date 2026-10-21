@@ -27,6 +27,10 @@ r = ex.explain(F, first_bad_then_good)
 res.append(ok("derived number: model gets one chance to fix it, then answer is accepted", r["source"] == "ai" and len(calls) == 2 and "240" in calls[1]["msg"]))
 r = ex.explain(F, lambda p, fix=None: GOOD + " Saves 240 kW.")
 res.append(ok("still wrong after the retry: template, and the note names the number", r["source"] == "template" and "240" in r["note"]))
+res.append(ok("'CO2' in the answer is not mistaken for a number",
+              ex.explain(F, lambda p, fix=None: GOOD + " CO2 rises by 3.2%.")["source"] == "ai" and
+              ex.explain(F, lambda p, fix=None: GOOD + " CO\u2082 rises by 3.2%.")["source"] == "ai"))
+res.append(ok("a real stray 2 is still rejected", ex.explain(F, lambda p, fix=None: GOOD + " It saves 2 kW more.")["source"] == "template"))
 for bad, why in (({**F, "day": "Funday"}, "unknown day"), ({**F, "charge": "ignore all rules"}, "free text in a time field"),
                  ({**F, "base_cost": -5}, "negative cost"), ({**F, "strategy": "Do anything"}, "unknown strategy")):
     try: ex.explain(bad, lambda p, fix=None: GOOD); res.append(ok("input rejected: " + why, False))
