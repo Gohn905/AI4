@@ -147,7 +147,8 @@ def bad_numbers(text, p):
     for v in p.values():
         for n in NUM.findall(str(v)):
             allowed.add(float(n.replace(",", "")))
-    return [n for n in NUM.findall(text or "") if float(n.replace(",", "")) not in allowed]
+    text = re.sub(r"co\s?[2\u2082]", "co-two", text or "", flags=re.I)      # the 2 in "CO2" is part of a word, not a number
+    return [n for n in NUM.findall(text) if float(n.replace(",", "")) not in allowed]
 
 
 def numbers_ok(text, p):
