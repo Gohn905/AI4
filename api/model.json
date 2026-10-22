@@ -1,28 +1,34 @@
 {
  "trained": "2026-10-13",
- "lat": 5.41,
- "lon": 100.33,
- "solar": {
-  "w": [
-   -0.0006679875400724999,
-   1.1450651403615482,
-   -0.03026230789264843,
-   -0.25952645293499715
-  ],
-  "band": {
-   "p10": 0.665,
-   "p90": 1.264
-  },
-  "metrics": {
-   "naive_mae_pct": 8.07,
-   "raw_mae_pct": 6.07,
-   "model_mae_pct": 6.32,
-   "naive_day_energy_err_pct": 16.5,
-   "model_day_energy_err_pct": 9.9,
-   "holdout_days": 28,
-   "unit": "% of installed kWp, hours 07-18"
+ "data_note": "Demand history is SYNTHETIC (shape from the case study, plus weekend, cooling and noise assumptions). It shows the pipeline works, not real-world accuracy.",
+ "sites": [
+  {
+   "name": "Penang",
+   "lat": 5.41,
+   "lon": 100.33,
+   "solar": {
+    "w": [
+     -0.0006679875400724999,
+     1.1450651403615482,
+     -0.03026230789264843,
+     -0.25952645293499715
+    ],
+    "band": {
+     "p10": 0.665,
+     "p90": 1.264
+    },
+    "metrics": {
+     "naive_mae_pct": 8.07,
+     "raw_mae_pct": 6.07,
+     "model_mae_pct": 6.32,
+     "naive_day_energy_err_pct": 16.5,
+     "model_day_energy_err_pct": 9.9,
+     "holdout_days": 28,
+     "unit": "% of installed kWp, hours 07-18"
+    }
+   }
   }
- },
+ ],
  "demand": {
   "campus": {
    "w": [
@@ -200,6 +206,5 @@
     "naive": "same hour, same weekday, last week"
    }
   }
- },
- "data_note": "Demand history is SYNTHETIC (shape from the case study, plus weekend, cooling and noise assumptions). It shows the pipeline works, not real-world accuracy."
+ }
 }
