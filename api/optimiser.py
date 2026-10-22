@@ -1,4 +1,4 @@
-"""Hourly cost optimiser for a facility with solar, battery and shiftable load.
+"""Cost optimiser (hourly, or half-hourly with 48 values per profile) for a facility with solar, battery and shiftable load.
 
 Pure function: tariff logic stays in the dashboard, which sends hourly rates and
 the hours that count for maximum demand. Returns the cheapest schedule.
@@ -13,13 +13,22 @@ import math
 import numpy as np
 from scipy.optimize import linprog
 
-N = 24
+N = 24                    # default: hourly. Send 48 values per profile for half-hourly steps (billed maximum demand is a 30-minute figure).
 
 
-def _vec(d, key, lo, hi):
+def _steps(d):
+    """Number of time steps: 24 (hourly) or 48 (half-hourly), taken from the length of 'load'."""
+    v = d.get("load")
+    n = len(v) if isinstance(v, list) else 0
+    if n not in (24, 48):
+        raise ValueError("load must be a list of 24 (hourly) or 48 (half-hourly) numbers")
+    return n
+
+
+def _vec(d, key, lo, hi, n=N):
     v = d.get(key)
-    if not isinstance(v, list) or len(v) != N:
-        raise ValueError(f"{key} must be a list of {N} numbers")
+    if not isinstance(v, list) or len(v) != n:
+        raise ValueError(f"{key} must be a list of {n} numbers, the same length as load")
     a = np.array(v, dtype=float)
     if not np.all(np.isfinite(a)) or a.min() < lo or a.max() > hi:
         raise ValueError(f"{key} out of range")
@@ -34,9 +43,11 @@ def _num(d, key, lo, hi):
 
 
 def optimise(d):
-    load = _vec(d, "load", 0, 1e6)           # kW, original hourly load
-    pv = _vec(d, "pv", 0, 1e6)               # kW, available solar
-    rate = _vec(d, "rates", 0, 10)           # RM/kWh incl. adders and AFA
+    N = _steps(d)                            # 24 or 48 steps
+    dt = 24.0 / N                            # hours per step: kW x dt = kWh
+    load = _vec(d, "load", 0, 1e6, N)        # kW, original load (average over each step)
+    pv = _vec(d, "pv", 0, 1e6, N)            # kW, available solar
+    rate = _vec(d, "rates", 0, 10, N)        # RM/kWh incl. adders and AFA
     md_rate = _num(d, "md_rate_day", 0, 1000)  # RM/kW/day
     cap = _num(d, "batt_kwh", 0, 20000)
     share = _num(d, "flex_share", 0, 0.5)
@@ -57,29 +68,30 @@ def optimise(d):
         raise ValueError("grid_kwh_cap must be zero or more")
     if allow is not None and allow < 1 and gcap == 0:
         free = optimise({**d, "co2_allow": 1})                   # the cheapest plan, no cap
-        base = float(np.maximum(load - pv, 0).sum())             # solar-only baseline grid energy
-        extra = float(sum(free["grid"])) - base
+        base = float(np.maximum(load - pv, 0).sum()) * dt        # solar-only baseline grid energy, kWh
+        extra = float(sum(free["grid"])) * dt - base
         if extra <= 0.5:
             return free                                         # nothing extra to hold back
         return optimise({**d, "co2_allow": 1, "grid_kwh_cap": base + allow * extra})
-    md_hours = [int(h) for h in d.get("md_hours", []) if 0 <= int(h) < N]
+    per = N // 24                             # steps per hour
+    md_hours = sorted({h * per + j for h in (int(x) for x in d.get("md_hours", []) if 0 <= int(x) < 24) for j in range(per)})
     P = cap / 2.0
-    win = list(range(9, 17))                  # shiftable only 09:00-17:00
+    win = list(range(9 * per, 17 * per))      # shiftable only 09:00-17:00
 
     fixed = load.copy()
-    flex_total = share * load[win].sum()
+    flex_total = share * load[win].sum() * dt            # kWh
     fixed[win] = load[win] * (1 - share)
-    cp = 1.5 * flex_total / len(win)
+    cp = 1.5 * flex_total / (len(win) * dt)         # kW
 
     ix, k = {}, 0
     for name, size in [("Imp", N), ("MD", 1), ("Ch", N), ("Dis", N),
                        ("SOC", N + 1), ("Flex", N), ("PVu", N), ("Over", N), ("MDo", 1), ("CapO", 1)]:
         ix[name] = np.arange(k, k + size); k += size
     nv = k
-    c = np.zeros(nv); c[ix["Imp"]] = rate + carbon; c[ix["MD"]] = md_rate
-    c[ix["Ch"]] = wear; c[ix["Dis"]] = wear
-    c[ix["Over"]] = 50.0    # soft limit: exceeding the grid limit is allowed but very costly
-    c[ix["MDo"]] = 0.01     # tiny tie-break: keep unbilled-hour imports flat, not spiky
+    c = np.zeros(nv); c[ix["Imp"]] = (rate + carbon) * dt; c[ix["MD"]] = md_rate
+    c[ix["Ch"]] = wear * dt; c[ix["Dis"]] = wear * dt
+    c[ix["Over"]] = 50.0 * dt    # soft limit: exceeding the grid limit is allowed but very costly
+    c[ix["MDo"]] = 0.01 * dt     # tiny tie-break: keep unbilled-hour imports flat, not spiky
     c[ix["CapO"]] = 1000.0  # soft cap on total grid energy: peak savings are worth ~RM 8 per kWh here, so this must be far higher
 
     bounds = [(0, None)] * nv
@@ -101,9 +113,9 @@ def optimise(d):
         Aeq.append(r); beq.append(fixed[t])
         s = np.zeros(nv)
         s[ix["SOC"][t + 1]] = 1; s[ix["SOC"][t]] = -1
-        s[ix["Ch"][t]] = -eta; s[ix["Dis"][t]] = 1 / eta
+        s[ix["Ch"][t]] = -eta * dt; s[ix["Dis"][t]] = dt / eta
         Aeq.append(s); beq.append(0.0)
-    r = np.zeros(nv); r[ix["Flex"][win]] = 1
+    r = np.zeros(nv); r[ix["Flex"][win]] = dt
     Aeq.append(r); beq.append(flex_total)
 
     Aub, bub = [], []
@@ -120,7 +132,7 @@ def optimise(d):
             Aub.append(r); bub.append(0.0)
 
     if gcap > 0:
-        r = np.zeros(nv); r[ix["Imp"]] = 1; r[ix["CapO"][0]] = -1
+        r = np.zeros(nv); r[ix["Imp"]] = dt; r[ix["CapO"][0]] = -1
         Aub.append(r); bub.append(gcap)
 
     res = linprog(c, A_ub=np.array(Aub) if Aub else None, b_ub=bub if Aub else None,
@@ -132,7 +144,7 @@ def optimise(d):
     grid = x[ix["Imp"]]
     peak = float(max(grid[h] for h in md_hours)) if md_hours else float(grid.max())
     over = float(x[ix["Over"]].max())
-    bill = float(rate @ grid + md_rate * peak)      # true bill, without carbon or wear weights
-    return {"cap_over_kwh": float(x[ix["CapO"][0]]), "max_grid": float(grid.max()), "over_kw": over, "cost": bill, "peak": peak, "grid": g("Imp"), "dis": g("Dis"),
+    bill = float(rate @ grid * dt + md_rate * peak)      # true bill, without carbon or wear weights
+    return {"steps": N, "cap_over_kwh": float(x[ix["CapO"][0]]), "max_grid": float(grid.max()), "over_kw": over, "cost": bill, "peak": peak, "grid": g("Imp"), "dis": g("Dis"),
             "ch": g("Ch"), "flex": g("Flex"), "pv_used": g("PVu"),
             "ld": [round(float(v), 3) for v in fixed + x[ix["Flex"]]]}
