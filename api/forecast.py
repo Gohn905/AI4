@@ -27,6 +27,7 @@ URL_PREVIOUS = "https://previous-runs-api.open-meteo.com/v1/forecast"
 NOCT = 45.0        # deg C, nominal operating cell temperature
 GAMMA = -0.0035    # power change per deg C above 25 C cell temperature
 SYS_EFF = 0.88     # inverter, wiring, soiling, mismatch combined (assumption)
+SITE_RADIUS_KM = 50.0   # a learned solar model is only trusted this close to the place it was trained
 
 # Same weekday shapes as the dashboard (kW, kW-relative), used when no trained model exists
 _CAMP = [350, 345, 345, 345, 345, 345, 380, 450, 700, 850, 880, 900, 780, 970, 1050, 1010, 880, 750, 600, 500, 420, 380, 360, 355]
@@ -145,6 +146,36 @@ def demand_features(times, temps):
     return X
 
 
+def km_between(lat1, lon1, lat2, lon2):
+    """Great-circle distance in km (haversine)."""
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    a = math.sin((p2 - p1) / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(math.radians(lon2 - lon1) / 2) ** 2
+    return 6371.0 * 2 * math.asin(math.sqrt(a))
+
+
+def model_sites(model):
+    """Solar models by place: [{name, lat, lon, solar}]. Reads the new 'sites' list, or the old single-site layout."""
+    if not model:
+        return []
+    if model.get("sites"):
+        return [s for s in model["sites"] if s.get("solar")]
+    if model.get("solar") and model.get("lat") is not None and model.get("lon") is not None:
+        return [{"name": "", "lat": model["lat"], "lon": model["lon"], "solar": model["solar"]}]
+    return []
+
+
+def pick_site(model, lat, lon, radius_km=SITE_RADIUS_KM):
+    """Nearest trained site within radius_km, as (site, km). (None, km or None) when nothing is close enough."""
+    best, best_km = None, None
+    for s in model_sites(model):
+        d = km_between(lat, lon, s["lat"], s["lon"])
+        if best_km is None or d < best_km:
+            best, best_km = s, d
+    if best is not None and best_km <= radius_km:
+        return best, best_km
+    return None, best_km
+
+
 # ---------- public entry point ----------
 _MODEL = {"loaded": False, "data": None}
 
@@ -192,7 +223,8 @@ def forecast(q, weather=None, now=None):
     temp, cloud, ghi = (np.array([r[i] for r in rows]) for i in range(3))
 
     model = load_model() or {}
-    sm = model.get("solar")
+    site, site_km = pick_site(model, lat, lon)
+    sm = site["solar"] if site else None
     sme = (sm or {}).get("metrics") or {}
     # Use the learned irradiance fix only if it beat the plain weather forecast on the held-back days.
     use_corr = bool(sm) and sme.get("model_mae_pct", 1e9) <= sme.get("raw_mae_pct", -1)
@@ -218,7 +250,10 @@ def forecast(q, weather=None, now=None):
         "ghi": r3(ghi), "temp": r3(temp), "cloud": r3(cloud),
         "weather": wxinfo,
         "model": {"pv": ("learned correction + physics" if use_corr else
-                         "weather forecast + physics (learned fix tested, did not beat it, so not used)") if sm else "physics only",
+                         "weather forecast + physics (learned fix tested, did not beat it, so not used)") if sm else
+                        ("weather forecast + physics (no solar model trained within %d km of this location)" % SITE_RADIUS_KM
+                         if model_sites(model) else "physics only"),
+                  "site": ({"name": site.get("name") or None, "km": round(site_km, 1)} if site else None),
                   "demand": "ridge regression" if dm else "built-in profile",
                   "trained": model.get("trained"), "data_note": model.get("data_note")},
         "metrics": {"pv": (dict(sme, shown_mae_pct=sme["model_mae_pct"] if use_corr else sme["raw_mae_pct"]) if sme else None),
