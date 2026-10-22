@@ -42,6 +42,62 @@ def _num(d, key, lo, hi):
     return x
 
 
+def operating_window(weekday):
+    """Charging window (start_hour, end_hour) for the EV chargers by weekday (Mon=0 ... Sun=6), or None when closed.
+    Mon-Fri 07:30-18:00, Sat 07:30-14:00, Sun closed (organiser brief)."""
+    if weekday <= 4:
+        return (7.5, 18.0)
+    if weekday == 5:
+        return (7.5, 14.0)
+    return None
+
+
+def _ev(d, N, dt):
+    """Parse the optional EV charger block:
+       {"chargers": 8, "kw": 50, "energy_kwh": 300, "window": [7.5, 18.0]}   (window null or [] = no charging today)
+    Returns None when absent, else the steps inside the window, the power cap and the energy that can be delivered."""
+    e = d.get("ev")
+    if not e:
+        return None
+    if not isinstance(e, dict):
+        raise ValueError("ev must be an object")
+    try:
+        chargers, kw, energy = float(e.get("chargers", 8)), float(e.get("kw", 50)), float(e.get("energy_kwh", 0))
+    except (TypeError, ValueError):
+        raise ValueError("ev numbers must be numeric")
+    if not all(math.isfinite(v) for v in (chargers, kw, energy)) or not 0 <= chargers <= 1000 or not 0 <= kw <= 1000 or not 0 <= energy <= 1e6:
+        raise ValueError("ev values out of range")
+    w = e.get("window")
+    steps, window = [], None
+    if w:
+        try:
+            a, b = float(w[0]), float(w[1])
+        except (TypeError, ValueError, IndexError):
+            raise ValueError("ev window must be [start_hour, end_hour]")
+        if not (math.isfinite(a) and math.isfinite(b) and 0 <= a < b <= 24):
+            raise ValueError("ev window must satisfy 0 <= start < end <= 24")
+        window = [a, b]
+        steps = [t for t in range(N) if t * dt >= a - 1e-9 and (t + 1) * dt <= b + 1e-9]
+    kw_max = chargers * kw
+    used = min(energy, kw_max * dt * len(steps))
+    return {"kw_max": kw_max, "steps": steps, "window": window, "energy": energy, "used": used, "unmet": energy - used}
+
+
+def ev_baseline(d):
+    """What the chargers would draw with no smart scheduling: full power from the start of the window until the energy is delivered."""
+    N = _steps(d)
+    dt = 24.0 / N
+    ev = _ev(d, N, dt)
+    out = [0.0] * N
+    if ev:
+        left = ev["used"]
+        for t in ev["steps"]:
+            p = min(ev["kw_max"], left / dt)
+            out[t] = round(p, 3)
+            left -= p * dt
+    return out
+
+
 def optimise(d):
     N = _steps(d)                            # 24 or 48 steps
     dt = 24.0 / N                            # hours per step: kW x dt = kWh
@@ -53,6 +109,7 @@ def optimise(d):
     share = _num(d, "flex_share", 0, 0.5)
     carbon = _num(d, "carbon_adder", 0, 10)   # RM/kWh of grid energy (carbon price x emission factor)
     limit = _num(d, "grid_limit", 0, 1e6)    # kW cap on grid import in ANY hour, 0 = none
+    hard = bool(d.get("hard_limit", True)) and limit > 0   # grid limit is a hard rule when it can be met
     wear = _num(d, "wear", 0, 10)             # RM per kWh of battery throughput
     eff = float(d.get("eff", 0.90))
     if not math.isfinite(eff) or not 0.5 <= eff <= 1.0:
@@ -76,12 +133,15 @@ def optimise(d):
     per = N // 24                             # steps per hour
     md_hours = sorted({h * per + j for h in (int(x) for x in d.get("md_hours", []) if 0 <= int(x) < 24) for j in range(per)})
     P = cap / 2.0
-    win = list(range(9 * per, 17 * per))      # shiftable only 09:00-17:00
-
+    ev = _ev(d, N, dt)
     fixed = load.copy()
-    flex_total = share * load[win].sum() * dt            # kWh
-    fixed[win] = load[win] * (1 - share)
-    cp = 1.5 * flex_total / (len(win) * dt)         # kW
+    if ev:                                    # EV chargers: only these are flexible, only inside the operating window
+        win, flex_total, cp = ev["steps"], ev["used"], ev["kw_max"]
+    else:                                     # older behaviour: a share of the 09:00-17:00 load can move
+        win = list(range(9 * per, 17 * per))
+        flex_total = share * load[win].sum() * dt            # kWh
+        fixed[win] = load[win] * (1 - share)
+        cp = 1.5 * flex_total / (len(win) * dt)         # kW
 
     ix, k = {}, 0
     for name, size in [("Imp", N), ("MD", 1), ("Ch", N), ("Dis", N),
@@ -100,6 +160,8 @@ def optimise(d):
         bounds[ix["Dis"][t]] = (0, P)
         bounds[ix["Flex"][t]] = (0, cp if t in win else 0)
         bounds[ix["PVu"][t]] = (0, pv[t])
+        if hard:
+            bounds[ix["Imp"][t]] = (0, limit)
     for t in range(N + 1):
         bounds[ix["SOC"][t]] = (0, cap)
     bounds[ix["SOC"][0]] = (0.5 * cap, 0.5 * cap)      # start at 50%
@@ -137,6 +199,8 @@ def optimise(d):
 
     res = linprog(c, A_ub=np.array(Aub) if Aub else None, b_ub=bub if Aub else None,
                   A_eq=np.array(Aeq), b_eq=beq, bounds=bounds, method="highs")
+    if not res.success and hard:              # the limit cannot be met at all: plan as close to it as possible and say so
+        return optimise({**d, "hard_limit": False})
     if not res.success:
         raise RuntimeError("optimisation failed: " + res.message)
     x = res.x
@@ -145,6 +209,9 @@ def optimise(d):
     peak = float(max(grid[h] for h in md_hours)) if md_hours else float(grid.max())
     over = float(x[ix["Over"]].max())
     bill = float(rate @ grid * dt + md_rate * peak)      # true bill, without carbon or wear weights
-    return {"steps": N, "cap_over_kwh": float(x[ix["CapO"][0]]), "max_grid": float(grid.max()), "over_kw": over, "cost": bill, "peak": peak, "grid": g("Imp"), "dis": g("Dis"),
+    extra = {"limit_ok": bool(limit <= 0 or float(grid.max()) <= limit + 1e-6)}
+    if ev:
+        extra.update(ev_window=ev["window"], ev_unmet_kwh=round(ev["unmet"], 3), ev_baseline=ev_baseline(d))
+    return {**extra, "steps": N, "cap_over_kwh": float(x[ix["CapO"][0]]), "max_grid": float(grid.max()), "over_kw": over, "cost": bill, "peak": peak, "grid": g("Imp"), "dis": g("Dis"),
             "ch": g("Ch"), "flex": g("Flex"), "pv_used": g("PVu"),
             "ld": [round(float(v), 3) for v in fixed + x[ix["Flex"]]]}
