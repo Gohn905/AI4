@@ -3,6 +3,7 @@
 
 Run from the repo:      python tools/forecast_lab.py
 Self-test, no internet: python tools/forecast_lab.py --offline
+Another place:          python tools/forecast_lab.py --lat 3.0553 --lon 101.7003 --name "Kuala Lumpur"   (adds to model.json)
 Real meter data:        python tools/forecast_lab.py --meter meter.csv   (columns: timestamp,kw)
 
 Needs only numpy. Put forecast.py (from api/) in the same folder or keep the repo layout.
@@ -157,10 +158,28 @@ def demand_stage(times, F, truth, holdout):
     return {"w": wf.tolist(), "metrics": metrics}
 
 
+# ---------- one model.json for several places ----------
+def merge_model(old, new, lat, lon, name=""):
+    """Add this run's solar model to the existing model.json instead of replacing it.
+    Solar is stored per place ("sites"); a run within 1 km of an existing site replaces that site.
+    Demand profiles trained in this run replace the same profiles in the old file."""
+    out = {"trained": new["trained"], "data_note": new.get("data_note"), "sites": [], "demand": {}}
+    if old:
+        out["sites"] = [dict(x) for x in fc.model_sites(old)]
+        out["demand"] = dict(old.get("demand") or {})
+    out["sites"] = [x for x in out["sites"] if fc.km_between(lat, lon, x["lat"], x["lon"]) > 1.0]
+    if new.get("solar"):
+        out["sites"].append({"name": name, "lat": lat, "lon": lon, "solar": new["solar"]})
+    out["demand"].update(new.get("demand") or {})
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--lat", type=float, default=5.41)
     ap.add_argument("--lon", type=float, default=100.33)
+    ap.add_argument("--name", default="", help="label for this place, e.g. Penang")
+    ap.add_argument("--replace", action="store_true", help="start a fresh model.json instead of adding this place to the existing one")
     ap.add_argument("--days", type=int, default=150)
     ap.add_argument("--holdout", type=int, default=28)
     ap.add_argument("--offline", action="store_true", help="use mock weather (self-test only)")
@@ -224,6 +243,15 @@ def main():
         print(f"  same as yesterday       MAE {m['yesterday_mae_pct']:5.2f}%")
         print(f"  ridge regression        MAE {m['model_mae_pct']:5.2f}%   daily peak error {m['model_peak_err_pct']:.2f}%")
     print("\n" + out["data_note"])
+    old = None
+    if not a.replace and os.path.exists(a.out):
+        try:
+            with open(a.out, encoding="utf-8") as f:
+                old = json.load(f)
+        except (OSError, ValueError):
+            old = None
+    out = merge_model(old, out, a.lat, a.lon, a.name)
+    print("Places in model.json: " + ", ".join(f"{x.get('name') or '?'} ({x['lat']}, {x['lon']})" for x in out["sites"]))
     with open(a.out, "w", encoding="utf-8") as f:
         json.dump(out, f, indent=1)
     print(f"\nSaved {a.out}")
