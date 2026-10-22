@@ -63,6 +63,13 @@ class Unavailable(Exception):
     pass
 
 
+def _detail(e, raw):
+    """Short, safe text from the AI service's error, for the note and the log (long key-like strings removed)."""
+    t = re.sub(r"[A-Za-z0-9_\-]{32,}", "[hidden]", " ".join(raw.split()))[:200]
+    logging.warning("AI model HTTP %s: %s", e.code, t)
+    return t
+
+
 def redact(t):
     return LONGNUM.sub("[number]", EMAIL.sub("[email]", str(t or "")))[:3000]
 
@@ -209,6 +216,7 @@ def call_model(messages):
     if eff:
         body["reasoning_effort"] = eff
     url = ep + "/openai/v1/chat/completions"
+    last = ""
     for _ in range(4):
         req = Request(url, data=json.dumps(body).encode(),
                       headers={"Content-Type": "application/json", **auth})
@@ -217,7 +225,9 @@ def call_model(messages):
                 j = json.loads(r.read().decode("utf-8"))
             return (j["choices"][0]["message"].get("content") or "").strip()
         except HTTPError as e:
-            msg = e.read().decode("utf-8", "ignore")[:300].lower()
+            raw = e.read().decode("utf-8", "ignore")
+            msg = raw[:300].lower()
+            last = _detail(e, raw)
             if e.code == 400 and "reasoning_effort" in body and "reasoning" in msg:
                 body.pop("reasoning_effort")
                 continue
@@ -230,10 +240,10 @@ def call_model(messages):
             if e.code == 404:
                 raise Unavailable("AI model error 404: check AZURE_OPENAI_ENDPOINT (it must contain .openai.azure.com) "
                                   "and AZURE_OPENAI_DEPLOYMENT (the exact deployment name)")
-            raise Unavailable(f"AI model error {e.code}")
+            raise Unavailable(f"AI model error {e.code}: {last}" if last else f"AI model error {e.code}")
         except Exception as e:
             raise Unavailable("AI model unreachable: " + type(e).__name__)
-    raise Unavailable("AI model rejected the request")
+    raise Unavailable("AI model rejected the request" + (": " + last if last else ""))
 
 
 def assist(raw, model=call_model):
