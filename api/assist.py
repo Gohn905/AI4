@@ -190,11 +190,14 @@ def parse_json(text):
 
 
 def _endpoint():
-    ep = os.environ.get("AZURE_OPENAI_ENDPOINT", "").strip().rstrip("/")
-    for tail in ("/openai/v1", "/openai"):
-        if ep.endswith(tail):
-            ep = ep[: -len(tail)]
-    return ep
+    """Only the address of the AI resource (https://name.services.ai.azure.com). Any pasted path such as
+    /openai/v1/responses is dropped, because call_model adds the right path itself."""
+    from urllib.parse import urlparse
+    ep = os.environ.get("AZURE_OPENAI_ENDPOINT", "").strip()
+    if ep and "://" not in ep:
+        ep = "https://" + ep
+    u = urlparse(ep)
+    return f"{u.scheme}://{u.netloc}" if u.netloc else ""
 
 
 def call_model(messages):
@@ -227,7 +230,7 @@ def call_model(messages):
         except HTTPError as e:
             raw = e.read().decode("utf-8", "ignore")
             msg = raw[:300].lower()
-            last = _detail(e, raw)
+            last = "[" + url.split("?")[0] + "] " + _detail(e, raw)
             if e.code == 400 and "reasoning_effort" in body and "reasoning" in msg:
                 body.pop("reasoning_effort")
                 continue
