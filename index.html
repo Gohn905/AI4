@@ -95,6 +95,20 @@ th{font-weight:700}table th{background:#f8fafc}.ribbon{border-radius:10px}
 .strategy.selected{border:2px solid var(--good);padding:14px;background:#f5fbf7;box-shadow:0 0 0 3px rgba(39,132,90,.08)}
 .strategy h3{margin:0 0 5px;font-size:14px;color:var(--acc)}.strategy p{font-size:12px;color:var(--mut);margin:0 0 10px;font-weight:400}.strategy .tiny{font-size:11px;font-weight:800;color:var(--good)}
 @media(max-width:700px){.stratgrid{grid-template-columns:1fr}}
+/* Brief page: larger, easier-to-read type */
+main[data-role=owner]{font-size:16px}
+main[data-role=owner] .card h2{font-size:19px}
+main[data-role=owner] .ai h2{font-size:clamp(24px,2.4vw,30px)}
+main[data-role=owner] .shortline{font-size:17px}
+main[data-role=owner] .ai-side strong{font-size:34px}
+main[data-role=owner] .kpi-top{font-size:14px}
+main[data-role=owner] .metric{font-size:clamp(28px,2.6vw,38px)}
+main[data-role=owner] .kpi-foot,main[data-role=owner] .barlabel{font-size:14px}
+main[data-role=owner] .barvalue{font-size:16px}
+main[data-role=owner] .action strong{font-size:16px}
+main[data-role=owner] .action p{font-size:14px}
+main[data-role=owner] .muted.small,main[data-role=owner] .footnote{font-size:13px}
+main[data-role=owner] .ribbon{font-size:15px}
 </style></head><body><header class="top"><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span class="sp"></span><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="auth" class="note"></span></header>
 <main id="app" data-role="owner">
 <div id="amsg" class="note" style="margin:0 0 6px"></div>
