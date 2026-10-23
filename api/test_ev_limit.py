@@ -52,6 +52,11 @@ bad = optimise({**BASE, "batt_kwh": 100, "grid_limit": 1000, "ev": EV})
 ok("an impossible limit does not crash: limit_ok is False and the excess is reported", bad["limit_ok"] is False and bad["max_grid"] > 1000)
 ok("no limit given: limit_ok is True", optimise({**BASE, "ev": EV})["limit_ok"] is True)
 
+# CO2-capped strategies must count the EV energy in their solar-only baseline (regression: Balanced used to save ~0%)
+for allow in (0.5, 0):
+    rc = optimise({**BASE, "ev": EV, "co2_allow": allow})
+    ok(f"co2_allow {allow} with EVs: the grid-energy cap is not broken", rc["cap_over_kwh"] < 1e-6)
+
 for badev, why in (({"window": [18, 7]}, "window start after end"), ({"energy_kwh": -5}, "negative energy"), ({"chargers": "x"}, "text chargers"), ({"window": [7.5]}, "one-value window")):
     try:
         optimise({**BASE, "ev": {**EV, **badev}}); ok("rejected: " + why, False)
