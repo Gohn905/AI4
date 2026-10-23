@@ -85,7 +85,7 @@ th{font-weight:700}table th{background:#f8fafc}.ribbon{border-radius:10px}
 #chatBtn{background:var(--sun);border-color:var(--sun);color:#153047;font-weight:700}
 @media(min-width:960px){.side{top:78px;max-height:calc(100vh - 90px)}}
 @media(max-width:1050px){.kpirow{grid-template-columns:repeat(2,minmax(0,1fr))}.card.ai{grid-template-columns:1fr}.ai-side{text-align:left}#out>*{grid-column:1/-1!important}}
-@media(max-width:640px){.top{padding:10px 14px}.brand{order:-1;width:100%}.costbars{grid-template-columns:70px 1fr 80px}}
+@media(max-width:640px){.top{padding:10px 14px}.brand{order:-1;width:100%;justify-content:flex-end}.costbars{grid-template-columns:70px 1fr 80px}}
 .layout{grid-template-columns:minmax(0,1fr)!important}#facPanel>.card{margin-bottom:16px}
 .shortline{color:#d5e1e9;margin:0;font-size:14px}
 .action{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.action:last-child{border-bottom:0;padding-bottom:0}
@@ -109,7 +109,7 @@ main[data-role=owner] .action strong{font-size:16px}
 main[data-role=owner] .action p{font-size:14px}
 main[data-role=owner] .muted.small,main[data-role=owner] .footnote{font-size:13px}
 main[data-role=owner] .ribbon{font-size:15px}
-</style></head><body><header class="top"><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span class="sp"></span><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="auth" class="note"></span></header>
+</style></head><body><header class="top"><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span class="sp"></span><span id="auth" class="note"></span><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div></header>
 <main id="app" data-role="owner">
 <div id="amsg" class="note" style="margin:0 0 6px"></div>
 <div class="pagehead"><div class="eyebrow">Facility energy intelligence</div><h1 id="pgTitle">Your energy, at a glance.</h1><div class="note" data-role="tech" style="margin:0">Pick a day, week or month and a strategy. See what the plan saves compared with the baseline.</div></div>
@@ -125,10 +125,10 @@ main[data-role=owner] .ribbon{font-size:15px}
 <div class="bar">
 <button id="yes">Yesterday</button><button id="tod">Today</button><button id="tom">Tomorrow</button><span class="sp"></span>
 <button id="vday">Day</button><button id="vweek">Week</button><button id="vmonth">Month</button></div>
+<div class="bar" style="margin:0 0 8px"><b>Strategy</b><button id="qbtn" aria-expanded="false" title="What does the optimiser decide?">?</button><span id="tabs" class="bar" style="margin:0"></span></div>
 <div class="bar"><button id="prev" aria-label="Previous">&#9664;</button><input type="date" id="dt"><button id="next" aria-label="Next">&#9654;</button>
 <b id="ttl"></b> <span id="badge"></span></div>
 <div class="note" id="info" data-role="tech" style="margin-top:0"></div>
-<div class="bar" style="margin:12px 0 0"><b>Strategy</b><button id="qbtn" aria-expanded="false" title="What does the optimiser decide?">?</button><span id="tabs" class="bar" style="margin:0"></span></div>
 </div>
 
 <div class="bar" id="dtabs" data-role="tech" style="margin:0 0 12px"><button data-dt="ov" class="on">Overview</button><button data-dt="fc">Forecasts &amp; energy</button><button data-dt="op">Optimisation</button><button data-dt="pl">Plan &amp; actions</button><button data-dt="ad">Advanced</button><button data-dt="fa">Facility &amp; data</button></div>
@@ -725,11 +725,11 @@ let user=null,sites=[];
 const say=t=>{$('fmsg').textContent=t;$('amsg').textContent=t},persist=()=>{try{localStorage.setItem('facility',JSON.stringify(F))}catch(e){}};
 function fillSites(){const s=$('sites');if(!s)return;s.innerHTML=sites.length?sites.map(x=>`<option value="${esc(x.name)}"${x.name==F.name?' selected':''}>${esc(x.name)}</option>`).join(''):'<option value="">No saved facilities yet</option>'}
 function authUi(){const a=$('auth');
- if(user){a.innerHTML=`Signed in as <b>${esc(user.userDetails||'user')}</b> <select id="sites" aria-label="My saved facilities"></select> <button id="sload">Load</button> <a href="/.auth/logout?post_logout_redirect_uri=/">Sign out</a>`;
-  $('sload').onclick=()=>{const n=$('sites').value;if(n)loadSite(n)};fillSites()}
+ if(user){a.innerHTML=`Signed in as <b>${esc(user.userDetails||'user')}</b> <select id="sites" aria-label="My saved facilities"></select> <a href="/.auth/logout?post_logout_redirect_uri=/">Sign out</a>`;
+  $('sites').onchange=()=>{const n=$('sites').value;if(n)loadSite(n)};fillSites()}
  else a.innerHTML='<a href="/.auth/login/github?post_login_redirect_uri=/">Sign in with GitHub</a> &middot; <a href="/.auth/login/aad?post_login_redirect_uri=/">Microsoft</a>';
  $('acctBtns').hidden=!user;$('fsave').hidden=!user;$('signhint').hidden=!!user}
-async function loadSite(name){try{const j=await api('/api/profile?site='+encodeURIComponent(name));{const nf=Object.assign({},DEF,LEG(j.data),{name}),ch=diffF(F,nf);setPend(['Loaded <b>'+esc(name)+'</b> from your account.'].concat(ch))}F=Object.assign({},DEF,LEG(j.data),{name});persist();cache.clear();fill();render();say('Loaded '+name+'.')}catch(e){say(e.message)}}
+async function loadSite(name){try{const j=await api('/api/profile?site='+encodeURIComponent(name));{const nf=Object.assign({},DEF,LEG(j.data),{name}),ch=diffF(F,nf);setPend(['Loaded <b>'+esc(name)+'</b> from your account.'].concat(ch))}F=Object.assign({},DEF,LEG(j.data),{name});persist();cache.clear();fill();render();say('Loaded '+name+'.')}catch(e){say(e.message);fillSites()}}
 async function whoami(){try{const j=await (await fetch('/.auth/me')).json();user=j.clientPrincipal||null}catch(e){user=null}
  authUi();if(user){try{const j=await api('/api/profile');sites=j.sites||[];fillSites();if(!saved&&sites.length)loadSite(sites[0].name)}catch(e){say(e.message)}}}
 function readForm(){$('f_volt').value=$('f_tar').value.slice(0,2);$('f_struct').value=$('f_tar').value[2];
