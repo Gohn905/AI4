@@ -5,7 +5,7 @@
 <style>
 :root{--bg:#eef3f6;--card:#fff;--ink:#12303f;--mut:#5b7280;--mute:#5b7280;--line:#d3dee4;--acc:#12303f;--sun:#f2a900;--bat:#1f8a8a;--grid:#b5483a;--shift:#b24fc9;--blue:#2563eb;--good:#15803d;--bad:#b42318;--link:#1d4ed8}
 @media(prefers-color-scheme:dark){:root{--bg:#0e1b22;--card:#15262f;--ink:#e4eef2;--mut:#8ea4af;--mute:#8ea4af;--line:#2a3f4a;--acc:#e4eef2;--good:#4ade80;--bad:#f87171;--link:#8ab4ff}}
-[hidden]{display:none!important}a{color:var(--link)}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
+[hidden]{display:none!important}input,select,textarea{max-width:100%}input[type=file]{width:100%;min-width:0}a{color:var(--link)}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
 main{max-width:1320px;margin:0 auto;padding:16px}.layout{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}.mainCol,.side{min-width:0}
 @media(min-width:960px){.layout{grid-template-columns:minmax(0,1fr) 350px;align-items:start}.side{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow-y:auto;padding-right:2px}}h1{font-size:22px;margin:0}h2{font-size:16px;margin:0 0 8px}
 .sub{color:var(--mut);font-size:13px;margin:2px 0 14px}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
@@ -34,9 +34,24 @@ h3.sec{font-size:14px;margin:14px 0 6px;color:var(--ink)}details.adv{margin-top:
 .msg{max-width:90%;padding:8px 10px;border-radius:10px;font-size:14px;white-space:pre-wrap}.msg.u{align-self:flex-end;background:var(--acc);color:var(--card)}.msg.b{align-self:flex-start;background:var(--bg);border:1px solid var(--line)}.msg.n{align-self:center;font-size:12px;color:var(--mut)}
 .prop{border:1px dashed var(--sun);border-radius:10px;padding:8px 10px;font-size:13px}.prop ul{margin:4px 0 8px;padding-left:18px}.chips{display:flex;flex-wrap:wrap;gap:6px;padding:6px 12px}.chips button{font-size:12px;padding:4px 8px;border-radius:99px}
 .cin{display:flex;gap:6px;padding:8px 10px;border-top:1px solid var(--line);align-items:flex-end}.cin textarea{flex:1;resize:none;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+main[data-role=owner] [data-role=tech],main[data-role=tech] [data-role=owner]{display:none!important}
+.rs{display:inline-flex;align-items:center;gap:4px}.rs button.on{font-weight:600}
+#roleGate{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}.rg{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;max-width:560px;width:100%}
+.rgbtns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.rgbtns button{text-align:left;padding:14px;border-radius:12px;display:flex;flex-direction:column;gap:6px}.rgbtns button span{font-size:13px;color:var(--mut)}@media(max-width:560px){.rgbtns{grid-template-columns:1fr}}
+#calcDrawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100vw);z-index:45;background:var(--card);border-left:1px solid var(--line);box-shadow:-8px 0 24px rgba(0,0,0,.3);display:flex;flex-direction:column}.dbody{padding:12px 16px;overflow-y:auto;font-size:14px}.dbody li{margin-bottom:10px}
+.hl{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}.hl .k b{font-size:26px}.bad{color:var(--bad)}
+.ribbon.warn{border-left-color:var(--sun);background:rgba(242,169,0,.12)}
+.fl{display:flex;align-items:center;gap:10px;margin:8px 0}.fl-l{width:110px;font-size:13px;color:var(--mut);flex:none}.fl-b{flex:1;display:flex;height:32px;border-radius:6px;overflow:hidden;background:var(--line)}
+.fl-b span{display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;min-width:0;white-space:nowrap;overflow:hidden}.fl-b .s1{background:var(--sun);color:#1c1c1c}.fl-b .s2{background:var(--bat)}.fl-b .s3{background:var(--grid)}@media(max-width:560px){.fl{flex-direction:column;align-items:stretch;gap:4px}.fl-l{width:auto}}
+table.sch td,table.sch th{padding:4px 8px}table.sch tr.bw td{background:rgba(181,72,58,.10)}
+.spin{display:inline-block;width:16px;height:16px;border:3px solid var(--line);border-top-color:var(--sun);border-radius:50%;animation:sp 0.9s linear infinite;vertical-align:-3px;margin-right:8px}@keyframes sp{to{transform:rotate(360deg)}}
+#fatal{position:fixed;left:0;right:0;top:0;z-index:80;background:var(--bad);color:#fff;padding:10px 16px;text-align:center}
+#printSheet{display:none}
+@media print{body{background:#fff!important}main,aside,#chatBtn,#chatPanel,#calcDrawer,#roleGate,#tourShade,#tourHole,#tourTip,#fatal{display:none!important}#printSheet{display:block!important;color:#000;background:#fff;font:12pt/1.45 system-ui,Arial,sans-serif;padding:0}#printSheet h1{font-size:20pt;margin:0 0 4pt}#printSheet h2{font-size:13pt;margin:14pt 0 4pt}#printSheet table{border-collapse:collapse;width:100%;min-width:0}#printSheet td,#printSheet th{border:1px solid #999;padding:4pt 6pt;text-align:left}.pbig{display:flex;gap:10pt}.pbig div{flex:1;border:1px solid #999;padding:8pt}.pbig b{font-size:18pt;display:block}.psm{font-size:9.5pt;color:#444}}
+@media(max-width:600px){#chatBtn{padding:7px 12px;font-size:13px;right:10px;bottom:10px}.hl .k b{font-size:22px}#calcBtn,#tourBtn{padding:4px 8px;font-size:13px}}
 #qbtn{border-radius:50%;width:28px;height:28px;padding:0;font-weight:700}@media(max-width:600px){.c{min-height:60px;font-size:12px}}
-</style></head><body><main>
-<div class="bar"><h1>Facility Energy Planner</h1><span class="sp"></span><button id="tourBtn">Take the tour</button> <span id="auth" class="note"></span></div>
+</style></head><body><main id="app" data-role="owner">
+<div class="bar"><h1>Facility Energy Planner</h1><span class="sp"></span><span id="roleSwitch" class="rs" role="group" aria-label="I am"><span class="note">I am:</span> <button data-rp="owner">Owner</button><button data-rp="tech">Technician</button></span> <button id="calcBtn">How we calculated this</button> <button id="tourBtn">Take the tour</button> <span id="auth" class="note"></span></div>
 <div id="amsg" class="note" style="margin:0 0 6px"></div>
 <p class="sub">Pick a day, week or month and a strategy. See what the plan saves compared with the baseline.</p>
 
@@ -94,6 +109,18 @@ h3.sec{font-size:14px;margin:14px 0 6px;color:var(--ink)}details.adv{margin-top:
 <div><label>Battery, kWh (0 = none)</label><input id="f_bat" type="number" min="0"></div>
 <div><label>Shiftable daytime load, % (0 to 30)</label><input id="f_flex" type="number" min="0" max="30"></div>
 </div>
+<details class="adv" id="conv"><summary>Solar size helper: panels to kWp to kWh</summary>
+<div class="form" style="margin-top:8px">
+<div><label>Number of panels</label><input id="cv_n" type="number" min="1"></div>
+<div><label>Watts per panel (W), from the datasheet</label><input id="cv_w" type="number" min="1" value="550"></div>
+<div><label>Yield, kWh per kWp per day</label><input id="cv_h" type="number" step="0.1" min="0.5" max="8"></div>
+</div>
+<div id="cv_out" class="note" style="margin-top:8px"></div>
+<div id="cv_note" class="note"></div>
+<button class="on" id="cv_use" style="margin-top:6px">Use this kWp</button> <span class="note">Nothing changes until you press this.</span>
+<p class="note"><b>Units.</b> kWp is the panel's peak power (a power, in kW). kWh is energy: power &times; time. A day's solar energy is kWh per day. We never write "kW/h".</p>
+<p class="note"><b>String inverter:</b> one inverter serves a whole string of panels, so shading on one panel limits the whole string. <b>Micro-inverter:</b> one small inverter per panel, so it copes better with shading, but costs more. The model does not simulate inverters one by one: its system efficiency of 0.88 covers inverter, wiring, dirt and mismatch together.</p>
+</details>
 <details class="adv"><summary>Advanced (usually leave as it is)</summary>
 <div class="form" style="margin-top:8px">
 <div><label>Strategy I follow (keeps past days fixed)</label><select id="f_follow"><option value="base">None (baseline)</option><option value="cost">Cost-saving</option><option value="bal">Balanced</option><option value="zero">No extra CO2</option><option value="prod">Production-first</option></select></div>
@@ -116,6 +143,21 @@ h3.sec{font-size:14px;margin:14px 0 6px;color:var(--ink)}details.adv{margin-top:
 <div id="chatChips" class="chips"><button data-chip="Set up a factory in Penang">Set up a factory in Penang</button><button data-chip="Show this month with the cost-saving strategy">Show this month</button><button data-chip="What does the Balanced strategy do?">What is Balanced?</button></div>
 <p class="note" style="padding:0 12px;margin:4px 0">Messages go to an Azure AI model. Please do not paste names or account numbers. Meter CSV files stay in your browser. I propose, you confirm.</p>
 <div class="cin"><input type="file" id="chatFile" accept=".csv,.txt,text/csv,text/plain" hidden><button id="chatAttach" title="Attach a meter CSV, or a .txt file with the text of your bill">Attach</button><textarea id="chatIn" rows="2" placeholder="Describe your facility, or ask me to show something" aria-label="Message"></textarea><button class="on" id="chatSend">Send</button></div></div>
+<div id="roleGate" hidden role="dialog" aria-modal="true" aria-labelledby="rgTitle"><div class="rg"><h2 id="rgTitle">Who is using this?</h2><p class="note" style="margin-top:0">Pick one. You can change it at the top at any time. Both views use exactly the same numbers; the choice only shows or hides sections.</p>
+<div class="rgbtns"><button data-rp="owner"><b>Owner</b><span>Savings, billed peak and CO&#8322; in plain words, plus a one-page summary to print.</span></button><button data-rp="tech"><b>Technician</b><span>The hourly schedule, assumptions, stress test, battery size sweep and the audit log.</span></button></div></div></div>
+<div id="calcDrawer" role="dialog" aria-label="How we calculated this" hidden><div class="chead"><b>How we calculated this</b><span class="sp"></span><button id="calcX" aria-label="Close">Close</button></div><div class="dbody">
+<ol>
+<li><b>Weather.</b> Hourly temperature, cloud and sunshine for your site from Open-Meteo: a forecast for today and the next 2 days, recorded weather for past days.</li>
+<li><b>Solar.</b> Sunshine is turned into power per kWp: cell temperature = air temperature + (45 &minus; 20) / 800 &times; sunshine; power = sunshine / 1,000 &times; (1 &minus; 0.0035 &times; (cell temperature &minus; 25)) &times; 0.88. Tilt is ignored. A learned correction is used only if it beat the plain forecast on held-back days.</li>
+<li><b>Demand.</b> Your meter file if you loaded one (real readings on the days it covers, your typical weekday, Saturday or Sunday pattern otherwise). If not, a model by hour, day type and temperature, trained on synthetic history, so treat it as an estimate.</li>
+<li><b>Tariff.</b> TNB rates for your tariff plus your AFA. On a time-of-use tariff the peak rate and the maximum demand charge apply on weekdays 14:00 to 22:00. The billed peak is the highest hourly average in that window. A day carries the monthly demand charge divided by 30.</li>
+<li><b>Optimiser.</b> A linear program plans every hour: grid import, battery charge and discharge (round-trip efficiency from your settings, power = half the capacity, starts and ends the day at least half full) and flexible load (09:00 to 17:00, total energy unchanged). It minimises the bill, with a limit on extra CO&#8322; for the CO&#8322; strategies.</li>
+<li><b>Baseline and savings.</b> Baseline = solar only, no battery, no load shifting. Saving = baseline cost &minus; plan cost. CO&#8322; = grid kWh &times; one flat factor (a placeholder; check it against an official figure).</li>
+
+<li><b>What it does not do yet.</b> Plan in 30-minute steps (TNB bills the highest 30 minutes), plan across several days, use real demand history unless you upload it, model the retail charge, the 1.6% KWTBB levy or tax, or control any equipment.</li>
+</ol></div></div>
+<div id="printSheet"></div>
+<div id="fatal" hidden></div>
 <div id="tourShade" hidden></div><div id="tourHole" hidden></div>
 <div id="tourTip" role="dialog" aria-modal="true" aria-labelledby="tourTitle" hidden><h3 id="tourTitle"></h3><p id="tourText"></p><div class="tbtns"><span class="note" id="tourCount" style="margin:0"></span><span class="sp"></span><button id="tourSkip">Skip</button><button id="tourBack">Back</button><button class="on" id="tourNext">Next</button></div></div>
 <script>
@@ -135,14 +177,17 @@ const iso=d=>d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate()),parse=s=
 const addD=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return iso(d)},diff=(a,b)=>Math.round((parse(a)-parse(b))/864e5);
 const TODAY=iso(new Date()),MIN=addD(TODAY,-31),MAX=addD(TODAY,2),isWk=s=>{const g=parse(s).getDay();return g>0&&g<6};
 const esc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const money=n=>'RM '+(Math.abs(n)>=100?Math.round(n).toLocaleString('en-MY'):n.toFixed(2));
+const nf=d=>n=>(+n).toLocaleString('en-MY',{minimumFractionDigits:d,maximumFractionDigits:d}),N0=nf(0),N1=nf(1),N2=nf(2),sgn=n=>(n>0?'+':n<0?'\u2212':'')+N0(Math.abs(n));
+const money=n=>'RM '+(Math.abs(n)>=100?N0(n):N2(n));
 let saved=null;try{saved=JSON.parse(localStorage.getItem('facility'))}catch(e){}
 let lastPlan=null,chartTab='use',pend=null,last=null,srcNote='',M=null,aiFacts=null;const aiCache=new Map();try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
 let F=Object.assign({},DEF,saved||{}),view='day',cur=TODAY,sel='bal',cache=new Map(),tok=0;
 const tf=()=>TF[F.volt+F.struct],tou=()=>F.struct=='T';
 
-async function api(url,opt){const r=await fetch(url,opt);let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw new Error(j.error||'Error '+r.status);return j}
-function memo(k,fn){if(cache.has(k))return cache.get(k);const p=fn();cache.set(k,p);p.catch(()=>cache.delete(k));return p}
+async function api(url,opt){const ctl=typeof AbortController!='undefined'?new AbortController():null,t=ctl?setTimeout(()=>ctl.abort(),25000):0;let r;
+ try{r=await fetch(url,Object.assign({},opt,ctl?{signal:ctl.signal}:{}))}catch(e){clearTimeout(t);throw new Error(e&&e.name=='AbortError'?'the server took too long to answer':'the server could not be reached')}
+ clearTimeout(t);let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw new Error(j.error||(r.status==401?'please sign in':'Error '+r.status));return j}
+function memo(k,fn){if(cache.has(k))return cache.get(k);const p=fn();cache.set(k,p);p.then(v=>{if(v&&v.offline)cache.delete(k)},()=>{});p.catch(()=>cache.delete(k));return p}
 function meterLoad(date){if(!M)return null;if(M.days[date])return{v:M.days[date],k:'actual'};
  const g=parse(date).getDay(),t=M.typ||{},v=g==6?(t.sat||t.sun||t.wk):g==0?(t.sun||t.sat||t.wk):(t.wk||t.sat||t.sun);return v?{v,k:'typical'}:null}
 const hk=o=>{const s=JSON.stringify(o);let h=7;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h.toString(36)};
@@ -154,26 +199,29 @@ function pcSave(){const m=pcm();let ks=Object.keys(m).sort((a,b)=>m[a].t-m[b].t)
 const rd=a=>a.map(v=>+(+v).toFixed(2));
 const fkey=()=>[F.loc,F.kwp,F.peak,F.prof],rkey=()=>[F.loc,F.kwp,F.peak,F.prof,F.volt,F.struct,F.afa,F.bat,F.flex,F.lim,F.ef,F.eff,'v2',M?M.stamp:0];
 const getFc=date=>memo('f|'+date+'|'+hk(fkey().concat(M?M.stamp:0)),async()=>{
- const rk='f|'+date+'|'+hk(fkey());let fc=pcGet(rk);
- if(!fc){const [lat,lon]=F.loc.split(',');fc=await api('/api/forecast?'+new URLSearchParams({lat,lon,kwp:F.kwp,peak:F.peak,prof:F.prof,day:diff(date,TODAY)}));pcSet(rk,fc,date)}
- const ml=meterLoad(date);if(!ml)return fc;
- return Object.assign({},fc,{load:ml.v,meter:ml.k,model:Object.assign({},fc.model,{demand:'your meter data ('+ml.k+')',data_note:'Demand comes from your own meter file, which stays in this browser.'}),metrics:Object.assign({},fc.metrics,{load:null})})});
+ const rk='f|'+date+'|'+hk(fkey());let fc=pcGet(rk),off=0;
+ if(!fc){try{const [lat,lon]=F.loc.split(',');fc=await api('/api/forecast?'+new URLSearchParams({lat,lon,kwp:F.kwp,peak:F.peak,prof:F.prof,day:diff(date,TODAY)}));pcSet(rk,fc,date)}
+  catch(e){const st=pcm()[rk];if(!st)throw e;fc=st.v;off=st.t}}
+ const ml=meterLoad(date);
+ const out=ml?Object.assign({},fc,{load:ml.v,meter:ml.k,model:Object.assign({},fc.model,{demand:'your meter data ('+ml.k+')',data_note:'Demand comes from your own meter file, which stays in this browser.'}),metrics:Object.assign({},fc.metrics,{load:null})}):fc;
+ return off?Object.assign({},out,{offline:off}):out});
 
 function ctx(date,t=tf(),T=tou()){const wk=isWk(date),win=T?(wk?[14,22]:null):[0,24],mdH=win?N.filter(h=>h>=win[0]&&h<win[1]):[];
  return{wk,win,mdH,mdd:mdH.length?t.md/30:0,rates:N.map(h=>((wk&&isPk(h)?t.ep:t.eo)+t.ad+(+F.afa))/100)}}
 function finish(r,c){r.en=sum(r.g.map((g,h)=>g*c.rates[h]));r.cost=r.en+c.mdd*r.peak;r.util=sum(r.d)/(sum(r.sol)||1)*100;r.co2=sum(r.g)*F.ef;return r}
 function baseline(fc,c){const g=fc.load.map((l,i)=>Math.max(l-fc.pv[i],0)),z=N.map(()=>0);
  return finish({g,b:z,d:fc.load.map((l,i)=>Math.min(l,fc.pv[i])),ld:fc.load,sol:fc.pv,ch:z,fl:z,peak:c.mdH.length?Math.max(...c.mdH.map(h=>g[h])):0},c)}
+const optReq=(fc,c,m,bat)=>({load:fc.load,pv:fc.pv,rates:c.rates,md_rate_day:c.mdd,md_hours:c.mdH,batt_kwh:bat,flex_share:(+F.flex||0)/100*m.fx,carbon_adder:0,grid_limit:+F.lim||0,wear:m.wr,eff:(+F.eff||90)/100,co2_allow:m.ca});
 const getRun=(date,mode)=>memo('r|'+date+'|'+mode+'|'+hk(rkey()),async()=>{
- const fc=await getFc(date),c=ctx(date),ck='r|'+date+'|'+mode+'|'+hk(rkey()),hit=mode=='base'?null:pcGet(ck);let r;
+ const fc=await getFc(date),c=ctx(date),ck='r|'+date+'|'+mode+'|'+hk(rkey());let hit=mode=='base'?null:pcGet(ck),off=fc.offline||0,r;
  if(mode=='base')r=baseline(fc,c);
- else if(hit)r=finish({d:hit.d,b:hit.b,g:hit.g,ld:hit.ld,sol:fc.pv,ch:hit.ch,fl:hit.fl,peak:hit.peak},c);
- else{const m=MODES.find(x=>x.k==mode);
-  const o=await api('/api/optimise',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({load:fc.load,pv:fc.pv,rates:c.rates,
-   md_rate_day:c.mdd,md_hours:c.mdH,batt_kwh:+F.bat||0,flex_share:(+F.flex||0)/100*m.fx,carbon_adder:0,grid_limit:+F.lim||0,wear:m.wr,eff:(+F.eff||90)/100,co2_allow:m.ca})});
-  r=finish({d:o.pv_used,b:o.dis,g:o.grid,ld:o.ld,sol:fc.pv,ch:o.ch,fl:o.flex,peak:c.mdH.length?o.peak:0},c);
-  pcSet(ck,{d:rd(r.d),b:rd(r.b),g:rd(r.g),ld:rd(r.ld),ch:rd(r.ch),fl:rd(r.fl),peak:+(+r.peak).toFixed(2)},date)}
- r.fc=fc;r.c=c;return r});
+ else{if(!hit){const m=MODES.find(x=>x.k==mode);
+   try{const o=await api('/api/optimise',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(optReq(fc,c,m,+F.bat||0))});
+    r=finish({d:o.pv_used,b:o.dis,g:o.grid,ld:o.ld,sol:fc.pv,ch:o.ch,fl:o.flex,peak:c.mdH.length?o.peak:0},c);
+    pcSet(ck,{d:rd(r.d),b:rd(r.b),g:rd(r.g),ld:rd(r.ld),ch:rd(r.ch),fl:rd(r.fl),peak:+(+r.peak).toFixed(2)},date)}
+   catch(e){const st=pcm()[ck];if(!st)throw e;hit=st.v;off=st.t}}
+  if(hit)r=finish({d:hit.d,b:hit.b,g:hit.g,ld:hit.ld,sol:fc.pv,ch:hit.ch,fl:hit.fl,peak:hit.peak},c)}
+ r.fc=fc;r.c=c;if(off)r.offline=off;return r});
 
 function draw(r,b0,win){const W=760,H=290,L=46,B=28,T=10,bw=(W-L-8)/24,mx=Math.max(...r.ld,...b0.ld,...r.sol,...r.g.map((g,h)=>g+r.b[h]),1)*1.1,y=v=>H-B-(v/mx)*(H-B-T);
  let s='<defs><pattern id="mv" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--shift)" opacity=".30"/><rect width="2.5" height="6" fill="var(--shift)"/></pattern></defs>';
@@ -218,33 +266,121 @@ function fcCard(fc,past,fn){
 function tradeoff(R){const a=R.cost,z=R.zero;if(!a||!z)return'';const dS=z.cost-a.cost,dC=a.co2-z.co2;
  if(dS<1||dC<0.5)return'<p class="note">CO&#8322; trade-off: Cost-saving and No extra CO&#8322; give almost the same result on this day.</p>';
  return `<p class="note"><b>CO&#8322; trade-off:</b> Cost-saving earns ${money(dS)} more per day than No extra CO&#8322;, at the price of ${Math.round(dC)} kg more CO&#8322; (about ${money(dS/dC)} per kg). Balanced sits in between.</p>`}
+
+// ================= roles =================
+let role=null;try{role=localStorage.getItem('role')}catch(e){}
+function applyRole(r){role=r;$('app').setAttribute('data-role',r);if(document.querySelectorAll)document.querySelectorAll('[data-rp]').forEach(b=>b.classList.toggle('on',b.dataset.rp==r))}
+function setRole(r){applyRole(r);try{localStorage.setItem('role',r)}catch(e){}$('roleGate').hidden=true;maybeTour()}
+$('roleGate').onclick=$('roleSwitch').onclick=e=>{const b=e.target.closest('[data-rp]');if(b)setRole(b.dataset.rp)};
+
+// ================= headline, summary, flow =================
+function tplSummary(f){const sv=f.base_cost-f.plan_cost,pct=f.base_cost>0?100*sv/f.base_cost:0;
+ if(f.strategy=='Baseline')return `Baseline means solar only, with no battery and no load shifting. On ${f.day} it costs ${money(f.base_cost)} on the ${f.tariff} tariff.`;
+ const s=[];
+ if(sv>=0.5)s.push(`On ${f.day}, ${f.strategy} lowers the day's cost from ${money(f.base_cost)} to ${money(f.plan_cost)}, a saving of ${money(sv)} (${N1(pct)}%).`);
+ else if(sv<0)s.push(`On ${f.day}, ${f.strategy} costs ${money(-sv)} more than the baseline of ${money(f.base_cost)}.`);
+ else s.push(`On ${f.day}, ${f.strategy} saves nothing: the day costs ${money(f.base_cost)} either way.`);
+ s.push(f.billed?`The billed peak goes from ${N0(f.base_peak)} kW to ${N0(f.plan_peak)} kW.`:'No maximum demand charge is billed on this day, so there is no peak to reduce.');
+ const bits=[];if(f.charge)bits.push(`the battery charges ${f.charge}`);if(f.discharge)bits.push(`discharges ${f.discharge}`);if(f.shift)bits.push(`flexible equipment runs ${f.shift}`);
+ if(bits.length)s.push('In the plan, '+bits.join(', ')+'.');return s.join(' ')}
+function headCard(r,b,c,sv,past){const sb=sel=='base',sav=b.cost-r.cost,dp=b.peak-r.peak,dpp=b.peak>0?100*dp/b.peak:0,dco=r.co2-b.co2,cc=b.co2?100*dco/b.co2:0;
+ const k=(l,v,cls,sub)=>`<div class="k"><span>${l}</span><b class="${cls||''}">${v}</b><span>${sub||''}</span></div>`;
+ const n1=sb?k('You save per day','&mdash;','','Baseline is solar only. Pick a strategy above.'):k('You save per day',money(sav),sav>0.5?'good':'',N1(sv)+'% less than the baseline');
+ const n2=!c.mdH.length?k('Billed peak','No peak charge','','no maximum demand is billed on this day'):sb?k('Billed peak',N0(b.peak)+' kW','','solar only'):k('Billed peak lower by',N0(dp)+' kW',dp>0.5?'good':'',N0(b.peak)+' kW &rarr; '+N0(r.peak)+' kW ('+N0(dpp)+'%)');
+ const n3=sb?k('CO&#8322; vs baseline','&mdash;','',''):k('CO&#8322; vs baseline',sgn(dco)+' kg',Math.abs(dco)<0.5?'':dco<0?'good':'bad',(cc>=0?'+':'\u2212')+N1(Math.abs(cc))+'% (solar already avoids '+N0(sum(b.ld)*F.ef-b.co2)+' kg)');
+ return `<div class="card${past?'':' fcast'}" data-tour="headline"><div class="bar" style="margin-bottom:8px"><h2 style="margin:0">${NAMES[sel]} <span class="tag ${past?'':'f'}">${past?'recorded weather':'forecast'}</span></h2><span class="sp"></span><button data-role="owner" data-pr="1">Print one-page summary</button></div>
+ <div class="hl">${n1}${n2}${n3}</div>
+ <p id="aiTxt" style="margin:12px 0 4px;font-size:15px">${esc(tplSummary(aiFacts))}<br><small class="note">Built from the optimiser's numbers. Press the button for an AI-written version.</small></p>
+ <button class="on" id="aiBtn" data-ai="1">Rewrite with AI</button></div>`}
+function flowCard(r,b){
+ const segs=x=>{const d=sum(x.d),bt=sum(x.b),g=sum(x.g);return{d,bt,g,t:d+bt+g||1}};
+ const bar=(x,l)=>{const s=segs(x),lab=v=>v/s.t>0.1?N0(v)+' kWh':'';return `<div class="fl"><div class="fl-l">${l}</div><div class="fl-b" role="img" aria-label="${l}: solar ${N0(s.d)} kWh, battery ${N0(s.bt)} kWh, grid ${N0(s.g)} kWh"><span class="s1" style="flex:${s.d}">${lab(s.d)}</span><span class="s2" style="flex:${s.bt}">${lab(s.bt)}</span><span class="s3" style="flex:${s.g}">${lab(s.g)}</span></div></div>`};
+ const s=segs(r);
+ return `<div class="card" data-tour="flow"><h2>Where the day's energy comes from</h2>${bar(b,'Baseline (solar only)')}${sel=='base'?'':bar(r,NAMES[sel].replace('Optimiser: ',''))}
+ <div class="legend"><span><i style="background:var(--sun)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (including battery charging)</span></div>
+ <div class="stats"><div><span>Self-consumption</span><b>${N0(r.util)}%</b><span>of the solar produced is used on site</span></div><div><span>Solar share of supply</span><b>${N0(100*s.d/s.t)}%</b><span>of the energy supplied came from solar</span></div><div><span>Solar available</span><b>${N0(sum(r.sol))} kWh</b></div></div>
+ <p class="note">Totals for the day, in kWh. The battery's energy first came from solar or the grid.</p></div>`}
+
+// ================= print (owner) =================
+function printOwner(){const p=lastPlan;if(!p||!aiFacts)return;const r=p.r,b=p.b,c=b.c,f=aiFacts,k=JSON.stringify(f),txt=aiCache.has(k)?aiCache.get(k).text:tplSummary(f),past=p.date<TODAY;
+ const row=(l,x,y)=>`<tr><td>${l}</td><td>${x}</td><td>${y}</td></tr>`;
+ $('printSheet').innerHTML=`<h1>Energy plan summary</h1><p class="psm">${esc(F.name)} &middot; ${esc(parse(p.date).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))} &middot; ${past?'Recorded weather':'FORECAST: a prediction, not a measurement'} &middot; Strategy: ${esc(NAMES[p.sel].replace('Optimiser: ',''))}</p>
+ <div class="pbig"><div><span>Saving per day</span><b>${money(b.cost-r.cost)}</b></div><div><span>Billed peak</span><b>${c.mdH.length?N0(r.peak)+' kW':'none'}</b><span class="psm">${c.mdH.length?'baseline '+N0(b.peak)+' kW':'no demand charge on this day'}</span></div><div><span>CO&#8322; vs baseline</span><b>${sgn(r.co2-b.co2)} kg</b></div></div>
+ <h2>In plain words</h2><p>${esc(txt)}</p>
+ <h2>Key figures</h2><table><tr><th></th><th>Baseline (solar only)</th><th>This plan</th></tr>${row('Cost for the day',money(b.cost),money(r.cost))}${row('Billed peak',c.mdH.length?N0(b.peak)+' kW':'none',c.mdH.length?N0(r.peak)+' kW':'none')}${row('CO&#8322;',N0(b.co2)+' kg',N0(r.co2)+' kg')}${row('Solar used on site',N0(b.util)+'%',N0(r.util)+'%')}${row('Solar available',N0(sum(r.sol))+' kWh','')}</table>
+ <h2>Basis</h2><p class="psm">Tariff ${esc(tf().n)} with AFA ${N2(F.afa)} sen/kWh. Solar ${N0(F.kwp)} kWp, battery ${N0(F.bat)} kWh at ${N0(F.eff)}% round-trip efficiency, ${N0(F.flex)}% of daytime load can move. Baseline is solar only. Demand: ${esc((p.b.fc.model||{}).demand||'modelled')}. CO&#8322; uses one flat factor of ${N2(F.ef)} kg/kWh. Hourly planning: TNB bills the highest 30 minutes, so real peaks can be higher. Savings are estimates, not guarantees. Printed ${esc(new Date().toLocaleString('en-GB'))}.</p>`;
+ try{window.print()}catch(e){}}
+
+// ================= technician cards =================
+const PVSPEC=[['Module temperature rating (NOCT)','45 \u00b0C'],['Power change with temperature','\u22120.35% per \u00b0C above 25 \u00b0C cell temperature'],['System efficiency','0.88 (inverter, wiring, dirt and mismatch together)'],['Tilt','Ignored: horizontal sunshine is used as the sunshine on the panel'],['Weather source','Open-Meteo (a forecast, or recorded weather for past days)'],['Time step','Hourly values'],['Cell temperature','Air temperature + (NOCT \u2212 20) / 800 \u00d7 sunshine'],['Output limit','1 kW per kWp']];
+function schedCard(r,c){const rows=N.map(h=>{const bs=r.b[h]-r.ch[h];return `<tr class="${c.mdH.includes(h)?'bw':''}"><td>${p2(h)}:00</td><td>${bs>0.5?'+':bs<-0.5?'\u2212':''}${N0(Math.abs(bs))}</td><td>${N0(r.fl[h])}</td><td>${N0(r.g[h])}</td><td>${N0(r.sol[h])}</td><td>${N0(r.ld[h])}</td></tr>`}).join('');
+ return `<div class="card" data-role="tech" data-tour="schedule"><h2>Hourly schedule</h2><div class="scroll"><table class="sch"><tr><th>Hour</th><th>Battery, kW</th><th>Flexible load, kW</th><th>Grid import, kW</th><th>Solar forecast, kW</th><th>Site demand, kW</th></tr>${rows}</table></div><p class="note">Battery: + discharges to the site, \u2212 charges. Grid import includes battery charging. Shaded rows are the hours where maximum demand is billed. Site demand is after load shifting.</p></div>`}
+function assumeCard(fc,past){const m=fc.model||{};
+ const other=[['Battery round-trip efficiency',N0(F.eff)+'%'],['Battery power','Half the capacity in kW (a 1,000 kWh battery can move 500 kW)'],['Battery start and end of day','Starts at 50% and ends at least 50% full'],['Flexible load','Share of 09:00 to 17:00 load that can move: '+N0(F.flex)+'%. Total energy unchanged, at most 1.5 times the average in any hour'],['Billed peak','Highest hourly average in the billed window (TNB bills the highest 30 minutes, so real peaks can be higher)'],['Demand charge in a day','Monthly demand charge divided by 30, times the day\u2019s billed peak'],['Tariff',tf().n+' (rates in the TNB table), AFA '+N2(F.afa)+' sen/kWh'],['Grid CO\u2082 factor',N2(F.ef)+' kg/kWh, one flat value (placeholder)'],['Export income','None: no export is assumed'],['Demand source',m.demand||'unknown'],['Not modelled','Retail charge, 1.6% KWTBB levy, tax, financing, equipment ageing']];
+ const tb=a=>'<table class="sch">'+a.map(x=>`<tr><td><b>${x[0]}</b></td><td style="text-align:left">${esc(x[1])}</td></tr>`).join('')+'</table>';
+ return `<div class="card" data-role="tech" data-tour="assume"><h2>Assumptions</h2><h3 class="sec">PV model (read-only)</h3><div class="scroll">${tb(PVSPEC)}</div><p class="note">Solar method on the day shown: ${esc(m.pv||'')}.</p><h3 class="sec">Plan and tariff</h3><div class="scroll">${tb(other)}</div></div>`}
+function stressCard(){const p=lastPlan;if(!p)return'';
+ if(p.sel=='base')return `<div class="card" data-role="tech" data-tour="stress"><h2>Stress test</h2><p class="note" style="margin-top:0">Select an optimiser strategy to stress-test its schedule.</p></div>`;
+ const r=p.r,b=p.b,c=b.c,hd=c.mdH.length>0,sc=[['As forecast',0,1],['Demand +10%',.1,1],['Demand \u221210%',-.1,1],['Solar \u221230%',0,.7],['Demand +10% and solar \u221230%',.1,.7]];
+ const ev=(dl,sf)=>{const pv=b.sol.map(v=>v*sf),g0=b.ld.map((l,h)=>Math.max(l*(1+dl)-pv[h],0)),ld=r.ld.map(v=>v*(1+dl)),g1=ld.map((l,h)=>Math.max(l+r.ch[h]-r.b[h]-Math.min(pv[h],l+r.ch[h]),0));
+  const pk=a=>hd?Math.max(...c.mdH.map(h=>a[h])):0,cost=a=>sum(a.map((g,h)=>g*c.rates[h]))+c.mdd*pk(a);return{pk1:pk(g1),c0:cost(g0),c1:cost(g1)}};
+ const base=ev(0,1),rows=sc.map(([n,dl,sf])=>{const e=ev(dl,sf);return `<tr><td style="text-align:left">${n}</td><td>${hd?N0(e.pk1)+(dl==0&&sf==1?'':' ('+sgn(e.pk1-base.pk1)+')'):'&mdash;'}</td><td>${money(e.c1)}</td><td class="${e.c0-e.c1>0.5?'good':''}">${money(e.c0-e.c1)}</td></tr>`}).join('');
+ return `<div class="card" data-role="tech" data-tour="stress"><h2>Stress test</h2><p class="note" style="margin-top:0">The planned battery and equipment schedule is held fixed while demand or sunshine turns out different from the forecast. It shows how much of the saving and the peak reduction survive.</p><div class="scroll"><table class="sch"><tr><th>Scenario</th><th>Billed peak, kW (change)</th><th>Day cost</th><th>Saving vs solar only</th></tr>${rows}</table></div></div>`}
+function sweepCard(){return `<div class="card" data-role="tech" data-tour="sweep"><h2>Battery size sweep</h2><p class="note" style="margin-top:0">Re-plans this day with different battery sizes, using ${esc(sel=='base'?'Cost-saving':NAMES[sel].replace('Optimiser: ',''))}, to show where more capacity stops paying off.</p><button class="on" data-sw="1">Run battery sweep</button> <span id="swMsg" class="note"></span><div id="swOut" class="scroll" style="margin-top:8px"></div></div>`}
+async function sweepRun(){const p=lastPlan;if(!p)return;const b=p.b,fc=b.fc,c=b.c,m=MODES.find(x=>x.k==(p.sel=='base'?'cost':p.sel)),cur0=+F.bat||0,sizes=[...new Set([0,250,500,1000,1500,2000,cur0])].sort((x,y)=>x-y),msg=$('swMsg'),out=$('swOut');let n=0;const res=[];msg.textContent='Running 0 of '+sizes.length+'...';
+ const one=async bat=>{try{const o=await api('/api/optimise',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(optReq(fc,c,m,bat))});return{bat,r:finish({d:o.pv_used,b:o.dis,g:o.grid,ld:o.ld,sol:fc.pv,ch:o.ch,fl:o.flex,peak:c.mdH.length?o.peak:0},c)}}catch(e){return{bat,err:e.message}}finally{n++;msg.textContent='Running '+n+' of '+sizes.length+'...'}};
+ for(let i=0;i<sizes.length;i+=3)res.push(...await Promise.all(sizes.slice(i,i+3).map(one)));
+ msg.textContent='';out.innerHTML='<table class="sch"><tr><th>Battery, kWh</th><th>Saving per day</th><th>Billed peak, kW</th><th>CO&#8322; vs baseline, kg</th><th>Saving per kWh of battery</th></tr>'+res.map(x=>x.err?`<tr><td>${N0(x.bat)}</td><td colspan="4" class="err">${esc(x.err)}</td></tr>`:`<tr class="${x.bat==cur0?'sel':''}"><td>${N0(x.bat)}${x.bat==cur0?' (yours)':''}</td><td>${money(b.cost-x.r.cost)}</td><td>${c.mdH.length?N0(x.r.peak):'&mdash;'}</td><td>${sgn(x.r.co2-b.co2)}</td><td>${x.bat>0?'RM '+N2((b.cost-x.r.cost)/x.bat):'&mdash;'}</td></tr>`).join('')+'</table><p class="note">Saving is against the solar-only baseline for this day, with your flexible-load share and efficiency.</p>'}
+function auditCard(){return `<div class="card" data-role="tech" data-tour="audit"><h2>Audit log</h2><p class="note" style="margin-top:0">Recent forecast, optimise, explanation and assistant calls, with who asked and how long they took. What people type is never logged. Needs sign-in.</p><button class="on" data-au="1">Load recent activity</button><div id="auOut" class="scroll" style="margin-top:8px"></div></div>`}
+async function auditRun(){const o=$('auOut');o.textContent='Loading...';
+ try{const j=await api('/api/audit');if(!j.enabled){o.innerHTML='<span class="note">Logging to storage is not switched on for this site, so there is nothing to show.</span>';return}
+  if(!j.items.length){o.innerHTML='<span class="note">No calls logged in the last two days.</span>';return}
+  o.innerHTML='<table class="sch"><tr><th>Time (UTC)</th><th>Call</th><th>User</th><th>Status</th><th>ms</th><th>Model</th><th>What happened</th></tr>'+j.items.map(x=>`<tr><td style="text-align:left">${esc(x.time)}</td><td>${esc(x.route)}</td><td>${esc(x.user)}</td><td>${esc(x.status)}</td><td>${N0(x.ms||0)}</td><td style="text-align:left">${esc(x.model||'')}</td><td style="text-align:left">${esc(x.summary||'')}</td></tr>`).join('')+'</table>'}
+ catch(e){o.innerHTML=`<span class="err">${/sign in|401|403/i.test(e.message)?'Please sign in to see the audit log (top right).':esc(e.message)}</span>`}}
+
+// ================= solar converter =================
+let cvTouched=false,cvKwp=0;
+function cvRefresh(){const n=+$('cv_n').value,w=+$('cv_w').value,h=+$('cv_h').value,o=$('cv_out');cvKwp=0;
+ if(!(n>0&&w>0)){o.textContent='Enter the number of panels and the watts per panel.';return}
+ cvKwp=n*w/1000;o.innerHTML=`${N0(n)} panels &times; ${N0(w)} W &divide; 1,000 = <b>${N1(cvKwp)} kWp</b>.`+(h>0?`<br>${N1(cvKwp)} kWp &times; ${N1(h)} kWh per kWp per day = <b>${N0(cvKwp*h)} kWh per day</b>.`:'')}
+function cvDefault(){if(cvTouched||!lastPlan||!(+F.kwp>0))return;const y=sum(lastPlan.r.sol)/F.kwp;if(!(y>0))return;$('cv_h').value=y.toFixed(1);$('cv_note').textContent=`The model's own yield for the day shown is ${N1(y)} kWh per kWp per day. It is lower on cloudy days and higher on clear ones.`;cvRefresh()}
+['cv_n','cv_w','cv_h'].forEach(id=>{$(id).oninput=()=>{if(id=='cv_h')cvTouched=true;cvRefresh()}});
+$('cv_use').onclick=()=>{if(!(cvKwp>0)){say('Enter the number of panels first.');return}$('f_kwp').value=Math.round(cvKwp*10)/10;applyLocal([`<b>Solar size</b> set from the helper: ${N0($('cv_n').value)} panels &times; ${N0($('cv_w').value)} W = ${N1(cvKwp)} kWp.`])};
+
+// ================= drawer, errors, handlers =================
+const errCard=m=>`<div class="card err" role="alert"><b>We could not load this.</b><p style="margin:6px 0">${esc(m)}.</p><p class="note">Check your connection and try again. If it keeps failing, the server may be restarting: wait a minute, or reload the page. Days you opened earlier are saved on this device.</p><button class="on" data-retry="1">Try again</button></div>`;
+$('calcBtn').onclick=()=>{$('calcDrawer').hidden=!$('calcDrawer').hidden};$('calcX').onclick=()=>{$('calcDrawer').hidden=true};
+if(typeof window!='undefined'&&window.addEventListener){const fatal=m=>{const f=$('fatal');f.textContent='Something went wrong on this page ('+String(m).slice(0,120)+'). Please reload. Your settings are saved. (Click to hide.)';f.hidden=false;f.onclick=()=>{f.hidden=true}};
+ window.addEventListener('error',e=>fatal(e.message||'error'));window.addEventListener('unhandledrejection',e=>fatal((e.reason&&e.reason.message)||'error'))}
 function kpis(items){return '<div class="kpis">'+items.map(k=>`<div class="k"><span>${k[0]}</span><b class="${k[2]||''}">${k[1]}</b><span>${k[3]||''}</span></div>`).join('')+'</div>'}
 
 function dayHtml(R,rows){
  if(!R[sel])sel='base';const b=R.base,r=R[sel],sv=(1-r.cost/b.cost)*100||0,c=b.c;last={view:'day',key:cur,base:b.cost,cost:r.cost,save:b.cost-r.cost};
  aiFacts={day:parse(cur).toLocaleDateString('en-GB',{weekday:'long'}),strategy:NAMES[sel].replace('Optimiser: ',''),tariff:tf().n,billed:c.mdH.length>0,base_cost:+b.cost.toFixed(2),plan_cost:+r.cost.toFixed(2),base_peak:+b.peak.toFixed(1),plan_peak:+r.peak.toFixed(1),solar_pct:+r.util.toFixed(1),co2_pct:b.co2?+((r.co2/b.co2-1)*100).toFixed(2):null,charge:rg(r.ch,1),discharge:rg(r.b,1),shift:rg(r.fl,1)};lastPlan={date:cur,sel,r,b};
  const tbl=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Grid share</th><th>Billed peak, kW</th><th>CO&#8322;, kg</th><th>CO&#8322; vs baseline</th></tr>`+rows.map(s=>{const x=R[s.k],v=(1-x.cost/b.cost)*100,cd=b.co2?(x.co2/b.co2-1)*100:0;
-  return `<tr class="${s.k==sel?'sel':''}"><td>${NAMES[s.k]}</td><td>${x.cost.toFixed(2)}</td><td class="${v>0.05?'good':''}">${s.k=='base'?'&mdash;':v.toFixed(1)+'%'}</td><td>${x.util.toFixed(0)}%</td><td>${(sum(x.g)/sum(x.ld)*100).toFixed(0)}%</td><td>${x.peak.toFixed(0)}</td><td>${x.co2.toFixed(0)}</td><td style="${s.k!='base'&&cd>0.05?'color:#d9a441':''}" class="${s.k!='base'&&cd<-0.05?'good':''}">${s.k=='base'||!b.co2?'&mdash;':(cd>=0?'+':'')+cd.toFixed(1)+'%'}</td></tr>`}).join('');
+  return `<tr class="${s.k==sel?'sel':''}"><td>${NAMES[s.k]}</td><td>${N2(x.cost)}</td><td class="${v>0.05?'good':''}">${s.k=='base'?'&mdash;':v.toFixed(1)+'%'}</td><td>${N0(x.util)}%</td><td>${N0(sum(x.g)/sum(x.ld)*100)}%</td><td>${N0(x.peak)}</td><td>${N0(x.co2)}</td><td style="${s.k!='base'&&cd>0.05?'color:#d9a441':''}" class="${s.k!='base'&&cd<-0.05?'good':''}">${s.k=='base'||!b.co2?'&mdash;':(cd>=0?'+':'')+cd.toFixed(1)+'%'}</td></tr>`}).join('');
  const ng=sum(b.ld)*F.ef,cc=b.co2?(r.co2/b.co2-1)*100:0,nm=NAMES[sel];
- const carbon=(ng>0?`Carbon: solar already cuts CO&#8322; by ${((1-b.co2/ng)*100).toFixed(0)}% versus buying everything from the grid (${Math.round(ng-b.co2)} kg avoided on this day). `:'')+(sel=='base'?'':(Math.abs(cc)<0.05?`${nm} leaves CO&#8322; unchanged versus the baseline. `:cc<0?`${nm} cuts CO&#8322; by a further ${(-cc).toFixed(1)}% versus the baseline. `:`${nm} adds ${cc.toFixed(1)}% CO&#8322; versus the baseline: charging the battery from the grid loses about ${Math.round(100-F.eff)}% of the energy, so here the saving is money, not carbon. `))+`Uses one flat grid factor (${F.ef} kg/kWh), so it cannot tell cleaner hours from dirtier ones.`;
- const ann=sel=='base'?'Baseline: solar only, no battery, no load shifting.':(c.wk?`Saving versus baseline: about RM ${Math.round((b.cost-r.cost)*300).toLocaleString()} a year if 300 weekdays looked like this one. Rough guide only, and battery purchase cost is not included.`:'This is a weekend day, so it is not scaled up to a yearly figure.');
+ const carbon=(ng>0?`Carbon: solar already cuts CO&#8322; by ${((1-b.co2/ng)*100).toFixed(0)}% versus buying everything from the grid (${N0(ng-b.co2)} kg avoided on this day). `:'')+(sel=='base'?'':(Math.abs(cc)<0.05?`${nm} leaves CO&#8322; unchanged versus the baseline. `:cc<0?`${nm} cuts CO&#8322; by a further ${(-cc).toFixed(1)}% versus the baseline. `:`${nm} adds ${cc.toFixed(1)}% CO&#8322; versus the baseline: charging the battery from the grid loses about ${Math.round(100-F.eff)}% of the energy, so here the saving is money, not carbon. `))+`Uses one flat grid factor (${F.ef} kg/kWh), so it cannot tell cleaner hours from dirtier ones.`;
+ const ann=sel=='base'?'Baseline: solar only, no battery, no load shifting.':(c.wk?`Saving versus baseline: about ${money((b.cost-r.cost)*300)} a year if 300 weekdays looked like this one. Rough guide only, and battery purchase cost is not included.`:'This is a weekend day, so it is not scaled up to a yearly figure.');
  const T=tou(),alt=TF[F.volt+(T?'G':'T')],c2=finish(baseline(b.fc,ctx(cur,alt,!T)),ctx(cur,alt,!T)).cost,
-  tc=`Tariff check (baseline, same load): ${T?'ToU':'General'} RM ${b.cost.toFixed(2)} vs ${T?'General':'ToU'} RM ${c2.toFixed(2)} per day. ${c2<b.cost-0.5?'The other tariff looks cheaper for this profile, so worth checking with TNB.':'The selected tariff is the cheaper one for this profile.'}`;
+  tc=`Tariff check (baseline, same load): ${T?'ToU':'General'} ${money(b.cost)} vs ${T?'General':'ToU'} ${money(c2)} per day. ${c2<b.cost-0.5?'The other tariff looks cheaper for this profile, so worth checking with TNB.':'The selected tariff is the cheaper one for this profile.'}`;
  const fc=b.fc,m=fc.model||{},me=fc.metrics||{},sp=me.pv,ld=me.load;
  let fn=`Solar: ${m.pv}. Demand: ${m.demand}.`;
  if(sp)fn+=` Solar error ${sp.shown_mae_pct??sp.model_mae_pct}% of kWp vs ${sp.naive_mae_pct}% for yesterday's output.`;
  if(ld)fn+=` Demand error ${ld.model_mae_pct}% of peak vs ${ld.naive_mae_pct}% for same-as-last-week${/SYNTHETIC/.test(m.data_note||'')?' (measured on SYNTHETIC history, not real accuracy)':''}.`;
  if(m.data_note)fn+=' '+m.data_note;if(fc.weather&&fc.weather.stale)fn+=' Weather is a saved copy because the weather service did not answer.';
  const past=cur<TODAY,rib=past?`<div class="ribbon past" data-tour="ribbon"><b>RECORDED WEATHER.</b> Demand is ${fc.meter=='actual'?'your real meter reading':'modelled, because no meter data covers this day'}. Savings are what each strategy would have achieved.</div>`:`<div class="ribbon" data-tour="ribbon"><b>${cur==TODAY?'FORECAST FOR TODAY.':'FORECAST.'}</b> This is a prediction, not a measurement.${cur==TODAY?' Hours that have already passed are still forecast values.':' This day has not happened yet.'} Weather comes from a weather forecast; solar and demand are calculated from it.</div>`;
- return rib+`<div class="card${past?'':' fcast'}" data-tour="kpi"><h2>${nm} <span class="tag ${past?'':'f'}">${past?'recorded weather':'forecast'}</span></h2>${kpis([['Baseline cost',money(b.cost),'','solar only'],['With this strategy',money(r.cost)],['You save',money(b.cost-r.cost),'good',sv.toFixed(1)+'%'],
-  ['Billed peak',c.mdH.length?Math.round(r.peak)+' kW':'none','',c.mdH.length?'baseline '+Math.round(b.peak)+' kW':'no demand charge today'],['Solar used',Math.round(r.util)+'%','',Math.round(sum(r.sol))+' kWh available']])}
+ const off=R.base.offline||r.offline,offB=off?`<div class="ribbon warn"><b>OFFLINE.</b> The server could not be reached, so this screen shows results saved on this device at ${new Date(off).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}. They may be out of date. Try again in a minute.</div>`:'';
+ return rib+offB+headCard(r,b,c,sv,past)+`<div class="card${past?'':' fcast'}" data-tour="kpi"><h2>The numbers behind it</h2>${kpis([['Baseline cost',money(b.cost),'','solar only'],['With this strategy',money(r.cost)],['You save',money(b.cost-r.cost),'good',sv.toFixed(1)+'%'],
+  ['Billed peak',c.mdH.length?N0(r.peak)+' kW':'none','',c.mdH.length?'baseline '+N0(b.peak)+' kW':'no demand charge today'],['Solar used',N0(r.util)+'%','',N0(sum(r.sol))+' kWh available']])}
  <p class="note">Daily cost includes the monthly demand charge spread over 30 days.</p></div>
- <div class="card${past?'':' fcast'}" data-tour="chart"><div class="bar" style="margin-bottom:6px"><h2 id="chTitle" style="margin:0">${chartTab=='wx'?(past?'Weather and solar record (recorded)':'Forecast inputs: weather, solar and demand (forecast)'):'Where the power comes from, hour by hour'+(past?'':' (forecast)')}</h2><span class="sp"></span><span id="chTabs"><button data-ct="use" class="${chartTab=='use'?'on':''}" data-tp="${past?1:0}">Energy usage</button> <button data-ct="wx" class="${chartTab=='wx'?'on':''}">${past?'Recorded weather':'Predicted weather'}</button></span></div>
+ ${flowCard(r,b)}
+ <div class="card${past?'':' fcast'}" data-tour="chart" data-role="tech"><div class="bar" style="margin-bottom:6px"><h2 id="chTitle" style="margin:0">${chartTab=='wx'?(past?'Weather and solar record (recorded)':'Forecast inputs: weather, solar and demand (forecast)'):'Where the power comes from, hour by hour'+(past?'':' (forecast)')}</h2><span class="sp"></span><span id="chTabs"><button data-ct="use" class="${chartTab=='use'?'on':''}" data-tp="${past?1:0}">Energy usage</button> <button data-ct="wx" class="${chartTab=='wx'?'on':''}">${past?'Recorded weather':'Predicted weather'}</button></span></div>
  <div id="ct_use"${chartTab=='use'?'':' hidden'}>${draw(r,b,c.win)}</div><div id="ct_wx"${chartTab=='wx'?'':' hidden'}>${fcCard(fc,past,fn)}</div></div>
  <div class="card" data-tour="compare"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
  <p class="note">${ann}</p><p class="note">${tc}</p><p class="note">${carbon}</p>${tradeoff(R)}</div>
- <div class="card" data-tour="actions"><h2>Recommended actions</h2><ul>${recs(r,b)}</ul><p class="note">Generated from the selected strategy's schedule.</p></div>
- ${apCard()}<div class="card" data-tour="ai"><h2>Plain-English summary</h2><p id="aiTxt" class="note" style="margin-top:0">A short written explanation of this plan, in three sentences.</p><button class="on" id="aiBtn" data-ai="1" style="margin-top:8px">Explain this plan</button></div>`}
+ <div class="card" data-tour="actions" data-role="tech"><h2>Recommended actions</h2><ul>${recs(r,b)}</ul><p class="note">Generated from the selected strategy's schedule.</p></div>
+ ${schedCard(r,c)}${apCard()}${stressCard()}${sweepCard()}${assumeCard(fc,past)}${auditCard()}`}
 
 function rel(d){return d<TODAY?['Past (recorded weather)','']:d==TODAY?['Today (forecast)','t']:d==addD(TODAY,1)?['Tomorrow (forecast)','f']:['Forecast','f']}
 function periodHtml(dates,items){
@@ -297,7 +433,7 @@ async function render(){
  $('ttl').textContent=view=='day'?f(cur,{weekday:'long',day:'numeric',month:'long',year:'numeric'}):view=='week'?'Week of '+f(dates[0],{day:'numeric',month:'short'})+' to '+f(dates[6],{day:'numeric',month:'short'}):f(cur,{month:'long',year:'numeric'});
  const [bt,bc]=rel(cur);$('badge').innerHTML=view=='day'?`<span class="tag ${bc}">${bt}</span>`:'';
  $('info').textContent=view=='day'?dayInfo():'Days before today are estimates from recorded weather. Days after today are forecasts (up to 2 days ahead). Other days show no data.';
- $('out').innerHTML='<div class="card note" id="prog">Working it out&hellip; a day you have not opened before takes a few seconds, then it is saved on this device.</div>';
+ $('out').innerHTML='<div class="card"><span class="spin"></span><span id="prog">Working it out&hellip; a day you have not opened before takes a few seconds, then it is saved on this device.</span><div class="note" id="slow"></div></div>';setTimeout(()=>{if(my==tok&&$('slow'))$('slow').textContent='Still working. The first request after a quiet period can take 10 to 20 seconds while the server wakes up.'},6000);
  try{
   if(view=='day'){
    if(cur<MIN||cur>MAX){$('out').innerHTML='<div class="card err">No data for that date. Choose a day from 31 days ago to 2 days ahead.</div>';return}
@@ -305,21 +441,21 @@ async function render(){
    if(res[0].status!='fulfilled')throw res[0].reason;
    const R={},ok=[];res.forEach((x,i)=>{if(x.status=='fulfilled'){R[rows[i].k]=x.value;ok.push(rows[i])}});
    const miss=res.filter(x=>x.status!='fulfilled').length;
-   $('out').innerHTML=(miss?`<div class="card err">The optimiser did not answer, so only the baseline is shown. Refresh in a minute.</div>`:'')+dayHtml(R,ok);aiRestore();apShow();changeCard();maybeTour();setTimeout(()=>warm(my),1500);return}
+   $('out').innerHTML=(miss?`<div class="ribbon warn"><b>PARTIAL.</b> The optimiser did not answer, so only the baseline is shown. <button data-retry="1">Try again</button></div>`:'')+dayHtml(R,ok);aiRestore();apShow();cvDefault();changeCard();maybeTour();setTimeout(()=>warm(my),1500);return}
   const items=dates.map(()=>null),idx=dates.map((x,i)=>i).filter(i=>dates[i]>=MIN&&dates[i]<=MAX);
   let done=0;const run=async i=>{try{items[i]={b:await getRun(dates[i],'base'),r:await getRun(dates[i],dates[i]<TODAY?F.follow:sel)}}catch(e){items[i]=null}done++;const p=$('prog');if(p)p.textContent=`Loading day ${done} of ${idx.length}. A new day takes a few seconds, then it is saved on this device.`};
   if(idx.length){await run(idx[0]);for(let k=1;k<idx.length;k+=6){await Promise.all(idx.slice(k,k+6).map(run));if(my!=tok)return}}
   if(my!=tok)return;$('out').innerHTML=periodHtml(dates,items);changeCard();setTimeout(()=>warm(my),1500)
- }catch(e){if(my==tok)$('out').innerHTML=`<div class="card err">${esc(e.message)}</div>`}}
+ }catch(e){if(my==tok)$('out').innerHTML=errCard(e.message)}}
 
 
-function aiShow(j){$('aiTxt').innerHTML=esc(j.text)+'<br><small>'+(j.source=='ai'?'Written by an AI model (Azure AI Foundry) from the optimiser\'s numbers. Every number in it was checked against those numbers.':'Standard text built from the optimiser\'s numbers. The AI model was not used'+(j.note?' ('+esc(j.note)+')':'')+'.')+'</small>'}
+function aiShow(j){$('aiTxt').innerHTML=esc(j.text)+'<br><small>'+(j.source=='ai'?'Written by an AI model (Azure AI Foundry) from the optimiser\'s numbers. Every number in it was checked against those numbers.':'Standard text built from the optimiser\'s numbers. The AI model was not used'+(j.note?'<span data-role="tech"> ('+esc(j.note)+')</span>':'')+'.')+'</small>'}
 function aiRestore(){const k=aiFacts&&JSON.stringify(aiFacts);if(k&&aiCache.has(k)&&$('aiTxt'))aiShow(aiCache.get(k))}
 async function explainClick(){if(!aiFacts)return;const k=JSON.stringify(aiFacts),btn=$('aiBtn');
  if(aiCache.has(k)){aiShow(aiCache.get(k));return}
  btn.disabled=true;$('aiTxt').textContent='Writing the summary...';
  try{const j=await api('/api/explain',{method:'POST',headers:{'Content-Type':'application/json'},body:k});if(j.source=='ai')aiCache.set(k,j);aiShow(j)}
- catch(e){$('aiTxt').textContent='The explanation service did not answer ('+e.message+'). The action list above has the same facts.'}
+ catch(e){$('aiTxt').innerHTML=esc(tplSummary(aiFacts))+'<br><small>The AI service did not answer, so this is the standard text, built from the same numbers.<span data-role="tech"> ('+esc(e.message)+')</span></small>'}
  btn.disabled=false}
 async function warm(my){if(my!=tok||view=='month')return;const mon=addD(cur,-((parse(cur).getDay()+6)%7));
  for(let i=0;i<7;i++){const d=addD(mon,i);if(d<MIN||d>MAX)continue;
@@ -327,17 +463,21 @@ async function warm(my){if(my!=tok||view=='month')return;const mon=addD(cur,-((p
   await new Promise(r=>setTimeout(r,120))}}
 
 const STEPS=[
+ {s:'#roleSwitch',t:'Owner or Technician',x:'Choose your view. Owners see savings, billed peak and CO2 with a printable summary. Technicians see the hourly schedule, assumptions, stress test, battery sweep and audit log. Both use the same numbers.'},
  {s:'#dateCard',t:'Pick a day',x:'Use Yesterday, Today and Tomorrow, or the arrows and the date box. Day, Week and Month change the view. In Week and Month, tap a day to open it. Dashed boxes are forecasts.'},
- {s:'#tabs',t:'Choose a strategy',x:'Baseline is solar only. The four optimiser strategies plan the battery and the flexible equipment. The ? button explains what the optimiser decides.'},
+ {s:'#tabs',t:'Choose a strategy',x:'Baseline is solar only. The four optimiser strategies plan the battery and the flexible equipment, with different limits on extra CO2. The ? button explains what the optimiser decides.'},
  {s:'[data-tour=ribbon]',t:'Forecast or recorded?',x:'This banner always says whether the day is a prediction or recorded weather. Forecast cards have dashed borders.'},
- {s:'[data-tour=kpi]',t:'The headline numbers',x:'Cost without the plan, with the plan, what you save, the billed peak and how much solar is used.'},
+ {s:'[data-tour=headline]',t:'Headline numbers and summary',x:'Saving per day, billed peak reduction and CO2, then a plain-English summary. Press Rewrite with AI for an AI-written version; every number in it is checked.'},
+ {s:'[data-tour=kpi]',t:'The numbers behind it',x:'Cost without the plan, with the plan, what you save, the billed peak and how much solar is used.'},
+ {s:'[data-tour=flow]',t:'Where the energy comes from',x:'Solar, battery and grid for the whole day, baseline against the plan, with self-consumption: how much of your solar is used on site.'},
  {s:'[data-tour=chart]',t:'Hour by hour',x:'Energy usage shows where each hour\'s power comes from. Press Predicted weather to see the weather and solar forecast with its likely range.'},
- {s:'[data-tour=compare]',t:'Compare strategies',x:'Every strategy side by side: cost, saving, solar used, billed peak and CO2.'},
+ {s:'[data-tour=compare]',t:'Compare strategies',x:'Every strategy side by side: cost, saving, solar used, billed peak and CO2, with the cost of each extra kg of CO2.'},
  {s:'[data-tour=actions]',t:'What to do',x:'The schedule for the selected strategy: when to charge, when to discharge and when to run flexible equipment.'},
+ {s:'[data-tour=schedule]',t:'Hourly schedule',x:'Every hour of the plan as numbers: battery, flexible load, grid import, solar and demand.'},
  {s:'[data-tour=approve]',t:'Approve and export',x:'Approve a plan to record who accepted it, then download the schedule as CSV or JSON for your operators. Nothing is sent to equipment: you stay in control.'},
- {s:'[data-tour=ai]',t:'Plain-English summary',x:'An AI model writes three sentences from the optimiser\'s numbers. Every number is checked, so it cannot invent figures.'},
- {s:'#setup',t:'Set up your facility',x:'Enter it once: tariff and maximum demand from your bill (or upload meter readings), plus solar and battery sizes. Changes apply straight away.'},
- {s:'#rates',t:'TNB rates',x:'The tariff rates behind every calculation, with all tariffs in the table.'},
+ {s:'[data-tour=stress]',t:'Stress test',x:'Holds the schedule fixed and shows what happens if demand or sunshine differs from the forecast.'},
+ {s:'#setup',t:'Set up your facility',x:'Enter it once: tariff and maximum demand from your bill (or upload meter readings), plus solar and battery sizes. The solar size helper turns panels into kWp and kWh.'},
+ {s:'#calcBtn',t:'How we calculated this',x:'A plain explanation of every step, from weather to savings, and what the model does not do yet.'},
  {s:'#chatBtn',t:'Ask the assistant',x:'Type what you need in plain words: describe your facility, open a day or week, switch strategy, or attach a meter CSV. It proposes, and you confirm before anything changes.'},
  {s:'#auth',t:'Keep your work',x:'Sign in to save your facility to your account and open it on any device.'}];
 let tI=-1,autoTried=false;
@@ -358,9 +498,9 @@ function tShow(i,dir){dir=dir||1;while(i>=0&&i<STEPS.length&&!tOK(i))i+=dir;if(i
 function tEnd(){tI=-1;$('tourShade').hidden=$('tourHole').hidden=$('tourTip').hidden=true;try{localStorage.setItem('tourDone','1')}catch(e){}}
 const tNext=()=>{if($('tourNext').textContent=='Done')tEnd();else tShow(tI+1,1)},tBack=()=>tShow(tI-1,-1);
 async function tStart(){tEnd();view='day';if(!(isWk(cur)&&cur>=TODAY&&cur<=MAX)||!document.querySelector('[data-tour=kpi]')){cur=isWk(cur)&&cur>=TODAY&&cur<=MAX?cur:([TODAY,addD(TODAY,1),addD(TODAY,2)].find(isWk)||TODAY);await render()}tShow(0,1)}
-function maybeTour(){let seen=null;try{seen=localStorage.getItem('tourDone')}catch(e){}if(seen||tI>=0||autoTried)return;autoTried=true;setTimeout(()=>{if(tI<0&&document.querySelector('[data-tour=kpi]'))tStart()},900)}
+function maybeTour(){if(!$('roleGate').hidden)return;let seen=null;try{seen=localStorage.getItem('tourDone')}catch(e){}if(seen||tI>=0||autoTried)return;autoTried=true;setTimeout(()=>{if(tI<0&&document.querySelector('[data-tour=kpi]'))tStart()},900)}
 $('tourBtn').onclick=tStart;$('tourNext').onclick=tNext;$('tourBack').onclick=tBack;$('tourSkip').onclick=tEnd;
-document.onkeydown=e=>{if(tI<0){if(e.key=='Escape'&&!$('chatPanel').hidden)chatOpen(false);return}if(e.key=='Escape')tEnd();else if(e.key=='ArrowRight')tNext();else if(e.key=='ArrowLeft')tBack()};
+document.onkeydown=e=>{if(tI<0){if(e.key=='Escape'){if(!$('chatPanel').hidden)chatOpen(false);if(!$('calcDrawer').hidden)$('calcDrawer').hidden=true}return}if(e.key=='Escape')tEnd();else if(e.key=='ArrowRight')tNext();else if(e.key=='ArrowLeft')tBack()};
 if(typeof window!='undefined'&&window.addEventListener){const rp=()=>{if(tI>=0)(window.requestAnimationFrame||setTimeout)(tPlace)};window.addEventListener('scroll',rp,true);window.addEventListener('resize',rp)}
 
 // ---------------- approve and export (autonomy level 1) ----------------
@@ -424,7 +564,7 @@ function handleAssist(j,msg){if(j.reply)cAdd('msg b',esc(j.reply));chat.hist.pus
  if(j.navigate&&Object.keys(j.navigate).length)applyNav(j.navigate);if(j.facility&&Object.keys(j.facility).length)propose(j.facility)}
 async function chatAsk(msg,doc){chat.busy=true;$('chatTyping').hidden=false;$('chatSend').disabled=true;
  try{const j=await api('/api/assist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,document:doc,history:chat.hist.slice(-6),context:ctxNow()})});handleAssist(j,msg)}
- catch(e){const l=localIntent(msg);if(l)handleAssist(l,msg);else cAdd('msg b','The assistant is not available right now ('+esc(e.message)+'). The boxes on the right still work.')}
+ catch(e){const l=localIntent(msg);if(l)handleAssist(l,msg);else cAdd('msg b','The assistant is not available right now'+(role=='tech'?' ('+esc(e.message)+')':'')+'. The boxes on the right still work.')}
  chat.busy=false;$('chatTyping').hidden=true;$('chatSend').disabled=false}
 async function chatSubmit(over){if(chat.busy)return;const raw=(over!=null?over:$('chatIn').value).trim();if(!raw)return;$('chatIn').value='';
  let msg=raw.slice(0,500),doc='';if(raw.length>500){msg='Here is text from my bill.';doc=redactText(raw)}
@@ -448,6 +588,10 @@ $('out').onclick=e=>{const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.d
   $('chTitle').textContent=chartTab=='wx'?(past?'Weather and solar record (recorded)':'Forecast inputs: weather, solar and demand (forecast)'):'Where the power comes from, hour by hour'+(past?'':' (forecast)');
   document.querySelectorAll?document.querySelectorAll('#chTabs button').forEach(b=>b.classList.toggle('on',b.dataset.ct==chartTab)):0;return}
  if(e.target.closest('[data-ai]')){explainClick();return}
+ if(e.target.closest('[data-pr]')){printOwner();return}
+ if(e.target.closest('[data-sw]')){sweepRun();return}
+ if(e.target.closest('[data-au]')){auditRun();return}
+ if(e.target.closest('[data-retry]')){render();return}
  const ap=e.target.closest('[data-ap]');if(ap){apClick(ap.dataset.ap);return}
  const x=e.target.closest('[data-x]');if(x){x.closest('.card').remove();return}
  const b=e.target.closest('[data-d]');if(b&&!b.classList.contains('na'))go(b.dataset.d)};
@@ -511,5 +655,6 @@ $('sdel').onclick=async()=>{const n=$('sites')&&$('sites').value;if(!n||!confirm
  try{const j=await api('/api/profile?site='+encodeURIComponent(n),{method:'DELETE'});sites=j.sites||[];fillSites();say('Deleted '+n+'.')}catch(e){say(e.message)}};
 $('sall').onclick=async()=>{if(!confirm('Delete ALL your saved facilities from the account?'))return;
  try{const j=await api('/api/profile?all=1',{method:'DELETE'});sites=j.sites||[];fillSites();say('All saved data deleted.')}catch(e){say(e.message)}};
+const hadRole=!!role;applyRole(role||'owner');$('roleGate').hidden=hadRole;
 fill();if(!saved)$('setup').open=true;render();whoami();
 </script></body></html>
