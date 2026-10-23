@@ -185,7 +185,8 @@ const nf=d=>n=>(+n).toLocaleString('en-MY',{minimumFractionDigits:d,maximumFract
 const money=n=>'RM '+(Math.abs(n)>=100?N0(n):N2(n));
 let saved=null;try{saved=JSON.parse(localStorage.getItem('facility'))}catch(e){}
 let lastPlan=null,chartTab='use',pend=null,last=null,srcNote='',M=null,aiFacts=null;const aiCache=new Map();try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
-let F=Object.assign({},DEF,saved||{}),view='day',cur=TODAY,sel='bal',cache=new Map(),tok=0;
+const LEG=o=>o&&o.evn===undefined?Object.assign({evn:0,eve:0},o):(o||{});
+let F=Object.assign({},DEF,LEG(saved)),view='day',cur=TODAY,sel='bal',cache=new Map(),tok=0;
 const tf=()=>TF[F.volt+F.struct],tou=()=>F.struct=='T';
 
 async function api(url,opt){const ctl=typeof AbortController!='undefined'?new AbortController():null,t=ctl?setTimeout(()=>ctl.abort(),25000):0;let r;
@@ -644,7 +645,7 @@ function authUi(){const a=$('auth');
   $('sload').onclick=()=>{const n=$('sites').value;if(n)loadSite(n)};fillSites()}
  else a.innerHTML='<a href="/.auth/login/github?post_login_redirect_uri=/">Sign in with GitHub</a> &middot; <a href="/.auth/login/aad?post_login_redirect_uri=/">Microsoft</a>';
  $('acctBtns').hidden=!user;$('fsave').hidden=!user;$('signhint').hidden=!!user}
-async function loadSite(name){try{const j=await api('/api/profile?site='+encodeURIComponent(name));{const nf=Object.assign({},DEF,j.data,{name}),ch=diffF(F,nf);setPend(['Loaded <b>'+esc(name)+'</b> from your account.'].concat(ch))}F=Object.assign({},DEF,j.data,{name});persist();cache.clear();fill();render();say('Loaded '+name+'.')}catch(e){say(e.message)}}
+async function loadSite(name){try{const j=await api('/api/profile?site='+encodeURIComponent(name));{const nf=Object.assign({},DEF,LEG(j.data),{name}),ch=diffF(F,nf);setPend(['Loaded <b>'+esc(name)+'</b> from your account.'].concat(ch))}F=Object.assign({},DEF,LEG(j.data),{name});persist();cache.clear();fill();render();say('Loaded '+name+'.')}catch(e){say(e.message)}}
 async function whoami(){try{const j=await (await fetch('/.auth/me')).json();user=j.clientPrincipal||null}catch(e){user=null}
  authUi();if(user){try{const j=await api('/api/profile');sites=j.sites||[];fillSites();if(!saved&&sites.length)loadSite(sites[0].name)}catch(e){say(e.message)}}}
 function readForm(){$('f_volt').value=$('f_tar').value.slice(0,2);$('f_struct').value=$('f_tar').value[2];
