@@ -18,7 +18,7 @@ Planning tool for commercial and industrial facilities with on-site solar, batte
 
 ```mermaid
 flowchart LR
-  U[Browser] --> SWA[Azure Static Web Apps<br/>page + sign-in]
+  U[Browser] --> SWA[Azure Static Web Apps<br/>page + integrated API + sign-in]
   SWA --> API[Azure Functions API<br/>optimise, forecast, explain, assist, profile, audit]
   API --> OM[(Open-Meteo<br/>weather forecast)]
   API --> TS[(Azure Table Storage<br/>audit log)]
@@ -29,10 +29,10 @@ flowchart LR
 | Service | Why it is used | Status |
 |---|---|---|
 | Azure Static Web Apps | Hosts the page, deploys from this repo, built-in GitHub / Microsoft sign-in | In use |
-| Azure Functions (Python), managed by Static Web Apps | Runs the optimiser and forecast as small HTTP functions | In use |
+| Azure Functions API integrated with Static Web Apps | Runs the optimiser, forecast and other HTTP functions from the api/ folder | In use |
 | Azure Table Storage | Audit log of every optimiser and forecast call | In code, active when `AUDIT_STORAGE_CONNECTION` is set |
-| Application Insights | Monitoring and traces | Planned |
-| Separate Function App with managed identity, Key Vault | Production-grade secrets and identity (managed functions in Static Web Apps have no managed identity) | Planned |
+| Application Insights | Monitoring and traces | Resource exists in Azure (per owner); this repo has no explicit connection configured. Verify the Static Web App telemetry link in Azure. |
+| Separate Function App with managed identity, Key Vault | Alternative hosting for the API and production-grade secrets/identity | Resource exists in Azure (per owner); the current workflow deploys the API through Static Web Apps, not to this Function App. |
 | Azure OpenAI | Plain-language plan explanations and setup/navigation assistant | In use (Azure gpt-5-mini deployment) |
 
 Services considered and not used: Microsoft Fabric (smallest capacity costs about US$263 a month at pay-as-you-go, far more than one facility needs), Copilot Studio (built for Microsoft 365 chat agents), AKS and VMs (more to manage than the workload needs).
@@ -56,10 +56,10 @@ Services considered and not used: Microsoft Fabric (smallest capacity costs abou
 
 ## Security and privacy
 
-- The API handlers validate inputs; the explanation, assistant and profile requests have size limits. The optimiser and AI endpoints are anonymously callable in the demo deployment.
+- The API handlers validate inputs; the explanation, assistant and profile requests have size limits. In the demo deployment, optimiser and forecast endpoints are public; explanation, assistant, audit and profile endpoints require sign-in.
 - The audit log stores a one-way hashed user ID (no email) and the site location rounded to 0.1 degree. Rows are deleted after 30 days (`AUDIT_RETENTION_DAYS`).
 - The location sent to the weather service is rounded to about 1 km.
-- Demo mode leaves the optimiser and AI endpoints open so anyone can try them. `/api/audit` and `/api/profile` need sign-in. Review access controls and add shared rate limiting before production use; the current in-process AI limits are not a deployment-wide quota.
+- Demo mode leaves the optimiser and forecast endpoints open so anyone can try them. /api/explain, /api/assist, /api/audit and /api/profile need sign-in. Review access controls and add shared rate limiting before production use; the current in-process AI limits are not a deployment-wide quota.
 - Known gap: any signed-in GitHub or Microsoft account counts as "authenticated". A real deployment should restrict the audit log to named roles.
 
 ## Run it yourself
