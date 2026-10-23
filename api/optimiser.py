@@ -125,7 +125,7 @@ def optimise(d):
         raise ValueError("grid_kwh_cap must be zero or more")
     if allow is not None and allow < 1 and gcap == 0:
         free = optimise({**d, "co2_allow": 1})                   # the cheapest plan, no cap
-        base = float(np.maximum(load - pv, 0).sum()) * dt        # solar-only baseline grid energy, kWh
+        base = float(np.maximum(load + np.array(ev_baseline(d)) - pv, 0).sum()) * dt   # solar-only baseline grid energy incl. EVs charging immediately, kWh
         extra = float(sum(free["grid"])) * dt - base
         if extra <= 0.5:
             return free                                         # nothing extra to hold back
