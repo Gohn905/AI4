@@ -3,8 +3,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Sun Shine</title>
 <style>
-:root{--bg:#f5f7f5;--card:#fff;--ink:#12303f;--mut:#64748b;--mute:#64748b;--line:#e2e8f0;--acc:#153047;--sun:#f2c14e;--bat:#27845a;--grid:#64809a;--shift:#b24fc9;--blue:#2563eb;--good:#27845a;--bad:#b45309;--shadow:0 8px 24px rgba(21,48,71,.06);--link:#1d4ed8}
-@media(prefers-color-scheme:dark){:root{--bg:#0e1b22;--card:#15262f;--ink:#e4eef2;--mut:#8ea4af;--mute:#8ea4af;--line:#2a3f4a;--acc:#e4eef2;--good:#4ade80;--bad:#f87171;--link:#8ab4ff}}
+:root{--bg:#f5f7f5;--card:#fff;--ink:#12303f;--mut:#64748b;--mute:#64748b;--line:#e2e8f0;--acc:#153047;--sun:#f2c14e;--bat:#27845a;--grid:#2b6cb0;color-scheme:light;--shift:#b24fc9;--blue:#2563eb;--good:#27845a;--bad:#b45309;--shadow:0 8px 24px rgba(21,48,71,.06);--link:#1d4ed8}
+
 [hidden]{display:none!important}input,select,textarea{max-width:100%}input[type=file]{width:100%;min-width:0}a{color:var(--link)}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
 main{max-width:1320px;margin:0 auto;padding:16px}.layout{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}.mainCol,.side{min-width:0}
 @media(min-width:960px){.layout{grid-template-columns:minmax(0,1fr) 350px;align-items:start}.side{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow-y:auto;padding-right:2px}}h1{font-size:22px;margin:0}h2{font-size:16px;margin:0 0 8px}
@@ -22,7 +22,7 @@ ul{margin:6px 0 0;padding-left:20px}.cal{display:grid;grid-template-columns:repe
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.form label{font-size:12px;color:var(--mut);display:block}.form input,.form select{width:100%}
 summary{cursor:pointer;font-weight:600}.err{color:var(--bad)}.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
 td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}td:first-child,th:first-child{text-align:left}th{font-weight:500;color:var(--mut)}tr.sel td{background:color-mix(in srgb,var(--sun) 16%,transparent)}
-@media(prefers-color-scheme:dark){.ribbon{background:rgba(96,165,250,.14)}.ribbon.past{background:rgba(147,160,177,.14)}}
+
 .ribbon{border-left:6px solid var(--blue);background:rgba(37,99,235,.09);padding:9px 12px;border-radius:6px;font-size:14px;margin-bottom:12px}.ribbon b{letter-spacing:.04em}.ribbon.past{border-left-color:var(--mut);background:rgba(102,114,128,.10)}
 .card.fcast{border-style:dashed;border-color:var(--blue)}.c.fc{border-style:dashed}.stats{display:flex;flex-wrap:wrap;gap:18px;margin-top:8px;font-size:14px}.stats span{color:var(--mut);font-size:12px;display:block}
 h3.sec{font-size:14px;margin:14px 0 6px;color:var(--ink)}details.adv{margin-top:12px}details.adv>summary{font-weight:500;color:var(--mut)}
@@ -51,36 +51,54 @@ table.sch td,table.sch th{padding:4px 8px}table.sch tr.bw td{background:rgba(181
 @media(max-width:600px){#chatBtn{padding:7px 12px;font-size:13px;right:10px;bottom:10px}.hl .k b{font-size:22px}#calcBtn,#tourBtn{padding:4px 8px;font-size:13px}}
 #qbtn{border-radius:50%;width:28px;height:28px;padding:0;font-weight:700}@media(max-width:600px){.c{min-height:60px;font-size:12px}}
 
-/* ===== Sun Shine look ===== */
+/* ===== Sun Shine look (from the supplied mockup) ===== */
 body{font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
 main{max-width:1480px;padding:26px clamp(16px,3vw,42px) 54px}
-.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px clamp(16px,4vw,56px);background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px clamp(16px,4vw,56px);background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;color:var(--acc);white-space:nowrap}
 .sunmark{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--sun);color:#153047;font-size:19px}
 .top .rs{gap:6px}.top .rs button,.top>button{border:0;background:transparent;color:var(--mut);padding:10px 15px;border-radius:9px;font-weight:650}
-.top .rs button.on{background:#fff4ce;color:#153047}.top .rs button:hover,.top>button:hover{background:color-mix(in srgb,var(--line) 60%,transparent)}
-#auth:empty{display:none}#auth{border:1px solid var(--line);padding:6px 12px;border-radius:9px;background:var(--card);font-weight:650;margin:0}
-.pagehead{margin-bottom:18px}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--mut);font-weight:800}
+.top .rs button.on{background:#fff4ce;color:#153047}.top .rs button:hover,.top>button:hover{background:#f1f5f9}
+#auth:empty{display:none}#auth{border:1px solid var(--line);padding:6px 12px;border-radius:9px;background:#fff;font-weight:650;margin:0}
+.pagehead{margin-bottom:18px}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:#64748b;font-weight:800}
 h1{font-size:clamp(24px,2.5vw,34px);line-height:1.15;margin:5px 0 7px;color:var(--acc);letter-spacing:-.035em}
-.card{border-radius:15px;padding:19px;box-shadow:var(--shadow)}.card h2{color:var(--acc);font-size:17px;letter-spacing:-.015em}
-button,select{border-radius:9px}button{font-weight:650}.tag{font-weight:800}
-.k{border-radius:12px;padding:15px}.k b:not(.good):not(.bad){color:var(--acc)}.k b{font-size:24px;font-weight:800;letter-spacing:-.03em}
-th{font-weight:700}table.sch th,table th{background:color-mix(in srgb,var(--line) 30%,transparent)}
-#dtabs button{padding:9px 13px;font-weight:700;color:var(--mut)}#dtabs button.on{color:var(--card)}
-.ribbon{border-radius:10px}
-[data-tour=headline]{background:#153047;color:#fff;border:1px solid #153047;padding:22px 24px}
-[data-tour=headline].fcast{border:1px dashed #5c7d95}[data-tour=headline] h2{color:#fff}
-[data-tour=headline] .k{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)}
-[data-tour=headline] .k span,[data-tour=headline] .note{color:#c7d6e0}[data-tour=headline] .k b:not(.good):not(.bad),#aiTxt{color:#fff}
-[data-tour=headline] .k b.good{color:var(--sun)}[data-tour=headline] .k b.bad{color:#f6b36b}
-[data-tour=headline] button{background:#fff;color:#153047;border-color:#fff}[data-tour=headline] button.on{background:var(--sun);border-color:var(--sun)}
+.card{border-radius:15px;padding:19px;box-shadow:var(--shadow)}.card h2{color:var(--acc);font-size:17px;letter-spacing:-.015em;margin:0 0 4px}
+button,select{border-radius:9px}button{font-weight:650}.small{font-size:12px}.muted{color:var(--mut)}
+#tabs button,#dtabs button{padding:9px 13px;font-weight:700;color:#526274;background:#fff}#tabs button.on,#dtabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+th{font-weight:700}table th{background:#f8fafc}.ribbon{border-radius:10px}
+#out{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}#out>*{grid-column:1/-1;margin:0!important}
+#out>[data-tour=costbars]{grid-column:span 7}#out>[data-tour=actions]{grid-column:span 5}main[data-role=tech] #out>[data-tour=actions]{grid-column:1/-1}
+.kpirow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.kpi{padding:17px}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--mut);font-size:12px;font-weight:700}
+.ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#f1f5f9;font-size:17px}
+.metric{font-size:clamp(23px,2vw,30px);font-weight:800;letter-spacing:-.04em;margin:12px 0 2px;color:var(--acc)}.positive{color:var(--good)!important}.warning{color:#b45309!important}.kpi-foot{font-size:12px;color:var(--mut)}
+.card.ai{background:#153047;color:#fff;border:0;padding:22px 24px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center}.card.ai.fcast{border:1px dashed #5c7d95}
+.ai .eyebrow{color:var(--sun)}.ai h2{color:#fff;font-size:21px;margin:7px 0 8px;letter-spacing:-.02em}#aiTxt{color:#d5e1e9;max-width:900px;margin:0}.ai .note{color:#a9bccb}
+.ai-side{min-width:150px;text-align:right}.ai-side .small{color:#d5e1e9}.ai-side strong{display:block;font-size:27px;color:var(--sun)}
+.ai button{background:#fff;color:#153047;border-color:#fff}.ai button.on{background:var(--sun);border-color:var(--sun)}
+.cardhead{display:flex;justify-content:space-between;align-items:start;gap:12px;margin-bottom:15px}
+.badge{display:inline-flex;align-items:center;padding:5px 9px;border-radius:99px;font-size:11px;font-weight:800;background:#f1f5f9;color:#475569;white-space:nowrap}.badge.green{background:#e7f6ed;color:#17643e}.badge.amber{background:#fff3d7;color:#92400e}
+.costbars{display:grid;grid-template-columns:110px 1fr 100px;align-items:center;gap:12px;margin:16px 0}.barwrap{height:13px;background:#edf1f4;border-radius:99px;overflow:hidden}.barfill{height:100%;border-radius:99px}
+.barfill.base{background:#aab8c4}.barfill.opt{background:var(--good)}.barlabel{font-size:12px;color:var(--mut)}.barvalue{text-align:right;font-weight:800;color:var(--acc)}
+.notice{border-radius:10px;background:#fff6e7;border:1px solid #f3d39b;padding:12px 14px;color:#80531a;font-size:12px;margin-top:14px}.footnote{font-size:11px;color:var(--mut);margin-top:13px}
+[data-tour=actions] ul{list-style:none;padding:0;margin:0}[data-tour=actions] li{padding:13px 0;border-bottom:1px solid var(--line);font-size:13px}[data-tour=actions] li:last-child{border-bottom:0}
 #chatBtn{background:var(--sun);border-color:var(--sun);color:#153047;font-weight:700}
 @media(min-width:960px){.side{top:78px;max-height:calc(100vh - 90px)}}
-@media(max-width:640px){.top{padding:10px 14px}.brand{order:-1;width:100%}}
+@media(max-width:1050px){.kpirow{grid-template-columns:repeat(2,minmax(0,1fr))}.card.ai{grid-template-columns:1fr}.ai-side{text-align:left}#out>*{grid-column:1/-1!important}}
+@media(max-width:640px){.top{padding:10px 14px}.brand{order:-1;width:100%}.costbars{grid-template-columns:70px 1fr 80px}}
+.layout{grid-template-columns:minmax(0,1fr)!important}#facPanel>.card{margin-bottom:16px}
+.shortline{color:#d5e1e9;margin:0;font-size:14px}
+.action{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.action:last-child{border-bottom:0;padding-bottom:0}
+.action-icon{width:35px;height:35px;border-radius:10px;background:#f1f5f9;display:grid;place-items:center;flex-shrink:0}.action strong{display:block;color:var(--acc);font-size:13px}.action p{margin:3px 0 0;color:var(--mut);font-size:12px}
+.stratgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:14px 0 0}
+.strategy{border:1px solid var(--line);border-radius:12px;padding:15px;background:#fff;text-align:left;color:var(--ink);width:100%;height:100%;display:block}
+.strategy.selected{border:2px solid var(--good);padding:14px;background:#f5fbf7;box-shadow:0 0 0 3px rgba(39,132,90,.08)}
+.strategy h3{margin:0 0 5px;font-size:14px;color:var(--acc)}.strategy p{font-size:12px;color:var(--mut);margin:0 0 10px;font-weight:400}.strategy .tiny{font-size:11px;font-weight:800;color:var(--good)}
+@media(max-width:700px){.stratgrid{grid-template-columns:1fr}}
 </style></head><body><header class="top"><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span class="sp"></span><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="auth" class="note"></span></header>
 <main id="app" data-role="owner">
 <div id="amsg" class="note" style="margin:0 0 6px"></div>
-<div class="pagehead"><div class="eyebrow">Facility energy intelligence</div><h1 id="pgTitle">Your energy, at a glance.</h1><div class="note" style="margin:0">Pick a day, week or month and a strategy. See what the plan saves compared with the baseline.</div></div>
+<div class="pagehead"><div class="eyebrow">Facility energy intelligence</div><h1 id="pgTitle">Your energy, at a glance.</h1><div class="note" data-role="tech" style="margin:0">Pick a day, week or month and a strategy. See what the plan saves compared with the baseline.</div></div>
 
 
 
@@ -95,11 +113,11 @@ th{font-weight:700}table.sch th,table th{background:color-mix(in srgb,var(--line
 <button id="vday">Day</button><button id="vweek">Week</button><button id="vmonth">Month</button></div>
 <div class="bar"><button id="prev" aria-label="Previous">&#9664;</button><input type="date" id="dt"><button id="next" aria-label="Next">&#9654;</button>
 <b id="ttl"></b> <span id="badge"></span></div>
-<div class="note" id="info" style="margin-top:0"></div>
+<div class="note" id="info" data-role="tech" style="margin-top:0"></div>
 <div class="bar" style="margin:12px 0 0"><b>Strategy</b><button id="qbtn" aria-expanded="false" title="What does the optimiser decide?">?</button><span id="tabs" class="bar" style="margin:0"></span></div>
 </div>
 
-<div class="bar" id="dtabs" data-role="tech" style="margin:0 0 12px"><button data-dt="ov" class="on">Overview</button><button data-dt="fc">Forecasts &amp; energy</button><button data-dt="op">Optimisation</button><button data-dt="pl">Plan &amp; actions</button><button data-dt="ad">Advanced</button></div>
+<div class="bar" id="dtabs" data-role="tech" style="margin:0 0 12px"><button data-dt="ov" class="on">Overview</button><button data-dt="fc">Forecasts &amp; energy</button><button data-dt="op">Optimisation</button><button data-dt="pl">Plan &amp; actions</button><button data-dt="ad">Advanced</button><button data-dt="fa">Facility &amp; data</button></div>
 <div class="card" id="why" hidden><h2>What the optimiser decides</h2>
 <p class="note" style="margin-top:0">For every hour of the day, the optimiser chooses all of these together, so it can plan the battery and the equipment around the highest billed hour.</p>
 <ul style="font-size:14px">
@@ -111,9 +129,8 @@ th{font-weight:700}table.sch th,table th{background:color-mix(in srgb,var(--line
 <p class="note"><b>Not included yet:</b> diesel or gas, individual machines with start and stop rules, real meter history (the demand forecast is trained on synthetic history), export income, forecast uncertainty, the retail charge, the 1.6% KWTBB levy and tax.</p></div>
 
 <div id="out"><div class="card note">Loading&hellip;</div></div>
-</div>
-<aside class="side">
-<details class="card" id="setup"><summary id="fsum">My facility</summary>
+<div id="facPanel" data-role="tech" hidden>
+<details class="card" id="setup" open><summary id="fsum">My facility</summary>
 <p class="note">Changes apply as soon as you leave a box. There is nothing to press.</p>
 <div class="form" style="margin-bottom:8px"><div><label>Start from a typical case</label><select id="f_case"><option value="">Choose a case...</option><option value="lv">LV: small shop or office</option><option value="mv">MV: large campus (challenge case)</option><option value="hv">HV: large factory</option></select></div></div>
 <h3 class="sec">1. Your site</h3>
@@ -165,7 +182,7 @@ th{font-weight:700}table.sch th,table th{background:color-mix(in srgb,var(--line
 <p class="note" id="signhint">Your facility is kept in this browser. Sign in (top right) to keep it in your account too.</p>
 <button class="on" id="fsave" hidden>Save to my account</button> <span id="acctBtns" hidden><button id="sdel">Delete selected saved facility</button> <button id="sall">Delete all my saved data</button></span> <span id="fmsg" class="note"></span></details>
 <div class="card" id="rates"></div>
-</aside></div>
+</div></div></div>
 </main>
 <button id="chatBtn" class="on" aria-expanded="false" aria-controls="chatPanel">Ask the assistant</button>
 <div id="chatPanel" role="dialog" aria-label="Assistant" hidden>
@@ -303,8 +320,8 @@ function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a
  return `<p class="note"><b>CO&#8322; trade-off:</b> Cost-saving earns ${money(dS)} more per day than Balanced, at the price of ${Math.round(dC)} kg more CO&#8322; (about ${money(dS/dC)} per kg).</p>`}
 
 // ================= pages: Brief (owner view) and Detailed (tabs) =================
-const TABS={ov:['ribbon','headline','kpi','flow'],fc:['ribbon','chart'],op:['ribbon','compare'],pl:['actions','schedule','approve'],ad:['stress','sweep','assume','audit']};let dtab='ov';
-function applyTab(){const t=role=='tech';Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;if(k)el.hidden=t&&!TABS[dtab].includes(k)});
+const TABS={ov:['ribbon','headline','kpi','costbars','flow','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','changed'],pl:['actions','schedule','approve','changed'],ad:['stress','sweep','assume','audit','changed'],fa:['changed']};let dtab='ov';
+function applyTab(){const t=role=='tech';Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&dtab=='fa'});$('facPanel').hidden=!(t&&dtab=='fa');
  if(document.querySelectorAll)document.querySelectorAll('#dtabs button').forEach(b=>b.classList.toggle('on',b.dataset.dt==dtab))}
 $('dtabs').onclick=e=>{const b=e.target.closest('[data-dt]');if(b){dtab=b.dataset.dt;applyTab()}};
 // ================= roles =================
@@ -323,20 +340,40 @@ function tplSummary(f){const sv=f.base_cost-f.plan_cost,pct=f.base_cost>0?100*sv
  s.push(f.billed?`The billed peak goes from ${N0(f.base_peak)} kW to ${N0(f.plan_peak)} kW.`:'No maximum demand charge is billed on this day, so there is no peak to reduce.');
  const bits=[];if(f.charge)bits.push(`the battery charges ${f.charge}`);if(f.discharge)bits.push(`discharges ${f.discharge}`);if(f.shift)bits.push(`flexible equipment runs ${f.shift}`);
  if(bits.length)s.push('In the plan, '+bits.join(', ')+'.');return s.join(' ')}
-function headCard(r,b,c,sv,past){const sb=sel=='base',sav=b.cost-r.cost,dp=b.peak-r.peak,dpp=b.peak>0?100*dp/b.peak:0,dco=r.co2-b.co2,cc=b.co2?100*dco/b.co2:0;
- const k=(l,v,cls,sub)=>`<div class="k"><span>${l}</span><b class="${cls||''}">${v}</b><span>${sub||''}</span></div>`;
- const n1=sb?k('You save per day','&mdash;','','Baseline is solar only. Pick a strategy above.'):k('You save per day',money(sav),sav>0.5?'good':'',N1(sv)+'% less than the baseline');
- const n2=!c.mdH.length?k('Billed peak','No peak charge','','no maximum demand is billed on this day'):sb?k('Billed peak',N0(b.peak)+' kW','','solar only'):k('Billed peak lower by',N0(dp)+' kW',dp>0.5?'good':'',N0(b.peak)+' kW &rarr; '+N0(r.peak)+' kW ('+N0(dpp)+'%)');
- const n3=sb?k('CO&#8322; vs baseline','&mdash;','',''):k('CO&#8322; vs baseline',sgn(dco)+' kg',Math.abs(dco)<0.5?'':dco<0?'good':'bad',(cc>=0?'+':'\u2212')+N1(Math.abs(cc))+'% (solar already avoids '+N0(sum(b.ld)*F.ef-b.co2)+' kg)');
- return `<div class="card${past?'':' fcast'}" data-tour="headline"><div class="bar" style="margin-bottom:8px"><h2 style="margin:0">${NAMES[sel]} <span class="tag ${past?'':'f'}">${past?'recorded weather':'forecast'}</span></h2><span class="sp"></span><button data-role="owner" data-pr="1">Print one-page summary</button></div>
- <div class="hl">${n1}${n2}${n3}</div>
- <p id="aiTxt" style="margin:12px 0 4px;font-size:15px">${esc(tplSummary(aiFacts))}<br><small class="note">Built from the optimiser's numbers. Press the button for an AI-written version.</small></p>
- <button class="on" id="aiBtn" data-ai="1">Rewrite with AI</button></div>`}
+function headCard(r,b,c,sv,past){const sb=sel=='base',sav=b.cost-r.cost,dco=r.co2-b.co2,day=aiFacts.day,tail=dco>0.5?' \u2014 with one trade-off to review.':'.',
+ short=(c.mdH.length&&!sb?'Billed peak '+N0(b.peak)+' \u2192 '+N0(r.peak)+' kW. ':'')+(sb?'Solar only, no battery, no load shifting.':'CO\u2082 '+(dco>=0?'+':'\u2212')+N1(Math.abs(b.co2?100*dco/b.co2:0))+'% vs baseline.'),
+ ttl=sb?`Baseline: solar only, on ${day}.`:sav<0.5?`This plan saves almost nothing on ${day}.`:(past?'This plan would have saved ':'Potential savings of ')+money(sav)+tail;
+ return `<div class="card ai${past?'':' fcast'}" data-tour="headline"><div><div class="eyebrow">&#10022; Sun Shine briefing &middot; ${NAMES[sel].replace('Optimiser: ','')} <span class="tag ${past?'':'f'}">${past?'recorded weather':'forecast'}</span></div>
+ <h2>${esc(ttl)}</h2><p class="shortline" data-role="owner">${esc(short)}</p><p id="aiTxt" data-role="tech">${esc(tplSummary(aiFacts))}<br><small class="note">Built from the optimiser's numbers. Press the button for an AI-written version.</small></p>
+ <div class="bar" style="margin:12px 0 0"><button class="on" id="aiBtn" data-ai="1" data-role="tech">Rewrite with AI</button><button data-role="owner" data-pr="1">Print one-page summary</button></div></div>
+ <div class="ai-side"><span class="small">${sb?'Baseline cost':past?'Daily saving':'Potential daily savings'}</span><strong>${sb?money(b.cost):money(sav)}</strong><button class="on" data-role="owner" data-goto="1">Explore plan &rarr;</button></div></div>`}
+function kpiRow(r,b,c,sv){const sb=sel=='base',sav=b.cost-r.cost,dco=r.co2-b.co2,cp=b.co2?100*dco/b.co2:0,
+ k=(l,i,v,cl,f)=>`<div class="card kpi"><div class="kpi-top"><span>${l}</span><span class="ico">${i}</span></div><div class="metric ${cl||''}">${v}</div><div class="kpi-foot">${f}</div></div>`;
+ return `<div class="kpirow" data-tour="kpi">`+
+  k('Estimated cost savings','&#8600;',sb?'&mdash;':money(sav),sav>0.5?'positive':'',sb?'Baseline is solar only':sv>=0?N1(sv)+'% lower than baseline':N1(-sv)+'% higher than baseline')+
+  k('Billed peak demand','&#989;',c.mdH.length?N0(r.peak)+' kW':'None','',c.mdH.length?'From '+N0(b.peak)+' kW at baseline':'No demand charge on this day')+
+  k('Solar utilisation','&#9788;',N0(r.util)+'%','',N0(sum(r.sol))+' kWh available')+
+  k('CO&#8322; vs baseline','&#9831;',sb?'&mdash;':(dco>=0?'+':'\u2212')+N1(Math.abs(cp))+'%',sb||Math.abs(dco)<0.5?'':dco<0?'positive':'warning',sb?'':Math.abs(dco)<0.5?'About the same':dco<0?'Emissions lower':'Emissions slightly higher')+`</div>`}
+function costCard(r,b,sv,past){const sb=sel=='base',w=b.cost>0?Math.min(100*r.cost/b.cost,100):100;
+ return `<div class="card" data-tour="costbars"><div class="cardhead"><div><h2>Electricity cost comparison</h2><div class="muted small">Baseline vs selected strategy</div></div>${!sb&&sv>=0.05?`<span class="badge green">${N1(sv)}% lower</span>`:''}</div>
+ <div class="costbars"><div class="barlabel">Baseline</div><div class="barwrap"><div class="barfill base" style="width:100%"></div></div><div class="barvalue">${money(b.cost)}</div></div>
+ <div class="costbars"><div class="barlabel">${sb?'Baseline':NAMES[sel].replace('Optimiser: ','')}</div><div class="barwrap"><div class="barfill opt" style="width:${w.toFixed(1)}%"></div></div><div class="barvalue">${money(r.cost)}</div></div>
+ <div class="footnote">${past?'Estimate from recorded weather.':'Forecast estimate, not a measurement.'}<span data-role="tech"> Daily cost includes the monthly demand charge spread over 30 days. Check the tariff assumptions against your own bill.</span></div></div>`}
+function ownerSteps(r,b){const cap=+F.bat||0,L=[],it=(i,t,p)=>`<div class="action"><div class="action-icon">${i}</div><div><strong>${t}</strong><p>${p}</p></div></div>`;
+ if(sel=='base')return it('&#9788;','Pick a strategy','Choose one above to see the plan.');
+ const c=rg(r.ch,1),d=rg(r.b,1),f=rg(r.fl,1);
+ if(cap>0)L.push(it('&#989;','Battery',(c?'Charge '+c+'. ':'')+(d?'Discharge '+d+'.':'Not needed today.')));
+ L.push(it('&#9638;',+F.evn>0?'EV charging':'Flexible equipment',f?'Run '+f+'.':'No change to the normal schedule.'));
+ if(r.c.mdH.length)L.push(it('&#8600;','Billed peak','Hold it to '+N0(r.peak)+' kW.'));
+ return L.join('')}
+function actCard(r,b){return `<div class="card" data-tour="actions"><div class="cardhead"><div><h2>Recommended next steps</h2><div class="muted small">For this strategy</div></div><span class="badge amber">For your review</span></div><div data-role="owner">${ownerSteps(r,b)}</div><ul data-role="tech">${recs(r,b)}</ul><button class="on" data-role="owner" data-goto="1" style="width:100%;margin-top:15px">View detailed energy plan &rarr;</button></div>`}
+function stratCards(R,b){const D={cost:['Cost-saving','Lowest bill. May add a little CO&#8322;.'],bal:['Balanced','Moves half as much equipment and limits extra CO&#8322;.'],prod:['Production-first','Never moves equipment. Same CO&#8322; limit as Balanced.']};
+ return `<div class="card" data-tour="strategies"><h2>Choose an optimisation strategy</h2><div class="muted small">Pick one to see its plan across the dashboard.</div><div class="stratgrid">`+['cost','bal','prod'].map(k=>{const x=R[k],v=x&&b.cost>0?(1-x.cost/b.cost)*100:null;return `<button class="strategy${sel==k?' selected':''}" data-sc="${k}"><h3>${D[k][0]}</h3><p>${D[k][1]}</p><span class="tiny">${v==null?'':N1(v)+'% saving'}</span></button>`}).join('')+`</div></div>`}
 function flowCard(r,b){
  const segs=x=>{const d=sum(x.d),bt=sum(x.b),g=sum(x.g);return{d,bt,g,t:d+bt+g||1}};
  const bar=(x,l)=>{const s=segs(x),lab=v=>v/s.t>0.1?N0(v)+' kWh':'';return `<div class="fl"><div class="fl-l">${l}</div><div class="fl-b" role="img" aria-label="${l}: solar ${N0(s.d)} kWh, battery ${N0(s.bt)} kWh, grid ${N0(s.g)} kWh"><span class="s1" style="flex:${s.d}">${lab(s.d)}</span><span class="s2" style="flex:${s.bt}">${lab(s.bt)}</span><span class="s3" style="flex:${s.g}">${lab(s.g)}</span></div></div>`};
  const s=segs(r);
- return `<div class="card" data-tour="flow"><h2>Where the day's energy comes from</h2>${bar(b,'Baseline (solar only)')}${sel=='base'?'':bar(r,NAMES[sel].replace('Optimiser: ',''))}
+ return `<div class="card" data-tour="flow" data-role="tech"><h2>Where the day's energy comes from</h2>${bar(b,'Baseline (solar only)')}${sel=='base'?'':bar(r,NAMES[sel].replace('Optimiser: ',''))}
  <div class="legend"><span><i style="background:var(--sun)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (including battery charging)</span></div>
  <div class="stats"><div><span>Self-consumption</span><b>${N0(r.util)}%</b><span>of the solar produced is used on site</span></div><div><span>Solar share of supply</span><b>${N0(100*s.d/s.t)}%</b><span>of the energy supplied came from solar</span></div><div><span>Solar available</span><b>${N0(sum(r.sol))} kWh</b></div></div>
  <p class="note">Totals for the day, in kWh. The battery's energy first came from solar or the grid.</p></div>`}
@@ -409,19 +446,17 @@ function dayHtml(R,rows){
  if(sp)fn+=` Solar error ${sp.shown_mae_pct??sp.model_mae_pct}% of kWp vs ${sp.naive_mae_pct}% for yesterday's output.`;
  if(ld)fn+=` Demand error ${ld.model_mae_pct}% of peak vs ${ld.naive_mae_pct}% for same-as-last-week${/SYNTHETIC/.test(m.data_note||'')?' (measured on SYNTHETIC history, not real accuracy)':''}.`;
  if(m.data_note)fn+=' '+m.data_note;if(fc.weather&&fc.weather.stale)fn+=' Weather is a saved copy because the weather service did not answer.';
- const past=cur<TODAY,rib=past?`<div class="ribbon past" data-tour="ribbon"><b>RECORDED WEATHER.</b> Demand is ${fc.meter=='actual'?'your real meter reading':'modelled, because no meter data covers this day'}. Savings are what each strategy would have achieved.</div>`:`<div class="ribbon" data-tour="ribbon"><b>${cur==TODAY?'FORECAST FOR TODAY.':'FORECAST.'}</b> This is a prediction, not a measurement.${cur==TODAY?' Hours that have already passed are still forecast values.':' This day has not happened yet.'} Weather comes from a weather forecast; solar and demand are calculated from it.</div>`;
+ const past=cur<TODAY,rib=past?`<div class="ribbon past" data-tour="ribbon"><b>RECORDED WEATHER.</b> A past day, estimated from recorded weather.<span data-role="tech"> Demand is ${fc.meter=='actual'?'your real meter reading':'modelled, because no meter data covers this day'}. Savings are what each strategy would have achieved.</span></div>`:`<div class="ribbon" data-tour="ribbon"><b>${cur==TODAY?'FORECAST FOR TODAY.':'FORECAST.'}</b> A prediction, not a measurement.<span data-role="tech">${cur==TODAY?' Hours that have already passed are still forecast values.':' This day has not happened yet.'} Weather comes from a weather forecast; solar and demand are calculated from it.</span></div>`;
  const off=R.base.offline||r.offline,offB=off?`<div class="ribbon warn"><b>OFFLINE.</b> The server could not be reached, so this screen shows results saved on this device at ${new Date(off).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}. They may be out of date. Try again in a minute.</div>`:'';
  const L=+F.lim,mxg=Math.max(...r.g),mxb=Math.max(...b.g),
   limB=(L>0&&mxg>L+1?`<div class="ribbon warn"><b>GRID LIMIT NOT MET.</b> Highest grid import is ${N0(mxg)} kW, above the ${N0(L)} kW limit.${sel=='base'?' Pick a strategy to see whether it can be held.':' The battery and chargers cannot hold it, so this is the closest plan.'}</div>`:'')+(L>0&&sel!='base'&&mxb>L+1&&mxg<=L+1?`<div class="ribbon"><b>GRID LIMIT.</b> Solar only, the site would draw up to ${N0(mxb)} kW, above the ${N0(L)} kW limit. This plan holds it at or under ${N0(L)} kW.</div>`:'')+(+F.evn>0&&fc.evun>0.5?`<div class="ribbon warn"><b>EV CHARGING.</b> ${N0(fc.evun)} kWh of the EV demand cannot be delivered on this day: the chargers are closed or there are too few hours or too little power.</div>`:'');
- return rib+offB+limB+headCard(r,b,c,sv,past)+`<div class="card${past?'':' fcast'}" data-tour="kpi"><h2>The numbers behind it</h2>${kpis([['Baseline cost',money(b.cost),'','solar only'],['With this strategy',money(r.cost)],['You save',money(b.cost-r.cost),'good',sv.toFixed(1)+'%'],
-  ['Billed peak',c.mdH.length?N0(r.peak)+' kW':'none','',c.mdH.length?'baseline '+N0(b.peak)+' kW':'no demand charge today'],['Solar used',N0(r.util)+'%','',N0(sum(r.sol))+' kWh available']])}
- <p class="note">Daily cost includes the monthly demand charge spread over 30 days.</p></div>
+ return rib+offB+limB+headCard(r,b,c,sv,past)+`${kpiRow(r,b,c,sv)}${costCard(r,b,sv,past)}${actCard(r,b)}
  ${flowCard(r,b)}
  <div class="card${past?'':' fcast'}" data-tour="chart" data-role="tech"><div class="bar" style="margin-bottom:6px"><h2 id="chTitle" style="margin:0">${chartTab=='wx'?(past?'Weather and solar record (recorded)':'Forecast inputs: weather, solar and demand (forecast)'):'Where the power comes from, hour by hour'+(past?'':' (forecast)')}</h2><span class="sp"></span><span id="chTabs"><button data-ct="use" class="${chartTab=='use'?'on':''}" data-tp="${past?1:0}">Energy usage</button> <button data-ct="wx" class="${chartTab=='wx'?'on':''}">${past?'Recorded weather':'Predicted weather'}</button></span></div>
  <div id="ct_use"${chartTab=='use'?'':' hidden'}>${draw(r,b,c.win)}</div><div id="ct_wx"${chartTab=='wx'?'':' hidden'}>${fcCard(fc,past,fn)}</div></div>
- <div class="card" data-tour="compare"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
+ ${stratCards(R,b)}
+ <div class="card" data-tour="compare" data-role="tech"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
  <p class="note">${ann}</p>${rows.length>1&&rows.every(x=>Math.abs(R[x.k].cost-b.cost)<0.01)?'<p class="note"><b>Why are all the strategies the same?</b> On this day no peak rate or maximum demand charge applies (for example a weekend on a time-of-use tariff), so moving energy or using the battery cannot lower the bill. Try a weekday.</p>':''}<p class="note">${tc}</p><p class="note">${carbon}</p>${tradeoff(R)}</div>
- <div class="card" data-tour="actions"><h2>Recommended next steps</h2><ul>${recs(r,b)}</ul><p class="note">Generated from the selected strategy's schedule.</p></div>
  ${schedCard(r,c)}${apCard()}${stressCard()}${sweepCard()}${assumeCard(fc,past)}${auditCard()}`}
 
 function rel(d){return d<TODAY?['Past (recorded weather)','']:d==TODAY?['Today (forecast)','t']:d==addD(TODAY,1)?['Tomorrow (forecast)','f']:['Forecast','f']}
@@ -466,7 +501,7 @@ function changeCard(){if(!pend)return;const p=pend;pend=null;const a=p.before,b=
  if(a&&b&&a.view==b.view&&a.key==b.key){const same=Math.abs(a.base-b.base)<0.005&&Math.abs(a.cost-b.cost)<0.005;
   num=same?'The numbers on this screen did not change, because these settings do not affect them.':`Baseline cost ${money(a.base)} &rarr; ${money(b.base)}. Cost with the strategy ${money(a.cost)} &rarr; ${money(b.cost)}. You save ${money(a.save)} &rarr; ${money(b.save)}.`}
  else num='The numbers below now use the new settings.';
- $('out').insertAdjacentHTML('afterbegin',`<div class="card" style="border-color:var(--sun)"><div class="bar" style="margin:0"><h2 style="margin:0">What just changed</h2><span class="sp"></span><button data-x="1">Dismiss</button></div><ul>${p.items.map(x=>`<li>${x}</li>`).join('')}</ul><p class="note">${num}</p></div>`)}
+ $('out').insertAdjacentHTML('afterbegin',`<div class="card" data-tour="changed" style="border-color:var(--sun)"><div class="bar" style="margin:0"><h2 style="margin:0">What just changed</h2><span class="sp"></span><button data-x="1">Dismiss</button></div><ul>${p.items.map(x=>`<li>${x}</li>`).join('')}</ul><p class="note">${num}</p></div>`)}
 async function render(){
  const my=++tok,dates=span();$('dt').value=cur;tabs();
  ['day','week','month'].forEach(v=>$('v'+v).classList.toggle('on',view==v));
@@ -487,7 +522,7 @@ async function render(){
   const items=dates.map(()=>null),idx=dates.map((x,i)=>i).filter(i=>dates[i]>=MIN&&dates[i]<=MAX);
   let done=0;const run=async i=>{try{items[i]={b:await getRun(dates[i],'base'),r:await getRun(dates[i],dates[i]<TODAY?F.follow:sel)}}catch(e){items[i]=null}done++;const p=$('prog');if(p)p.textContent=`Loading day ${done} of ${idx.length}. A new day takes a few seconds, then it is saved on this device.`};
   if(idx.length){await run(idx[0]);for(let k=1;k<idx.length;k+=6){await Promise.all(idx.slice(k,k+6).map(run));if(my!=tok)return}}
-  if(my!=tok)return;$('out').innerHTML=periodHtml(dates,items);changeCard();setTimeout(()=>warm(my),1500)
+  if(my!=tok)return;$('out').innerHTML=periodHtml(dates,items);applyTab();changeCard();setTimeout(()=>warm(my),1500)
  }catch(e){if(my==tok)$('out').innerHTML=errCard(e.message)}}
 
 
@@ -549,7 +584,7 @@ if(typeof window!='undefined'&&window.addEventListener){const rp=()=>{if(tI>=0)(
 const apKey=()=>lastPlan?lastPlan.date+'|'+lastPlan.sel+'|'+hk(rkey()):'';
 const apLoad=()=>{try{return JSON.parse(localStorage.getItem('approvals')||'[]')}catch(e){return[]}};
 function apCard(){const p=lastPlan;if(!p||p.sel=='base'||p.date<TODAY)return'';
- return `<div class="card" data-tour="approve"><h2>Approve this plan</h2><p class="note" style="margin-top:0">You stay in control. Approving records who accepted the plan and prepares a schedule file for your operators or building system. Nothing is sent to any equipment.</p><button class="on" data-ap="approve">Approve and prepare schedule</button><div id="apOut" style="margin-top:8px"></div><p class="note">Autonomy level 1 of 3: advice that a person approves, then an exported schedule. Levels 2 and 3 (automatic control of equipment) need live meter and device links, safety interlocks and sign-off, and are not switched on.</p></div>`}
+ return `<div class="card" data-tour="approve" data-role="tech"><h2>Approve this plan</h2><p class="note" style="margin-top:0">You stay in control. Approving records who accepted the plan and prepares a schedule file for your operators or building system. Nothing is sent to any equipment.</p><button class="on" data-ap="approve">Approve and prepare schedule</button><div id="apOut" style="margin-top:8px"></div><p class="note">Autonomy level 1 of 3: advice that a person approves, then an exported schedule. Levels 2 and 3 (automatic control of equipment) need live meter and device links, safety interlocks and sign-off, and are not switched on.</p></div>`}
 function schedule(p,rec){const r=p.r,b=p.b;
  const hours=N.map(h=>({hour_start:p2(h)+':00',battery_setpoint_kw:+(r.b[h]-r.ch[h]).toFixed(1),flexible_load_kw:+(+r.fl[h]).toFixed(1),planned_grid_import_kw:+r.g[h].toFixed(1),expected_solar_kw:+r.sol[h].toFixed(1),site_demand_kw:+r.ld[h].toFixed(1)}));
  return{schema:'facility-energy-planner/schedule/v1',advisory:'Forecast-based plan approved by a person. This is not a control signal: check it against live readings before acting.',facility:F.name,tariff:tf().n,date:p.date,strategy:NAMES[p.sel].replace('Optimiser: ',''),
@@ -634,6 +669,8 @@ $('out').onclick=e=>{const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.d
  if(e.target.closest('[data-sw]')){sweepRun();return}
  if(e.target.closest('[data-au]')){auditRun();return}
  if(e.target.closest('[data-retry]')){render();return}
+ const sc=e.target.closest('[data-sc]');if(sc){sel=sc.dataset.sc;render();return}
+ if(e.target.closest('[data-goto]')){setRole('tech');window.scrollTo&&window.scrollTo(0,0);return}
  const ap=e.target.closest('[data-ap]');if(ap){apClick(ap.dataset.ap);return}
  const x=e.target.closest('[data-x]');if(x){x.closest('.card').remove();return}
  const b=e.target.closest('[data-d]');if(b&&!b.classList.contains('na'))go(b.dataset.d)};
@@ -705,5 +742,5 @@ $('f_case').onchange=e=>{const c=CASES[e.target.value];if(!c)return;const nf=Obj
  FIELDS.forEach(k=>$('f_'+k).value=nf[k]);$('f_tar').value=nf.volt+nf.struct;
  applyLocal(['<b>Typical case loaded:</b> '+esc(c.name)+'. Replace these numbers with your own bill.']);e.target.value=''};
 applyRole(role||'owner');$('roleGate').hidden=true;
-fill();if(!saved)$('setup').open=true;render();whoami();
+fill();if(!saved){applyRole('tech');dtab='fa';applyTab()}render();whoami();
 </script></body></html>
