@@ -79,7 +79,7 @@ table.sch td,table.sch th{padding:4px 8px}table.sch tr.bw td{background:rgba(181
 <li><b>Shiftable equipment:</b> how much of the flexible load runs in each hour, with total energy unchanged. With EV chargers set, only the chargers move, and only inside operating hours (Mon to Fri 07:30 to 18:00, Sat 07:30 to 14:00, Sun closed; hourly steps round this inward to whole hours). With no chargers, a share of the 09:00 to 17:00 load moves.</li>
 <li><b>Grid:</b> how much to import each hour, within the grid limit (a hard limit: if it cannot be met, the plan gets as close as it can and says so), with the highest billed hour as the maximum demand.</li>
 <li><b>Solar:</b> all of it is used on site first. No export is assumed.</li></ul>
-<p class="note"><b>Goal:</b> lowest bill (hourly energy charge plus maximum demand charge). The baseline is solar only. <b>Cost-saving</b> minimises the bill. <b>Balanced</b> moves half as much equipment, adds a small battery wear cost, and allows only half of the extra CO&#8322; that Cost-saving would add. <b>No extra CO&#8322;</b> allows no more grid energy than the baseline, so it never adds CO&#8322;. <b>Production-first</b> moves no equipment at all. The CO&#8322; limit matters because charging the battery from the grid loses energy: with a 90% battery, about 11 kWh is lost for every 100 kWh discharged.</p>
+<p class="note"><b>Goal:</b> lowest bill (hourly energy charge plus maximum demand charge). The baseline is solar only. <b>Cost-saving</b> minimises the bill. <b>Balanced</b> moves half as much equipment, adds a small battery wear cost, and allows only half of the extra CO&#8322; that Cost-saving would add. <b>Production-first</b> moves no equipment at all, and its battery follows the same CO&#8322; limit and wear cost as Balanced. The CO&#8322; limit matters because charging the battery from the grid loses energy: with a 90% battery, about 11 kWh is lost for every 100 kWh discharged.</p>
 <p class="note"><b>Not included yet:</b> diesel or gas, individual machines with start and stop rules, real meter history (the demand forecast is trained on synthetic history), export income, forecast uncertainty, the retail charge, the 1.6% KWTBB levy and tax.</p></div>
 
 <div id="out"><div class="card note">Loading&hellip;</div></div>
@@ -127,7 +127,7 @@ table.sch td,table.sch th{padding:4px 8px}table.sch tr.bw td{background:rgba(181
 </details>
 <details class="adv"><summary>Advanced (usually leave as it is)</summary>
 <div class="form" style="margin-top:8px">
-<div><label>Strategy I follow (keeps past days fixed)</label><select id="f_follow"><option value="base">None (baseline)</option><option value="cost">Cost-saving</option><option value="bal">Balanced</option><option value="zero">No extra CO2</option><option value="prod">Production-first</option></select></div>
+<div><label>Strategy I follow (keeps past days fixed)</label><select id="f_follow"><option value="base">None (baseline)</option><option value="cost">Cost-saving</option><option value="bal">Balanced</option><option value="prod">Production-first</option></select></div>
 <div><label>Grid import limit, kW (blank = none)</label><input id="f_lim" type="number" min="0"></div>
 <div><label>Grid emissions, kg CO&#8322;/kWh</label><input id="f_ef" type="number" step="0.01"></div>
 <div><label>Battery round-trip efficiency, %</label><input id="f_eff" type="number" min="50" max="100"></div>
@@ -173,8 +173,8 @@ MVG:{n:'MV General',ep:29.83,eo:29.83,md:89.27,ad:0,t:'MV General: 29.83 sen/kWh
 MVT:{n:'MV Time-of-Use',ep:31.32,eo:27.23,md:97.06,ad:0,t:'MV ToU: peak 31.32, off-peak 27.23 sen/kWh. Maximum demand RM97.06/kW/month (30.19 + 66.87), billed on peak-period demand only. Retail RM200/month.'},
 HVG:{n:'HV General',ep:43.03,eo:43.03,md:31.21,ad:0,t:'HV General: 43.03 sen/kWh. Maximum demand RM31.21/kW/month (16.68 + 14.53). Retail RM250/month.'},
 HVT:{n:'HV Time-of-Use',ep:44.52,eo:40.43,md:44.82,ad:0,t:'HV ToU: peak 44.52, off-peak 40.43 sen/kWh. Maximum demand RM44.82/kW/month (21.76 + 23.06), peak-period demand only. Retail RM250/month.'}};
-const MODES=[{k:'cost',n:'Cost-saving',fx:1,wr:0,ca:1},{k:'bal',n:'Balanced',fx:.5,wr:.02,ca:.5},{k:'zero',n:'No extra CO2',fx:1,wr:0,ca:0},{k:'prod',n:'Production-first',fx:0,wr:0,ca:1}];
-const NAMES={base:'Baseline',cost:'Optimiser: Cost-saving',bal:'Optimiser: Balanced',zero:'Optimiser: No extra CO2',prod:'Optimiser: Production-first'};
+const MODES=[{k:'cost',n:'Cost-saving',fx:1,wr:0,ca:1},{k:'bal',n:'Balanced',fx:.5,wr:.02,ca:.5},{k:'prod',n:'Production-first',fx:0,wr:.02,ca:.5}];
+const NAMES={base:'Baseline',cost:'Optimiser: Cost-saving',bal:'Optimiser: Balanced',prod:'Optimiser: Production-first'};
 const DEF={name:'APU',loc:'3.0553,101.7003',prof:'campus',follow:'bal',volt:'MV',struct:'T',afa:0,peak:4000,kwp:3000,bat:5000,flex:10,lim:4200,evn:8,evkw:50,eve:1200,ef:0.6,eff:90};
 const FIELDS=['name','loc','prof','follow','volt','struct','afa','peak','kwp','bat','flex','lim','evn','evkw','eve','ef','eff'],NUMS=['afa','peak','kwp','bat','flex','evn','evkw','eve','ef','eff'];
 const iso=d=>d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate()),parse=s=>new Date(s+'T12:00:00');
@@ -186,7 +186,7 @@ const money=n=>'RM '+(Math.abs(n)>=100?N0(n):N2(n));
 let saved=null;try{saved=JSON.parse(localStorage.getItem('facility'))}catch(e){}
 let lastPlan=null,chartTab='use',pend=null,last=null,srcNote='',M=null,aiFacts=null;const aiCache=new Map();try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
 const LEG=o=>o&&o.evn===undefined?Object.assign({evn:0,eve:0},o):(o||{});
-let F=Object.assign({},DEF,LEG(saved)),view='day',cur=TODAY,sel='bal',cache=new Map(),tok=0;
+let F=Object.assign({},DEF,LEG(saved));if(F.follow=='zero')F.follow='bal',view='day',cur=TODAY,sel='bal',cache=new Map(),tok=0;
 const tf=()=>TF[F.volt+F.struct],tou=()=>F.struct=='T';
 
 async function api(url,opt){const ctl=typeof AbortController!='undefined'?new AbortController():null,t=ctl?setTimeout(()=>ctl.abort(),25000):0;let r;
@@ -270,9 +270,9 @@ function fcCard(fc,past,fn){
  <div class="stats"><div><span>Highest temperature</span><b>${Math.max(...fc.temp).toFixed(1)} &deg;C</b></div><div><span>Average cloud cover</span><b>${Math.round(av(fc.cloud))}%</b></div><div><span>Strongest sunshine</span><b>${Math.round(Math.max(...fc.ghi))} W/m&sup2;</b></div><div><span>Solar energy ${past?'':'expected '}</span><b>${Math.round(E)} kWh</b></div></div>
  <p class="note">${past?'Rebuilt from recorded weather, not from an inverter reading.':'Not measured: this is a prediction, so real values will differ.'}${rng}</p><p class="note">${esc(fn)}</p>`}
 
-function tradeoff(R){const a=R.cost,z=R.zero;if(!a||!z)return'';const dS=z.cost-a.cost,dC=a.co2-z.co2;
- if(dS<1||dC<0.5)return'<p class="note">CO&#8322; trade-off: Cost-saving and No extra CO&#8322; give almost the same result on this day.</p>';
- return `<p class="note"><b>CO&#8322; trade-off:</b> Cost-saving earns ${money(dS)} more per day than No extra CO&#8322;, at the price of ${Math.round(dC)} kg more CO&#8322; (about ${money(dS/dC)} per kg). Balanced sits in between.</p>`}
+function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a.cost,dC=a.co2-z.co2;
+ if(dS<1||dC<0.5)return'<p class="note">CO&#8322; trade-off: Cost-saving and Balanced give almost the same result on this day.</p>';
+ return `<p class="note"><b>CO&#8322; trade-off:</b> Cost-saving earns ${money(dS)} more per day than Balanced, at the price of ${Math.round(dC)} kg more CO&#8322; (about ${money(dS/dC)} per kg).</p>`}
 
 // ================= roles =================
 let role=null;try{role=localStorage.getItem('role')}catch(e){}
@@ -364,8 +364,8 @@ function kpis(items){return '<div class="kpis">'+items.map(k=>`<div class="k"><s
 function dayHtml(R,rows){
  if(!R[sel])sel='base';const b=R.base,r=R[sel],sv=(1-r.cost/b.cost)*100||0,c=b.c;last={view:'day',key:cur,base:b.cost,cost:r.cost,save:b.cost-r.cost};
  aiFacts={day:parse(cur).toLocaleDateString('en-GB',{weekday:'long'}),strategy:NAMES[sel].replace('Optimiser: ',''),tariff:tf().n,billed:c.mdH.length>0,base_cost:+b.cost.toFixed(2),plan_cost:+r.cost.toFixed(2),base_peak:+b.peak.toFixed(1),plan_peak:+r.peak.toFixed(1),solar_pct:+r.util.toFixed(1),co2_pct:b.co2?+((r.co2/b.co2-1)*100).toFixed(2):null,charge:rg(r.ch,1),discharge:rg(r.b,1),shift:rg(r.fl,1)};lastPlan={date:cur,sel,r,b};
- const tbl=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Grid share</th><th>Billed peak, kW</th><th>CO&#8322;, kg</th><th>CO&#8322; vs baseline</th></tr>`+rows.map(s=>{const x=R[s.k],v=(1-x.cost/b.cost)*100,cd=b.co2?(x.co2/b.co2-1)*100:0;
-  return `<tr class="${s.k==sel?'sel':''}"><td>${NAMES[s.k]}</td><td>${N2(x.cost)}</td><td class="${v>0.05?'good':''}">${s.k=='base'?'&mdash;':v.toFixed(1)+'%'}</td><td>${N0(x.util)}%</td><td>${N0(sum(x.g)/sum(x.ld)*100)}%</td><td>${N0(x.peak)}</td><td>${N0(x.co2)}</td><td style="${s.k!='base'&&cd>0.05?'color:#d9a441':''}" class="${s.k!='base'&&cd<-0.05?'good':''}">${s.k=='base'||!b.co2?'&mdash;':(cd>=0?'+':'')+cd.toFixed(1)+'%'}</td></tr>`}).join('');
+ const tbl=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Grid share</th><th>Billed peak, kW</th><th>CO&#8322;, kg</th><th>CO&#8322; vs baseline</th><th>CO&#8322; vs no solar</th></tr>`+rows.map(s=>{const x=R[s.k],v=(1-x.cost/b.cost)*100,cd=b.co2?(x.co2/b.co2-1)*100:0;
+  return `<tr class="${s.k==sel?'sel':''}"><td>${NAMES[s.k]}</td><td>${N2(x.cost)}</td><td class="${v>0.05?'good':''}">${s.k=='base'?'&mdash;':v.toFixed(1)+'%'}</td><td>${N0(x.util)}%</td><td>${N0(sum(x.g)/sum(x.ld)*100)}%</td><td>${N0(x.peak)}</td><td>${N0(x.co2)}</td><td style="${s.k!='base'&&cd>0.05?'color:#d9a441':''}" class="${s.k!='base'&&cd<-0.05?'good':''}">${s.k=='base'||!b.co2?'&mdash;':(cd>=0?'+':'')+cd.toFixed(1)+'%'}</td><td class="good">${((x.co2/(sum(b.ld)*F.ef)-1)*100).toFixed(0)}%</td></tr>`}).join('');
  const ng=sum(b.ld)*F.ef,cc=b.co2?(r.co2/b.co2-1)*100:0,nm=NAMES[sel];
  const carbon=(ng>0?`Carbon: solar already cuts CO&#8322; by ${((1-b.co2/ng)*100).toFixed(0)}% versus buying everything from the grid (${N0(ng-b.co2)} kg avoided on this day). `:'')+(sel=='base'?'':(Math.abs(cc)<0.05?`${nm} leaves CO&#8322; unchanged versus the baseline. `:cc<0?`${nm} cuts CO&#8322; by a further ${(-cc).toFixed(1)}% versus the baseline. `:`${nm} adds ${cc.toFixed(1)}% CO&#8322; versus the baseline: charging the battery from the grid loses about ${Math.round(100-F.eff)}% of the energy, so here the saving is money, not carbon. `))+`Uses one flat grid factor (${F.ef} kg/kWh), so it cannot tell cleaner hours from dirtier ones.`;
  const ann=sel=='base'?'Baseline: solar only, no battery, no load shifting.':(c.wk?`Saving versus baseline: about ${money((b.cost-r.cost)*300)} a year if 300 weekdays looked like this one. Rough guide only, and battery purchase cost is not included.`:'This is a weekend day, so it is not scaled up to a yearly figure.');
@@ -474,7 +474,7 @@ async function warm(my){if(my!=tok||view=='month')return;const mon=addD(cur,-((p
 const STEPS=[
  {s:'#roleSwitch',t:'Owner or Technician',x:'Choose your view. Owners see savings, billed peak and CO2 with a printable summary. Technicians see the hourly schedule, assumptions, stress test, battery sweep and audit log. Both use the same numbers.'},
  {s:'#dateCard',t:'Pick a day',x:'Use Yesterday, Today and Tomorrow, or the arrows and the date box. Day, Week and Month change the view. In Week and Month, tap a day to open it. Dashed boxes are forecasts.'},
- {s:'#tabs',t:'Choose a strategy',x:'Baseline is solar only. The four optimiser strategies plan the battery and the flexible equipment, with different limits on extra CO2. The ? button explains what the optimiser decides.'},
+ {s:'#tabs',t:'Choose a strategy',x:'Baseline is solar only. The three optimiser strategies plan the battery and the flexible equipment, with different limits on extra CO2. The ? button explains what the optimiser decides.'},
  {s:'[data-tour=ribbon]',t:'Forecast or recorded?',x:'This banner always says whether the day is a prediction or recorded weather. Forecast cards have dashed borders.'},
  {s:'[data-tour=headline]',t:'Headline numbers and summary',x:'Saving per day, billed peak reduction and CO2, then a plain-English summary. Press Rewrite with AI for an AI-written version; every number in it is checked.'},
  {s:'[data-tour=kpi]',t:'The numbers behind it',x:'Cost without the plan, with the plan, what you save, the billed peak and how much solar is used.'},
@@ -555,12 +555,12 @@ function localIntent(t){const s=t.toLowerCase(),nav={},fac={},num=x=>+String(x).
 function applyNav(n){const bits=[];
  if(n.date&&n.date>=MIN&&n.date<=MAX){cur=n.date;view=n.view||'day';bits.push(n.date)}
  if(n.view){view=n.view;bits.push(n.view+' view')}
- if(n.strategy){sel=n.strategy;bits.push(NAMES[sel].replace('Optimiser: ',''))}
+ if(n.strategy){sel=n.strategy=='zero'?'bal':n.strategy;bits.push(NAMES[sel].replace('Optimiser: ',''))}
  if(n.chart){chartTab=n.chart;bits.push(n.chart=='wx'?'weather chart':'energy usage chart')}
  if(n.open=='why'){$('why').hidden=false;$('qbtn').setAttribute('aria-expanded','true');bits.push('what the optimiser decides')}
  if(n.open=='tour'){chatOpen(false);tStart();return}
  if(bits.length)cAdd('msg n','Opened: '+esc([...new Set(bits)].join(', ')));render()}
-function propToF(p){const n={};for(const k in p){if(k=='tar'){n.volt=p.tar.slice(0,2);n.struct=p.tar[2]}else if(k=='loc')n.loc=p.loc=='penang'?'5.41,100.33':'3.0553,101.7003';else n[k]=p[k]}return n}
+function propToF(p){const n={};for(const k in p){if(k=='tar'){n.volt=p.tar.slice(0,2);n.struct=p.tar[2]}else if(k=='loc')n.loc=p.loc=='penang'?'5.41,100.33':'3.0553,101.7003';else n[k]=(k=='follow'&&p[k]=='zero')?'bal':p[k]}return n}
 function propose(p){const nf=Object.assign({},F,propToF(p)),lines=diffF(F,nf);
  if(!lines.length){cAdd('msg b','Those values already match your settings.');return}
  const id=++chat.n;chat.props.set(id,nf);
@@ -665,9 +665,9 @@ $('sdel').onclick=async()=>{const n=$('sites')&&$('sites').value;if(!n||!confirm
 $('sall').onclick=async()=>{if(!confirm('Delete ALL your saved facilities from the account?'))return;
  try{const j=await api('/api/profile?all=1',{method:'DELETE'});sites=j.sites||[];fillSites();say('All saved data deleted.')}catch(e){say(e.message)}};
 const CASES={
- lv:{name:'LV demo site',prof:'campus',volt:'LV',struct:'T',peak:150,kwp:100,bat:200,flex:10,lim:'',evn:0,evkw:50,eve:0},
- mv:{name:'MV demo campus',prof:'campus',volt:'MV',struct:'T',peak:4000,kwp:3000,bat:5000,flex:10,lim:4200,evn:8,evkw:50,eve:1200},
- hv:{name:'HV demo factory',prof:'factory',volt:'HV',struct:'T',peak:15000,kwp:8000,bat:10000,flex:10,lim:'',evn:0,evkw:50,eve:0}};
+ lv:{name:'LV demo site',loc:'3.0553,101.7003',prof:'campus',volt:'LV',struct:'T',peak:150,kwp:100,bat:200,flex:10,lim:'',evn:0,evkw:50,eve:0},
+ mv:{name:'MV demo campus',loc:'3.0553,101.7003',prof:'campus',volt:'MV',struct:'T',peak:4000,kwp:3000,bat:5000,flex:10,lim:4200,evn:8,evkw:50,eve:1200},
+ hv:{name:'HV demo factory',loc:'5.41,100.33',prof:'factory',volt:'HV',struct:'T',peak:15000,kwp:8000,bat:10000,flex:10,lim:'',evn:0,evkw:50,eve:0}};
 $('f_case').onchange=e=>{const c=CASES[e.target.value];if(!c)return;const nf=Object.assign({},F,c);
  FIELDS.forEach(k=>$('f_'+k).value=nf[k]);$('f_tar').value=nf.volt+nf.struct;
  applyLocal(['<b>Typical case loaded:</b> '+esc(c.name)+'. Replace these numbers with your own bill.']);e.target.value=''};
