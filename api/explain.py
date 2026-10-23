@@ -24,7 +24,7 @@ from collections import deque
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-STRATS = ("Baseline", "Cost-saving", "Balanced", "No extra CO2", "Production-first")
+STRATS = ("Baseline", "Cost-saving", "Balanced", "Production-first")
 TARIFFS = ("LV General", "LV Time-of-Use", "MV General", "MV Time-of-Use", "HV General", "HV Time-of-Use")
 DAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 RUN = re.compile(r"^\d{2}:00 to \d{2}:00(, \d{2}:00 to \d{2}:00){0,5}$")
