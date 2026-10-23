@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Facility Energy Planner</title>
+<title>Sun Shine</title>
 <style>
-:root{--bg:#eef3f6;--card:#fff;--ink:#12303f;--mut:#5b7280;--mute:#5b7280;--line:#d3dee4;--acc:#12303f;--sun:#f2a900;--bat:#1f8a8a;--grid:#b5483a;--shift:#b24fc9;--blue:#2563eb;--good:#15803d;--bad:#b42318;--link:#1d4ed8}
+:root{--bg:#f5f7f5;--card:#fff;--ink:#12303f;--mut:#64748b;--mute:#64748b;--line:#e2e8f0;--acc:#153047;--sun:#f2c14e;--bat:#27845a;--grid:#64809a;--shift:#b24fc9;--blue:#2563eb;--good:#27845a;--bad:#b45309;--shadow:0 8px 24px rgba(21,48,71,.06);--link:#1d4ed8}
 @media(prefers-color-scheme:dark){:root{--bg:#0e1b22;--card:#15262f;--ink:#e4eef2;--mut:#8ea4af;--mute:#8ea4af;--line:#2a3f4a;--acc:#e4eef2;--good:#4ade80;--bad:#f87171;--link:#8ab4ff}}
 [hidden]{display:none!important}input,select,textarea{max-width:100%}input[type=file]{width:100%;min-width:0}a{color:var(--link)}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
 main{max-width:1320px;margin:0 auto;padding:16px}.layout{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}.mainCol,.side{min-width:0}
@@ -50,10 +50,37 @@ table.sch td,table.sch th{padding:4px 8px}table.sch tr.bw td{background:rgba(181
 @media print{body{background:#fff!important}main,aside,#chatBtn,#chatPanel,#calcDrawer,#roleGate,#tourShade,#tourHole,#tourTip,#fatal{display:none!important}#printSheet{display:block!important;color:#000;background:#fff;font:12pt/1.45 system-ui,Arial,sans-serif;padding:0}#printSheet h1{font-size:20pt;margin:0 0 4pt}#printSheet h2{font-size:13pt;margin:14pt 0 4pt}#printSheet table{border-collapse:collapse;width:100%;min-width:0}#printSheet td,#printSheet th{border:1px solid #999;padding:4pt 6pt;text-align:left}.pbig{display:flex;gap:10pt}.pbig div{flex:1;border:1px solid #999;padding:8pt}.pbig b{font-size:18pt;display:block}.psm{font-size:9.5pt;color:#444}}
 @media(max-width:600px){#chatBtn{padding:7px 12px;font-size:13px;right:10px;bottom:10px}.hl .k b{font-size:22px}#calcBtn,#tourBtn{padding:4px 8px;font-size:13px}}
 #qbtn{border-radius:50%;width:28px;height:28px;padding:0;font-weight:700}@media(max-width:600px){.c{min-height:60px;font-size:12px}}
-</style></head><body><main id="app" data-role="owner">
-<div class="bar"><h1>Facility Energy Planner</h1><span class="sp"></span><span id="roleSwitch" class="rs" role="group" aria-label="I am"><span class="note">I am:</span> <button data-rp="owner">Owner</button><button data-rp="tech">Technician</button></span> <button id="calcBtn">How we calculated this</button> <button id="tourBtn">Take the tour</button> <span id="auth" class="note"></span></div>
+
+/* ===== Sun Shine look ===== */
+body{font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1480px;padding:26px clamp(16px,3vw,42px) 54px}
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px clamp(16px,4vw,56px);background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;color:var(--acc);white-space:nowrap}
+.sunmark{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--sun);color:#153047;font-size:19px}
+.top .rs{gap:6px}.top .rs button,.top>button{border:0;background:transparent;color:var(--mut);padding:10px 15px;border-radius:9px;font-weight:650}
+.top .rs button.on{background:#fff4ce;color:#153047}.top .rs button:hover,.top>button:hover{background:color-mix(in srgb,var(--line) 60%,transparent)}
+#auth:empty{display:none}#auth{border:1px solid var(--line);padding:6px 12px;border-radius:9px;background:var(--card);font-weight:650;margin:0}
+.pagehead{margin-bottom:18px}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--mut);font-weight:800}
+h1{font-size:clamp(24px,2.5vw,34px);line-height:1.15;margin:5px 0 7px;color:var(--acc);letter-spacing:-.035em}
+.card{border-radius:15px;padding:19px;box-shadow:var(--shadow)}.card h2{color:var(--acc);font-size:17px;letter-spacing:-.015em}
+button,select{border-radius:9px}button{font-weight:650}.tag{font-weight:800}
+.k{border-radius:12px;padding:15px}.k b:not(.good):not(.bad){color:var(--acc)}.k b{font-size:24px;font-weight:800;letter-spacing:-.03em}
+th{font-weight:700}table.sch th,table th{background:color-mix(in srgb,var(--line) 30%,transparent)}
+#dtabs button{padding:9px 13px;font-weight:700;color:var(--mut)}#dtabs button.on{color:var(--card)}
+.ribbon{border-radius:10px}
+[data-tour=headline]{background:#153047;color:#fff;border:1px solid #153047;padding:22px 24px}
+[data-tour=headline].fcast{border:1px dashed #5c7d95}[data-tour=headline] h2{color:#fff}
+[data-tour=headline] .k{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)}
+[data-tour=headline] .k span,[data-tour=headline] .note{color:#c7d6e0}[data-tour=headline] .k b:not(.good):not(.bad),#aiTxt{color:#fff}
+[data-tour=headline] .k b.good{color:var(--sun)}[data-tour=headline] .k b.bad{color:#f6b36b}
+[data-tour=headline] button{background:#fff;color:#153047;border-color:#fff}[data-tour=headline] button.on{background:var(--sun);border-color:var(--sun)}
+#chatBtn{background:var(--sun);border-color:var(--sun);color:#153047;font-weight:700}
+@media(min-width:960px){.side{top:78px;max-height:calc(100vh - 90px)}}
+@media(max-width:640px){.top{padding:10px 14px}.brand{order:-1;width:100%}}
+</style></head><body><header class="top"><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span class="sp"></span><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="auth" class="note"></span></header>
+<main id="app" data-role="owner">
 <div id="amsg" class="note" style="margin:0 0 6px"></div>
-<p class="sub">Pick a day, week or month and a strategy. See what the plan saves compared with the baseline.</p>
+<div class="pagehead"><div class="eyebrow">Facility energy intelligence</div><h1 id="pgTitle">Your energy, at a glance.</h1><div class="note" style="margin:0">Pick a day, week or month and a strategy. See what the plan saves compared with the baseline.</div></div>
 
 
 
@@ -72,6 +99,7 @@ table.sch td,table.sch th{padding:4px 8px}table.sch tr.bw td{background:rgba(181
 <div class="bar" style="margin:12px 0 0"><b>Strategy</b><button id="qbtn" aria-expanded="false" title="What does the optimiser decide?">?</button><span id="tabs" class="bar" style="margin:0"></span></div>
 </div>
 
+<div class="bar" id="dtabs" data-role="tech" style="margin:0 0 12px"><button data-dt="ov" class="on">Overview</button><button data-dt="fc">Forecasts &amp; energy</button><button data-dt="op">Optimisation</button><button data-dt="pl">Plan &amp; actions</button><button data-dt="ad">Advanced</button></div>
 <div class="card" id="why" hidden><h2>What the optimiser decides</h2>
 <p class="note" style="margin-top:0">For every hour of the day, the optimiser chooses all of these together, so it can plan the battery and the equipment around the highest billed hour.</p>
 <ul style="font-size:14px">
@@ -274,9 +302,14 @@ function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a
  if(dS<1||dC<0.5)return'<p class="note">CO&#8322; trade-off: Cost-saving and Balanced give almost the same result on this day.</p>';
  return `<p class="note"><b>CO&#8322; trade-off:</b> Cost-saving earns ${money(dS)} more per day than Balanced, at the price of ${Math.round(dC)} kg more CO&#8322; (about ${money(dS/dC)} per kg).</p>`}
 
+// ================= pages: Brief (owner view) and Detailed (tabs) =================
+const TABS={ov:['ribbon','headline','kpi','flow'],fc:['ribbon','chart'],op:['ribbon','compare'],pl:['actions','schedule','approve'],ad:['stress','sweep','assume','audit']};let dtab='ov';
+function applyTab(){const t=role=='tech';Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;if(k)el.hidden=t&&!TABS[dtab].includes(k)});
+ if(document.querySelectorAll)document.querySelectorAll('#dtabs button').forEach(b=>b.classList.toggle('on',b.dataset.dt==dtab))}
+$('dtabs').onclick=e=>{const b=e.target.closest('[data-dt]');if(b){dtab=b.dataset.dt;applyTab()}};
 // ================= roles =================
 let role=null;try{role=localStorage.getItem('role')}catch(e){}
-function applyRole(r){role=r;$('app').setAttribute('data-role',r);if(document.querySelectorAll)document.querySelectorAll('[data-rp]').forEach(b=>b.classList.toggle('on',b.dataset.rp==r))}
+function applyRole(r){role=r;$('pgTitle').textContent=r=='tech'?'Energy optimisation workspace':'Your energy, at a glance.';$('app').setAttribute('data-role',r);applyTab();if(document.querySelectorAll)document.querySelectorAll('[data-rp]').forEach(b=>b.classList.toggle('on',b.dataset.rp==r))}
 function setRole(r){applyRole(r);try{localStorage.setItem('role',r)}catch(e){}$('roleGate').hidden=true;maybeTour()}
 $('roleGate').onclick=$('roleSwitch').onclick=e=>{const b=e.target.closest('[data-rp]');if(b)setRole(b.dataset.rp)};
 
@@ -388,7 +421,7 @@ function dayHtml(R,rows){
  <div id="ct_use"${chartTab=='use'?'':' hidden'}>${draw(r,b,c.win)}</div><div id="ct_wx"${chartTab=='wx'?'':' hidden'}>${fcCard(fc,past,fn)}</div></div>
  <div class="card" data-tour="compare"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
  <p class="note">${ann}</p>${rows.length>1&&rows.every(x=>Math.abs(R[x.k].cost-b.cost)<0.01)?'<p class="note"><b>Why are all the strategies the same?</b> On this day no peak rate or maximum demand charge applies (for example a weekend on a time-of-use tariff), so moving energy or using the battery cannot lower the bill. Try a weekday.</p>':''}<p class="note">${tc}</p><p class="note">${carbon}</p>${tradeoff(R)}</div>
- <div class="card" data-tour="actions" data-role="tech"><h2>Recommended actions</h2><ul>${recs(r,b)}</ul><p class="note">Generated from the selected strategy's schedule.</p></div>
+ <div class="card" data-tour="actions"><h2>Recommended next steps</h2><ul>${recs(r,b)}</ul><p class="note">Generated from the selected strategy's schedule.</p></div>
  ${schedCard(r,c)}${apCard()}${stressCard()}${sweepCard()}${assumeCard(fc,past)}${auditCard()}`}
 
 function rel(d){return d<TODAY?['Past (recorded weather)','']:d==TODAY?['Today (forecast)','t']:d==addD(TODAY,1)?['Tomorrow (forecast)','f']:['Forecast','f']}
@@ -450,7 +483,7 @@ async function render(){
    if(res[0].status!='fulfilled')throw res[0].reason;
    const R={},ok=[];res.forEach((x,i)=>{if(x.status=='fulfilled'){R[rows[i].k]=x.value;ok.push(rows[i])}});
    const miss=res.filter(x=>x.status!='fulfilled').length;
-   $('out').innerHTML=(miss?`<div class="ribbon warn"><b>PARTIAL.</b> The optimiser did not answer, so only the baseline is shown. <button data-retry="1">Try again</button></div>`:'')+dayHtml(R,ok);aiRestore();apShow();cvDefault();changeCard();maybeTour();setTimeout(()=>warm(my),1500);return}
+   $('out').innerHTML=(miss?`<div class="ribbon warn"><b>PARTIAL.</b> The optimiser did not answer, so only the baseline is shown. <button data-retry="1">Try again</button></div>`:'')+dayHtml(R,ok);aiRestore();apShow();cvDefault();applyTab();changeCard();maybeTour();setTimeout(()=>warm(my),1500);return}
   const items=dates.map(()=>null),idx=dates.map((x,i)=>i).filter(i=>dates[i]>=MIN&&dates[i]<=MAX);
   let done=0;const run=async i=>{try{items[i]={b:await getRun(dates[i],'base'),r:await getRun(dates[i],dates[i]<TODAY?F.follow:sel)}}catch(e){items[i]=null}done++;const p=$('prog');if(p)p.textContent=`Loading day ${done} of ${idx.length}. A new day takes a few seconds, then it is saved on this device.`};
   if(idx.length){await run(idx[0]);for(let k=1;k<idx.length;k+=6){await Promise.all(idx.slice(k,k+6).map(run));if(my!=tok)return}}
@@ -472,7 +505,7 @@ async function warm(my){if(my!=tok||view=='month')return;const mon=addD(cur,-((p
   await new Promise(r=>setTimeout(r,120))}}
 
 const STEPS=[
- {s:'#roleSwitch',t:'Owner or Technician',x:'Choose your view. Owners see savings, billed peak and CO2 with a printable summary. Technicians see the hourly schedule, assumptions, stress test, battery sweep and audit log. Both use the same numbers.'},
+ {s:'#roleSwitch',t:'Brief or Detailed',x:'Brief shows savings, billed peak, CO2, next steps and a printable summary. Detailed has tabs for the hourly chart, strategy comparison, schedule and approval, and the stress test, battery sweep, assumptions and audit log. Both use the same numbers.'},
  {s:'#dateCard',t:'Pick a day',x:'Use Yesterday, Today and Tomorrow, or the arrows and the date box. Day, Week and Month change the view. In Week and Month, tap a day to open it. Dashed boxes are forecasts.'},
  {s:'#tabs',t:'Choose a strategy',x:'Baseline is solar only. The three optimiser strategies plan the battery and the flexible equipment, with different limits on extra CO2. The ? button explains what the optimiser decides.'},
  {s:'[data-tour=ribbon]',t:'Forecast or recorded?',x:'This banner always says whether the day is a prediction or recorded weather. Forecast cards have dashed borders.'},
@@ -671,6 +704,6 @@ const CASES={
 $('f_case').onchange=e=>{const c=CASES[e.target.value];if(!c)return;const nf=Object.assign({},F,c);
  FIELDS.forEach(k=>$('f_'+k).value=nf[k]);$('f_tar').value=nf.volt+nf.struct;
  applyLocal(['<b>Typical case loaded:</b> '+esc(c.name)+'. Replace these numbers with your own bill.']);e.target.value=''};
-const hadRole=!!role;applyRole(role||'owner');$('roleGate').hidden=hadRole;
+applyRole(role||'owner');$('roleGate').hidden=true;
 fill();if(!saved)$('setup').open=true;render();whoami();
 </script></body></html>
