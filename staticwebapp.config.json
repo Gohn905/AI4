@@ -1,6 +1,18 @@
 {
   "routes": [
     {
+      "route": "/api/explain",
+      "allowedRoles": [
+        "authenticated"
+      ]
+    },
+    {
+      "route": "/api/assist",
+      "allowedRoles": [
+        "authenticated"
+      ]
+    },
+    {
       "route": "/login",
       "redirect": "/.auth/login/aad?post_login_redirect_uri=/",
       "statusCode": 302
