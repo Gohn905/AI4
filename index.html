@@ -407,7 +407,7 @@ function kpiRow(r,b,c,sv){const sb=sel=='base',sav=b.cost-r.cost,dco=r.co2-b.co2
  k=(l,i,v,cl,f)=>`<div class="card kpi"><div class="kpi-top"><span>${l}</span><span class="ico">${i}</span></div><div class="metric ${cl||''}">${v}</div><div class="kpi-foot">${f}</div></div>`;
  return `<div class="kpirow" data-tour="kpi">`+
   k('Estimated cost savings','&#8600;',sb?'&mdash;':money(sav),sav>0.5?'positive':'',sb?'Baseline is solar only':sv>=0?N1(sv)+'% lower than baseline':N1(-sv)+'% higher than baseline')+
-  k('Billed peak demand','&#989;',c.mdH.length?N0(r.peak)+' kW':'None','',c.mdH.length?'From '+N0(b.peak)+' kW at baseline':'No demand charge on this day')+
+  k('Billed peak demand','&#989;',c.mdH.length?N0(r.peak)+' kW':'None <small style="font-size:14px;font-weight:600;color:var(--mut)">('+new Date(cur+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'})+')</small>','',c.mdH.length?'From '+N0(b.peak)+' kW at baseline':'No demand charge on this day')+
   k('Solar utilisation','&#9788;',N0(r.util)+'%','',N0(sum(r.sol)*DT)+' kWh available')+
   k('CO&#8322; vs baseline','&#9831;',sb?'&mdash;':(dco>=0?'+':'\u2212')+N1(Math.abs(cp))+'%',sb||Math.abs(dco)<0.5?'':dco<0?'positive':'warning',sb?'':Math.abs(dco)<0.5?'About the same':dco<0?'Emissions lower':'Emissions slightly higher')+`</div>`}
 function costCard(r,b,sv,past){const sb=sel=='base',w=b.cost>0?Math.min(100*r.cost/b.cost,100):100;
