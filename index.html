@@ -377,7 +377,7 @@ function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a
  return `<p class="note"><b>CO&#8322; trade-off:</b> Cost-saving earns ${money(dS)} more per day than Balanced, at the price of ${Math.round(dC)} kg more CO&#8322; (about ${money(dS/dC)} per kg).</p>`}
 
 // ================= pages: Brief (owner view) and Detailed (tabs) =================
-const TABS={ov:['ribbon','headline','kpi','costbars','flow','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','live','schedule','approve','changed'],ad:['reopt','stress','sweep','assume','audit','changed'],fa:['changed']};let dtab='ov';
+const TABS={ov:['ribbon','headline','kpi','costbars','flow','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','live','schedule','approve','changed'],ad:['reopt','learn','stress','sweep','assume','audit','changed'],fa:['changed']};let dtab='ov';
 function applyTab(){const t=role=='tech';Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&dtab=='fa'});$('facPanel').hidden=!(t&&dtab=='fa');
  if(document.querySelectorAll)document.querySelectorAll('#dtabs button').forEach(b=>b.classList.toggle('on',b.dataset.dt==dtab));fairLoad()}
 $('dtabs').onclick=e=>{const b=e.target.closest('[data-dt]');if(b){dtab=b.dataset.dt;applyTab()}};
@@ -502,9 +502,9 @@ ${td?`<div class="bar"><select id="lvMd">${MODES.filter(m=>m.k!='prod').map(m=>`
 <p class="note">Columns: <code>load_kw</code> (site load, <b>without</b> EV charging) and <code>solar_kw</code> are required; optional <code>battery_kw</code> (discharge +, charging &minus;), <code>ev_kw</code>, <code>grid_kw</code> (only used to check the other readings), <code>soc_kwh</code> (battery charge now, last row). One row per 30 minutes from 00:00 today. Leave a column empty if you do not have it: then the day-ahead plan is assumed to have been followed.</p>
 <div class="bar"><b>No meter yet?</b> <select id="lvSc">${Object.entries(ROSC).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join('')}</select> <select id="lvNow"><option value="20">It is 10:00</option><option value="24">It is 12:00</option><option value="28" selected>It is 14:00</option><option value="32">It is 16:00</option></select> <button class="on" data-lv="1">Run simulated replay</button></div>`:`<p class="note"><b>Open today to use this.</b> It compares the forecast with what happened so far today.</p>`}
 <span id="lvMsg" class="note"></span><div id="lvOut" style="margin-top:8px"></div></div>`}
-function liveParse(txt){const L=txt.replace(/^\uFEFF/,'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(L.length<2)throw new Error('The file needs a header row and at least one data row');
+function liveParse(txt,full){const L=txt.replace(/^\uFEFF/,'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(L.length<2)throw new Error('The file needs a header row and at least one data row');
  const h=L[0].split(',').map(x=>x.trim().toLowerCase()),col=n=>h.indexOf(n),rows=L.slice(1).map(l=>l.split(',').map(x=>x.trim()));
- if(rows.length>=NS)throw new Error('The file has '+rows.length+' rows. Only the part of today that has passed (fewer than '+NS+' rows) can be used.');
+ if(full?rows.length!=NS:rows.length>=NS)throw new Error(full?'A full day needs exactly '+NS+' rows (one per 30 minutes). The file has '+rows.length+'.':'The file has '+rows.length+' rows. Only the part of today that has passed (fewer than '+NS+' rows) can be used.');
  const num=(n,req)=>{const c=col(n);if(c<0){if(req)throw new Error('Missing column '+n);return undefined}
   const cells=rows.map(r=>r[c]===undefined?'':r[c]);if(!req&&cells.every(x=>x===''))return undefined;
   return cells.map((x,i)=>{const v=parseFloat(x);if(!isFinite(v))throw new Error(n+' row '+(i+2)+' is not a number');return v})};
@@ -526,14 +526,47 @@ function liveRender(j,q){const fe=j.forecast_error,ex=j.expected,o=ex.old_plan,n
  const lim=+F.lim,over=n.limit_violation_steps>0&&lim>0?`<div class="ribbon warn"><b>GRID LIMIT.</b> Even the new plan is expected to exceed ${N0(lim)} kW for ${hrs(n.limit_violation_steps)} (highest ${N0(n.max_grid_kw)} kW).</div>`:'';
  $('lvOut').innerHTML=`<div class="ribbon${j.simulated?'':' past'}"><b>${j.simulated?'SIMULATED REPLAY.':'MEASURED DATA.'}</b> Up to ${now}. ${j.simulated?'The day so far is the forecast with simulated deviations; it is not measured.':'The rest of the day is a corrected forecast, not a measurement.'}</div>${over}
  ${dq.warn?`<div class="ribbon warn"><b>CHECK YOUR DATA.</b> Your grid readings differ from what the other readings imply by ${N0(dq.grid_gap_kw)} kW on average (${N0(dq.grid_gap_pct_of_load)}% of load). Check units, timezone and whether load includes EV charging.</div>`:''}
- <p style="margin:6px 0">Over the last 2 hours: ${st(j.correction.pv_ratio,'solar')} and ${st(j.correction.load_ratio,'load').toLowerCase()}. The rest of the day is corrected by these recent ratios, fading back to the forecast over about ${N0(j.correction.fade_hours)} hours.</p>${tiles}
+ ${j.learned&&j.learned.applied?`<p class="note" style="margin:6px 0"><b>Learning applied.</b> The forecast was first corrected with what was learned over ${j.learned.days} day${j.learned.days==1?'':'s'}. Average error since midnight: solar ${N0(j.forecast_error.pv.mae_kw)} kW (raw forecast ${N0(j.forecast_error_raw.pv.mae_kw)} kW), load ${N0(j.forecast_error.load.mae_kw)} kW (raw ${N0(j.forecast_error_raw.load.mae_kw)} kW).</p>`:''}<p style="margin:6px 0">Over the last 2 hours: ${st(j.correction.pv_ratio,'solar')} and ${st(j.correction.load_ratio,'load').toLowerCase()}. The rest of the day is corrected by these recent ratios, fading back to the forecast over about ${N0(j.correction.fade_hours)} hours.</p>${tiles}
  ${liveChart('Solar: forecast (dashed grey), measured so far (solid), corrected for the rest of the day (dotted)',s.forecast_pv,s.actual_pv,s.belief_pv,j.now_step,'#f29f3d')}${liveChart('Site load (without EV): forecast, measured so far, corrected',s.forecast_load,s.actual_load,s.belief_load,j.now_step,'#64748b')}
  <h3 class="sec">Recommended next 4 hours (battery + discharge, &minus; charging)</h3><div class="scroll"><table class="sch"><tr><th>Time</th><th>Battery, kW</th><th>EV charging, kW</th><th>Grid import, kW</th></tr>${nx}</table></div>
  <p class="note">Battery data: ${esc(dq.battery_source)}. EV data: ${esc(dq.ev_source)}. Battery charge: ${esc(dq.soc_source)}. The old and new plans are compared on the same corrected forecast, from the same state, with the same grid-limit guard, so the saving is an estimate, not a measurement. ${esc(j.data_kind)}</p>`}
-async function liveRun(body,msg){const q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return;const m=$('lvMsg');m.textContent=msg||'Calculating...';$('lvOut').innerHTML='';
- try{const j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,body))});m.textContent='';lvLast=j;if($('lvOut'))liveRender(j,q)}catch(e){m.textContent='';$('lvOut').innerHTML=`<span class="err">${esc(e.message)}</span>`}}
+async function liveRun(body,msg){const q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return;const m=$('lvMsg');m.textContent=msg||'Calculating...';$('lvOut').innerHTML='';const lp=lrnGet();
+ try{const j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,lp?{learned:lp}:{},body))});m.textContent='';lvLast=j;if($('lvOut'))liveRender(j,q)}catch(e){m.textContent='';$('lvOut').innerHTML=`<span class="err">${esc(e.message)}</span>`}}
 function liveFile(inp){const f=inp.files&&inp.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{let o;try{o=liveParse(String(rd.result))}catch(e){$('lvOut').innerHTML=`<span class="err">${esc(e.message)}</span>`;return}liveRun({now:o},'Calculating from '+o.load.length+' rows...')};rd.onerror=()=>{$('lvOut').innerHTML='<span class="err">The file could not be read.</span>'};rd.readAsText(f)}
 if(typeof document!='undefined'&&document.addEventListener)document.addEventListener('change',e=>{if(e.target&&e.target.id=='lvFile')liveFile(e.target)});
+// ================= learning from forecast error (one correction ratio per half-hour, kept on this device) =================
+const lrnKey=()=>hk([F.loc,F.kwp,F.peak,F.prof,'res'+S]);
+function lrnGet(){try{const o=JSON.parse(localStorage.getItem('learned')||'null');return o&&o.key==lrnKey()&&o.profile&&o.profile.n==NS?o.profile:null}catch(e){return null}}
+function lrnDates(){try{const o=JSON.parse(localStorage.getItem('learned')||'null');return o&&o.key==lrnKey()&&Array.isArray(o.dates)?o.dates:[]}catch(e){return[]}}
+function lrnSet(p,date){try{if(p)localStorage.setItem('learned',JSON.stringify({key:lrnKey(),profile:p,dates:date?lrnDates().concat([date]):lrnDates()}));else localStorage.removeItem('learned')}catch(e){}}
+const lrnStat=()=>{const p=lrnGet();return p&&p.days?`Learned from <b>${p.days}</b> day${p.days==1?'':'s'} of data. It is applied in <b>Today so far</b>.`:'Nothing learned yet. The forecast is used as it is.'};
+function learnCard(){return `<div class="card" data-role="tech" data-tour="learn"><h2>Learning from forecast error</h2>
+<p class="note" style="margin-top:0">Forecasts are often wrong in the same way at the same time of day (for example afternoon cloud, or an evening load the model misses). After each full day of data, every half-hour keeps a correction ratio (actual &divide; forecast), updated with more weight on recent days, so repeatable errors are learned and one-off weather noise is averaged out. Stored on this device only.</p>
+<p id="lrnStat" style="margin:6px 0">${lrnStat()}</p>
+<div class="bar"><label class="note">Teach it a past day (CSV with 48 rows, same columns as Today so far): <input type="file" id="lrnFile" accept=".csv,text/csv"></label> <button data-lrc="1">Forget what it learned</button></div>
+<p class="note">Uses the date selected above, which must be a past day. For past days this page's forecast is rebuilt from recorded weather, so what is learned is the model's own repeatable bias (panel output, load shape), not weather-forecast error.</p>
+<div class="bar"><b>No data yet?</b> <button class="on" data-lrd="1">Run 30-day simulated demo</button> <label class="note"><input type="checkbox" id="lrdBias" checked> inject a repeatable error</label> <span id="lrnMsg" class="note"></span></div>
+<div id="lrnOut" style="margin-top:8px"></div></div>`}
+async function lrnTeach(inp){const f=inp.files&&inp.files[0];if(!f)return;const out=$('lrnOut'),p=lastPlan,day=cur;
+ if(lrnDates().includes(day)){inp.value='';out.innerHTML='<span class="err">This day was already learned. Teaching it twice would count it twice. Pick a different past day.</span>';return}
+ if(cur>=TODAY){out.innerHTML='<span class="err">Select a past day first (it must have finished). Use the date controls at the top.</span>';return}
+ if(!p){out.innerHTML='<span class="err">Nothing is loaded yet.</span>';return}
+ const rd=new FileReader();rd.onerror=()=>{out.innerHTML='<span class="err">The file could not be read.</span>'};
+ rd.onload=async()=>{let o;try{o=liveParse(String(rd.result),true)}catch(e){out.innerHTML=`<span class="err">${esc(e.message)}</span>`;return}
+  const fc=p.b.fc;try{const j=await api('/api/learn',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'update',profile:lrnGet(),forecast:{load:fc.load,pv:fc.pv},actual:{load:o.load,pv:o.pv}})});
+   lrnSet(j.profile,day);inp.value='';$('lrnStat').innerHTML=lrnStat();out.innerHTML=`<div class="ribbon past"><b>LEARNED.</b> ${esc(parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'}))} updated ${j.slots_updated.pv} solar and ${j.slots_updated.load} load time slots.</div>`}
+  catch(e){out.innerHTML=`<span class="err">${esc(e.message)}</span>`}};rd.readAsText(f)}
+function lrnChart(rows){const W=760,H=190,L=54,R=12,T=14,B=26,mx=Math.max(...rows.map(r=>Math.max(r.pv_mae_raw_kw,r.pv_mae_learned_kw)),1),ax=niceAxis(0,mx*1.05),y=v=>T+(ax.hi-v)/(ax.hi-ax.lo)*(H-T-B),xf=i=>L+(W-L-R)*(rows.length<2?0:i/(rows.length-1)),
+  pth=k=>rows.map((r,i)=>(i?'L':'M')+xf(i).toFixed(1)+' '+y(r[k]).toFixed(1)).join('');
+ return `<h3 class="sec" style="margin:10px 0 2px">Solar forecast error each day: raw (grey) and with learning (orange)</h3><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="Daily solar forecast error, raw and learned">${yGrid(ax,y,L,W-R)}${yTitle(T,H-B,'kW')}<line x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}" stroke="#94a3b8"/><text x="${L}" y="${H-8}" font-size="11" fill="var(--mute)">day 1</text><text x="${W-R}" y="${H-8}" text-anchor="end" font-size="11" fill="var(--mute)">day ${rows.length}</text>
+ <path d="${pth('pv_mae_raw_kw')}" fill="none" stroke="#94a3b8" stroke-width="2"/><path d="${pth('pv_mae_learned_kw')}" fill="none" stroke="#f29f3d" stroke-width="2.5"/></svg>`}
+async function lrnDemo(){const q=sameReq('cost');if(!q)return;const msg=$('lrnMsg'),out=$('lrnOut');msg.textContent='Simulating 30 days...';out.innerHTML='';
+ let j;try{j=await api('/api/learn',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,{action:'demo',days:30,bias:$('lrdBias').checked}))})}catch(e){msg.textContent='';out.innerHTML=`<span class="err">${esc(e.message)}</span>`;return}
+ msg.textContent='';const s=j.summary,pc=(a,b)=>b>0?(a<=b?N0(100*(1-a/b))+'% lower':N0(100*(a/b-1))+'% higher'):'',
+  tiles=kpis([['Solar error, last third of days',N0(s.last_pv_mae_learned_kw)+' kW','good','raw forecast '+N0(s.last_pv_mae_raw_kw)+' kW ('+pc(s.last_pv_mae_learned_kw,s.last_pv_mae_raw_kw)+')'],['Load error, last third of days',N0(s.last_load_mae_learned_kw)+' kW','good','raw forecast '+N0(s.last_load_mae_raw_kw)+' kW ('+pc(s.last_load_mae_learned_kw,s.last_load_mae_raw_kw)+')'],
+   ['Real cost over '+s.days+' days, raw plan',money(s.total_cost_raw_rm),'','plan made from the raw forecast'],['Real cost, plan from learned forecast',money(s.total_cost_learned_rm),'good','plan made from the corrected forecast'],['Difference',money(s.total_saving_rm),s.total_saving_rm>0.5?'good':'',s.total_saving_pct==null?'':N1(s.total_saving_pct)+'%']]);
+ out.innerHTML=`<div class="ribbon"><b>SIMULATED.</b> ${s.bias_injected?'A repeatable error was injected (afternoon solar 25% below forecast, evening load 8% above). Random cloud and load noise were added and cannot be learned.':'No repeatable error was injected: this is the control. Learning has nothing to find, so expect no gain, and a little extra noise.'} Each day is corrected using earlier days only. ${esc(j.data_kind)}</div>${tiles}${lrnChart(j.days)}<p class="note">Real cost = the cost of living through the simulated day with a plan made from each forecast, battery following the plan, same grid-limit guard. This shows the mechanism works and does not peek at the future; it is not a measurement of your site.</p>`}
+if(typeof document!='undefined'&&document.addEventListener)document.addEventListener('change',e=>{if(e.target&&e.target.id=='lrnFile')lrnTeach(e.target)});
 function auditCard(){return `<div class="card" data-role="tech" data-tour="audit"><h2>Audit log</h2><p class="note" style="margin-top:0">Recent forecast, optimise, explanation and assistant calls, with who asked and how long they took. What people type is never logged. Needs sign-in.</p><button class="on" data-au="1">Load recent activity</button><div id="auOut" class="scroll" style="margin-top:8px"></div></div>`}
 async function auditRun(){const o=$('auOut');o.textContent='Loading...';
  try{const j=await api('/api/audit');if(!j.enabled){o.innerHTML='<span class="note">Logging to storage is not switched on for this site, so there is nothing to show.</span>';return}
@@ -583,7 +616,7 @@ function dayHtml(R,rows){
  ${stratCards(R,b)}
  <div class="card" data-tour="compare" data-role="tech"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
  <p class="note">${ann}</p>${rows.length>1&&rows.every(x=>Math.abs(R[x.k].cost-b.cost)<0.01)?'<p class="note"><b>Why are all the strategies the same?</b> On this day no peak rate or maximum demand charge applies (for example a weekend on a time-of-use tariff), so moving energy or using the battery cannot lower the bill. Try a weekday.</p>':''}<p class="note">${tc}</p><p class="note">${carbon}</p>${tradeoff(R)}</div>
- ${fairCard()}${liveCard()}${schedCard(r,c)}${apCard()}${reoptCard()}${stressCard()}${sweepCard()}${assumeCard(fc,past)}${auditCard()}`}
+ ${fairCard()}${liveCard()}${schedCard(r,c)}${apCard()}${reoptCard()}${learnCard()}${stressCard()}${sweepCard()}${assumeCard(fc,past)}${auditCard()}`}
 
 function rel(d){return d<TODAY?['Past (recorded weather)','']:d==TODAY?['Today (forecast)','t']:d==addD(TODAY,1)?['Tomorrow (forecast)','f']:['Forecast','f']}
 function periodHtml(dates,items){
@@ -800,6 +833,8 @@ $('out').onclick=e=>{const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.d
  if(e.target.closest('[data-sw]')){sweepRun();return}
  if(e.target.closest('[data-ro]')){reoptRun();return}
  if(e.target.closest('[data-lvt]')){liveTemplate();return}
+ if(e.target.closest('[data-lrd]')){lrnDemo();return}
+ if(e.target.closest('[data-lrc]')){lrnSet(null);if($('lrnStat'))$('lrnStat').innerHTML=lrnStat();if($('lrnOut'))$('lrnOut').innerHTML='<div class="ribbon past">Cleared.</div>';return}
  if(e.target.closest('[data-lv]')){liveRun({replay:{now_step:+$('lvNow').value,scenario:ROSC[$('lvSc').value][1]}},'Running simulated replay...');return}
  if(e.target.closest('[data-au]')){auditRun();return}
  if(e.target.closest('[data-retry]')){render();return}
