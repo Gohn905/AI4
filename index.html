@@ -133,13 +133,13 @@ main[data-role=owner] .ribbon{font-size:15px}
 
 <div class="bar" id="dtabs" data-role="tech" style="margin:0 0 12px"><button data-dt="ov" class="on">Overview</button><button data-dt="fc">Forecasts &amp; energy</button><button data-dt="op">Optimisation</button><button data-dt="pl">Plan &amp; actions</button><button data-dt="ad">Advanced</button><button data-dt="fa">Facility &amp; data</button></div>
 <div class="card" id="why" hidden><h2>What the optimiser decides</h2>
-<p class="note" style="margin-top:0">For every hour of the day, the optimiser chooses all of these together, so it can plan the battery and the equipment around the highest billed hour.</p>
+<p class="note" style="margin-top:0">Every 30 minutes of the day, the optimiser chooses all of these together, so it can plan the battery and the equipment around the highest billed 30 minutes.</p>
 <ul style="font-size:14px">
 <li><b>Battery:</b> when to charge, when to discharge, and how full it is. It starts the day half full and must end at least half full. Round-trip efficiency is 90%.</li>
-<li><b>Shiftable equipment:</b> how much of the flexible load runs in each hour, with total energy unchanged. With EV chargers set, only the chargers move, and only inside operating hours (Mon to Fri 07:30 to 18:00, Sat 07:30 to 14:00, Sun closed; hourly steps round this inward to whole hours). With no chargers, a share of the 09:00 to 17:00 load moves.</li>
-<li><b>Grid:</b> how much to import each hour, within the grid limit (a hard limit: if it cannot be met, the plan gets as close as it can and says so), with the highest billed hour as the maximum demand.</li>
+<li><b>Shiftable equipment:</b> how much of the flexible load runs in each 30 minutes, with total energy unchanged. With EV chargers set, only the chargers move, and only inside operating hours (Mon to Fri 07:30 to 18:00, Sat 07:30 to 14:00, Sun closed). With no chargers, a share of the 09:00 to 17:00 load moves.</li>
+<li><b>Grid:</b> how much to import each 30 minutes, within the grid limit (a hard limit: if it cannot be met, the plan gets as close as it can and says so), with the highest billed 30 minutes as the maximum demand.</li>
 <li><b>Solar:</b> all of it is used on site first. No export is assumed.</li></ul>
-<p class="note"><b>Goal:</b> lowest bill (hourly energy charge plus maximum demand charge). The baseline is solar only. <b>Cost-saving</b> minimises the bill. <b>Balanced</b> moves half as much equipment, adds a small battery wear cost, and allows only half of the extra CO&#8322; that Cost-saving would add. <b>Production-first</b> moves no equipment at all, and its battery follows the same CO&#8322; limit and wear cost as Balanced. The CO&#8322; limit matters because charging the battery from the grid loses energy: with a 90% battery, about 11 kWh is lost for every 100 kWh discharged.</p>
+<p class="note"><b>Goal:</b> lowest bill (energy charge plus maximum demand charge). The baseline is solar only. <b>Cost-saving</b> minimises the bill. <b>Balanced</b> moves half as much equipment, adds a small battery wear cost, and allows only half of the extra CO&#8322; that Cost-saving would add. <b>Production-first</b> moves no equipment at all, and its battery follows the same CO&#8322; limit and wear cost as Balanced. The CO&#8322; limit matters because charging the battery from the grid loses energy: with a 90% battery, about 11 kWh is lost for every 100 kWh discharged.</p>
 <p class="note"><b>Not included yet:</b> diesel or gas, individual machines with start and stop rules, real meter history (the demand forecast is trained on synthetic history), export income, forecast uncertainty, the retail charge, the 1.6% KWTBB levy and tax.</p></div>
 
 <div id="out"><div class="card note">Loading&hellip;</div></div>
@@ -213,7 +213,7 @@ main[data-role=owner] .ribbon{font-size:15px}
 <li><b>Weather.</b> Hourly temperature, cloud and sunshine for your site from Open-Meteo: a forecast for today and the next 2 days, recorded weather for past days.</li>
 <li><b>Solar.</b> Sunshine is turned into power per kWp: cell temperature = air temperature + (45 &minus; 20) / 800 &times; sunshine; power = sunshine / 1,000 &times; (1 &minus; 0.0035 &times; (cell temperature &minus; 25)) &times; 0.88. Tilt is ignored. A learned correction is used only if it beat the plain forecast on held-back days.</li>
 <li><b>Demand.</b> Your meter file if you loaded one (real readings on the days it covers, your typical weekday, Saturday or Sunday pattern otherwise). If not, a model by hour, day type and temperature, trained on synthetic history, so treat it as an estimate.</li>
-<li><b>Tariff.</b> TNB rates for your tariff plus your AFA. On a time-of-use tariff the peak rate and the maximum demand charge apply on weekdays 14:00 to 22:00. The billed peak is the highest hourly average in that window. A day carries the monthly demand charge divided by 30.</li>
+<li><b>Tariff.</b> TNB rates for your tariff plus your AFA. On a time-of-use tariff the peak rate and the maximum demand charge apply on weekdays 14:00 to 22:00. The billed peak is the highest 30-minute average in that window. A day carries the monthly demand charge divided by 30.</li>
 <li><b>Optimiser.</b> A linear program plans every hour: grid import, battery charge and discharge (round-trip efficiency from your settings, power = half the capacity, starts and ends the day at least half full) and flexible load (09:00 to 17:00, total energy unchanged). It minimises the bill, with a limit on extra CO&#8322; for the CO&#8322; strategies.</li>
 <li><b>Baseline and savings.</b> Baseline = solar only, no battery, no load shifting. Saving = baseline cost &minus; plan cost. CO&#8322; = grid kWh &times; one flat factor (a placeholder; check it against an official figure).</li>
 
@@ -224,7 +224,7 @@ main[data-role=owner] .ribbon{font-size:15px}
 <div id="tourShade" hidden></div><div id="tourHole" hidden></div>
 <div id="tourTip" role="dialog" aria-modal="true" aria-labelledby="tourTitle" hidden><h3 id="tourTitle"></h3><p id="tourText"></p><div class="tbtns"><span class="note" id="tourCount" style="margin:0"></span><span class="sp"></span><button id="tourSkip">Skip</button><button id="tourBack">Back</button><button class="on" id="tourNext">Next</button></div></div>
 <script>
-const $=id=>document.getElementById(id),N=[...Array(24).keys()],p2=n=>String(n).padStart(2,'0'),isPk=h=>h>=14&&h<22,sum=a=>a.reduce((x,y)=>x+y,0);
+const $=id=>document.getElementById(id),S=2,NS=24*S,DT=1/S,N=[...Array(NS).keys()],p2=n=>String(n).padStart(2,'0'),tm=i=>p2(Math.floor(i/S))+':'+p2(Math.round(i%S*60/S)),isPk=i=>i>=14*S&&i<22*S,sum=a=>a.reduce((x,y)=>x+y,0);
 const TF={
 LVG:{n:'LV General',ep:27.03,eo:27.03,md:0,ad:23.65,t:'LV General: 27.03 sen/kWh energy, plus capacity 8.83 and network 14.82 sen/kWh. No maximum demand charge. Retail RM20/month.'},
 LVT:{n:'LV Time-of-Use',ep:28.52,eo:24.43,md:0,ad:23.65,t:'LV ToU: peak 28.52, off-peak 24.43 sen/kWh, plus capacity and network 23.65 sen/kWh. No maximum demand charge. Retail RM20/month.'},
@@ -244,6 +244,7 @@ const nf=d=>n=>(+n).toLocaleString('en-MY',{minimumFractionDigits:d,maximumFract
 const money=n=>'RM '+(Math.abs(n)>=100?N0(n):N2(n));
 let saved=null;try{saved=JSON.parse(localStorage.getItem('facility'))}catch(e){}
 let lastPlan=null,chartTab='use',pend=null,last=null,srcNote='',M=null,aiFacts=null;const aiCache=new Map();try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
+if(M&&M.res!==S){try{const up=a=>a.flatMap(v=>[v,v]);for(const k in M.days)M.days[k]=up(M.days[k]);for(const k in (M.typ||{}))M.typ[k]=up(M.typ[k]);M.res=S}catch(e){M=null}}
 const LEG=o=>o&&o.evn===undefined?Object.assign({evn:0,eve:0},o):(o||{});
 let F=Object.assign({},DEF,LEG(saved)),view='day',cur=TODAY,sel='bal',cache=new Map(),tok=0;if(F.follow=='zero')F.follow='bal';
 const tf=()=>TF[F.volt+F.struct],tou=()=>F.struct=='T';
@@ -261,23 +262,23 @@ const pcSet=(k,v,date)=>{pcm()[k]={t:Date.now(),l:date>=TODAY?1:0,v};clearTimeou
 function pcSave(){const m=pcm();let ks=Object.keys(m).sort((a,b)=>m[a].t-m[b].t);if(ks.length>420)ks.slice(0,ks.length-320).forEach(k=>delete m[k]);
  for(let i=0;i<4;i++){try{localStorage.setItem('calc',JSON.stringify(m));return}catch(e){ks=Object.keys(m).sort((a,b)=>m[a].t-m[b].t);ks.slice(0,Math.ceil(ks.length/2)).forEach(k=>delete m[k])}}}
 const rd=a=>a.map(v=>+(+v).toFixed(2));
-const fkey=()=>[F.loc,F.kwp,F.peak,F.prof],rkey=()=>[F.loc,F.kwp,F.peak,F.prof,F.volt,F.struct,F.afa,F.bat,F.flex,F.lim,F.evn,F.evkw,F.eve,F.ef,F.eff,'v3',M?M.stamp:0];
+const fkey=()=>[F.loc,F.kwp,F.peak,F.prof,'res'+S],rkey=()=>[F.loc,F.kwp,F.peak,F.prof,F.volt,F.struct,F.afa,F.bat,F.flex,F.lim,F.evn,F.evkw,F.eve,F.ef,F.eff,'v4',M?M.stamp:0];
 const getFc=date=>memo('f|'+date+'|'+hk(fkey().concat(M?M.stamp:0,F.evn,F.evkw,F.eve)),async()=>{
  const rk='f|'+date+'|'+hk(fkey());let fc=pcGet(rk),off=0;
- if(!fc){try{const [lat,lon]=F.loc.split(',');fc=await api('/api/forecast?'+new URLSearchParams({lat,lon,kwp:F.kwp,peak:F.peak,prof:F.prof,day:diff(date,TODAY)}));pcSet(rk,fc,date)}
+ if(!fc){try{const [lat,lon]=F.loc.split(',');fc=await api('/api/forecast?'+new URLSearchParams({lat,lon,kwp:F.kwp,peak:F.peak,prof:F.prof,day:diff(date,TODAY),res:S}));pcSet(rk,fc,date)}
   catch(e){const st=pcm()[rk];if(!st)throw e;fc=st.v;off=st.t}}
  const ml=meterLoad(date);
  const out=ml?Object.assign({},fc,{load:ml.v,meter:ml.k,model:Object.assign({},fc.model,{demand:'your meter data ('+ml.k+')',data_note:'Demand comes from your own meter file, which stays in this browser.'}),metrics:Object.assign({},fc.metrics,{load:null})}):fc;
  const ev=evBase(date),o2=Object.assign({},out,{evb:ev.p,evun:ev.unmet});return off?Object.assign({},o2,{offline:off}):o2});
 
 const evWin=d=>{const w=(parse(d).getDay()+6)%7;return w<5?[7.5,18]:w==5?[7.5,14]:null};
-function evBase(d){const o={p:N.map(()=>0),unmet:0};if(!(+F.evn>0))return o;const w=evWin(d),E=+F.eve||0,km=F.evn*F.evkw,st=w?N.filter(h=>h>=w[0]-1e-9&&h+1<=w[1]+1e-9):[];let left=Math.min(E,km*st.length);o.unmet=E-left;st.forEach(h=>{const p=Math.min(km,left);o.p[h]=p;left-=p});return o}
-function ctx(date,t=tf(),T=tou()){const wk=isWk(date),win=T?(wk?[14,22]:null):[0,24],mdH=win?N.filter(h=>h>=win[0]&&h<win[1]):[];
- return{wk,win,mdH,evw:evWin(date),mdd:mdH.length?t.md/30:0,rates:N.map(h=>((wk&&isPk(h)?t.ep:t.eo)+t.ad+(+F.afa))/100)}}
-function finish(r,c){r.en=sum(r.g.map((g,h)=>g*c.rates[h]));r.cost=r.en+c.mdd*r.peak;r.util=sum(r.d)/(sum(r.sol)||1)*100;r.co2=sum(r.g)*F.ef;return r}
+function evBase(d){const o={p:N.map(()=>0),unmet:0};if(!(+F.evn>0))return o;const w=evWin(d),E=+F.eve||0,km=F.evn*F.evkw,st=w?N.filter(i=>i/S>=w[0]-1e-9&&(i+1)/S<=w[1]+1e-9):[];let left=Math.min(E,km*DT*st.length);o.unmet=E-left;st.forEach(i=>{const p=Math.min(km,left/DT);o.p[i]=p;left-=p*DT});return o}
+function ctx(date,t=tf(),T=tou()){const wk=isWk(date),win=T?(wk?[14,22]:null):[0,24],mdH=win?N.filter(i=>i>=win[0]*S&&i<win[1]*S):[],mdHr=win?Array.from({length:win[1]-win[0]},(_,j)=>win[0]+j):[];
+ return{wk,win,mdH,mdHr,evw:evWin(date),mdd:mdH.length?t.md/30:0,rates:N.map(h=>((wk&&isPk(h)?t.ep:t.eo)+t.ad+(+F.afa))/100)}}
+function finish(r,c){r.en=sum(r.g.map((g,h)=>g*c.rates[h]))*DT;r.cost=r.en+c.mdd*r.peak;r.util=sum(r.d)/(sum(r.sol)||1)*100;r.co2=sum(r.g)*DT*F.ef;return r}
 function baseline(fc,c){const L0=fc.load.map((l,i)=>l+((fc.evb||[])[i]||0)),g=L0.map((l,i)=>Math.max(l-fc.pv[i],0)),z=N.map(()=>0);
  return finish({g,b:z,d:L0.map((l,i)=>Math.min(l,fc.pv[i])),ld:L0,sol:fc.pv,ch:z,fl:z,peak:c.mdH.length?Math.max(...c.mdH.map(h=>g[h])):0},c)}
-const optReq=(fc,c,m,bat)=>{const on=+F.evn>0,smart=on&&m.fx>0,r={load:on&&!smart?fc.load.map((l,i)=>l+((fc.evb||[])[i]||0)):fc.load,pv:fc.pv,rates:c.rates,md_rate_day:c.mdd,md_hours:c.mdH,batt_kwh:bat,flex_share:on?0:(+F.flex||0)/100*m.fx,carbon_adder:0,grid_limit:+F.lim||0,hard_limit:true,wear:m.wr,eff:(+F.eff||90)/100,co2_allow:m.ca};if(smart)r.ev={chargers:+F.evn,kw:+F.evkw,energy_kwh:+F.eve,window:c.evw};return r};
+const optReq=(fc,c,m,bat)=>{const on=+F.evn>0,smart=on&&m.fx>0,r={load:on&&!smart?fc.load.map((l,i)=>l+((fc.evb||[])[i]||0)):fc.load,pv:fc.pv,rates:c.rates,md_rate_day:c.mdd,md_hours:c.mdHr,batt_kwh:bat,flex_share:on?0:(+F.flex||0)/100*m.fx,carbon_adder:0,grid_limit:+F.lim||0,hard_limit:true,wear:m.wr,eff:(+F.eff||90)/100,co2_allow:m.ca};if(smart)r.ev={chargers:+F.evn,kw:+F.evkw,energy_kwh:+F.eve,window:c.evw};return r};
 const getRun=(date,mode)=>memo('r|'+date+'|'+mode+'|'+hk(rkey()),async()=>{
  const fc=await getFc(date),c=ctx(date),ck='r|'+date+'|'+mode+'|'+hk(rkey());let hit=mode=='base'?null:pcGet(ck),off=fc.offline||0,r;
  if(mode=='base')r=baseline(fc,c);
@@ -289,41 +290,41 @@ const getRun=(date,mode)=>memo('r|'+date+'|'+mode+'|'+hk(rkey()),async()=>{
   if(hit)r=finish({d:hit.d,b:hit.b,g:hit.g,ld:hit.ld,sol:fc.pv,ch:hit.ch,fl:hit.fl,peak:hit.peak},c)}
  r.fc=fc;r.c=c;if(off)r.offline=off;return r});
 
-function draw(r,b0,win){const W=760,H=290,L=46,B=28,T=10,bw=(W-L-8)/24,mx=Math.max(...r.ld,...b0.ld,...r.sol,...r.g.map((g,h)=>g+r.b[h]),1)*1.1,y=v=>H-B-(v/mx)*(H-B-T);
+function draw(r,b0,win){const W=760,H=290,L=46,B=28,T=10,bw=(W-L-8)/NS,hb=bw*S,mx=Math.max(...r.ld,...b0.ld,...r.sol,...r.g.map((g,h)=>g+r.b[h]),1)*1.1,y=v=>H-B-(v/mx)*(H-B-T);
  let s='<defs><pattern id="mv" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--shift)" opacity=".30"/><rect width="2.5" height="6" fill="var(--shift)"/></pattern></defs>';
  for(let i=0;i<=4;i++){const v=mx*i/4;s+=`<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--mute)">${Math.round(v)}</text>`}
- if(win)s+=`<rect x="${L+win[0]*bw}" y="${T}" width="${(win[1]-win[0])*bw}" height="${H-B-T}" fill="var(--grid)" opacity=".15"/><rect x="${L+win[0]*bw}" y="${H-B+3}" width="${(win[1]-win[0])*bw}" height="3" fill="var(--grid)" opacity=".5"/>`;
- N.forEach(h=>{const x=L+h*bw+2,w=bw-4;let base=0;
+ if(win)s+=`<rect x="${L+win[0]*hb}" y="${T}" width="${(win[1]-win[0])*hb}" height="${H-B-T}" fill="var(--grid)" opacity=".15"/><rect x="${L+win[0]*hb}" y="${H-B+3}" width="${(win[1]-win[0])*hb}" height="3" fill="var(--grid)" opacity=".5"/>`;
+ N.forEach(h=>{const x=L+h*bw+1,w=bw-2;let base=0;
   [[r.g[h],'--grid'],[r.b[h],'--bat'],[r.d[h],'--sun']].forEach(([v,c])=>{if(v>0.5){s+=`<rect x="${x}" y="${y(base+v)}" width="${w}" height="${y(base)-y(base+v)}" fill="var(${c})"/>`;base+=v}});
   const un=r.sol[h]-r.d[h];if(un>0.5)s+=`<rect x="${x}" y="${y(base+un)}" width="${w}" height="${y(base)-y(base+un)}" fill="none" stroke="var(--sun)" stroke-dasharray="3 2"/>`;
   const dl=r.ld[h]-b0.ld[h];
   if(dl>0.5){const m=Math.min(dl,base);s+=`<rect x="${x}" y="${y(base)}" width="${w}" height="${y(base-m)-y(base)}" fill="url(#mv)" stroke="var(--shift)"/>`}
   if(dl<-0.5){const t0=base+Math.max(un,0);s+=`<rect x="${x}" y="${y(t0-dl)}" width="${w}" height="${y(t0)-y(t0-dl)}" fill="none" stroke="var(--shift)" stroke-width="1.5" stroke-dasharray="3 2"/>`}
-  if(h%3==0)s+=`<text x="${x+w/2}" y="${H-12}" text-anchor="middle" font-size="11" fill="var(--mute)">${p2(h)}</text>`});
- if(win&&r.peak>0)s+=`<line x1="${L+win[0]*bw}" x2="${L+win[1]*bw}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${L+win[1]*bw-4}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)">billed peak ${Math.round(r.peak)} kW</text>`;
+  if(h%(3*S)==0)s+=`<text x="${x+w/2}" y="${H-12}" text-anchor="middle" font-size="11" fill="var(--mute)">${p2(h/S)}</text>`});
+ if(win&&r.peak>0)s+=`<line x1="${L+win[0]*hb}" x2="${L+win[1]*hb}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${L+win[1]*hb-4}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)">billed peak ${Math.round(r.peak)} kW</text>`;
  s+=`<text x="${L}" y="${H-1}" font-size="10" fill="var(--mute)">kW. Shaded hours = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;
- return `<svg viewBox="0 0 760 290" role="img" aria-label="Hourly supply split by source">${s}</svg><div class="legend"><span><i style="background:var(--sun)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border:1px dashed var(--sun)"></i>Unused solar</span><span><i style="background:repeating-linear-gradient(45deg,var(--shift) 0 2px,transparent 2px 5px);border:1px solid var(--shift)"></i>Work moved into this hour</span><span><i style="background:none;border:1px dashed var(--shift)"></i>Work moved out of this hour</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span></div>`}
+ return `<svg viewBox="0 0 760 290" role="img" aria-label="Supply split by source, every 30 minutes">${s}</svg><div class="legend"><span><i style="background:var(--sun)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border:1px dashed var(--sun)"></i>Unused solar</span><span><i style="background:repeating-linear-gradient(45deg,var(--shift) 0 2px,transparent 2px 5px);border:1px solid var(--shift)"></i>Work moved into this hour</span><span><i style="background:none;border:1px dashed var(--shift)"></i>Work moved out of this hour</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span></div>`}
 
-function rg(a,t){const o=[];let s=null;for(let h=0;h<=24;h++){const on=h<24&&a[h]>t;if(on&&s===null)s=h;if(!on&&s!==null){o.push(p2(s)+':00 to '+p2(h)+':00');s=null}}return o.join(', ')}
+function rg(a,t){const o=[];let s=null;for(let h=0;h<=NS;h++){const on=h<NS&&a[h]>t;if(on&&s===null)s=h;if(!on&&s!==null){o.push(tm(s)+' to '+tm(h));s=null}}return o.join(', ')}
 function recs(r,b){const L=[],cap=+F.bat||0;
  if(r===b)L.push('Select one of the optimiser strategies to see its action plan.');
  else{const fl=rg(r.fl,1);L.push(fl?`Run flexible equipment between ${fl}. Charging stays inside the allowed operating window.`:'No equipment is moved. Operations keep their normal schedule.');
   if(cap>0){const c=rg(r.ch,1),d=rg(r.b,1);L.push((c?`Charge the battery ${c}. `:'')+(d?`Discharge it ${d} to cap the billed grid peak.`:'The battery is not needed in this plan.'))}else L.push('No battery in this plan.');
-  L.push(r.c.mdH.length?`Hold billed grid demand to ${r.peak.toFixed(0)} kW (baseline ${b.peak.toFixed(0)} kW). Highest draw in any hour is ${Math.max(...r.g).toFixed(0)} kW${+F.lim>0?`, against a grid limit of ${F.lim} kW`:''}.`:`No maximum demand is billed on this day. Highest draw in any hour is ${Math.max(...r.g).toFixed(0)} kW.`);
+  L.push(r.c.mdH.length?`Hold billed grid demand to ${r.peak.toFixed(0)} kW (baseline ${b.peak.toFixed(0)} kW). Highest draw in any 30 minutes is ${Math.max(...r.g).toFixed(0)} kW${+F.lim>0?`, against a grid limit of ${F.lim} kW`:''}.`:`No maximum demand is billed on this day. Highest draw in any 30 minutes is ${Math.max(...r.g).toFixed(0)} kW.`);
   const su=rg(r.sol.map((s,h)=>s-r.ld[h]),0);L.push(su?`Solar surplus expected ${su}: store it or run flexible load then.`:'Solar never exceeds site load, so all of it is used on site and the grid covers the shortfall.')}
  return L.map(t=>`<li>${t}</li>`).join('')}
 
 function fcCard(fc,past,fn){
- const W=760,Hh=210,L=46,B=26,T=10,x=h=>L+(W-L-8)*h/23,hi=fc.pv_p90&&!past?fc.pv_p90:fc.pv,mx=Math.max(...fc.load,...hi,1)*1.1,y=v=>Hh-B-(v/mx)*(Hh-B-T);
+ const W=760,Hh=210,L=46,B=26,T=10,x=h=>L+(W-L-8)*h/(NS-1),hi=fc.pv_p90&&!past?fc.pv_p90:fc.pv,mx=Math.max(...fc.load,...hi,1)*1.1,y=v=>Hh-B-(v/mx)*(Hh-B-T);
  const pa=a=>a.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join('');let g='';
  for(let i=0;i<=4;i++){const v=mx*i/4;g+=`<line x1="${L}" x2="${W-8}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--mute)">${Math.round(v)}</text>`}
- for(let h=0;h<24;h+=3)g+=`<text x="${x(h)}" y="${Hh-8}" text-anchor="middle" font-size="11" fill="var(--mute)">${p2(h)}</text>`;
+ for(let h=0;h<24;h+=3)g+=`<text x="${x(h*S)}" y="${Hh-8}" text-anchor="middle" font-size="11" fill="var(--mute)">${p2(h)}</text>`;
  const band=fc.pv_p10&&fc.pv_p90&&!past;
  if(band){const up=fc.pv_p90.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)),dn=fc.pv_p10.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)).reverse();g+=`<path d="M${up.join('L')}L${dn.join('L')}Z" fill="var(--sun)" opacity=".25"/>`}
  g+=`<path d="${pa(fc.load)}" stroke="var(--mute)" stroke-dasharray="5 4" fill="none" stroke-width="2"/><path d="${pa(fc.pv)}" stroke="var(--sun)" fill="none" stroke-width="2.5"/>`;
  const dl=fc.meter=='actual'?'Demand (your meter reading)':fc.meter=='typical'?'Demand (typical pattern from your meter data)':past?'Demand (modelled)':'Demand (forecast)',
-  E=sum(fc.pv),av=a=>sum(a)/a.length;
- const rng=band?` Likely range ${Math.round(sum(fc.pv_p10))} to ${Math.round(sum(fc.pv_p90))} kWh.`:'';
+  E=sum(fc.pv)*DT,av=a=>sum(a)/a.length;
+ const rng=band?` Likely range ${Math.round(sum(fc.pv_p10)*DT)} to ${Math.round(sum(fc.pv_p90)*DT)} kWh.`:'';
  return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Solar and demand ${past?'record':'forecast'}">${g}</svg>
  <div class="legend"><span><i style="background:var(--sun)"></i>Solar output, kW${past?'':' (expected)'}</span>${band?'<span><i style="background:var(--sun);opacity:.3"></i>Likely range (10% to 90%)</span>':''}<span><i style="background:none;border-top:2px dashed var(--mute);height:0;width:14px"></i>${dl}, kW</span></div>
  <div class="stats"><div><span>Highest temperature</span><b>${Math.max(...fc.temp).toFixed(1)} &deg;C</b></div><div><span>Average cloud cover</span><b>${Math.round(av(fc.cloud))}%</b></div><div><span>Strongest sunshine</span><b>${Math.round(Math.max(...fc.ghi))} W/m&sup2;</b></div><div><span>Solar energy ${past?'':'expected '}</span><b>${Math.round(E)} kWh</b></div></div>
@@ -366,7 +367,7 @@ function kpiRow(r,b,c,sv){const sb=sel=='base',sav=b.cost-r.cost,dco=r.co2-b.co2
  return `<div class="kpirow" data-tour="kpi">`+
   k('Estimated cost savings','&#8600;',sb?'&mdash;':money(sav),sav>0.5?'positive':'',sb?'Baseline is solar only':sv>=0?N1(sv)+'% lower than baseline':N1(-sv)+'% higher than baseline')+
   k('Billed peak demand','&#989;',c.mdH.length?N0(r.peak)+' kW':'None','',c.mdH.length?'From '+N0(b.peak)+' kW at baseline':'No demand charge on this day')+
-  k('Solar utilisation','&#9788;',N0(r.util)+'%','',N0(sum(r.sol))+' kWh available')+
+  k('Solar utilisation','&#9788;',N0(r.util)+'%','',N0(sum(r.sol)*DT)+' kWh available')+
   k('CO&#8322; vs baseline','&#9831;',sb?'&mdash;':(dco>=0?'+':'\u2212')+N1(Math.abs(cp))+'%',sb||Math.abs(dco)<0.5?'':dco<0?'positive':'warning',sb?'':Math.abs(dco)<0.5?'About the same':dco<0?'Emissions lower':'Emissions slightly higher')+`</div>`}
 function costCard(r,b,sv,past){const sb=sel=='base',w=b.cost>0?Math.min(100*r.cost/b.cost,100):100;
  return `<div class="card" data-tour="costbars"><div class="cardhead"><div><h2>Electricity cost comparison</h2><div class="muted small">Baseline vs selected strategy</div></div>${!sb&&sv>=0.05?`<span class="badge green">${N1(sv)}% lower</span>`:''}</div>
@@ -384,12 +385,12 @@ function actCard(r,b){return `<div class="card" data-tour="actions"><div class="
 function stratCards(R,b){const D={cost:['Cost-saving','Lowest bill. May add a little CO&#8322;.'],bal:['Balanced','Moves half as much equipment and limits extra CO&#8322;.'],prod:['Production-first','Never moves equipment. Same CO&#8322; limit as Balanced.']};
  return `<div class="card" data-tour="strategies"><h2>Choose an optimisation strategy</h2><div class="muted small">Pick one to see its plan across the dashboard.</div><div class="stratgrid">`+['cost','bal','prod'].map(k=>{const x=R[k],v=x&&b.cost>0?(1-x.cost/b.cost)*100:null;return `<button class="strategy${sel==k?' selected':''}" data-sc="${k}"><h3>${D[k][0]}</h3><p>${D[k][1]}</p><span class="tiny">${v==null?'':N1(v)+'% saving'}</span></button>`}).join('')+`</div></div>`}
 function flowCard(r,b){
- const segs=x=>{const d=sum(x.d),bt=sum(x.b),g=sum(x.g);return{d,bt,g,t:d+bt+g||1}};
+ const segs=x=>{const d=sum(x.d)*DT,bt=sum(x.b)*DT,g=sum(x.g)*DT;return{d,bt,g,t:d+bt+g||1}};
  const bar=(x,l)=>{const s=segs(x),lab=v=>v/s.t>0.1?N0(v)+' kWh':'';return `<div class="fl"><div class="fl-l">${l}</div><div class="fl-b" role="img" aria-label="${l}: solar ${N0(s.d)} kWh, battery ${N0(s.bt)} kWh, grid ${N0(s.g)} kWh"><span class="s1" style="flex:${s.d}">${lab(s.d)}</span><span class="s2" style="flex:${s.bt}">${lab(s.bt)}</span><span class="s3" style="flex:${s.g}">${lab(s.g)}</span></div></div>`};
  const s=segs(r);
  return `<div class="card" data-tour="flow" data-role="tech"><h2>Where the day's energy comes from</h2>${bar(b,'Baseline (solar only)')}${sel=='base'?'':bar(r,NAMES[sel].replace('Optimiser: ',''))}
  <div class="legend"><span><i style="background:var(--sun)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (including battery charging)</span></div>
- <div class="stats"><div><span>Self-consumption</span><b>${N0(r.util)}%</b><span>of the solar produced is used on site</span></div><div><span>Solar share of supply</span><b>${N0(100*s.d/s.t)}%</b><span>of the energy supplied came from solar</span></div><div><span>Solar available</span><b>${N0(sum(r.sol))} kWh</b></div></div>
+ <div class="stats"><div><span>Self-consumption</span><b>${N0(r.util)}%</b><span>of the solar produced is used on site</span></div><div><span>Solar share of supply</span><b>${N0(100*s.d/s.t)}%</b><span>of the energy supplied came from solar</span></div><div><span>Solar available</span><b>${N0(sum(r.sol)*DT)} kWh</b></div></div>
  <p class="note">Totals for the day, in kWh. The battery's energy first came from solar or the grid.</p></div>`}
 
 // ================= print (owner) =================
@@ -398,23 +399,23 @@ function printOwner(){const p=lastPlan;if(!p||!aiFacts)return;const r=p.r,b=p.b,
  $('printSheet').innerHTML=`<h1>Energy plan summary</h1><p class="psm">${esc(F.name)} &middot; ${esc(parse(p.date).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))} &middot; ${past?'Recorded weather':'FORECAST: a prediction, not a measurement'} &middot; Strategy: ${esc(NAMES[p.sel].replace('Optimiser: ',''))}</p>
  <div class="pbig"><div><span>Saving per day</span><b>${money(b.cost-r.cost)}</b></div><div><span>Billed peak</span><b>${c.mdH.length?N0(r.peak)+' kW':'none'}</b><span class="psm">${c.mdH.length?'baseline '+N0(b.peak)+' kW':'no demand charge on this day'}</span></div><div><span>CO&#8322; vs baseline</span><b>${sgn(r.co2-b.co2)} kg</b></div></div>
  <h2>In plain words</h2><p>${esc(txt)}</p>
- <h2>Key figures</h2><table><tr><th></th><th>Baseline (solar only)</th><th>This plan</th></tr>${row('Cost for the day',money(b.cost),money(r.cost))}${row('Billed peak',c.mdH.length?N0(b.peak)+' kW':'none',c.mdH.length?N0(r.peak)+' kW':'none')}${row('CO&#8322;',N0(b.co2)+' kg',N0(r.co2)+' kg')}${row('Solar used on site',N0(b.util)+'%',N0(r.util)+'%')}${row('Solar available',N0(sum(r.sol))+' kWh','')}</table>
- <h2>Basis</h2><p class="psm">Tariff ${esc(tf().n)} with AFA ${N2(F.afa)} sen/kWh. Solar ${N0(F.kwp)} kWp, battery ${N0(F.bat)} kWh at ${N0(F.eff)}% round-trip efficiency, ${N0(F.flex)}% of daytime load can move. Baseline is solar only. Demand: ${esc((p.b.fc.model||{}).demand||'modelled')}. CO&#8322; uses one flat factor of ${N2(F.ef)} kg/kWh. Hourly planning: TNB bills the highest 30 minutes, so real peaks can be higher. Savings are estimates, not guarantees. Printed ${esc(new Date().toLocaleString('en-GB'))}.</p>`;
+ <h2>Key figures</h2><table><tr><th></th><th>Baseline (solar only)</th><th>This plan</th></tr>${row('Cost for the day',money(b.cost),money(r.cost))}${row('Billed peak',c.mdH.length?N0(b.peak)+' kW':'none',c.mdH.length?N0(r.peak)+' kW':'none')}${row('CO&#8322;',N0(b.co2)+' kg',N0(r.co2)+' kg')}${row('Solar used on site',N0(b.util)+'%',N0(r.util)+'%')}${row('Solar available',N0(sum(r.sol)*DT)+' kWh','')}</table>
+ <h2>Basis</h2><p class="psm">Tariff ${esc(tf().n)} with AFA ${N2(F.afa)} sen/kWh. Solar ${N0(F.kwp)} kWp, battery ${N0(F.bat)} kWh at ${N0(F.eff)}% round-trip efficiency, ${N0(F.flex)}% of daytime load can move. Baseline is solar only. Demand: ${esc((p.b.fc.model||{}).demand||'modelled')}. CO&#8322; uses one flat factor of ${N2(F.ef)} kg/kWh. Planning uses 30-minute steps, the interval TNB bills. The weather forecast is hourly and smoothed to 30 minutes, so demand is only truly 30-minute with a 30-minute meter file. Savings are estimates, not guarantees. Printed ${esc(new Date().toLocaleString('en-GB'))}.</p>`;
  try{window.print()}catch(e){}}
 
 // ================= technician cards =================
-const PVSPEC=[['Module temperature rating (NOCT)','45 \u00b0C'],['Power change with temperature','\u22120.35% per \u00b0C above 25 \u00b0C cell temperature'],['System efficiency','0.88 (inverter, wiring, dirt and mismatch together)'],['Tilt','Ignored: horizontal sunshine is used as the sunshine on the panel'],['Weather source','Open-Meteo (a forecast, or recorded weather for past days)'],['Time step','Hourly values'],['Cell temperature','Air temperature + (NOCT \u2212 20) / 800 \u00d7 sunshine'],['Output limit','1 kW per kWp']];
-function schedCard(r,c){const rows=N.map(h=>{const bs=r.b[h]-r.ch[h];return `<tr class="${c.mdH.includes(h)?'bw':''}"><td>${p2(h)}:00</td><td>${bs>0.5?'+':bs<-0.5?'\u2212':''}${N0(Math.abs(bs))}</td><td>${N0(r.fl[h])}</td><td>${N0(r.g[h])}</td><td>${N0(r.sol[h])}</td><td>${N0(r.ld[h])}</td></tr>`}).join('');
- return `<div class="card" data-role="tech" data-tour="schedule"><h2>Hourly schedule</h2><div class="scroll"><table class="sch"><tr><th>Hour</th><th>Battery, kW</th><th>Flexible load, kW</th><th>Grid import, kW</th><th>Solar forecast, kW</th><th>Site demand, kW</th></tr>${rows}</table></div><p class="note">Battery: + discharges to the site, \u2212 charges. Grid import includes battery charging. Shaded rows are the hours where maximum demand is billed. Site demand is after load shifting.</p></div>`}
+const PVSPEC=[['Module temperature rating (NOCT)','45 \u00b0C'],['Power change with temperature','\u22120.35% per \u00b0C above 25 \u00b0C cell temperature'],['System efficiency','0.88 (inverter, wiring, dirt and mismatch together)'],['Tilt','Ignored: horizontal sunshine is used as the sunshine on the panel'],['Weather source','Open-Meteo (a forecast, or recorded weather for past days)'],['Time step','30-minute values. The weather forecast is hourly, smoothed to 30 minutes; demand is truly 30-minute only with a 30-minute meter file'],['Cell temperature','Air temperature + (NOCT \u2212 20) / 800 \u00d7 sunshine'],['Output limit','1 kW per kWp']];
+function schedCard(r,c){const rows=N.map(h=>{const bs=r.b[h]-r.ch[h];return `<tr class="${c.mdH.includes(h)?'bw':''}"><td>${tm(h)}</td><td>${bs>0.5?'+':bs<-0.5?'\u2212':''}${N0(Math.abs(bs))}</td><td>${N0(r.fl[h])}</td><td>${N0(r.g[h])}</td><td>${N0(r.sol[h])}</td><td>${N0(r.ld[h])}</td></tr>`}).join('');
+ return `<div class="card" data-role="tech" data-tour="schedule"><h2>Half-hourly schedule</h2><div class="scroll"><table class="sch"><tr><th>Time</th><th>Battery, kW</th><th>Flexible load, kW</th><th>Grid import, kW</th><th>Solar forecast, kW</th><th>Site demand, kW</th></tr>${rows}</table></div><p class="note">Battery: + discharges to the site, \u2212 charges. Grid import includes battery charging. Shaded rows are the hours where maximum demand is billed. Site demand is after load shifting.</p></div>`}
 function assumeCard(fc,past){const m=fc.model||{};
- const other=[['Battery round-trip efficiency',N0(F.eff)+'%'],['Battery power','Half the capacity in kW (a 1,000 kWh battery can move 500 kW)'],['Battery start and end of day','Starts at 50% and ends at least 50% full'],['Flexible load','Share of 09:00 to 17:00 load that can move: '+N0(F.flex)+'%. Total energy unchanged, at most 1.5 times the average in any hour'],['Billed peak','Highest hourly average in the billed window (TNB bills the highest 30 minutes, so real peaks can be higher)'],['Demand charge in a day','Monthly demand charge divided by 30, times the day\u2019s billed peak'],['Tariff',tf().n+' (rates in the TNB table), AFA '+N2(F.afa)+' sen/kWh'],['Grid CO\u2082 factor',N2(F.ef)+' kg/kWh, one flat value (placeholder)'],['Export income','None: no export is assumed'],['Demand source',m.demand||'unknown'],['Not modelled','Retail charge, 1.6% KWTBB levy, tax, financing, equipment ageing']];
+ const other=[['Battery round-trip efficiency',N0(F.eff)+'%'],['Battery power','Half the capacity in kW (a 1,000 kWh battery can move 500 kW)'],['Battery start and end of day','Starts at 50% and ends at least 50% full'],['Flexible load','Share of 09:00 to 17:00 load that can move: '+N0(F.flex)+'%. Total energy unchanged, at most 1.5 times the average in any 30 minutes'],['Billed peak','Highest 30-minute average in the billed window, the interval TNB bills'],['Demand charge in a day','Monthly demand charge divided by 30, times the day\u2019s billed peak'],['Tariff',tf().n+' (rates in the TNB table), AFA '+N2(F.afa)+' sen/kWh'],['Grid CO\u2082 factor',N2(F.ef)+' kg/kWh, one flat value (placeholder)'],['Export income','None: no export is assumed'],['Demand source',m.demand||'unknown'],['Not modelled','Retail charge, 1.6% KWTBB levy, tax, financing, equipment ageing']];
  const tb=a=>'<table class="sch">'+a.map(x=>`<tr><td><b>${x[0]}</b></td><td style="text-align:left">${esc(x[1])}</td></tr>`).join('')+'</table>';
  return `<div class="card" data-role="tech" data-tour="assume"><h2>Assumptions</h2><h3 class="sec">PV model (read-only)</h3><div class="scroll">${tb(PVSPEC)}</div><p class="note">Solar method on the day shown: ${esc(m.pv||'')}.</p><h3 class="sec">Plan and tariff</h3><div class="scroll">${tb(other)}</div></div>`}
 function stressCard(){const p=lastPlan;if(!p)return'';
  if(p.sel=='base')return `<div class="card" data-role="tech" data-tour="stress"><h2>Stress test</h2><p class="note" style="margin-top:0">Select an optimiser strategy to stress-test its schedule.</p></div>`;
  const r=p.r,b=p.b,c=b.c,hd=c.mdH.length>0,sc=[['As forecast',0,1],['Demand +10%',.1,1],['Demand \u221210%',-.1,1],['Solar \u221230%',0,.7],['Demand +10% and solar \u221230%',.1,.7]];
  const ev=(dl,sf)=>{const pv=b.sol.map(v=>v*sf),g0=b.ld.map((l,h)=>Math.max(l*(1+dl)-pv[h],0)),ld=r.ld.map(v=>v*(1+dl)),g1=ld.map((l,h)=>Math.max(l+r.ch[h]-r.b[h]-Math.min(pv[h],l+r.ch[h]),0));
-  const pk=a=>hd?Math.max(...c.mdH.map(h=>a[h])):0,cost=a=>sum(a.map((g,h)=>g*c.rates[h]))+c.mdd*pk(a);return{pk1:pk(g1),c0:cost(g0),c1:cost(g1)}};
+  const pk=a=>hd?Math.max(...c.mdH.map(h=>a[h])):0,cost=a=>sum(a.map((g,h)=>g*c.rates[h]))*DT+c.mdd*pk(a);return{pk1:pk(g1),c0:cost(g0),c1:cost(g1)}};
  const base=ev(0,1),rows=sc.map(([n,dl,sf])=>{const e=ev(dl,sf);return `<tr><td style="text-align:left">${n}</td><td>${hd?N0(e.pk1)+(dl==0&&sf==1?'':' ('+sgn(e.pk1-base.pk1)+')'):'&mdash;'}</td><td>${money(e.c1)}</td><td class="${e.c0-e.c1>0.5?'good':''}">${money(e.c0-e.c1)}</td></tr>`}).join('');
  return `<div class="card" data-role="tech" data-tour="stress"><h2>Stress test</h2><p class="note" style="margin-top:0">The planned battery and equipment schedule is held fixed while demand or sunshine turns out different from the forecast. It shows how much of the saving and the peak reduction survive.</p><div class="scroll"><table class="sch"><tr><th>Scenario</th><th>Billed peak, kW (change)</th><th>Day cost</th><th>Saving vs solar only</th></tr>${rows}</table></div></div>`}
 function sweepCard(){return `<div class="card" data-role="tech" data-tour="sweep"><h2>Battery size sweep</h2><p class="note" style="margin-top:0">Re-plans this day with different battery sizes, using ${esc(sel=='base'?'Cost-saving':NAMES[sel].replace('Optimiser: ',''))}, to show where more capacity stops paying off.</p><button class="on" data-sw="1">Run battery sweep</button> <span id="swMsg" class="note"></span><div id="swOut" class="scroll" style="margin-top:8px"></div></div>`}
@@ -434,7 +435,7 @@ let cvTouched=false,cvKwp=0;
 function cvRefresh(){const n=+$('cv_n').value,w=+$('cv_w').value,h=+$('cv_h').value,o=$('cv_out');cvKwp=0;
  if(!(n>0&&w>0)){o.textContent='Enter the number of panels and the watts per panel.';return}
  cvKwp=n*w/1000;o.innerHTML=`${N0(n)} panels &times; ${N0(w)} W &divide; 1,000 = <b>${N1(cvKwp)} kWp</b>.`+(h>0?`<br>${N1(cvKwp)} kWp &times; ${N1(h)} kWh per kWp per day = <b>${N0(cvKwp*h)} kWh per day</b>.`:'')}
-function cvDefault(){if(cvTouched||!lastPlan||!(+F.kwp>0))return;const y=sum(lastPlan.r.sol)/F.kwp;if(!(y>0))return;$('cv_h').value=y.toFixed(1);$('cv_note').textContent=`The model's own yield for the day shown is ${N1(y)} kWh per kWp per day. It is lower on cloudy days and higher on clear ones.`;cvRefresh()}
+function cvDefault(){if(cvTouched||!lastPlan||!(+F.kwp>0))return;const y=sum(lastPlan.r.sol)*DT/F.kwp;if(!(y>0))return;$('cv_h').value=y.toFixed(1);$('cv_note').textContent=`The model's own yield for the day shown is ${N1(y)} kWh per kWp per day. It is lower on cloudy days and higher on clear ones.`;cvRefresh()}
 ['cv_n','cv_w','cv_h'].forEach(id=>{$(id).oninput=()=>{if(id=='cv_h')cvTouched=true;cvRefresh()}});
 $('cv_use').onclick=()=>{if(!(cvKwp>0)){say('Enter the number of panels first.');return}$('f_kwp').value=Math.round(cvKwp*10)/10;applyLocal([`<b>Solar size</b> set from the helper: ${N0($('cv_n').value)} panels &times; ${N0($('cv_w').value)} W = ${N1(cvKwp)} kWp.`])};
 
@@ -449,8 +450,8 @@ function dayHtml(R,rows){
  if(!R[sel])sel='base';const b=R.base,r=R[sel],sv=(1-r.cost/b.cost)*100||0,c=b.c;last={view:'day',key:cur,base:b.cost,cost:r.cost,save:b.cost-r.cost};
  aiFacts={day:parse(cur).toLocaleDateString('en-GB',{weekday:'long'}),strategy:NAMES[sel].replace('Optimiser: ',''),tariff:tf().n,billed:c.mdH.length>0,base_cost:+b.cost.toFixed(2),plan_cost:+r.cost.toFixed(2),base_peak:+b.peak.toFixed(1),plan_peak:+r.peak.toFixed(1),solar_pct:+r.util.toFixed(1),co2_pct:b.co2?+((r.co2/b.co2-1)*100).toFixed(2):null,charge:rg(r.ch,1),discharge:rg(r.b,1),shift:rg(r.fl,1)};lastPlan={date:cur,sel,r,b};
  const tbl=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Grid share</th><th>Billed peak, kW</th><th>CO&#8322;, kg</th><th>CO&#8322; vs baseline</th><th>CO&#8322; vs no solar</th></tr>`+rows.map(s=>{const x=R[s.k],v=(1-x.cost/b.cost)*100,cd=b.co2?(x.co2/b.co2-1)*100:0;
-  return `<tr class="${s.k==sel?'sel':''}"><td>${NAMES[s.k]}</td><td>${N2(x.cost)}</td><td class="${v>0.05?'good':''}">${s.k=='base'?'&mdash;':v.toFixed(1)+'%'}</td><td>${N0(x.util)}%</td><td>${N0(sum(x.g)/sum(x.ld)*100)}%</td><td>${N0(x.peak)}</td><td>${N0(x.co2)}</td><td style="${s.k!='base'&&cd>0.05?'color:#d9a441':''}" class="${s.k!='base'&&cd<-0.05?'good':''}">${s.k=='base'||!b.co2?'&mdash;':(cd>=0?'+':'')+cd.toFixed(1)+'%'}</td><td class="good">${((x.co2/(sum(b.ld)*F.ef)-1)*100).toFixed(0)}%</td></tr>`}).join('');
- const ng=sum(b.ld)*F.ef,cc=b.co2?(r.co2/b.co2-1)*100:0,nm=NAMES[sel];
+  return `<tr class="${s.k==sel?'sel':''}"><td>${NAMES[s.k]}</td><td>${N2(x.cost)}</td><td class="${v>0.05?'good':''}">${s.k=='base'?'&mdash;':v.toFixed(1)+'%'}</td><td>${N0(x.util)}%</td><td>${N0(sum(x.g)/sum(x.ld)*100)}%</td><td>${N0(x.peak)}</td><td>${N0(x.co2)}</td><td style="${s.k!='base'&&cd>0.05?'color:#d9a441':''}" class="${s.k!='base'&&cd<-0.05?'good':''}">${s.k=='base'||!b.co2?'&mdash;':(cd>=0?'+':'')+cd.toFixed(1)+'%'}</td><td class="good">${((x.co2/(sum(b.ld)*DT*F.ef)-1)*100).toFixed(0)}%</td></tr>`}).join('');
+ const ng=sum(b.ld)*DT*F.ef,cc=b.co2?(r.co2/b.co2-1)*100:0,nm=NAMES[sel];
  const carbon=(ng>0?`Carbon: solar already cuts CO&#8322; by ${((1-b.co2/ng)*100).toFixed(0)}% versus buying everything from the grid (${N0(ng-b.co2)} kg avoided on this day). `:'')+(sel=='base'?'':(Math.abs(cc)<0.05?`${nm} leaves CO&#8322; unchanged versus the baseline. `:cc<0?`${nm} cuts CO&#8322; by a further ${(-cc).toFixed(1)}% versus the baseline. `:`${nm} adds ${cc.toFixed(1)}% CO&#8322; versus the baseline: charging the battery from the grid loses about ${Math.round(100-F.eff)}% of the energy, so here the saving is money, not carbon. `))+`Uses one flat grid factor (${F.ef} kg/kWh), so it cannot tell cleaner hours from dirtier ones.`;
  const ann=sel=='base'?'Baseline: solar only, no battery, no load shifting.':(c.wk?`Saving versus baseline: about ${money((b.cost-r.cost)*300)} a year if 300 weekdays looked like this one. Rough guide only, and battery purchase cost is not included.`:'This is a weekend day, so it is not scaled up to a yearly figure.');
  const T=tou(),alt=TF[F.volt+(T?'G':'T')],c2=finish(baseline(b.fc,ctx(cur,alt,!T)),ctx(cur,alt,!T)).cost,
@@ -564,7 +565,7 @@ const STEPS=[
  {s:'[data-tour=chart]',t:'Hour by hour',x:'Energy usage shows where each hour\'s power comes from. Press Predicted weather to see the weather and solar forecast with its likely range.'},
  {s:'[data-tour=compare]',t:'Compare strategies',x:'Every strategy side by side: cost, saving, solar used, billed peak and CO2, with the cost of each extra kg of CO2.'},
  {s:'[data-tour=actions]',t:'What to do',x:'The schedule for the selected strategy: when to charge, when to discharge and when to run flexible equipment.'},
- {s:'[data-tour=schedule]',t:'Hourly schedule',x:'Every hour of the plan as numbers: battery, flexible load, grid import, solar and demand.'},
+ {s:'[data-tour=schedule]',t:'Half-hourly schedule',x:'Every 30 minutes of the plan as numbers: battery, flexible load, grid import, solar and demand.'},
  {s:'[data-tour=approve]',t:'Approve and export',x:'Approve a plan to record who accepted it, then download the schedule as CSV or JSON for your operators. Nothing is sent to equipment: you stay in control.'},
  {s:'[data-tour=stress]',t:'Stress test',x:'Holds the schedule fixed and shows what happens if demand or sunshine differs from the forecast.'},
  {s:'#setup',t:'Set up your facility',x:'Enter it once: tariff and maximum demand from your bill (or upload meter readings), plus solar and battery sizes. The solar size helper turns panels into kWp and kWh.'},
@@ -600,12 +601,12 @@ const apLoad=()=>{try{return JSON.parse(localStorage.getItem('approvals')||'[]')
 function apCard(){const p=lastPlan;if(!p||p.sel=='base'||p.date<TODAY)return'';
  return `<div class="card" data-tour="approve" data-role="tech"><h2>Approve this plan</h2><p class="note" style="margin-top:0">You stay in control. Approving records who accepted the plan and prepares a schedule file for your operators or building system. Nothing is sent to any equipment.</p><button class="on" data-ap="approve">Approve and prepare schedule</button><div id="apOut" style="margin-top:8px"></div><p class="note">Autonomy level 1 of 3: advice that a person approves, then an exported schedule. Levels 2 and 3 (automatic control of equipment) need live meter and device links, safety interlocks and sign-off, and are not switched on.</p></div>`}
 function schedule(p,rec){const r=p.r,b=p.b;
- const hours=N.map(h=>({hour_start:p2(h)+':00',battery_setpoint_kw:+(r.b[h]-r.ch[h]).toFixed(1),flexible_load_kw:+(+r.fl[h]).toFixed(1),planned_grid_import_kw:+r.g[h].toFixed(1),expected_solar_kw:+r.sol[h].toFixed(1),site_demand_kw:+r.ld[h].toFixed(1)}));
+ const hours=N.map(h=>({time_start:tm(h),battery_setpoint_kw:+(r.b[h]-r.ch[h]).toFixed(1),flexible_load_kw:+(+r.fl[h]).toFixed(1),planned_grid_import_kw:+r.g[h].toFixed(1),expected_solar_kw:+r.sol[h].toFixed(1),site_demand_kw:+r.ld[h].toFixed(1)}));
  return{schema:'facility-energy-planner/schedule/v1',advisory:'Forecast-based plan approved by a person. This is not a control signal: check it against live readings before acting.',facility:F.name,tariff:tf().n,date:p.date,strategy:NAMES[p.sel].replace('Optimiser: ',''),
   expected:{baseline_cost_rm:+b.cost.toFixed(2),plan_cost_rm:+r.cost.toFixed(2),saving_rm:+(b.cost-r.cost).toFixed(2),billed_peak_before_kw:+b.peak.toFixed(0),billed_peak_after_kw:+r.peak.toFixed(0)},
-  units:{battery_setpoint_kw:'positive = battery discharges to the site, negative = battery charges',flexible_load_kw:'flexible load planned in this hour',planned_grid_import_kw:'grid import, including battery charging',expected_solar_kw:'solar forecast',site_demand_kw:'site demand after load shifting'},
-  approved_by:rec.by,approved_at:rec.at,integrity:hk(hours),hours}}
-const csvOf=s=>['date,hour_start,battery_setpoint_kw,flexible_load_kw,planned_grid_import_kw,expected_solar_kw,site_demand_kw'].concat(s.hours.map(h=>[s.date,h.hour_start,h.battery_setpoint_kw,h.flexible_load_kw,h.planned_grid_import_kw,h.expected_solar_kw,h.site_demand_kw].join(','))).join('\n')+'\n';
+  units:{battery_setpoint_kw:'positive = battery discharges to the site, negative = battery charges',flexible_load_kw:'flexible load planned in this 30-minute step',planned_grid_import_kw:'grid import, including battery charging',expected_solar_kw:'solar forecast',site_demand_kw:'site demand after load shifting'},
+  approved_by:rec.by,approved_at:rec.at,step_minutes:60/S,integrity:hk(hours),hours}}
+const csvOf=s=>['date,time_start,battery_setpoint_kw,flexible_load_kw,planned_grid_import_kw,expected_solar_kw,site_demand_kw'].concat(s.hours.map(h=>[s.date,h.time_start,h.battery_setpoint_kw,h.flexible_load_kw,h.planned_grid_import_kw,h.expected_solar_kw,h.site_demand_kw].join(','))).join('\n')+'\n';
 function approveNow(){const p=lastPlan;if(!p||p.sel=='base'||p.date<TODAY)return;
  const s=schedule(p,{by:user?(user.userDetails||'signed-in user'):'local user (not signed in)',at:new Date().toISOString()}),log=apLoad().filter(x=>x.key!=apKey());
  log.push({key:apKey(),s});while(log.length>40)log.shift();try{localStorage.setItem('approvals',JSON.stringify(log))}catch(e){}apShow()}
@@ -692,23 +693,23 @@ $('tabs').onclick=e=>{const b=e.target.closest('[data-s]');if(b){sel=b.dataset.s
 $('qbtn').onclick=()=>{const w=$('why');w.hidden=!w.hidden;$('qbtn').setAttribute('aria-expanded',String(!w.hidden))};
 
 
-function tsParts(s){s=String(s).trim().replace(/"/g,'');let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[T ](\d{1,2})/);if(m)return[+m[1],+m[2],+m[3],+m[4]];
- m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T,]+(\d{1,2})/);return m?[+m[3],+m[2],+m[1],+m[4]]:null}
+function tsParts(s){s=String(s).trim().replace(/"/g,'');let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[T ](\d{1,2})(?::(\d{2}))?/);if(m)return[+m[1],+m[2],+m[3],+m[4],+(m[5]||0)];
+ m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T,]+(\d{1,2})(?::(\d{2}))?/);return m?[+m[3],+m[2],+m[1],+m[4],+(m[5]||0)]:null}
 function parseMeter(text,unit){const L=text.split(/\r?\n/).filter(x=>x.trim());if(L.length<2)return null;
  const dl=[',',';','\t'].map(d=>[d,L[0].split(d).length]).sort((a,b)=>b[1]-a[1])[0][0],H=L[0].toLowerCase().split(dl).map(x=>x.replace(/"/g,'').trim());
  let ti=H.findIndex(x=>/time|date/.test(x)),vi=H.findIndex((x,i)=>i!=ti&&/kw|power|demand|load|energy|value/.test(x));if(ti<0)ti=0;if(vi<0)vi=ti==0?1:0;
  if(!unit||unit=='auto')unit=/kwh|energy/.test(H[vi]||'')?'kwh':'kw';
- const day={};let skipped=0;
+ const day={};let skipped=0,half=false;
  L.slice(1).forEach(r=>{const c=r.split(dl),t=tsParts(c[ti]),v=parseFloat(String(c[vi]).replace(/[", ]/g,''));
-  if(!t||!isFinite(v)){skipped++;return}const key=t[0]+'-'+p2(t[1])+'-'+p2(t[2]),a=day[key]||(day[key]=N.map(()=>({s:0,n:0})));if(t[3]<0||t[3]>23){skipped++;return}a[t[3]].s+=Math.max(v,0);a[t[3]].n++;a.mx=Math.max(a.mx||0,Math.max(v,0))});
- const days={};Object.keys(day).sort().forEach(k=>{const a=day[k];if(a.every(x=>x.n>0))days[k]=a.map(x=>+(unit=='kwh'?x.s:x.s/x.n).toFixed(1))});
- const keys=Object.keys(days).slice(-120),out={};keys.forEach(k=>out[k]=days[k]);
- if(!keys.length)return{err:'No complete days (all 24 hours) were found in the file.',skipped};
+  if(!t||!isFinite(v)){skipped++;return}const key=t[0]+'-'+p2(t[1])+'-'+p2(t[2]),a=day[key]||(day[key]=N.map(()=>({s:0,n:0})));if(t[3]<0||t[3]>23){skipped++;return}const bi=t[3]*S+(t[4]>=30?1:0);if(bi%S)half=true;a[bi].s+=Math.max(v,0);a[bi].n++;a.mx=Math.max(a.mx||0,Math.max(v,0))});
+ const days={};Object.keys(day).sort().forEach(k=>{const a=day[k];if(half){if(a.every(x=>x.n>0))days[k]=a.map(x=>+(unit=='kwh'?x.s*S:x.s/x.n).toFixed(1))}else if(a.every((x,i)=>i%S||x.n>0)){const hv=a.filter((x,i)=>!(i%S)).map(x=>+(unit=='kwh'?x.s:x.s/x.n).toFixed(1));days[k]=hv.flatMap(v=>Array(S).fill(v))}});
+ const keys=Object.keys(days).slice(-366),out={};keys.forEach(k=>out[k]=days[k]);
+ if(!keys.length)return{err:'No complete days were found in the file (a day needs a reading for every hour, or every 30 minutes).',skipped};
  const grp={wk:[],sat:[],sun:[]};keys.forEach(k=>{const g=parse(k).getDay();grp[g==6?'sat':g==0?'sun':'wk'].push(out[k])});
  const typ={};for(const t in grp)if(grp[t].length)typ[t]=N.map(h=>+(sum(grp[t].map(a=>a[h]))/grp[t].length).toFixed(1));
  const mx=Math.max(...(typ.wk||[0]),0),pk=Math.max(...keys.map(k=>unit=='kwh'?Math.max(...out[k]):(day[k].mx||0)));
- return{days:out,typ,from:keys[0],to:keys[keys.length-1],n:keys.length,max:Math.round(mx),pk:Math.round(pk),unit,skipped,stamp:Date.now()}}
-function meterMsg(){$('m_msg').textContent=M?`In use: ${M.n} complete days (${M.from} to ${M.to}). Highest reading ${M.pk||M.max} kW; typical weekday peak ${M.max} kW.`:'No meter data loaded.'}
+ return{days:out,typ,from:keys[0],to:keys[keys.length-1],n:keys.length,max:Math.round(mx),pk:Math.round(pk),unit,skipped,res:S,half,stamp:Date.now()}}
+function meterMsg(){$('m_msg').textContent=M?`In use: ${M.n} complete days (${M.from} to ${M.to}), ${M.half?'30-minute':'hourly (repeated as 30-minute steps)'} readings. Highest reading ${M.pk||M.max} kW; typical weekday peak ${M.max} kW.`:'No meter data loaded.'}
 function importMeter(text,unit){let r;try{r=parseMeter(text,unit)}catch(e){r=null}
  if(!r||r.err)return{err:(r&&r.err)||'Could not read the file. It needs a header row, a timestamp column and a value column.'};
  M=r;try{localStorage.setItem('meter',JSON.stringify(M))}catch(e){}
