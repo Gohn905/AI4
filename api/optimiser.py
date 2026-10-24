@@ -151,6 +151,16 @@ def optimise(d):
     if not math.isfinite(gcap) or gcap < 0:
         raise ValueError("grid_kwh_cap must be zero or more")
     fx = _fixed(d, N)                         # optional: steps already executed (re-optimisation), locked to what really happened
+    soc_now = d.get("soc_now_kwh")            # optional: measured battery charge at the end of the fixed steps
+    if soc_now is not None:
+        if not fx:
+            raise ValueError("soc_now_kwh needs fixed steps")
+        try:
+            soc_now = float(soc_now)
+        except (TypeError, ValueError):
+            raise ValueError("soc_now_kwh must be a number")
+        if not math.isfinite(soc_now) or not 0 <= soc_now <= cap + 1e-6:
+            raise ValueError("soc_now_kwh must be between 0 and the battery size")
     if allow is not None and allow < 1 and gcap == 0:
         free = optimise({**d, "co2_allow": 1})                   # the cheapest plan, no cap
         base = float(np.maximum(load + np.array(ev_baseline(d)) - pv, 0).sum()) * dt   # solar-only baseline grid energy incl. EVs charging immediately, kWh
@@ -206,6 +216,10 @@ def optimise(d):
                 bounds[ix[name][t]] = (v, v)
         for t in range(1, fx["k"] + 1):       # 0.001 kWh of slack so rounded history cannot make the problem infeasible
             bounds[ix["SOC"][t]] = (-1e-3, cap + 1e-3)
+        if soc_now is not None:               # trust the meter: the plan continues from the measured charge
+            for t in range(fx["k"]):
+                bounds[ix["SOC"][t]] = (-1e7, 1e7)       # history before the measurement is only bookkeeping
+            bounds[ix["SOC"][fx["k"]]] = (soc_now, soc_now)
 
     Aeq, beq = [], []
     for t in range(N):
