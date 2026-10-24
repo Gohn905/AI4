@@ -8,6 +8,7 @@ from optimiser import optimise
 import reference
 import reopt
 import live
+import learn
 import ratelimit
 
 # Optional features must never stop the optimiser from starting, even if a file is missing or broken.
@@ -160,6 +161,36 @@ def replan_http(req: func.HttpRequest) -> func.HttpResponse:
     except Exception:
         _log("replan", req, 500, ms(), summary="re-plan failed")
         return _json({"error": "re-plan failed"}, 500)
+
+
+@app.route(route="learn", methods=["POST"])
+def learn_http(req: func.HttpRequest) -> func.HttpResponse:
+    """action "update": one full day of forecast and measurement -> new learned profile. action "demo": SIMULATED multi-day backtest. See learn.py."""
+    blocked = _guard(req, "learn", 10)
+    if blocked:
+        return blocked
+    t0 = time.perf_counter()
+    ms = lambda: (time.perf_counter() - t0) * 1000
+    try:
+        b = req.get_json()
+        act = b.get("action")
+        if act == "update":
+            f, a = b.get("forecast") or {}, b.get("actual") or {}
+            res = learn.update(b.get("profile"), f.get("load"), f.get("pv"), a.get("load"), a.get("pv"), float(b.get("alpha", 0.15)))
+            summary = f"profile now {res['profile']['days']} days"
+        elif act == "demo":
+            res = learn.backtest(b, days=int(b.get("days", 30)), bias=bool(b.get("bias", True)), seed=int(b.get("seed", 7)))
+            summary = f"simulated {res['summary']['days']} days, bias={res['summary']['bias_injected']}"
+        else:
+            raise ValueError("action must be 'update' or 'demo'")
+        _log("learn", req, 200, ms(), model="per time-of-day error learning", summary=summary)
+        return _json(res)
+    except (ValueError, TypeError, KeyError) as e:
+        _log("learn", req, 400, ms(), summary="rejected: " + str(e))
+        return _json({"error": str(e)}, 400)
+    except Exception:
+        _log("learn", req, 500, ms(), summary="learning failed")
+        return _json({"error": "learning failed"}, 500)
 
 
 @app.route(route="forecast", methods=["GET"])
