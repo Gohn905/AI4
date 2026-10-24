@@ -24,7 +24,10 @@ summary{cursor:pointer;font-weight:600}.err{color:var(--bad)}.scroll{overflow-x:
 td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}td:first-child,th:first-child{text-align:left}th{font-weight:500;color:var(--mut)}tr.sel td{background:color-mix(in srgb,var(--sun) 16%,transparent)}
 
 .ribbon{border-left:6px solid var(--blue);background:rgba(37,99,235,.09);padding:9px 12px;border-radius:6px;font-size:14px;margin-bottom:12px}.ribbon b{letter-spacing:.04em}.ribbon.past{border-left-color:var(--mut);background:rgba(102,114,128,.10)}
-.card.fcast{border-style:dashed;border-color:var(--blue)}.c.fc{border-style:dashed}.stats{display:flex;flex-wrap:wrap;gap:18px;margin-top:8px;font-size:14px}.stats span{color:var(--mut);font-size:12px;display:block}
+.card.fcast{border-style:dashed;border-color:var(--blue)}.c.fc{border-style:dashed}.pckpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:2px 0 12px}.pcT{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px}.pcT b{display:block;font-size:20px;color:var(--acc);line-height:1.15}.pcT span:not(.ico){font-size:12px;color:var(--mut);display:block}
+.pcw{position:relative}.pcw svg{touch-action:pan-y;cursor:crosshair}.pctip{position:absolute;pointer-events:none;transform:translate(-50%,calc(-100% - 16px));background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;box-shadow:var(--shadow);white-space:nowrap;line-height:1.4}
+@media(max-width:640px){.pckpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stats{display:flex;flex-wrap:wrap;gap:18px;margin-top:8px;font-size:14px}.stats span{color:var(--mut);font-size:12px;display:block}
 h3.sec{font-size:14px;margin:14px 0 6px;color:var(--ink)}details.adv{margin-top:12px}details.adv>summary{font-weight:500;color:var(--mut)}
 #tourShade{position:fixed;inset:0;z-index:59}#tourHole{position:fixed;z-index:60;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.62),0 0 0 3px var(--sun);transition:top .25s,left .25s,width .25s,height .25s;pointer-events:none}
 #tourTip{position:fixed;z-index:61;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.4)}#tourTip h3{margin:0 0 4px;font-size:16px}#tourTip p{margin:0 0 12px;font-size:14px}.tbtns{display:flex;gap:8px;align-items:center}
@@ -234,7 +237,7 @@ HVG:{n:'HV General',ep:43.03,eo:43.03,md:31.21,ad:0,t:'HV General: 43.03 sen/kWh
 HVT:{n:'HV Time-of-Use',ep:44.52,eo:40.43,md:44.82,ad:0,t:'HV ToU: peak 44.52, off-peak 40.43 sen/kWh. Maximum demand RM44.82/kW/month (21.76 + 23.06), peak-period demand only. Retail RM250/month.'}};
 const MODES=[{k:'cost',n:'Cost-saving',fx:1,wr:0,ca:1},{k:'bal',n:'Balanced',fx:.5,wr:.02,ca:.5},{k:'prod',n:'Production-first',fx:0,wr:.02,ca:.5}];
 const NAMES={base:'Baseline',cost:'Optimiser: Cost-saving',bal:'Optimiser: Balanced',prod:'Optimiser: Production-first'};
-const DEF={name:'APU',loc:'3.0553,101.7003',prof:'campus',follow:'bal',volt:'MV',struct:'T',afa:0,peak:4000,kwp:3000,bat:5000,flex:10,lim:4200,evn:8,evkw:50,eve:1200,ef:0.6,eff:90};
+const DEF={name:'APU',loc:'3.0553,101.7003',prof:'campus',follow:'bal',volt:'MV',struct:'T',afa:0,peak:4000,kwp:3000,bat:5000,flex:10,lim:4200,evn:8,evkw:50,eve:700,ef:0.6,eff:90};
 const FIELDS=['name','loc','prof','follow','volt','struct','afa','peak','kwp','bat','flex','lim','evn','evkw','eve','ef','eff'],NUMS=['afa','peak','kwp','bat','flex','evn','evkw','eve','ef','eff'];
 const iso=d=>d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate()),parse=s=>new Date(s+'T12:00:00');
 const addD=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return iso(d)},diff=(a,b)=>Math.round((parse(a)-parse(b))/864e5);
@@ -290,19 +293,58 @@ const getRun=(date,mode)=>memo('r|'+date+'|'+mode+'|'+hk(rkey()),async()=>{
   if(hit)r=finish({d:hit.d,b:hit.b,g:hit.g,ld:hit.ld,sol:fc.pv,ch:hit.ch,fl:hit.fl,peak:hit.peak},c)}
  r.fc=fc;r.c=c;if(off)r.offline=off;return r});
 
-function draw(r,b0,win){const W=760,H=290,L=46,B=28,T=10,bw=(W-L-8)/NS,hb=bw*S,mx=Math.max(...r.ld,...b0.ld,...r.sol,...r.g.map((g,h)=>g+r.b[h]),1)*1.1,y=v=>H-B-(v/mx)*(H-B-T);
+// ---- chart helpers: clean axis ranges ----
+const chT=past=>chartTab=='wx'?(past?'Weather and solar record (recorded)':'Forecast inputs: weather, solar and demand (forecast)'):chartTab=='pc'?(past?'Power curve (rebuilt from recorded weather)':'Power curve (forecast)'):'Where the power comes from, every 30 minutes'+(past?'':' (forecast)');
+function niceAxis(lo,hi,n=5){lo=Math.min(lo,0);hi=Math.max(hi,lo+1e-9);const p=Math.pow(10,Math.floor(Math.log10((hi-lo)/n)));let st=p;for(const m of [1,2,5,10]){st=m*p;if((hi-lo)/st<=n)break}return{lo:Math.floor(lo/st+1e-9)*st,hi:Math.ceil(hi/st-1e-9)*st,st}}
+function yGrid(ax,y,x1,x2){let o='';for(let v=ax.lo;v<=ax.hi+ax.st/1e3;v+=ax.st){const yy=y(v).toFixed(1),z=Math.abs(v)<ax.st/1e3;o+=`<line x1="${x1}" x2="${x2}" y1="${yy}" y2="${yy}" stroke="${z?'#94a3b8':'var(--line)'}"/><text x="${x1-6}" y="${(+yy+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--mute)">${(ax.st<1?N1:N0)(Math.abs(v)<ax.st/1e3?0:v)}</text>`}return o}
+const yTitle=(T,Bt,txt)=>`<text transform="rotate(-90 11 ${(T+Bt)/2})" x="11" y="${(T+Bt)/2}" text-anchor="middle" font-size="11" fill="var(--mute)">${txt}</text>`;
+function xAxis(xf,y0,t0,t1,st){let o=`<line x1="${xf(t0).toFixed(1)}" x2="${xf(t1).toFixed(1)}" y1="${y0}" y2="${y0}" stroke="#94a3b8"/>`;for(let t=Math.ceil(t0/st-1e-9)*st;t<=t1+1e-9;t+=st){const x=xf(t).toFixed(1),an=t>=24?'end':'middle';o+=`<line x1="${x}" x2="${x}" y1="${y0}" y2="${y0+4}" stroke="#94a3b8"/><text x="${x}" y="${y0+16}" text-anchor="${an}" font-size="11" fill="var(--mute)">${p2(t)}:00</text>`}return o}
+// ---- power curve (smooth area chart with a hover read-out) ----
+let pcType='sol',pcS=null;
+function monoPath(P){const n=P.length;if(n<2)return'';const dx=[],m=[],t=[];for(let i=0;i<n-1;i++){dx[i]=P[i+1][0]-P[i][0];m[i]=(P[i+1][1]-P[i][1])/dx[i]}t[0]=m[0];t[n-1]=m[n-2];for(let i=1;i<n-1;i++)t[i]=m[i-1]*m[i]<=0?0:(m[i-1]+m[i])/2;
+ for(let i=0;i<n-1;i++){if(m[i]===0){t[i]=t[i+1]=0}else{const a=t[i]/m[i],b=t[i+1]/m[i],q=a*a+b*b;if(q>9){const z=3/Math.sqrt(q);t[i]=z*a*m[i];t[i+1]=z*b*m[i]}}}
+ let d='M'+P[0][0].toFixed(1)+' '+P[0][1].toFixed(1);for(let i=0;i<n-1;i++){const x0=P[i][0],x1=P[i+1][0],h3=dx[i]/3;d+=`C${(x0+h3).toFixed(1)} ${(P[i][1]+t[i]*h3).toFixed(1)} ${(x1-h3).toFixed(1)} ${(P[i+1][1]-t[i+1]*h3).toFixed(1)} ${x1.toFixed(1)} ${P[i+1][1].toFixed(1)}`}return d}
+function pcPos(i){const s=pcS,v=s.vals[i],x=s.xf((i+.5)/S),y=s.y(v),pc=Math.max(14,Math.min(86,x/s.W*100));
+ return{x,y,left:pc,top:y/s.H*100,html:`Time: ${tm(i)} to ${tm(i+1)}<br>Power: ${(Math.abs(v)<100?N1:N0)(v).replace('-','\u2212')} kW`}}
+function pcShow(i){const s=pcS;if(!s)return;const p=pcPos(i),set=(id,o)=>{const e=$(id);for(const k in o)e.setAttribute(k,o[k])};
+ set('pcLine',{x1:p.x.toFixed(1),x2:p.x.toFixed(1)});set('pcDot',{cx:p.x.toFixed(1),cy:p.y.toFixed(1)});set('pcHalo',{cx:p.x.toFixed(1),cy:p.y.toFixed(1)});
+ const t=$('pcTip');t.innerHTML=p.html;t.style.left=p.left+'%';t.style.top=p.top+'%'}
+function pcMove(e){const s=pcS;if(!s)return;const svg=e.target&&e.target.closest?e.target.closest('.pcw svg'):null;
+ if(!svg){if(s.moved){s.moved=false;pcShow(s.peak)}return}
+ const rc=svg.getBoundingClientRect(),vx=(e.clientX-rc.left)/rc.width*s.W,t=s.h0+(vx-s.L)/(s.W-s.L-s.R)*(s.h1-s.h0);
+ const i=Math.max(s.h0*S,Math.min(s.h1*S-1,Math.round(t*S-.5)));s.moved=true;pcShow(i)}
+function pcCard(r,past){
+ const TY={sol:['Solar power',r.sol,'#f29f3d'],ld:['Site demand',r.ld,'#64748b'],g:['Grid import (planned)',r.g,'#2b6cb0'],bat:['Battery (discharge +, charging \u2212)',r.b.map((v,i)=>v-r.ch[i]),'#27845a']};
+ if(!TY[pcType])pcType='sol';const [nm,vals,col]=TY[pcType],NW=typeof innerWidth=='number'&&innerWidth<640,W=NW?400:760,H=300,L=NW?48:54,R=12,T=14,B=30;
+ let h0=0,h1=24;
+ if(pcType=='sol'&&Math.max(...vals)>0.5){const f=vals.findIndex(v=>v>0.5),l=vals.length-1-[...vals].reverse().findIndex(v=>v>0.5);h0=Math.max(0,Math.floor(f/S)-1);h1=Math.min(24,Math.ceil((l+1)/S)+1);while(h1-h0<6){if(h0>0)h0--;if(h1-h0<6&&h1<24)h1++}}
+ const ax=niceAxis(Math.min(0,...vals),Math.max(...vals,1)*1.05),y=v=>T+(ax.hi-v)/(ax.hi-ax.lo)*(H-T-B),xf=t=>L+(W-L-R)*(t-h0)/(h1-h0),y0=y(0);
+ const pts=[];for(let i=h0*S;i<h1*S;i++)pts.push([xf((i+.5)/S),y(vals[i])]);
+ let pk=h0*S;for(let i=h0*S;i<h1*S;i++)if(Math.abs(vals[i])>Math.abs(vals[pk]))pk=i;
+ pcS={h0,h1,vals,L,W,R,H,T,y,xf,peak:pk,moved:false};
+ const line=monoPath(pts),area=line+`L${pts[pts.length-1][0].toFixed(1)} ${y0.toFixed(1)}L${pts[0][0].toFixed(1)} ${y0.toFixed(1)}Z`,span=h1-h0,st=NW?(span<=6?1:span<=12?3:4):(span<=8?1:span<=14?2:3),p=pcPos(pk);
+ const E=sum(r.sol)*DT,spk=r.sol.indexOf(Math.max(...r.sol)),ca=sum(r.d)*DT*F.ef;
+ const tile=(bg,ic,v,l)=>`<div class="pcT"><span class="ico" style="background:${bg}">${ic}</span><div><b>${v}</b><span>${l}</span></div></div>`;
+ const tiles=`<div class="pckpis">`+tile('#e3f4d6','&#9788;',past?'Rebuilt':'Forecast','Data (not measured)')+tile('#ffe5cc','&#9889;',N0(E),'Solar energy, kWh')+tile('#dbe8fb','&#8599;',N0(Math.max(...r.sol)),'Peak solar, kW at '+tm(spk))+tile('#fdf0c4','&#9831;',N0(ca),'CO&#8322; avoided, kg')+`</div>`;
+ const sel=`<div class="bar"><label for="pcSel"><b>Data type</b></label><select id="pcSel">`+Object.entries(TY).map(([k,v])=>`<option value="${k}"${k==pcType?' selected':''}>${v[0]}</option>`).join('')+`</select></div>`;
+ return tiles+sel+`<div class="pcw"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${nm} through the day. Move over the chart to read a value."><defs><linearGradient id="pcg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".45"/><stop offset="1" stop-color="${col}" stop-opacity=".05"/></linearGradient></defs>`
+  +yGrid(ax,y,L,W-R)+yTitle(T,H-B,'kW')+`<path d="${area}" fill="url(#pcg)"/><path d="${line}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>`
+  +`<g id="pcHov"><line id="pcLine" x1="${p.x.toFixed(1)}" x2="${p.x.toFixed(1)}" y1="${T}" y2="${H-B}" stroke="${col}" stroke-opacity=".5"/><circle id="pcHalo" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="11" fill="${col}" fill-opacity=".25"/><circle id="pcDot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="6" fill="${col}" stroke="#fff" stroke-width="2.5"/></g>`
+  +xAxis(xf,H-B,h0,h1,st)+`</svg><div id="pcTip" class="pctip" style="left:${p.left}%;top:${p.top}%">${p.html}</div></div>`
+  +`<p class="note">${past?'Rebuilt from recorded weather, not from an inverter reading.':'A forecast, not a measurement: real values will differ.'} Smoothed between 30-minute values. Move over the chart to read a value.</p>`}
+function draw(r,b0,win){const W=760,H=290,L=54,B=30,T=10,bw=(W-L-8)/NS,hb=bw*S,ax=niceAxis(0,Math.max(...r.ld,...b0.ld,...r.sol,...r.g.map((g,h)=>g+r.b[h]),1)*1.03),mx=ax.hi,y=v=>H-B-(v/mx)*(H-B-T);
  let s='<defs><pattern id="mv" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--shift)" opacity=".30"/><rect width="2.5" height="6" fill="var(--shift)"/></pattern></defs>';
- for(let i=0;i<=4;i++){const v=mx*i/4;s+=`<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--mute)">${Math.round(v)}</text>`}
+ s+=yGrid(ax,y,L,W-8)+yTitle(T,H-B,'kW');
  if(win)s+=`<rect x="${L+win[0]*hb}" y="${T}" width="${(win[1]-win[0])*hb}" height="${H-B-T}" fill="var(--grid)" opacity=".15"/><rect x="${L+win[0]*hb}" y="${H-B+3}" width="${(win[1]-win[0])*hb}" height="3" fill="var(--grid)" opacity=".5"/>`;
  N.forEach(h=>{const x=L+h*bw+1,w=bw-2;let base=0;
   [[r.g[h],'--grid'],[r.b[h],'--bat'],[r.d[h],'--sun']].forEach(([v,c])=>{if(v>0.5){s+=`<rect x="${x}" y="${y(base+v)}" width="${w}" height="${y(base)-y(base+v)}" fill="var(${c})"/>`;base+=v}});
   const un=r.sol[h]-r.d[h];if(un>0.5)s+=`<rect x="${x}" y="${y(base+un)}" width="${w}" height="${y(base)-y(base+un)}" fill="none" stroke="var(--sun)" stroke-dasharray="3 2"/>`;
   const dl=r.ld[h]-b0.ld[h];
   if(dl>0.5){const m=Math.min(dl,base);s+=`<rect x="${x}" y="${y(base)}" width="${w}" height="${y(base-m)-y(base)}" fill="url(#mv)" stroke="var(--shift)"/>`}
-  if(dl<-0.5){const t0=base+Math.max(un,0);s+=`<rect x="${x}" y="${y(t0-dl)}" width="${w}" height="${y(t0)-y(t0-dl)}" fill="none" stroke="var(--shift)" stroke-width="1.5" stroke-dasharray="3 2"/>`}
-  if(h%(3*S)==0)s+=`<text x="${x+w/2}" y="${H-12}" text-anchor="middle" font-size="11" fill="var(--mute)">${p2(h/S)}</text>`});
- if(win&&r.peak>0)s+=`<line x1="${L+win[0]*hb}" x2="${L+win[1]*hb}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${L+win[1]*hb-4}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)">billed peak ${Math.round(r.peak)} kW</text>`;
- s+=`<text x="${L}" y="${H-1}" font-size="10" fill="var(--mute)">kW. Shaded hours = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;
+  if(dl<-0.5){const t0=base+Math.max(un,0);s+=`<rect x="${x}" y="${y(t0-dl)}" width="${w}" height="${y(t0)-y(t0-dl)}" fill="none" stroke="var(--shift)" stroke-width="1.5" stroke-dasharray="3 2"/>`}});
+ s+=xAxis(t=>L+t*hb,H-B,0,24,3);
+ if(win&&r.peak>0)s+=`<line x1="${L+win[0]*hb}" x2="${L+win[1]*hb}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${L+win[1]*hb-4}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)" stroke="#fff" stroke-width="3" paint-order="stroke">billed peak ${Math.round(r.peak)} kW</text>`;
+ s+=`<text x="${L}" y="${H-2}" font-size="10" fill="var(--mute)">Shaded band = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;
  return `<svg viewBox="0 0 760 290" role="img" aria-label="Supply split by source, every 30 minutes">${s}</svg><div class="legend"><span><i style="background:var(--sun)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border:1px dashed var(--sun)"></i>Unused solar</span><span><i style="background:repeating-linear-gradient(45deg,var(--shift) 0 2px,transparent 2px 5px);border:1px solid var(--shift)"></i>Work moved into this hour</span><span><i style="background:none;border:1px dashed var(--shift)"></i>Work moved out of this hour</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span></div>`}
 
 function rg(a,t){const o=[];let s=null;for(let h=0;h<=NS;h++){const on=h<NS&&a[h]>t;if(on&&s===null)s=h;if(!on&&s!==null){o.push(tm(s)+' to '+tm(h));s=null}}return o.join(', ')}
@@ -315,10 +357,9 @@ function recs(r,b){const L=[],cap=+F.bat||0;
  return L.map(t=>`<li>${t}</li>`).join('')}
 
 function fcCard(fc,past,fn){
- const W=760,Hh=210,L=46,B=26,T=10,x=h=>L+(W-L-8)*h/(NS-1),hi=fc.pv_p90&&!past?fc.pv_p90:fc.pv,mx=Math.max(...fc.load,...hi,1)*1.1,y=v=>Hh-B-(v/mx)*(Hh-B-T);
+ const W=760,Hh=220,L=54,B=28,T=10,x=h=>L+(W-L-8)*h/NS,hi=fc.pv_p90&&!past?fc.pv_p90:fc.pv,ax=niceAxis(0,Math.max(...fc.load,...hi,1)*1.03),mx=ax.hi,y=v=>Hh-B-(v/mx)*(Hh-B-T);
  const pa=a=>a.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join('');let g='';
- for(let i=0;i<=4;i++){const v=mx*i/4;g+=`<line x1="${L}" x2="${W-8}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--mute)">${Math.round(v)}</text>`}
- for(let h=0;h<24;h+=3)g+=`<text x="${x(h*S)}" y="${Hh-8}" text-anchor="middle" font-size="11" fill="var(--mute)">${p2(h)}</text>`;
+ g+=yGrid(ax,y,L,W-8)+yTitle(T,Hh-B,'kW')+xAxis(t=>x(t*S),Hh-B,0,24,3);
  const band=fc.pv_p10&&fc.pv_p90&&!past;
  if(band){const up=fc.pv_p90.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)),dn=fc.pv_p10.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)).reverse();g+=`<path d="M${up.join('L')}L${dn.join('L')}Z" fill="var(--sun)" opacity=".25"/>`}
  g+=`<path d="${pa(fc.load)}" stroke="var(--mute)" stroke-dasharray="5 4" fill="none" stroke-width="2"/><path d="${pa(fc.pv)}" stroke="var(--sun)" fill="none" stroke-width="2.5"/>`;
@@ -467,8 +508,8 @@ function dayHtml(R,rows){
   limB=(L>0&&mxg>L+1?`<div class="ribbon warn"><b>GRID LIMIT NOT MET.</b> Highest grid import is ${N0(mxg)} kW, above the ${N0(L)} kW limit.${sel=='base'?' Pick a strategy to see whether it can be held.':' The battery and chargers cannot hold it, so this is the closest plan.'}</div>`:'')+(L>0&&sel!='base'&&mxb>L+1&&mxg<=L+1?`<div class="ribbon"><b>GRID LIMIT.</b> Solar only, the site would draw up to ${N0(mxb)} kW, above the ${N0(L)} kW limit. This plan holds it at or under ${N0(L)} kW.</div>`:'')+(+F.evn>0&&fc.evun>0.5?`<div class="ribbon warn"><b>EV CHARGING.</b> ${N0(fc.evun)} kWh of the EV demand cannot be delivered on this day: the chargers are closed or there are too few hours or too little power.</div>`:'');
  return rib+offB+limB+headCard(r,b,c,sv,past)+`${kpiRow(r,b,c,sv)}${costCard(r,b,sv,past)}${actCard(r,b)}
  ${flowCard(r,b)}
- <div class="card${past?'':' fcast'}" data-tour="chart" data-role="tech"><div class="bar" style="margin-bottom:6px"><h2 id="chTitle" style="margin:0">${chartTab=='wx'?(past?'Weather and solar record (recorded)':'Forecast inputs: weather, solar and demand (forecast)'):'Where the power comes from, hour by hour'+(past?'':' (forecast)')}</h2><span class="sp"></span><span id="chTabs"><button data-ct="use" class="${chartTab=='use'?'on':''}" data-tp="${past?1:0}">Energy usage</button> <button data-ct="wx" class="${chartTab=='wx'?'on':''}">${past?'Recorded weather':'Predicted weather'}</button></span></div>
- <div id="ct_use"${chartTab=='use'?'':' hidden'}>${draw(r,b,c.win)}</div><div id="ct_wx"${chartTab=='wx'?'':' hidden'}>${fcCard(fc,past,fn)}</div></div>
+ <div class="card${past?'':' fcast'}" data-tour="chart" data-role="tech"><div class="bar" style="margin-bottom:6px"><h2 id="chTitle" style="margin:0">${chT(past)}</h2><span class="sp"></span><span id="chTabs"><button data-ct="use" class="${chartTab=='use'?'on':''}" data-tp="${past?1:0}">Energy usage</button> <button data-ct="wx" class="${chartTab=='wx'?'on':''}">${past?'Recorded weather':'Predicted weather'}</button> <button data-ct="pc" class="${chartTab=='pc'?'on':''}">Power curve</button></span></div>
+ <div id="ct_use"${chartTab=='use'?'':' hidden'}>${draw(r,b,c.win)}</div><div id="ct_wx"${chartTab=='wx'?'':' hidden'}>${fcCard(fc,past,fn)}</div><div id="ct_pc"${chartTab=='pc'?'':' hidden'}>${pcCard(r,past)}</div></div>
  ${stratCards(R,b)}
  <div class="card" data-tour="compare" data-role="tech"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
  <p class="note">${ann}</p>${rows.length>1&&rows.every(x=>Math.abs(R[x.k].cost-b.cost)<0.01)?'<p class="note"><b>Why are all the strategies the same?</b> On this day no peak rate or maximum demand charge applies (for example a weekend on a time-of-use tariff), so moving energy or using the battery cannot lower the bill. Try a weekday.</p>':''}<p class="note">${tc}</p><p class="note">${carbon}</p>${tradeoff(R)}</div>
@@ -676,8 +717,10 @@ const go=x=>{view='day';cur=x;render()};
 $('yes').onclick=()=>go(addD(TODAY,-1));$('tod').onclick=()=>go(TODAY);$('tom').onclick=()=>go(addD(TODAY,1));
 $('vday').onclick=()=>{view='day';render()};$('vweek').onclick=()=>{view='week';render()};$('vmonth').onclick=()=>{view='month';render()};
 $('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);$('dt').onchange=e=>{if(e.target.value){cur=e.target.value;render()}};
-$('out').onclick=e=>{const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';$('ct_wx').hidden=chartTab!='wx';
-  $('chTitle').textContent=chartTab=='wx'?(past?'Weather and solar record (recorded)':'Forecast inputs: weather, solar and demand (forecast)'):'Where the power comes from, hour by hour'+(past?'':' (forecast)');
+$('out').addEventListener('pointermove',pcMove);
+$('out').addEventListener('change',e=>{if(e.target&&e.target.id=='pcSel'){pcType=e.target.value;if(lastPlan&&$('ct_pc'))$('ct_pc').innerHTML=pcCard(lastPlan.r,cur<TODAY)}});
+$('out').onclick=e=>{const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';$('ct_wx').hidden=chartTab!='wx';$('ct_pc').hidden=chartTab!='pc';
+  $('chTitle').textContent=chT(past);
   document.querySelectorAll?document.querySelectorAll('#chTabs button').forEach(b=>b.classList.toggle('on',b.dataset.ct==chartTab)):0;return}
  if(e.target.closest('[data-ai]')){explainClick();return}
  if(e.target.closest('[data-pr]')){printOwner();return}
@@ -751,7 +794,7 @@ $('sall').onclick=async()=>{if(!confirm('Delete ALL your saved facilities from t
  try{const j=await api('/api/profile?all=1',{method:'DELETE'});sites=j.sites||[];fillSites();say('All saved data deleted.')}catch(e){say(e.message)}};
 const CASES={
  lv:{name:'LV demo site',loc:'3.0553,101.7003',prof:'campus',volt:'LV',struct:'T',peak:150,kwp:100,bat:200,flex:10,lim:'',evn:0,evkw:50,eve:0},
- mv:{name:'MV demo campus',loc:'3.0553,101.7003',prof:'campus',volt:'MV',struct:'T',peak:4000,kwp:3000,bat:5000,flex:10,lim:4200,evn:8,evkw:50,eve:1200},
+ mv:{name:'MV demo campus',loc:'3.0553,101.7003',prof:'campus',volt:'MV',struct:'T',peak:4000,kwp:3000,bat:5000,flex:10,lim:4200,evn:8,evkw:50,eve:700},
  hv:{name:'HV demo factory',loc:'5.41,100.33',prof:'factory',volt:'HV',struct:'T',peak:15000,kwp:8000,bat:10000,flex:10,lim:'',evn:0,evkw:50,eve:0}};
 $('f_case').onchange=e=>{const c=CASES[e.target.value];if(!c)return;const nf=Object.assign({},F,c);
  FIELDS.forEach(k=>$('f_'+k).value=nf[k]);$('f_tar').value=nf.volt+nf.struct;
