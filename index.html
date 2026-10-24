@@ -377,7 +377,7 @@ function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a
  return `<p class="note"><b>CO&#8322; trade-off:</b> Cost-saving earns ${money(dS)} more per day than Balanced, at the price of ${Math.round(dC)} kg more CO&#8322; (about ${money(dS/dC)} per kg).</p>`}
 
 // ================= pages: Brief (owner view) and Detailed (tabs) =================
-const TABS={ov:['ribbon','headline','kpi','costbars','flow','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','schedule','approve','changed'],ad:['reopt','stress','sweep','assume','audit','changed'],fa:['changed']};let dtab='ov';
+const TABS={ov:['ribbon','headline','kpi','costbars','flow','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','live','schedule','approve','changed'],ad:['reopt','stress','sweep','assume','audit','changed'],fa:['changed']};let dtab='ov';
 function applyTab(){const t=role=='tech';Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&dtab=='fa'});$('facPanel').hidden=!(t&&dtab=='fa');
  if(document.querySelectorAll)document.querySelectorAll('#dtabs button').forEach(b=>b.classList.toggle('on',b.dataset.dt==dtab));fairLoad()}
 $('dtabs').onclick=e=>{const b=e.target.closest('[data-dt]');if(b){dtab=b.dataset.dt;applyTab()}};
@@ -494,6 +494,46 @@ async function reoptRun(){const q=sameReq($('roMd').value);if(!q)return;const ms
   txt=`The forecast error cost <b>${money(s.forecast_error_cost_rm)}</b> compared with the day-ahead expectation (${money(j.day_ahead_expected_cost)}). `+(rec==null?'There was no gap for re-planning to close.':s.rolling_vs_open_loop_rm>=0?`Re-planning saved ${money(s.rolling_vs_open_loop_rm)} against following the old plan, which is ${N0(rec)}% of the gap to perfect foresight.`:`Here re-planning cost ${money(-s.rolling_vs_open_loop_rm)} more than following the old plan: its correction guessed the rest of the day wrongly. Re-planning is not guaranteed to win.`)+(q.m.ca<1?' Balanced and Production-first hold a CO\u2082 cap that was set from the forecast day, so on a day with less sun than forecast the cap works against the correction. Try Cost-saving to compare.':''),
   log=j.replans.length?j.replans.map(l=>`${tm(l.step)} ${l.failed?'failed (kept old plan)':esc(l.reason)}`).join(', '):'none';
  out.innerHTML=`<div class="ribbon"><b>SIMULATED.</b> ${esc(sc[0])}. The forecast inputs are model output and no equipment is controlled.</div><p style="margin:8px 0">${txt}</p><table class="sch"><tr><th>Strategy (judged on the same simulated day)</th><th>Cost, RM</th><th>Billed peak, kW</th><th>Highest import, kW</th><th>Time over limit</th><th>Saving vs best simple reference</th></tr>${tb}</table><p class="note"><b>Strategy:</b> ${esc(q.m.n)}. <b>Re-plans:</b> ${log}. Re-planning uses only past actuals plus a correction that assumes the recent solar and demand error fades over about 6 hours (chosen on a few synthetic scenarios, not tuned on real data).</p>`}
+// ================= today so far: measured data -> forecast error -> corrected plan (recommendation only) =================
+let lvLast=null;
+function liveCard(){const td=cur==TODAY;return `<div class="card" data-role="tech" data-tour="live"><h2>Today so far: monitor and adapt</h2>
+<p class="note" style="margin-top:0">Give the system what has really happened since midnight. It measures the forecast error, corrects the rest of the day, and re-plans from now. <b>Recommendation only: no equipment is controlled.</b></p>
+${td?`<div class="bar"><select id="lvMd">${MODES.filter(m=>m.k!='prod').map(m=>`<option value="${m.k}"${m.k==(sel=='bal'?'bal':'cost')?' selected':''}>${m.n}</option>`).join('')}</select> <label class="note">Measured data (CSV): <input type="file" id="lvFile" accept=".csv,text/csv"></label> <button data-lvt="1">Download CSV template</button></div>
+<p class="note">Columns: <code>load_kw</code> (site load, <b>without</b> EV charging) and <code>solar_kw</code> are required; optional <code>battery_kw</code> (discharge +, charging &minus;), <code>ev_kw</code>, <code>grid_kw</code> (only used to check the other readings), <code>soc_kwh</code> (battery charge now, last row). One row per 30 minutes from 00:00 today. Leave a column empty if you do not have it: then the day-ahead plan is assumed to have been followed.</p>
+<div class="bar"><b>No meter yet?</b> <select id="lvSc">${Object.entries(ROSC).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join('')}</select> <select id="lvNow"><option value="20">It is 10:00</option><option value="24">It is 12:00</option><option value="28" selected>It is 14:00</option><option value="32">It is 16:00</option></select> <button class="on" data-lv="1">Run simulated replay</button></div>`:`<p class="note"><b>Open today to use this.</b> It compares the forecast with what happened so far today.</p>`}
+<span id="lvMsg" class="note"></span><div id="lvOut" style="margin-top:8px"></div></div>`}
+function liveParse(txt){const L=txt.replace(/^\uFEFF/,'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(L.length<2)throw new Error('The file needs a header row and at least one data row');
+ const h=L[0].split(',').map(x=>x.trim().toLowerCase()),col=n=>h.indexOf(n),rows=L.slice(1).map(l=>l.split(',').map(x=>x.trim()));
+ if(rows.length>=NS)throw new Error('The file has '+rows.length+' rows. Only the part of today that has passed (fewer than '+NS+' rows) can be used.');
+ const num=(n,req)=>{const c=col(n);if(c<0){if(req)throw new Error('Missing column '+n);return undefined}
+  const cells=rows.map(r=>r[c]===undefined?'':r[c]);if(!req&&cells.every(x=>x===''))return undefined;
+  return cells.map((x,i)=>{const v=parseFloat(x);if(!isFinite(v))throw new Error(n+' row '+(i+2)+' is not a number');return v})};
+ const o={load:num('load_kw',1),pv:num('solar_kw',1)};for(const [n,k] of [['battery_kw','battery_kw'],['ev_kw','ev_kw'],['grid_kw','grid_kw']]){const v=num(n);if(v)o[k]=v}
+ const sc=col('soc_kwh');if(sc>=0){const v=parseFloat(rows[rows.length-1][sc]);if(isFinite(v))o.soc_kwh=v}return o}
+function liveTemplate(){const q=sameReq();if(!q)return;const d=new Date(),k=Math.max(1,Math.min(NS-1,Math.floor((d.getHours()*60+d.getMinutes())/(60/S)))),fc=q.p.b.fc;
+ let t='time,load_kw,solar_kw,battery_kw,ev_kw,grid_kw,soc_kwh\n';for(let i=0;i<k;i++)t+=tm(i)+','+N1(fc.load[i]).replace(/,/g,'')+','+N1(fc.pv[i]).replace(/,/g,'')+',,,,\n';
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='today_so_far_template.csv';document.body.appendChild(a);a.click();a.remove()}
+function liveChart(title,fc,act,bel,k,col){const W=760,H=190,L=54,R=12,T=14,B=26,mx=Math.max(...fc,...act,...bel,1),ax=niceAxis(0,mx*1.05),y=v=>T+(ax.hi-v)/(ax.hi-ax.lo)*(H-T-B),xf=t=>L+(W-L-R)*t/24,
+  pth=(a,from,to)=>{let d='';for(let i=from;i<to;i++)d+=(d?'L':'M')+xf((i+.5)/S).toFixed(1)+' '+y(a[i]).toFixed(1);return d},nx=xf(k/S).toFixed(1);
+ return `<h3 class="sec" style="margin:10px 0 2px">${title}</h3><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="${esc(title)}">${yGrid(ax,y,L,W-R)}${yTitle(T,H-B,'kW')}${xAxis(xf,H-B,0,24,4)}
+ <path d="${pth(fc,0,NS)}" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4"/><path d="${pth(bel,k,NS)}" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="2 3"/><path d="${pth(act,0,k)}" fill="none" stroke="${col}" stroke-width="2.5"/>
+ <line x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="#334155" stroke-dasharray="3 3"/><text x="${(+nx+4)}" y="${T+10}" font-size="11" fill="#334155">now</text></svg>`}
+function liveRender(j,q){const fe=j.forecast_error,ex=j.expected,o=ex.old_plan,n=ex.new_plan,pr=x=>x==null?'n/a':N0(x*100)+'%',now=tm(j.now_step),dq=j.data_quality,s=j.series,b=q.p.b.c.mdH.length>0,
+  st=(r,nm)=>r==null?`${nm} cannot be compared (forecast was zero so far).`:`${nm} is running at <b>${N0(r*100)}%</b> of forecast`;
+ const tiles=kpis([['Solar vs forecast, last 2 hours',pr(j.correction.pv_ratio),'','since midnight '+pr(fe.pv.ratio)+', average error '+N0(fe.pv.mae_kw)+' kW'],['Load vs forecast, last 2 hours',pr(j.correction.load_ratio),'','since midnight '+pr(fe.load.ratio)+', average error '+N0(fe.load.mae_kw)+' kW'],['Spent so far',money(j.spent_so_far_rm),'',b?'peak so far '+N0(j.peak_so_far_kw)+' kW':'no demand charge today'],
+  ['Day cost if old plan continues',money(o.cost),'','estimate'],['Day cost if re-planned',money(n.cost),'good','estimate'],['Expected saving from re-planning',money(ex.saving_rm),ex.saving_rm>0.5?'good':'',ex.saving_pct==null?'':N1(ex.saving_pct)+'% of the old-plan day']]);
+ const nx=j.next_steps.map(x=>`<tr><td>${tm(x.step)}</td><td>${sgn(x.battery_kw)}</td><td>${N0(x.ev_kw)}</td><td>${N0(x.grid_kw)}</td></tr>`).join('');
+ const lim=+F.lim,over=n.limit_violation_steps>0&&lim>0?`<div class="ribbon warn"><b>GRID LIMIT.</b> Even the new plan is expected to exceed ${N0(lim)} kW for ${hrs(n.limit_violation_steps)} (highest ${N0(n.max_grid_kw)} kW).</div>`:'';
+ $('lvOut').innerHTML=`<div class="ribbon${j.simulated?'':' past'}"><b>${j.simulated?'SIMULATED REPLAY.':'MEASURED DATA.'}</b> Up to ${now}. ${j.simulated?'The day so far is the forecast with simulated deviations; it is not measured.':'The rest of the day is a corrected forecast, not a measurement.'}</div>${over}
+ ${dq.warn?`<div class="ribbon warn"><b>CHECK YOUR DATA.</b> Your grid readings differ from what the other readings imply by ${N0(dq.grid_gap_kw)} kW on average (${N0(dq.grid_gap_pct_of_load)}% of load). Check units, timezone and whether load includes EV charging.</div>`:''}
+ <p style="margin:6px 0">Over the last 2 hours: ${st(j.correction.pv_ratio,'solar')} and ${st(j.correction.load_ratio,'load').toLowerCase()}. The rest of the day is corrected by these recent ratios, fading back to the forecast over about ${N0(j.correction.fade_hours)} hours.</p>${tiles}
+ ${liveChart('Solar: forecast (dashed grey), measured so far (solid), corrected for the rest of the day (dotted)',s.forecast_pv,s.actual_pv,s.belief_pv,j.now_step,'#f29f3d')}${liveChart('Site load (without EV): forecast, measured so far, corrected',s.forecast_load,s.actual_load,s.belief_load,j.now_step,'#64748b')}
+ <h3 class="sec">Recommended next 4 hours (battery + discharge, &minus; charging)</h3><div class="scroll"><table class="sch"><tr><th>Time</th><th>Battery, kW</th><th>EV charging, kW</th><th>Grid import, kW</th></tr>${nx}</table></div>
+ <p class="note">Battery data: ${esc(dq.battery_source)}. EV data: ${esc(dq.ev_source)}. Battery charge: ${esc(dq.soc_source)}. The old and new plans are compared on the same corrected forecast, from the same state, with the same grid-limit guard, so the saving is an estimate, not a measurement. ${esc(j.data_kind)}</p>`}
+async function liveRun(body,msg){const q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return;const m=$('lvMsg');m.textContent=msg||'Calculating...';$('lvOut').innerHTML='';
+ try{const j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,body))});m.textContent='';lvLast=j;if($('lvOut'))liveRender(j,q)}catch(e){m.textContent='';$('lvOut').innerHTML=`<span class="err">${esc(e.message)}</span>`}}
+function liveFile(inp){const f=inp.files&&inp.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{let o;try{o=liveParse(String(rd.result))}catch(e){$('lvOut').innerHTML=`<span class="err">${esc(e.message)}</span>`;return}liveRun({now:o},'Calculating from '+o.load.length+' rows...')};rd.onerror=()=>{$('lvOut').innerHTML='<span class="err">The file could not be read.</span>'};rd.readAsText(f)}
+if(typeof document!='undefined'&&document.addEventListener)document.addEventListener('change',e=>{if(e.target&&e.target.id=='lvFile')liveFile(e.target)});
 function auditCard(){return `<div class="card" data-role="tech" data-tour="audit"><h2>Audit log</h2><p class="note" style="margin-top:0">Recent forecast, optimise, explanation and assistant calls, with who asked and how long they took. What people type is never logged. Needs sign-in.</p><button class="on" data-au="1">Load recent activity</button><div id="auOut" class="scroll" style="margin-top:8px"></div></div>`}
 async function auditRun(){const o=$('auOut');o.textContent='Loading...';
  try{const j=await api('/api/audit');if(!j.enabled){o.innerHTML='<span class="note">Logging to storage is not switched on for this site, so there is nothing to show.</span>';return}
@@ -543,7 +583,7 @@ function dayHtml(R,rows){
  ${stratCards(R,b)}
  <div class="card" data-tour="compare" data-role="tech"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
  <p class="note">${ann}</p>${rows.length>1&&rows.every(x=>Math.abs(R[x.k].cost-b.cost)<0.01)?'<p class="note"><b>Why are all the strategies the same?</b> On this day no peak rate or maximum demand charge applies (for example a weekend on a time-of-use tariff), so moving energy or using the battery cannot lower the bill. Try a weekday.</p>':''}<p class="note">${tc}</p><p class="note">${carbon}</p>${tradeoff(R)}</div>
- ${fairCard()}${schedCard(r,c)}${apCard()}${reoptCard()}${stressCard()}${sweepCard()}${assumeCard(fc,past)}${auditCard()}`}
+ ${fairCard()}${liveCard()}${schedCard(r,c)}${apCard()}${reoptCard()}${stressCard()}${sweepCard()}${assumeCard(fc,past)}${auditCard()}`}
 
 function rel(d){return d<TODAY?['Past (recorded weather)','']:d==TODAY?['Today (forecast)','t']:d==addD(TODAY,1)?['Tomorrow (forecast)','f']:['Forecast','f']}
 function periodHtml(dates,items){
@@ -759,6 +799,8 @@ $('out').onclick=e=>{const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.d
  if(e.target.closest('[data-pr]')){printOwner();return}
  if(e.target.closest('[data-sw]')){sweepRun();return}
  if(e.target.closest('[data-ro]')){reoptRun();return}
+ if(e.target.closest('[data-lvt]')){liveTemplate();return}
+ if(e.target.closest('[data-lv]')){liveRun({replay:{now_step:+$('lvNow').value,scenario:ROSC[$('lvSc').value][1]}},'Running simulated replay...');return}
  if(e.target.closest('[data-au]')){auditRun();return}
  if(e.target.closest('[data-retry]')){render();return}
  const sc=e.target.closest('[data-sc]');if(sc){sel=sc.dataset.sc;render();return}
