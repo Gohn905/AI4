@@ -15,6 +15,7 @@ Request = the usual optimiser request (forecast load and pv for the WHOLE day, r
 What it does
   1. Forecast error over the elapsed steps (mean absolute error, bias, actual/forecast ratio) for load and solar.
   2. Corrects the rest of the day's forecast by persistence of the recent ratio, fading back to the forecast (persistence_hours, default 6).
+  2b. If a learned profile is sent (learned = see learn.py), the forecast is first multiplied by the ratio learned for its time of day.
   3. Re-plans steps k.. with the elapsed steps locked to what happened (and the battery charge locked to the measurement if given).
   4. Compares, on the SAME corrected forecast, continuing the old day-ahead plan against the new plan: expected cost for the whole day.
 Expected costs are estimates: the rest of the day is still a forecast.
@@ -24,6 +25,7 @@ import numpy as np
 from optimiser import optimise, _steps, _vec, _num
 import reference as ref
 import reopt
+import learn
 
 
 def _series(src, key, k, lo, hi, required=False):
@@ -61,7 +63,12 @@ def replan(d):
     tau = float(d.get("persistence_hours", 6.0))
     if not math.isfinite(tau) or not 0 <= tau <= 48:
         raise ValueError("persistence_hours must be between 0 and 48")
-    base = {k: v for k, v in d.items() if k not in ("now", "replay", "fixed", "soc_now_kwh", "scenario", "replan")}
+    raw_load, raw_pv = load, pv
+    learned = d.get("learned")
+    if learned:                                                     # forecast corrected by what was learned on earlier days
+        load, pv = learn.apply(learned, load, pv)
+    base = {k: v for k, v in d.items() if k not in ("now", "replay", "fixed", "soc_now_kwh", "scenario", "replan", "learned")}
+    base["load"], base["pv"] = list(load), list(pv)
 
     plan0 = optimise(base)                                         # the day-ahead plan, from the forecast only
     sim = d.get("replay") is not None
@@ -76,7 +83,7 @@ def replan(d):
             raise ValueError("replay.now_step is required")
         if not 1 <= k < n:
             raise ValueError(f"replay.now_step must be between 1 and {n - 1}")
-        al_all, ap_all = reopt._apply_scenario(load, pv, rp.get("scenario") or [], n)
+        al_all, ap_all = reopt._apply_scenario(raw_load, raw_pv, rp.get("scenario") or [], n)   # the real day comes from the RAW forecast
         al, ap = al_all[:k], ap_all[:k]
         kind = "SIMULATED REPLAY: the day so far is the forecast with simulated deviations. It is not measured data."
     else:
@@ -162,6 +169,8 @@ def replan(d):
     return {
         "steps": n, "now_step": k, "now_hour": k * dt, "data_kind": kind, "simulated": sim, "data_quality": dq,
         "forecast_error": {"load": _stats(al, load[:k]), "pv": _stats(ap, pv[:k])},
+        "forecast_error_raw": {"load": _stats(al, raw_load[:k]), "pv": _stats(ap, raw_pv[:k])},
+        "learned": {"applied": bool(learned), "days": int(learned["days"]) if learned else 0},
         "correction": {"load_ratio": rl, "pv_ratio": rp_, "fade_hours": tau},
         "spent_so_far_rm": spent, "peak_so_far_kw": peak_so_far,
         "day_ahead_expected_cost": plan0["cost"],
