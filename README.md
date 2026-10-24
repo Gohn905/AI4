@@ -19,7 +19,7 @@ Planning tool for commercial and industrial facilities with on-site solar, batte
 ```mermaid
 flowchart LR
   U[Browser] --> SWA[Azure Static Web Apps<br/>page + integrated API + sign-in]
-  SWA --> API[Azure Functions API<br/>optimise, forecast, explain, assist, profile, audit]
+  SWA --> API[Azure Functions API<br/>optimise, compare, reoptimise, forecast, explain, assist, profile, audit]
   API --> OM[(Open-Meteo<br/>weather forecast)]
   API --> TS[(Azure Table Storage<br/>audit log)]
   API --> AI[Azure OpenAI<br/>explanations and assistant]
@@ -36,6 +36,9 @@ flowchart LR
 | Azure OpenAI | Plain-language plan explanations and setup/navigation assistant | In use (Azure gpt-5-mini deployment) |
 
 Services considered and not used: Microsoft Fabric (smallest capacity costs about US$263 a month at pay-as-you-go, far more than one facility needs), Copilot Studio (built for Microsoft 365 chat agents), AKS and VMs (more to manage than the workload needs).
+
+5. **Fair comparison (`/api/compare`).** The same inputs are run four ways: solar only, a battery with a self-consumption rule, a battery with a simple time-of-use rule, and the optimiser. All use one KPI function (cost, grid energy, billed peak, highest import, solar used and curtailed, time over the grid limit). A battery rule that ends the day below 50% charge is charged for the shortfall, so no strategy borrows from tomorrow.
+6. **Re-optimisation simulation (`/api/reoptimise`).** A rolling-horizon *simulation*, not equipment control. A simulated deviation (cloud, demand surge) is applied to the forecast day. The day-ahead plan is followed unchanged or re-planned during the day (on a timer, on a forecast error, or when a new forecast arrives) using only information available at that time. Perfect foresight is shown as an unreachable bound. Both followed strategies share the same reactive grid-limit guard.
 
 ## Where the AI is
 
@@ -66,6 +69,8 @@ Services considered and not used: Microsoft Fabric (smallest capacity costs abou
 
 ```bash
 pip install numpy scipy
+(cd api && python test_reference.py)                            # fair comparison and fixed-step checks (34)
+(cd api && python test_reopt.py)                                 # re-optimisation simulation checks (44)
 python mems_milp.py                                    # optimiser checks against the course case study
 python tools/forecast_lab.py --forecast-source previous  # train and test the forecasts, writes api/model.json
 ```
@@ -90,4 +95,4 @@ mems_milp.py               MILP with diesel generator (course case study)
 - Battery purchase cost is not in the savings figure. The grid emission factor (0.60 kg/kWh) is a placeholder.
 - The retail charge, the 1.6% KWTBB levy and tax are not modelled. AFA changes monthly; confirm the tariff category and bill adjustments against the customer's bill.
 - Open-Meteo's free tier is for non-commercial use. A licensed weather source would replace it in production.
-- No intraday re-planning, no export income, no diesel or gas in the web optimiser.
+- Re-planning is a simulation with a fading-persistence correction (6 h, chosen on a few synthetic scenarios). It helps clearly when solar falls short under Cost-saving, but is not guaranteed to win: with the CO2 cap (Balanced, Production-first) or demand surprises it can be slightly worse. No export income, no diesel or gas in the web optimiser.
