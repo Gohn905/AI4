@@ -19,7 +19,7 @@ Planning tool for commercial and industrial facilities with on-site solar, batte
 ```mermaid
 flowchart LR
   U[Browser] --> SWA[Azure Static Web Apps<br/>page + integrated API + sign-in]
-  SWA --> API[Azure Functions API<br/>optimise, compare, reoptimise, replan, forecast, explain, assist, profile, audit]
+  SWA --> API[Azure Functions API<br/>optimise, compare, reoptimise, replan, learn, forecast, explain, assist, profile, audit]
   API --> OM[(Open-Meteo<br/>weather forecast)]
   API --> TS[(Azure Table Storage<br/>audit log)]
   API --> AI[Azure OpenAI<br/>explanations and assistant]
@@ -40,6 +40,7 @@ Services considered and not used: Microsoft Fabric (smallest capacity costs abou
 5. **Fair comparison (`/api/compare`).** The same inputs are run four ways: solar only, a battery with a self-consumption rule, a battery with a simple time-of-use rule, and the optimiser. All use one KPI function (cost, grid energy, billed peak, highest import, solar used and curtailed, time over the grid limit). A battery rule that ends the day below 50% charge is charged for the shortfall, so no strategy borrows from tomorrow.
 6. **Re-optimisation simulation (`/api/reoptimise`).** A rolling-horizon *simulation*, not equipment control. A simulated deviation (cloud, demand surge) is applied to the forecast day. The day-ahead plan is followed unchanged or re-planned during the day (on a timer, on a forecast error, or when a new forecast arrives) using only information available at that time. Perfect foresight is shown as an unreachable bound. Both followed strategies share the same reactive grid-limit guard.
 7. **Today so far (`/api/replan`).** The user gives measured 30-minute load and solar (optionally battery, EV, grid and battery charge) for the part of today that has passed, or runs a clearly labelled simulated replay. The server measures the forecast error, corrects the rest of the day's forecast by the recent actual/forecast ratio (fading back over about 6 hours), and re-plans from now with the elapsed steps locked. It compares continuing the old plan with the new plan on the same corrected forecast. Recommendation only.
+8. **Learning from forecast error (`/api/learn`).** Each half-hour of the day keeps a correction ratio (actual / forecast) for solar and for load. After every full day of measured data the ratios are updated (plain average for the first days, then exponential weighting so recent days count more; ratios are limited to 0.2 to 3). The profile is kept in the browser, sent with requests, and applied to the forecast in "Today so far". A day cannot be taught twice. A simulated 30-day backtest (day k corrected using days before k only, with a no-peeking test) shows the mechanism: with an injected repeatable error, solar error falls about 58% and load error about 45%, for a real-cost gain of about 1.3%; with no repeatable error (control) there is no gain and slightly more noise. The injected error is part of the test, so this demonstrates the mechanism, not real-world gain.
 
 ## Where the AI is
 
@@ -63,7 +64,7 @@ Services considered and not used: Microsoft Fabric (smallest capacity costs abou
 - The API handlers validate inputs; the explanation, assistant and profile requests have size limits. In the demo deployment, optimiser and forecast endpoints are public; explanation, assistant, audit and profile endpoints require sign-in.
 - The audit log stores a one-way hashed user ID (no email) and the site location rounded to 0.1 degree. Rows are deleted after 30 days (`AUDIT_RETENTION_DAYS`).
 - The location sent to the weather service is rounded to about 1 km.
-- Demo mode leaves the optimiser and forecast endpoints open so anyone can try them. /api/explain, /api/assist, /api/audit and /api/profile need sign-in. /api/compare (60 per minute per client) and /api/reoptimise and /api/replan (20 per minute per client each) have an in-process rate limit and a 200 KB body cap; like the AI limits it is per server instance, not a deployment-wide quota. Review access controls and add shared rate limiting before production use.
+- Demo mode leaves the optimiser and forecast endpoints open so anyone can try them. /api/explain, /api/assist, /api/audit and /api/profile need sign-in. /api/compare (60 per minute per client) and /api/reoptimise and /api/replan (20 per minute per client each) and /api/learn (10 per minute) have an in-process rate limit and a 200 KB body cap; like the AI limits it is per server instance, not a deployment-wide quota. Review access controls and add shared rate limiting before production use.
 - Known gap: any signed-in GitHub or Microsoft account counts as "authenticated". A real deployment should restrict the audit log to named roles.
 
 ## Run it yourself
@@ -73,6 +74,7 @@ pip install numpy scipy
 (cd api && python test_reference.py)                            # fair comparison and fixed-step checks (34)
 (cd api && python test_reopt.py)                                 # re-optimisation simulation checks (44)
 (cd api && python test_live.py)                               # today-so-far re-plan checks (30)
+(cd api && python test_learn.py)                              # error-learning checks (38)
 (cd api && python test_ratelimit.py)                          # rate limiter checks (9)
 python mems_milp.py                                    # optimiser checks against the course case study
 python tools/forecast_lab.py --forecast-source previous  # train and test the forecasts, writes api/model.json
