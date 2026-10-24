@@ -201,13 +201,24 @@ def _num(q, key, lo, hi, default):
     return x
 
 
+def to_steps(a, res):
+    """Hourly values (each is the mean over its hour) -> res steps per hour. res=2 gives 48 half-hour values by linear
+    interpolation between hour mid-points. This is a smoothing of hourly data, not new information: real 30-minute
+    detail only comes from a real 30-minute meter file."""
+    a = np.asarray(a, float)
+    if res == 1:
+        return a
+    return np.interp((np.arange(24 * res) + 0.5) / res, np.arange(24) + 0.5, a)
+
+
 def forecast(q, weather=None, now=None):
-    """q: dict of query parameters. Returns 24 hourly values for the chosen day (kW)."""
+    """q: dict of query parameters. Returns 24 hourly values (res=1, default) or 48 half-hour values (res=2) for the chosen day (kW)."""
     lat = _num(q, "lat", -90, 90, 5.41)       # default: Penang
     lon = _num(q, "lon", -180, 180, 100.33)
     kwp = _num(q, "kwp", 0, 1e5, 100)
     peak = _num(q, "peak", 0, 1e6, 1000)
     day = int(_num(q, "day", -31, 2, 1))     # -31..-1 past, 0 today, 1 tomorrow, 2 day after
+    res = int(_num(q, "res", 1, 2, 1))        # steps per hour: 1 = hourly, 2 = half-hourly
     prof = q.get("prof", "campus")
     if prof not in SHAPES:
         raise ValueError("prof must be campus or factory")
@@ -240,9 +251,9 @@ def forecast(q, weather=None, now=None):
         pu = np.array(SHAPES[prof])
     load = pu * peak
 
-    r3 = lambda a: [round(float(v), 3) for v in a]
+    r3 = lambda a: [round(float(v), 3) for v in to_steps(a, res)]
     return {
-        "date": str(target), "source": "open-meteo", "lat": lat, "lon": lon,
+        "date": str(target), "source": "open-meteo", "lat": lat, "lon": lon, "steps": 24 * res,
         "pv": r3(pv),
         "pv_p10": r3(pv * band["p10"]) if band else None,
         "pv_p90": r3(pv * band["p90"]) if band else None,
