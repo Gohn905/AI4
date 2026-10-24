@@ -83,6 +83,33 @@ def _ev(d, N, dt):
     return {"kw_max": kw_max, "steps": steps, "window": window, "energy": energy, "used": used, "unmet": energy - used}
 
 
+def _fixed(d, N):
+    """Optional {"ch","dis","flex"}: kW lists for the first k steps that have already happened (battery charge, battery
+    discharge, EV charging). The optimiser then only decides steps k..N-1 (rolling-horizon re-planning). Grid import and solar
+    use for those steps are derived from the energy balance with the load and solar given for them, so the history can never
+    be inconsistent."""
+    f = d.get("fixed")
+    if not f:
+        return None
+    if not isinstance(f, dict):
+        raise ValueError("fixed must be an object")
+    out, k = {}, None
+    for key in ("ch", "dis", "flex"):
+        v = f.get(key)
+        if not isinstance(v, list) or not 0 < len(v) < N:
+            raise ValueError(f"fixed.{key} must be a list with 1 to {N - 1} numbers")
+        if k is None:
+            k = len(v)
+        elif len(v) != k:
+            raise ValueError("fixed lists must all have the same length")
+        a = np.array(v, dtype=float)
+        if not np.all(np.isfinite(a)) or a.min() < -1e-6 or a.max() > 1e7:
+            raise ValueError(f"fixed.{key} out of range")
+        out[key] = np.maximum(a, 0.0)
+    out["k"] = k
+    return out
+
+
 def ev_baseline(d):
     """What the chargers would draw with no smart scheduling: full power from the start of the window until the energy is delivered."""
     N = _steps(d)
@@ -123,6 +150,7 @@ def optimise(d):
     gcap = float(d.get("grid_kwh_cap", 0) or 0)
     if not math.isfinite(gcap) or gcap < 0:
         raise ValueError("grid_kwh_cap must be zero or more")
+    fx = _fixed(d, N)                         # optional: steps already executed (re-optimisation), locked to what really happened
     if allow is not None and allow < 1 and gcap == 0:
         free = optimise({**d, "co2_allow": 1})                   # the cheapest plan, no cap
         base = float(np.maximum(load + np.array(ev_baseline(d)) - pv, 0).sum()) * dt   # solar-only baseline grid energy incl. EVs charging immediately, kWh
@@ -166,6 +194,18 @@ def optimise(d):
         bounds[ix["SOC"][t]] = (0, cap)
     bounds[ix["SOC"][0]] = (0.5 * cap, 0.5 * cap)      # start at 50%
     bounds[ix["SOC"][N]] = (0.5 * cap, cap)            # end at least at start
+    if fx:                                    # past steps are history: executed decisions, not decisions to make
+        for t in range(fx["k"]):
+            ch_, dis_, fl_ = float(fx["ch"][t]), float(fx["dis"][t]), float(fx["flex"][t])
+            need = fixed[t] + fl_ + ch_ - dis_
+            if need < 0:                      # discharging more than the site can use is not allowed (no export)
+                dis_ += need
+                need = 0.0
+            used = min(float(pv[t]), need)
+            for name, v in (("Imp", need - used), ("Ch", ch_), ("Dis", dis_), ("Flex", fl_), ("PVu", used)):
+                bounds[ix[name][t]] = (v, v)
+        for t in range(1, fx["k"] + 1):       # 0.001 kWh of slack so rounded history cannot make the problem infeasible
+            bounds[ix["SOC"][t]] = (-1e-3, cap + 1e-3)
 
     Aeq, beq = [], []
     for t in range(N):
