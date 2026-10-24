@@ -7,6 +7,8 @@ import azure.functions as func
 from optimiser import optimise
 import reference
 import reopt
+import live
+import ratelimit
 
 # Optional features must never stop the optimiser from starting, even if a file is missing or broken.
 try:
@@ -75,6 +77,24 @@ def optimise_http(req: func.HttpRequest) -> func.HttpResponse:
         return _json({"error": "optimisation failed"}, 500)
 
 
+MAX_BODY = 200_000                       # bytes; a 48-step request is about 10 KB
+
+
+def _guard(req, route, per_min):
+    """None if the call may go ahead, else the 413/429 response."""
+    try:
+        if len(req.get_body() or b"") > MAX_BODY:
+            return _json({"error": "request too large"}, 413)
+    except Exception:
+        pass
+    ok, wait = ratelimit.allow(ratelimit.client_key(req.headers, route), per_min)
+    if not ok:
+        r = _json({"error": f"too many requests, try again in {wait} s"}, 429)
+        r.headers["Retry-After"] = str(wait)
+        return r
+    return None
+
+
 def _kpi_summary(x):
     return {k: v for k, v in x.items() if not isinstance(v, list)}
 
@@ -82,6 +102,9 @@ def _kpi_summary(x):
 @app.route(route="compare", methods=["POST"])
 def compare_http(req: func.HttpRequest) -> func.HttpResponse:
     """Same optimiser request as /api/optimise. Returns KPIs for solar only, battery with simple rules, and the optimiser, all on identical inputs."""
+    blocked = _guard(req, "compare", 60)
+    if blocked:
+        return blocked
     t0 = time.perf_counter()
     ms = lambda: (time.perf_counter() - t0) * 1000
     try:
@@ -100,6 +123,9 @@ def compare_http(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="reoptimise", methods=["POST"])
 def reoptimise_http(req: func.HttpRequest) -> func.HttpResponse:
     """Re-optimisation SIMULATION: optimiser request plus scenario (or actual) and replan settings. See reopt.py."""
+    blocked = _guard(req, "reoptimise", 20)
+    if blocked:
+        return blocked
     t0 = time.perf_counter()
     ms = lambda: (time.perf_counter() - t0) * 1000
     try:
@@ -113,6 +139,27 @@ def reoptimise_http(req: func.HttpRequest) -> func.HttpResponse:
     except Exception:
         _log("reoptimise", req, 500, ms(), summary="simulation failed")
         return _json({"error": "simulation failed"}, 500)
+
+
+@app.route(route="replan", methods=["POST"])
+def replan_http(req: func.HttpRequest) -> func.HttpResponse:
+    """Today so far: measured (or SIMULATED replay) data for the elapsed steps -> forecast error, corrected forecast, re-plan from now. See live.py."""
+    blocked = _guard(req, "replan", 20)
+    if blocked:
+        return blocked
+    t0 = time.perf_counter()
+    ms = lambda: (time.perf_counter() - t0) * 1000
+    try:
+        res = live.replan(req.get_json())
+        _log("replan", req, 200, ms(), model="forecast-error correction + HiGHS",
+             summary=f"re-plan from step {res['now_step']}, expected saving RM{res['expected']['saving_rm']:.0f}")
+        return _json(res)
+    except (ValueError, TypeError, KeyError) as e:
+        _log("replan", req, 400, ms(), summary="rejected: " + str(e))
+        return _json({"error": str(e)}, 400)
+    except Exception:
+        _log("replan", req, 500, ms(), summary="re-plan failed")
+        return _json({"error": "re-plan failed"}, 500)
 
 
 @app.route(route="forecast", methods=["GET"])
