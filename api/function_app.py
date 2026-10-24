@@ -5,6 +5,8 @@ import time
 import azure.functions as func
 
 from optimiser import optimise
+import reference
+import reopt
 
 # Optional features must never stop the optimiser from starting, even if a file is missing or broken.
 try:
@@ -71,6 +73,46 @@ def optimise_http(req: func.HttpRequest) -> func.HttpResponse:
     except Exception:
         _log("optimise", req, 500, ms(), summary="optimisation failed")
         return _json({"error": "optimisation failed"}, 500)
+
+
+def _kpi_summary(x):
+    return {k: v for k, v in x.items() if not isinstance(v, list)}
+
+
+@app.route(route="compare", methods=["POST"])
+def compare_http(req: func.HttpRequest) -> func.HttpResponse:
+    """Same optimiser request as /api/optimise. Returns KPIs for solar only, battery with simple rules, and the optimiser, all on identical inputs."""
+    t0 = time.perf_counter()
+    ms = lambda: (time.perf_counter() - t0) * 1000
+    try:
+        res = reference.compare(req.get_json(), series=False)
+        _log("compare", req, 200, ms(), model="reference strategies + HiGHS",
+             summary=f"optimised vs best reference {res['savings']['optimised_vs_best_reference_pct']:.1f}%")
+        return _json(res)
+    except (ValueError, TypeError, KeyError) as e:
+        _log("compare", req, 400, ms(), summary="rejected: " + str(e))
+        return _json({"error": str(e)}, 400)
+    except Exception:
+        _log("compare", req, 500, ms(), summary="comparison failed")
+        return _json({"error": "comparison failed"}, 500)
+
+
+@app.route(route="reoptimise", methods=["POST"])
+def reoptimise_http(req: func.HttpRequest) -> func.HttpResponse:
+    """Re-optimisation SIMULATION: optimiser request plus scenario (or actual) and replan settings. See reopt.py."""
+    t0 = time.perf_counter()
+    ms = lambda: (time.perf_counter() - t0) * 1000
+    try:
+        res = reopt.simulate(req.get_json())
+        _log("reoptimise", req, 200, ms(), model="rolling-horizon simulation (HiGHS)",
+             summary=f"{len(res['replans'])} re-plans, rolling vs open-loop RM{res['summary']['rolling_vs_open_loop_rm']:.0f}")
+        return _json(res)
+    except (ValueError, TypeError, KeyError) as e:
+        _log("reoptimise", req, 400, ms(), summary="rejected: " + str(e))
+        return _json({"error": str(e)}, 400)
+    except Exception:
+        _log("reoptimise", req, 500, ms(), summary="simulation failed")
+        return _json({"error": "simulation failed"}, 500)
 
 
 @app.route(route="forecast", methods=["GET"])
