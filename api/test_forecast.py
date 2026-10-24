@@ -141,6 +141,21 @@ def test_cache_and_stale_fallback():
     fc._WX.clear()
 
 
+def test_half_hourly_output():
+    q = dict(lat=PEN[0], lon=PEN[1], kwp=300, peak=1000, day=1)
+    r1 = fc.forecast(q, weather=wx(), now=NOW)
+    r2 = fc.forecast(dict(q, res=2), weather=wx(), now=NOW)
+    assert len(r1["pv"]) == 24 and r1["steps"] == 24                       # default stays hourly
+    assert all(len(r2[k]) == 48 for k in ("pv", "load", "ghi", "temp", "cloud")) and r2["steps"] == 48
+    for k in ("pv", "load"):                                               # energy preserved within 2%
+        assert abs(sum(r2[k]) / 2 - sum(r1[k])) <= 0.02 * sum(r1[k]), k
+    try:
+        fc.forecast(dict(q, res=3), weather=wx(), now=NOW)
+        raise AssertionError("res=3 should be rejected")
+    except ValueError:
+        pass
+
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):
