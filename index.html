@@ -63,7 +63,8 @@ main{max-width:1480px;padding:26px clamp(16px,3vw,42px) 54px}
 .top .rs{gap:6px}.top .rs button,.top>button{border:0;background:transparent;color:var(--mut);padding:10px 15px;border-radius:9px;font-weight:650}
 .top .rs button.on{background:#fff4ce;color:#153047}.top .rs button:hover,.top>button:hover{background:#f1f5f9}
 #auth:empty{display:none}#auth{border:1px solid var(--line);padding:6px 12px;border-radius:9px;background:#fff;font-weight:650;margin:0}
-.pagehead{margin-bottom:18px}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:#64748b;font-weight:800}
+.pagehead{margin-bottom:18px;display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}.bsub{font-size:17px;font-weight:650;color:var(--acc);margin-top:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.seg{display:inline-flex;gap:4px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:4px}.seg button{border:0;background:transparent;color:var(--mut);padding:9px 18px;border-radius:9px;font-weight:650;font-size:15px;cursor:pointer}.seg button.on{background:var(--acc);color:#fff}.seg button:hover:not(.on){background:#f1f5f9}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:#64748b;font-weight:800}
 h1{font-size:clamp(24px,2.5vw,34px);line-height:1.15;margin:5px 0 7px;color:var(--acc);letter-spacing:-.035em}
 .card{border-radius:15px;padding:19px;box-shadow:var(--shadow)}.card h2{color:var(--acc);font-size:17px;letter-spacing:-.015em;margin:0 0 4px}
 button,select{border-radius:9px}button{font-weight:650}.small{font-size:12px}.muted{color:var(--mut)}
@@ -115,7 +116,7 @@ main[data-role=owner] .ribbon{font-size:15px}
 </style></head><body><header class="top"><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span class="sp"></span><span id="auth" class="note"></span><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div></header>
 <main id="app" data-role="owner">
 <div id="amsg" class="note" style="margin:0 0 6px"></div>
-<div class="pagehead"><div class="eyebrow">Facility energy intelligence</div><h1 id="pgTitle">Your energy, at a glance.</h1><div class="note" data-role="tech" style="margin:0">Pick a day, week or month and a strategy. See what the plan saves compared with the baseline.</div></div>
+<div class="pagehead"><div><div class="eyebrow">Facility energy intelligence</div><h1 id="pgTitle">Your energy, at a glance.</h1><div class="note" data-role="tech" style="margin:0">Pick a day, week or month and a strategy. See what the plan saves compared with the baseline.</div><div class="bsub" id="bSub" data-role="owner"></div></div><div class="seg" id="bView" data-role="owner" role="group" aria-label="Period"><button id="bday">Day</button><button id="bweek">Week</button><button id="bmonth">Month</button></div></div>
 
 
 
@@ -124,7 +125,7 @@ main[data-role=owner] .ribbon{font-size:15px}
 
 
 <div class="layout"><div class="mainCol">
-<div class="card" id="dateCard">
+<div class="card" id="dateCard" data-role="tech">
 <div class="bar">
 <button id="yes">Yesterday</button><button id="tod">Today</button><button id="tom">Tomorrow</button><span class="sp"></span>
 <button id="vday">Day</button><button id="vweek">Week</button><button id="vmonth">Month</button></div>
@@ -382,7 +383,8 @@ function applyTab(){const t=role=='tech';Array.from($('out').children).forEach(e
 $('dtabs').onclick=e=>{const b=e.target.closest('[data-dt]');if(b){dtab=b.dataset.dt;applyTab()}};
 // ================= roles =================
 let role=null;try{role=localStorage.getItem('role')}catch(e){}
-function applyRole(r){role=r;$('pgTitle').textContent=r=='tech'?'Energy optimisation workspace':'Your energy, at a glance.';$('app').setAttribute('data-role',r);applyTab();if(document.querySelectorAll)document.querySelectorAll('[data-rp]').forEach(b=>b.classList.toggle('on',b.dataset.rp==r))}
+let techCur=null;
+function applyRole(r){const prev=role;role=r;if(prev&&prev!==r){if(r=='owner'&&cur!==TODAY){techCur=cur;cur=TODAY;render()}else if(r=='tech'&&techCur){cur=techCur;techCur=null;render()}}$('pgTitle').textContent=r=='tech'?'Energy optimisation workspace':'Your energy, at a glance.';$('app').setAttribute('data-role',r);applyTab();if(document.querySelectorAll)document.querySelectorAll('[data-rp]').forEach(b=>b.classList.toggle('on',b.dataset.rp==r))}
 function setRole(r){applyRole(r);try{localStorage.setItem('role',r)}catch(e){}$('roleGate').hidden=true;maybeTour()}
 $('roleGate').onclick=$('roleSwitch').onclick=e=>{const b=e.target.closest('[data-rp]');if(b)setRole(b.dataset.rp)};
 
@@ -560,11 +562,12 @@ function changeCard(){if(!pend)return;const p=pend;pend=null;const a=p.before,b=
  $('out').insertAdjacentHTML('afterbegin',`<div class="card" data-tour="changed" style="border-color:var(--sun)"><div class="bar" style="margin:0"><h2 style="margin:0">What just changed</h2><span class="sp"></span><button data-x="1">Dismiss</button></div><ul>${p.items.map(x=>`<li>${x}</li>`).join('')}</ul><p class="note">${num}</p></div>`)}
 async function render(){
  const my=++tok,dates=span();$('dt').value=cur;tabs();
- ['day','week','month'].forEach(v=>$('v'+v).classList.toggle('on',view==v));
+ ['day','week','month'].forEach(v=>{$('v'+v).classList.toggle('on',view==v);$('b'+v).classList.toggle('on',view==v)});
  [['yes',addD(TODAY,-1)],['tod',TODAY],['tom',addD(TODAY,1)]].forEach(([id,x])=>$(id).classList.toggle('on',view=='day'&&cur==x));
  const f=(x,o)=>parse(x).toLocaleDateString('en-GB',o);
  $('ttl').textContent=view=='day'?f(cur,{weekday:'long',day:'numeric',month:'long',year:'numeric'}):view=='week'?'Week of '+f(dates[0],{day:'numeric',month:'short'})+' to '+f(dates[6],{day:'numeric',month:'short'}):f(cur,{month:'long',year:'numeric'});
  const [bt,bc]=rel(cur);$('badge').innerHTML=view=='day'?`<span class="tag ${bc}">${bt}</span>`:'';
+ $('bSub').innerHTML=esc(view=='day'?$('ttl').textContent:view=='week'?(dates.includes(TODAY)?'This week \u00b7 ':'')+f(dates[0],{day:'numeric',month:'short'})+' to '+f(dates[6],{day:'numeric',month:'short'}):(cur.slice(0,7)==TODAY.slice(0,7)?'This month \u00b7 ':'')+f(cur,{month:'long',year:'numeric'}))+(view=='day'?` <span class="tag ${bc}">${bt}</span>`:'');
  $('info').textContent=view=='day'?dayInfo():'Days before today are estimates from recorded weather. Days after today are forecasts (up to 2 days ahead). Other days show no data.';
  $('out').innerHTML='<div class="card"><span class="spin"></span><span id="prog">Working it out&hellip; a day you have not opened before takes a few seconds, then it is saved on this device.</span><div class="note" id="slow"></div></div>';setTimeout(()=>{if(my==tok&&$('slow'))$('slow').textContent='Still working. The first request after a quiet period can take 10 to 20 seconds while the server wakes up.'},6000);
  try{
@@ -597,6 +600,7 @@ async function warm(my){if(my!=tok||view=='month')return;const mon=addD(cur,-((p
 
 const STEPS=[
  {s:'#roleSwitch',t:'Brief or Detailed',x:'Brief shows savings, billed peak, CO2, next steps and a printable summary. Detailed has tabs for the hourly chart, strategy comparison, schedule and approval, and the stress test, battery sweep, assumptions and audit log. Both use the same numbers.'},
+ {s:'#bView',t:'Day, week or month',x:'Brief always starts from today. Day, Week and Month change the period it covers.'},
  {s:'#dateCard',t:'Pick a day',x:'Use Yesterday, Today and Tomorrow, or the arrows and the date box. Day, Week and Month change the view. In Week and Month, tap a day to open it. Dashed boxes are forecasts.'},
  {s:'#tabs',t:'Choose a strategy',x:'Baseline is solar only. The three optimiser strategies plan the battery and the flexible equipment, with different limits on extra CO2. The ? button explains what the optimiser decides.'},
  {s:'[data-tour=ribbon]',t:'Forecast or recorded?',x:'This banner always says whether the day is a prediction or recorded weather. Forecast cards have dashed borders.'},
@@ -716,6 +720,7 @@ function step(n){if(view=='day')cur=addD(cur,n);else if(view=='week')cur=addD(cu
 const go=x=>{view='day';cur=x;render()};
 $('yes').onclick=()=>go(addD(TODAY,-1));$('tod').onclick=()=>go(TODAY);$('tom').onclick=()=>go(addD(TODAY,1));
 $('vday').onclick=()=>{view='day';render()};$('vweek').onclick=()=>{view='week';render()};$('vmonth').onclick=()=>{view='month';render()};
+$('bView').onclick=e=>{const b=e.target.closest('button');if(b){view=b.id.slice(1);render()}};
 $('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);$('dt').onchange=e=>{if(e.target.value){cur=e.target.value;render()}};
 $('out').addEventListener('pointermove',pcMove);
 $('out').addEventListener('change',e=>{if(e.target&&e.target.id=='pcSel'){pcType=e.target.value;if(lastPlan&&$('ct_pc'))$('ct_pc').innerHTML=pcCard(lastPlan.r,cur<TODAY)}});
