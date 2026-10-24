@@ -1,0 +1,46 @@
+# Deploys the API (the api/ folder) to YOUR OWN Azure Function App, which is then linked to the Static Web App.
+# One line to edit: AZURE_FUNCTIONAPP_NAME. One GitHub secret to create: AZURE_FUNCTIONAPP_PUBLISH_PROFILE (see the guide).
+name: Deploy API to Function App
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "api/**"
+      - ".github/workflows/deploy-function-app.yml"
+  workflow_dispatch:
+
+env:
+  AZURE_FUNCTIONAPP_NAME: "Shiny"
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: "api"
+  PYTHON_VERSION: "3.11"          # must match the Python version chosen on the Function App
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      # Never deploy an API whose tests fail.
+      - name: Run the test suites
+        working-directory: api
+        run: |
+          pip install numpy scipy
+          for t in test_*.py; do echo "== $t"; python "$t" || exit 1; done
+
+      - name: Deploy to the Function App
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+          # Azure installs requirements.txt itself (remote build):
+          scm-do-build-during-deployment: true
+          enable-oryx-build: true
+          # ONLY if the Function App is on the Flex Consumption plan: delete the two lines above and use these instead:
+          # sku: flexconsumption
+          # remote-build: true
