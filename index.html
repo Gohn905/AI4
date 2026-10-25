@@ -1,24 +1,25 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#F59E0B">
 <title>Sun Shine</title>
 <style>
-:root{--bg:#f5f7f5;--card:#fff;--ink:#12303f;--mut:#64748b;--mute:#64748b;--line:#e2e8f0;--acc:#153047;--sun:#f2c14e;--bat:#27845a;--grid:#2b6cb0;color-scheme:light;--shift:#b24fc9;--blue:#2563eb;--good:#27845a;--bad:#b45309;--shadow:0 8px 24px rgba(21,48,71,.06);--link:#1d4ed8}
+:root{/* Warm palette: page #FFF7D6, bar/primary #F59E0B, highlight #FACC15, text #252B2A, savings #16803D, border #E7E0CA */--bg:#FFF7D6;--card:#fff;--ink:#252B2A;--mut:#5B6360;--mute:#5B6360;--line:#E7E0CA;--acc:#252B2A;--amb:#F59E0B;--amb-d:#92400E;--sun:#FACC15;--solar:#F59E0B;--bat:#16803D;--grid:#2b6cb0;color-scheme:light;--shift:#b24fc9;--blue:#2563eb;--good:#16803D;--bad:#C2410C;--shadow:0 8px 24px rgba(146,100,10,.10);--link:#92400E}
 
 [hidden]{display:none!important}input,select,textarea{max-width:100%}input[type=file]{width:100%;min-width:0}a{color:var(--link)}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
 main{max-width:1320px;margin:0 auto;padding:16px}.layout{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}.mainCol,.side{min-width:0}
 @media(min-width:960px){.layout{grid-template-columns:minmax(0,1fr) 350px;align-items:start}.side{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow-y:auto;padding-right:2px}}h1{font-size:22px;margin:0}h2{font-size:16px;margin:0 0 8px}
 .sub{color:var(--mut);font-size:13px;margin:2px 0 14px}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
 button,input,select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
-button{cursor:pointer}button:hover{border-color:var(--sun)}button.on{background:var(--acc);color:var(--card);border-color:var(--acc)}
-button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
+button{cursor:pointer}button:hover{border-color:var(--amb)}button.on{background:var(--amb);color:var(--ink);border-color:var(--amb)}button.on:hover{background:#E08A00;border-color:#E08A00}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}.sp{flex:1}
 .tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--line)}.tag.f{background:var(--blue);color:#fff}.tag.t{background:var(--bat);color:#fff}
 .note{color:var(--mut);font-size:13px;margin:6px 0 0}.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
 .k{border:1px solid var(--line);border-radius:8px;padding:10px}.k b{display:block;font-size:20px}.k span{font-size:12px;color:var(--mut)}.good{color:var(--good)}
 svg{width:100%;height:auto;display:block}.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--mute);margin-top:6px}.legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px}
 ul{margin:6px 0 0;padding-left:20px}.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.dh{font-size:12px;color:var(--mut);text-align:center}
-.c{min-height:74px;text-align:left;padding:6px;display:flex;flex-direction:column;gap:2px}.c.sel{border-color:var(--sun);box-shadow:0 0 0 1px var(--sun)}.c.na{opacity:.35;cursor:default}.c small{color:var(--mut)}.c b{font-size:14px}
+.c{min-height:74px;text-align:left;padding:6px;display:flex;flex-direction:column;gap:2px}.c.sel{border-color:var(--amb);box-shadow:0 0 0 1px var(--amb)}.c.na{opacity:.35;cursor:default}.c small{color:var(--mut)}.c b{font-size:14px}
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.form label{font-size:12px;color:var(--mut);display:block}.form input,.form select{width:100%}
 summary{cursor:pointer;font-weight:600}.err{color:var(--bad)}.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
 td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}td:first-child,th:first-child{text-align:left}th{font-weight:500;color:var(--mut)}tr.sel td{background:color-mix(in srgb,var(--sun) 16%,transparent)}
@@ -34,7 +35,7 @@ h3.sec{font-size:14px;margin:14px 0 6px;color:var(--ink)}details.adv{margin-top:
 #chatBtn{position:fixed;right:16px;bottom:16px;z-index:40;border-radius:99px;padding:10px 16px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
 #chatPanel{position:fixed;right:16px;bottom:66px;width:min(390px,calc(100vw - 32px));height:min(580px,calc(100vh - 100px));z-index:41;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
 .chead{display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}#chatLog{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
-.msg{max-width:90%;padding:8px 10px;border-radius:10px;font-size:14px;white-space:pre-wrap}.msg.u{align-self:flex-end;background:var(--acc);color:var(--card)}.msg.b{align-self:flex-start;background:var(--bg);border:1px solid var(--line)}.msg.n{align-self:center;font-size:12px;color:var(--mut)}
+.msg{max-width:90%;padding:8px 10px;border-radius:10px;font-size:14px;white-space:pre-wrap}.msg.u{align-self:flex-end;background:var(--amb);color:var(--ink)}.msg.b{align-self:flex-start;background:var(--bg);border:1px solid var(--line)}.msg.n{align-self:center;font-size:12px;color:var(--mut)}
 .prop{border:1px dashed var(--sun);border-radius:10px;padding:8px 10px;font-size:13px}.prop ul{margin:4px 0 8px;padding-left:18px}.chips{display:flex;flex-wrap:wrap;gap:6px;padding:6px 12px}.chips button{font-size:12px;padding:4px 8px;border-radius:99px}
 .cin{display:flex;gap:6px;padding:8px 10px;border-top:1px solid var(--line);align-items:flex-end}.cin textarea{flex:1;resize:none;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
 main[data-role=owner] [data-role=tech],main[data-role=tech] [data-role=owner]{display:none!important}
@@ -43,11 +44,11 @@ main[data-role=owner] [data-role=tech],main[data-role=tech] [data-role=owner]{di
 .rgbtns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.rgbtns button{text-align:left;padding:14px;border-radius:12px;display:flex;flex-direction:column;gap:6px}.rgbtns button span{font-size:13px;color:var(--mut)}@media(max-width:560px){.rgbtns{grid-template-columns:1fr}}
 #calcDrawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100vw);z-index:45;background:var(--card);border-left:1px solid var(--line);box-shadow:-8px 0 24px rgba(0,0,0,.3);display:flex;flex-direction:column}.dbody{padding:12px 16px;overflow-y:auto;font-size:14px}.dbody li{margin-bottom:10px}
 .hl{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}.hl .k b{font-size:26px}.bad{color:var(--bad)}
-.ribbon.warn{border-left-color:var(--sun);background:rgba(242,169,0,.12)}
+.ribbon.warn{border-left-color:var(--amb);background:rgba(250,204,21,.18)}
 .fl{display:flex;align-items:center;gap:10px;margin:8px 0}.fl-l{width:110px;font-size:13px;color:var(--mut);flex:none}.fl-b{flex:1;display:flex;height:32px;border-radius:6px;overflow:hidden;background:var(--line)}
 .fl-b span{display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;min-width:0;white-space:nowrap;overflow:hidden}.fl-b .s1{background:var(--sun);color:#1c1c1c}.fl-b .s2{background:var(--bat)}.fl-b .s3{background:var(--grid)}@media(max-width:560px){.fl{flex-direction:column;align-items:stretch;gap:4px}.fl-l{width:auto}}
 table.sch td,table.sch th{padding:4px 8px}table.sch tr.bw td{background:rgba(181,72,58,.10)}
-.spin{display:inline-block;width:16px;height:16px;border:3px solid var(--line);border-top-color:var(--sun);border-radius:50%;animation:sp 0.9s linear infinite;vertical-align:-3px;margin-right:8px}@keyframes sp{to{transform:rotate(360deg)}}
+.spin{display:inline-block;width:16px;height:16px;border:3px solid var(--line);border-top-color:var(--amb);border-radius:50%;animation:sp 0.9s linear infinite;vertical-align:-3px;margin-right:8px}@keyframes sp{to{transform:rotate(360deg)}}
 #fatal{position:fixed;left:0;right:0;top:0;z-index:80;background:var(--bad);color:#fff;padding:10px 16px;text-align:center}
 #printSheet{display:none}
 @media print{body{background:#fff!important}main,aside,#chatBtn,#chatPanel,#calcDrawer,#roleGate,#tourShade,#tourHole,#tourTip,#fatal{display:none!important}#printSheet{display:block!important;color:#000;background:#fff;font:12pt/1.45 system-ui,Arial,sans-serif;padding:0}#printSheet h1{font-size:20pt;margin:0 0 4pt}#printSheet h2{font-size:13pt;margin:14pt 0 4pt}#printSheet table{border-collapse:collapse;width:100%;min-width:0}#printSheet td,#printSheet th{border:1px solid #999;padding:4pt 6pt;text-align:left}.pbig{display:flex;gap:10pt}.pbig div{flex:1;border:1px solid #999;padding:8pt}.pbig b{font-size:18pt;display:block}.psm{font-size:9.5pt;color:#444}}
@@ -57,36 +58,36 @@ table.sch td,table.sch th{padding:4px 8px}table.sch tr.bw td{background:rgba(181
 /* ===== Sun Shine look (from the supplied mockup) ===== */
 body{font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
 main{max-width:1480px;padding:26px clamp(16px,3vw,42px) 54px}
-.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px clamp(16px,4vw,56px);background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px clamp(16px,4vw,56px);background:var(--amb);border-bottom:1px solid rgba(37,43,42,.14);box-shadow:0 2px 10px rgba(146,64,14,.18)}
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;color:var(--acc);white-space:nowrap;margin-right:14px}
-.sunmark{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--sun);color:#153047;font-size:19px}
-.top .rs{gap:6px}.top .rs button,.top>button{border:0;background:transparent;color:var(--mut);padding:10px 15px;border-radius:9px;font-weight:650}
-.top .rs button.on{background:#fff4ce;color:#153047}.top .rs button:hover,.top>button:hover{background:#f1f5f9}
+.sunmark{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#FFF7D6;color:var(--ink);font-size:19px;box-shadow:0 0 0 3px rgba(255,255,255,.4)}
+.top .rs{gap:6px}.top .rs button,.top>button{border:0;background:transparent;color:var(--ink);padding:10px 15px;border-radius:9px;font-weight:650}
+.top .rs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(37,43,42,.2)}.top .rs button:hover,.top>button:hover{background:rgba(255,255,255,.4)}.top .rs button.on:hover{background:#fff}
 #auth:empty{display:none}#auth{border:1px solid var(--line);padding:6px 12px;border-radius:9px;background:#fff;font-weight:650;margin:0}
 .pagehead{margin-bottom:18px;display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}.bsub{font-size:17px;font-weight:650;color:var(--acc);margin-top:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.seg{display:inline-flex;gap:4px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:4px}.seg button{border:0;background:transparent;color:var(--mut);padding:9px 18px;border-radius:9px;font-weight:650;font-size:15px;cursor:pointer}.seg button.on{background:var(--acc);color:#fff}.seg button:hover:not(.on){background:#f1f5f9}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:#64748b;font-weight:800}
+.seg{display:inline-flex;gap:4px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:4px}.seg button{border:0;background:transparent;color:var(--mut);padding:9px 18px;border-radius:9px;font-weight:650;font-size:15px;cursor:pointer}.seg button.on{background:var(--amb);color:var(--ink)}.seg button:hover:not(.on){background:#FFF7D6}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--amb-d);font-weight:800}
 h1{font-size:clamp(24px,2.5vw,34px);line-height:1.15;margin:5px 0 7px;color:var(--acc);letter-spacing:-.035em}
 .card{border-radius:15px;padding:19px;box-shadow:var(--shadow)}.card h2{color:var(--acc);font-size:17px;letter-spacing:-.015em;margin:0 0 4px}
 button,select{border-radius:9px}button{font-weight:650}.small{font-size:12px}.muted{color:var(--mut)}
-#tabs button,#dtabs button{padding:9px 13px;font-weight:700;color:#526274;background:#fff}#tabs button.on,#dtabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
-th{font-weight:700}table th{background:#f8fafc}.ribbon{border-radius:10px}
+#tabs button,#dtabs button{padding:9px 13px;font-weight:700;color:var(--mut);background:#fff}#tabs button.on,#dtabs button.on{background:var(--amb);color:var(--ink);border-color:var(--amb)}
+th{font-weight:700}table th{background:#FFFBEB}.ribbon{border-radius:10px}
 #out{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}#out>*{grid-column:1/-1;margin:0!important}
 #out>[data-tour=costbars]{grid-column:span 7}#out>[data-tour=actions]{grid-column:span 5}main[data-role=tech] #out>[data-tour=actions]{grid-column:1/-1}
 .kpirow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.kpi{padding:17px}
 .kpi-top{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--mut);font-size:12px;font-weight:700}
-.ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#f1f5f9;font-size:17px}
-.metric{font-size:clamp(23px,2vw,30px);font-weight:800;letter-spacing:-.04em;margin:12px 0 2px;color:var(--acc)}.positive{color:var(--good)!important}.warning{color:#b45309!important}.kpi-foot{font-size:12px;color:var(--mut)}
-.card.ai{background:#153047;color:#fff;border:0;padding:22px 24px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center}.card.ai.fcast{border:1px dashed #5c7d95}
-.ai .eyebrow{color:var(--sun)}.ai h2{color:#fff;font-size:21px;margin:7px 0 8px;letter-spacing:-.02em}#aiTxt{color:#d5e1e9;max-width:900px;margin:0}.ai .note{color:#a9bccb}
-.ai-side{min-width:150px;text-align:right}.ai-side .small{color:#d5e1e9}.ai-side strong{display:block;font-size:27px;color:var(--sun)}
-.ai button{background:#fff;color:#153047;border-color:#fff}.ai button.on{background:var(--sun);border-color:var(--sun)}
+.ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#FEF2C4;font-size:17px}
+.metric{font-size:clamp(23px,2vw,30px);font-weight:800;letter-spacing:-.04em;margin:12px 0 2px;color:var(--acc)}.positive{color:var(--good)!important}.warning{color:var(--amb-d)!important}.kpi-foot{font-size:12px;color:var(--mut)}
+.card.ai{background:radial-gradient(circle at 100% 0,rgba(250,204,21,.20),transparent 55%),var(--ink);color:#FFF7D6;border:0;padding:22px 24px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center}.card.ai.fcast{border:1px dashed #9A9066}
+.ai .eyebrow{color:var(--sun)}.ai h2{color:#FFF7D6;font-size:21px;margin:7px 0 8px;letter-spacing:-.02em}#aiTxt{color:#E6DFC3;max-width:900px;margin:0}.ai .note{color:#CBC4A6}
+.ai-side{min-width:150px;text-align:right}.ai-side .small{color:#E6DFC3}.ai-side strong{display:block;font-size:27px;color:var(--sun)}
+.ai button{background:#fff;color:#252B2A;border-color:#fff}.ai button.on{background:var(--sun);border-color:var(--sun)}
 .cardhead{display:flex;justify-content:space-between;align-items:start;gap:12px;margin-bottom:15px}
-.badge{display:inline-flex;align-items:center;padding:5px 9px;border-radius:99px;font-size:11px;font-weight:800;background:#f1f5f9;color:#475569;white-space:nowrap}.badge.green{background:#e7f6ed;color:#17643e}.badge.amber{background:#fff3d7;color:#92400e}
-.costbars{display:grid;grid-template-columns:110px 1fr 100px;align-items:center;gap:12px;margin:16px 0}.barwrap{height:13px;background:#edf1f4;border-radius:99px;overflow:hidden}.barfill{height:100%;border-radius:99px}
-.barfill.base{background:#aab8c4}.barfill.opt{background:var(--good)}.barlabel{font-size:12px;color:var(--mut)}.barvalue{text-align:right;font-weight:800;color:var(--acc)}
+.badge{display:inline-flex;align-items:center;padding:5px 9px;border-radius:99px;font-size:11px;font-weight:800;background:#F3EDD2;color:var(--mut);white-space:nowrap}.badge.green{background:#e7f6ed;color:#17643e}.badge.amber{background:#fff3d7;color:#92400e}
+.costbars{display:grid;grid-template-columns:110px 1fr 100px;align-items:center;gap:12px;margin:16px 0}.barwrap{height:13px;background:#EFE8CC;border-radius:99px;overflow:hidden}.barfill{height:100%;border-radius:99px}
+.barfill.base{background:#C4BC9C}.barfill.opt{background:var(--good)}.barlabel{font-size:12px;color:var(--mut)}.barvalue{text-align:right;font-weight:800;color:var(--acc)}
 .notice{border-radius:10px;background:#fff6e7;border:1px solid #f3d39b;padding:12px 14px;color:#80531a;font-size:12px;margin-top:14px}.footnote{font-size:11px;color:var(--mut);margin-top:13px}
 [data-tour=actions] ul{list-style:none;padding:0;margin:0}[data-tour=actions] li{padding:13px 0;border-bottom:1px solid var(--line);font-size:13px}[data-tour=actions] li:last-child{border-bottom:0}
-#chatBtn{background:var(--sun);border-color:var(--sun);color:#153047;font-weight:700}
+#chatBtn{background:var(--amb);border-color:var(--amb);color:var(--ink);font-weight:700}
 @media(min-width:960px){.side{top:78px;max-height:calc(100vh - 90px)}}
 @media(max-width:1050px){.kpirow{grid-template-columns:repeat(2,minmax(0,1fr))}.card.ai{grid-template-columns:1fr}.ai-side{text-align:left}#out>*{grid-column:1/-1!important}}
 @media(max-width:640px){.top{padding:10px 14px}.brand{order:-1;width:100%;justify-content:flex-start}.costbars{grid-template-columns:70px 1fr 80px}}
@@ -95,15 +96,15 @@ th{font-weight:700}table th{background:#f8fafc}.ribbon{border-radius:10px}
 .brow{display:flex;gap:8px;align-items:flex-start;align-self:flex-start;max-width:94%}.brow .shiny{margin-top:2px}.brow .msg{max-width:none}
 .stratbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;justify-content:flex-end}
 .layout{grid-template-columns:minmax(0,1fr)!important}#facPanel>.card{margin-bottom:16px}
-.shortline{color:#d5e1e9;margin:0;font-size:14px}
+.shortline{color:#E6DFC3;margin:0;font-size:14px}
 .action{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.action:last-child{border-bottom:0;padding-bottom:0}
-.action-icon{width:35px;height:35px;border-radius:10px;background:#f1f5f9;display:grid;place-items:center;flex-shrink:0}.action strong{display:block;color:var(--acc);font-size:13px}.action p{margin:3px 0 0;color:var(--mut);font-size:12px}
+.action-icon{width:35px;height:35px;border-radius:10px;background:#FEF2C4;display:grid;place-items:center;flex-shrink:0}.action strong{display:block;color:var(--acc);font-size:13px}.action p{margin:3px 0 0;color:var(--mut);font-size:12px}
 .plwrap{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}.pg{display:grid;grid-template-columns:repeat(8,46px);gap:6px}
 .pn{width:46px;height:50px;border-radius:3px;overflow:hidden;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.25);background:#f39c12}.pn i{display:block;height:26px;background:#1e3a5f repeating-linear-gradient(90deg,transparent 0 10px,rgba(255,255,255,.25) 10px 11px),repeating-linear-gradient(0deg,transparent 0 8px,rgba(255,255,255,.25) 8px 9px)}
-.pn b{display:block;color:#fff;font-size:13px;text-align:center;line-height:24px}.pn.fl{background:#d64545}.pn.z{background:#94a3b8}
+.pn b{display:block;color:#fff;font-size:13px;text-align:center;line-height:24px}.pn:not(.fl):not(.z) b{color:var(--ink)}.pn.fl{background:#d64545}.pn.z{background:#94a3b8}
 .stratgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:14px 0 0}
 .strategy{border:1px solid var(--line);border-radius:12px;padding:15px;background:#fff;text-align:left;color:var(--ink);width:100%;height:100%;display:block}
-.strategy.selected{border:2px solid var(--good);padding:14px;background:#f5fbf7;box-shadow:0 0 0 3px rgba(39,132,90,.08)}
+.strategy.selected{border:2px solid var(--amb);padding:14px;background:#FFFBEA;box-shadow:0 0 0 3px rgba(250,204,21,.35)}
 .strategy h3{margin:0 0 5px;font-size:14px;color:var(--acc)}.strategy p{font-size:12px;color:var(--mut);margin:0 0 10px;font-weight:400}.strategy .tiny{font-size:11px;font-weight:800;color:var(--good)}
 @media(max-width:700px){.stratgrid{grid-template-columns:1fr}}
 /* Brief page: larger, easier-to-read type */
@@ -120,6 +121,7 @@ main[data-role=owner] .action strong{font-size:16px}
 main[data-role=owner] .action p{font-size:14px}
 main[data-role=owner] .muted.small,main[data-role=owner] .footnote{font-size:13px}
 main[data-role=owner] .ribbon{font-size:15px}
+input,select,textarea{border-color:#D6CCA6}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span class="sp"></span><span id="auth" class="note"></span></header>
 <main id="app" data-role="owner">
 <div id="amsg" class="note" style="margin:0 0 6px"></div>
@@ -304,9 +306,9 @@ const getRun=(date,mode)=>memo('r|'+date+'|'+mode+'|'+hk(rkey()),async()=>{
 // ---- chart helpers: clean axis ranges ----
 const chT=past=>chartTab=='wx'?(past?'Weather and solar record (recorded)':'Forecast inputs: weather, solar and demand (forecast)'):chartTab=='pc'?(past?'Power curve (rebuilt from recorded weather)':'Power curve (forecast)'):'Where the power comes from, every 30 minutes'+(past?'':' (forecast)');
 function niceAxis(lo,hi,n=5){lo=Math.min(lo,0);hi=Math.max(hi,lo+1e-9);const p=Math.pow(10,Math.floor(Math.log10((hi-lo)/n)));let st=p;for(const m of [1,2,5,10]){st=m*p;if((hi-lo)/st<=n)break}return{lo:Math.floor(lo/st+1e-9)*st,hi:Math.ceil(hi/st-1e-9)*st,st}}
-function yGrid(ax,y,x1,x2){let o='';for(let v=ax.lo;v<=ax.hi+ax.st/1e3;v+=ax.st){const yy=y(v).toFixed(1),z=Math.abs(v)<ax.st/1e3;o+=`<line x1="${x1}" x2="${x2}" y1="${yy}" y2="${yy}" stroke="${z?'#94a3b8':'var(--line)'}"/><text x="${x1-6}" y="${(+yy+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--mute)">${(ax.st<1?N1:N0)(Math.abs(v)<ax.st/1e3?0:v)}</text>`}return o}
+function yGrid(ax,y,x1,x2){let o='';for(let v=ax.lo;v<=ax.hi+ax.st/1e3;v+=ax.st){const yy=y(v).toFixed(1),z=Math.abs(v)<ax.st/1e3;o+=`<line x1="${x1}" x2="${x2}" y1="${yy}" y2="${yy}" stroke="${z?'#BDB48F':'var(--line)'}"/><text x="${x1-6}" y="${(+yy+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--mute)">${(ax.st<1?N1:N0)(Math.abs(v)<ax.st/1e3?0:v)}</text>`}return o}
 const yTitle=(T,Bt,txt)=>`<text transform="rotate(-90 11 ${(T+Bt)/2})" x="11" y="${(T+Bt)/2}" text-anchor="middle" font-size="11" fill="var(--mute)">${txt}</text>`;
-function xAxis(xf,y0,t0,t1,st){let o=`<line x1="${xf(t0).toFixed(1)}" x2="${xf(t1).toFixed(1)}" y1="${y0}" y2="${y0}" stroke="#94a3b8"/>`;for(let t=Math.ceil(t0/st-1e-9)*st;t<=t1+1e-9;t+=st){const x=xf(t).toFixed(1),an=t>=24?'end':'middle';o+=`<line x1="${x}" x2="${x}" y1="${y0}" y2="${y0+4}" stroke="#94a3b8"/><text x="${x}" y="${y0+16}" text-anchor="${an}" font-size="11" fill="var(--mute)">${p2(t)}:00</text>`}return o}
+function xAxis(xf,y0,t0,t1,st){let o=`<line x1="${xf(t0).toFixed(1)}" x2="${xf(t1).toFixed(1)}" y1="${y0}" y2="${y0}" stroke="#BDB48F"/>`;for(let t=Math.ceil(t0/st-1e-9)*st;t<=t1+1e-9;t+=st){const x=xf(t).toFixed(1),an=t>=24?'end':'middle';o+=`<line x1="${x}" x2="${x}" y1="${y0}" y2="${y0+4}" stroke="#BDB48F"/><text x="${x}" y="${y0+16}" text-anchor="${an}" font-size="11" fill="var(--mute)">${p2(t)}:00</text>`}return o}
 // ---- power curve (smooth area chart with a hover read-out) ----
 let pcType='sol',pcS=null;
 function monoPath(P){const n=P.length;if(n<2)return'';const dx=[],m=[],t=[];for(let i=0;i<n-1;i++){dx[i]=P[i+1][0]-P[i][0];m[i]=(P[i+1][1]-P[i][1])/dx[i]}t[0]=m[0];t[n-1]=m[n-2];for(let i=1;i<n-1;i++)t[i]=m[i-1]*m[i]<=0?0:(m[i-1]+m[i])/2;
@@ -329,7 +331,7 @@ function plGridHtml(r,t){const n=plN(),base=(r.sol[t]||0)*1000/n,day=+cur.slice(
  const tile=(v,i)=>{const f=med>30&&v<med*.9;if(f)fl++;const nm=(i<32?'A':'B')+(i%32+1);return `<div class="pn${f?' fl':''}${v<=0?' z':''}" title="Panel ${nm}: ${v} W"><i></i><b>${v}</b></div>`};
  const arr=(a,b,name)=>`<div class="pa"><div class="note" style="margin:0 0 4px"><b>${name}</b></div><div class="pg">${out.slice(a,b).map((v,j)=>tile(v,a+j)).join('')}</div></div>`;
  const html=arr(0,32,'Array A')+arr(32,64,'Array B');
- return{html,info:`<b>${tm(t)}</b>: site solar ${N0(r.sol[t]||0)} kW over ${N0(n)} panels, about ${N0(base)} W each. `+(fl?`<b style="color:#b45309">${fl} of the 64 panels shown are more than 10% below the middle value (red).</b>`:'No panel shown is more than 10% below the middle value.')}}
+ return{html,info:`<b>${tm(t)}</b>: site solar ${N0(r.sol[t]||0)} kW over ${N0(n)} panels, about ${N0(base)} W each. `+(fl?`<b style="color:#92400E">${fl} of the 64 panels shown are more than 10% below the middle value (red).</b>`:'No panel shown is more than 10% below the middle value.')}}
 function panelCard(r){if(!(+F.kwp>0))return `<div class="card" data-tour="panels" data-role="tech"><h2>Panel layout</h2><p class="note">Enter a solar size under Facility to see the panel layout.</p></div>`;
  if(plDay!=cur){plDay=cur;plT=Math.max(0,r.sol.indexOf(Math.max(...r.sol)))}
  const g=plGridHtml(r,plT);
@@ -338,7 +340,7 @@ function panelCard(r){if(!(+F.kwp>0))return `<div class="card" data-tour="panels
  <div id="plInfo" class="note" style="margin:0 0 8px">${g.info}</div><div id="plGrid" class="plwrap">${g.html}</div>
  <p class="note"><b>Demo values.</b> These are not meter readings: the site solar forecast is split evenly across ${N0(plN())} panels (${N0(+F.kwp)} kWp), with a small made-up spread and two made-up weak panels to show how a fault would look. Only 64 panels are drawn. When the customer's per-panel data is loaded, it replaces these numbers.</p></div>`}
 function pcCard(r,past){
- const TY={sol:['Solar power',r.sol,'#f29f3d'],ld:['Site demand',r.ld,'#64748b'],g:['Grid import (planned)',r.g,'#2b6cb0'],bat:['Battery (discharge +, charging \u2212)',r.b.map((v,i)=>v-r.ch[i]),'#27845a']};
+ const TY={sol:['Solar power',r.sol,'#F59E0B'],ld:['Site demand',r.ld,'#5B6360'],g:['Grid import (planned)',r.g,'#2b6cb0'],bat:['Battery (discharge +, charging \u2212)',r.b.map((v,i)=>v-r.ch[i]),'#16803D']};
  if(!TY[pcType])pcType='sol';const [nm,vals,col]=TY[pcType],NW=typeof innerWidth=='number'&&innerWidth<640,W=NW?400:760,H=300,L=NW?48:54,R=12,T=14,B=30;
  let h0=0,h1=24;
  if(pcType=='sol'&&Math.max(...vals)>0.5){const f=vals.findIndex(v=>v>0.5),l=vals.length-1-[...vals].reverse().findIndex(v=>v>0.5);h0=Math.max(0,Math.floor(f/S)-1);h1=Math.min(24,Math.ceil((l+1)/S)+1);while(h1-h0<6){if(h0>0)h0--;if(h1-h0<6&&h1<24)h1++}}
@@ -362,14 +364,14 @@ function draw(r,b0,win){const W=760,H=290,L=54,B=30,T=10,bw=(W-L-8)/NS,hb=bw*S,a
  if(win)s+=`<rect x="${L+win[0]*hb}" y="${T}" width="${(win[1]-win[0])*hb}" height="${H-B-T}" fill="var(--grid)" opacity=".15"/><rect x="${L+win[0]*hb}" y="${H-B+3}" width="${(win[1]-win[0])*hb}" height="3" fill="var(--grid)" opacity=".5"/>`;
  N.forEach(h=>{const x=L+h*bw+1,w=bw-2;let base=0;
   [[r.g[h],'--grid'],[r.b[h],'--bat'],[r.d[h],'--sun']].forEach(([v,c])=>{if(v>0.5){s+=`<rect x="${x}" y="${y(base+v)}" width="${w}" height="${y(base)-y(base+v)}" fill="var(${c})"/>`;base+=v}});
-  const un=r.sol[h]-r.d[h];if(un>0.5)s+=`<rect x="${x}" y="${y(base+un)}" width="${w}" height="${y(base)-y(base+un)}" fill="none" stroke="var(--sun)" stroke-dasharray="3 2"/>`;
+  const un=r.sol[h]-r.d[h];if(un>0.5)s+=`<rect x="${x}" y="${y(base+un)}" width="${w}" height="${y(base)-y(base+un)}" fill="none" stroke="var(--solar)" stroke-dasharray="3 2"/>`;
   const dl=r.ld[h]-b0.ld[h];
   if(dl>0.5){const m=Math.min(dl,base);s+=`<rect x="${x}" y="${y(base)}" width="${w}" height="${y(base-m)-y(base)}" fill="url(#mv)" stroke="var(--shift)"/>`}
   if(dl<-0.5){const t0=base+Math.max(un,0);s+=`<rect x="${x}" y="${y(t0-dl)}" width="${w}" height="${y(t0)-y(t0-dl)}" fill="none" stroke="var(--shift)" stroke-width="1.5" stroke-dasharray="3 2"/>`}});
  s+=xAxis(t=>L+t*hb,H-B,0,24,3);
  if(win&&r.peak>0)s+=`<line x1="${L+win[0]*hb}" x2="${L+win[1]*hb}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${L+win[1]*hb-4}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)" stroke="#fff" stroke-width="3" paint-order="stroke">billed peak ${Math.round(r.peak)} kW</text>`;
  s+=`<text x="${L}" y="${H-2}" font-size="10" fill="var(--mute)">Shaded band = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;
- return `<svg viewBox="0 0 760 290" role="img" aria-label="Supply split by source, every 30 minutes">${s}</svg><div class="legend"><span><i style="background:var(--sun)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border:1px dashed var(--sun)"></i>Unused solar</span><span><i style="background:repeating-linear-gradient(45deg,var(--shift) 0 2px,transparent 2px 5px);border:1px solid var(--shift)"></i>Work moved into this hour</span><span><i style="background:none;border:1px dashed var(--shift)"></i>Work moved out of this hour</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span></div>`}
+ return `<svg viewBox="0 0 760 290" role="img" aria-label="Supply split by source, every 30 minutes">${s}</svg><div class="legend"><span><i style="background:var(--solar)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border:1px dashed var(--solar)"></i>Unused solar</span><span><i style="background:repeating-linear-gradient(45deg,var(--shift) 0 2px,transparent 2px 5px);border:1px solid var(--shift)"></i>Work moved into this hour</span><span><i style="background:none;border:1px dashed var(--shift)"></i>Work moved out of this hour</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span></div>`}
 
 function rg(a,t){const o=[];let s=null;for(let h=0;h<=NS;h++){const on=h<NS&&a[h]>t;if(on&&s===null)s=h;if(!on&&s!==null){o.push(tm(s)+' to '+tm(h));s=null}}return o.join(', ')}
 function recs(r,b){const L=[],cap=+F.bat||0;
@@ -385,13 +387,13 @@ function fcCard(fc,past,fn){
  const pa=a=>a.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join('');let g='';
  g+=yGrid(ax,y,L,W-8)+yTitle(T,Hh-B,'kW')+xAxis(t=>x(t*S),Hh-B,0,24,3);
  const band=fc.pv_p10&&fc.pv_p90&&!past;
- if(band){const up=fc.pv_p90.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)),dn=fc.pv_p10.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)).reverse();g+=`<path d="M${up.join('L')}L${dn.join('L')}Z" fill="var(--sun)" opacity=".25"/>`}
- g+=`<path d="${pa(fc.load)}" stroke="var(--mute)" stroke-dasharray="5 4" fill="none" stroke-width="2"/><path d="${pa(fc.pv)}" stroke="var(--sun)" fill="none" stroke-width="2.5"/>`;
+ if(band){const up=fc.pv_p90.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)),dn=fc.pv_p10.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)).reverse();g+=`<path d="M${up.join('L')}L${dn.join('L')}Z" fill="var(--solar)" opacity=".25"/>`}
+ g+=`<path d="${pa(fc.load)}" stroke="var(--mute)" stroke-dasharray="5 4" fill="none" stroke-width="2"/><path d="${pa(fc.pv)}" stroke="var(--solar)" fill="none" stroke-width="2.5"/>`;
  const dl=fc.meter=='actual'?'Demand (your meter reading)':fc.meter=='typical'?'Demand (typical pattern from your meter data)':past?'Demand (modelled)':'Demand (forecast)',
   E=sum(fc.pv)*DT,av=a=>sum(a)/a.length;
  const rng=band?` Likely range ${Math.round(sum(fc.pv_p10)*DT)} to ${Math.round(sum(fc.pv_p90)*DT)} kWh.`:'';
  return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Solar and demand ${past?'record':'forecast'}">${g}</svg>
- <div class="legend"><span><i style="background:var(--sun)"></i>Solar output, kW${past?'':' (expected)'}</span>${band?'<span><i style="background:var(--sun);opacity:.3"></i>Likely range (10% to 90%)</span>':''}<span><i style="background:none;border-top:2px dashed var(--mute);height:0;width:14px"></i>${dl}, kW</span></div>
+ <div class="legend"><span><i style="background:var(--solar)"></i>Solar output, kW${past?'':' (expected)'}</span>${band?'<span><i style="background:var(--solar);opacity:.3"></i>Likely range (10% to 90%)</span>':''}<span><i style="background:none;border-top:2px dashed var(--mute);height:0;width:14px"></i>${dl}, kW</span></div>
  <div class="stats"><div><span>Highest temperature</span><b>${Math.max(...fc.temp).toFixed(1)} &deg;C</b></div><div><span>Average cloud cover</span><b>${Math.round(av(fc.cloud))}%</b></div><div><span>Strongest sunshine</span><b>${Math.round(Math.max(...fc.ghi))} W/m&sup2;</b></div><div><span>Solar energy ${past?'':'expected '}</span><b>${Math.round(E)} kWh</b></div></div>
  <p class="note">${past?'Rebuilt from recorded weather, not from an inverter reading.':'Not measured: this is a prediction, so real values will differ.'}${rng}</p><p class="note">${esc(fn)}</p>`}
 
@@ -448,14 +450,14 @@ function ownerSteps(r,b){const cap=+F.bat||0,L=[],it=(i,t,p)=>`<div class="actio
  if(r.c.mdH.length)L.push(it('&#8600;','Billed peak','Hold it to '+N0(r.peak)+' kW.'));
  return L.join('')}
 function actCard(r,b){return `<div class="card" data-tour="actions"><div class="cardhead"><div><h2>Recommended next steps</h2><div class="muted small">For this strategy</div></div><span class="badge amber">For your review</span></div><div data-role="owner">${ownerSteps(r,b)}</div><ul data-role="tech">${recs(r,b)}</ul><button class="on" data-role="owner" data-goto="1" style="width:100%;margin-top:15px">View detailed energy plan &rarr;</button></div>`}
-function stratCards(R,b){const D={cost:['Cost-saving','Lowest bill. May add a little CO&#8322;.'],bal:['Balanced','Moves half as much equipment and limits extra CO&#8322;.'],prod:['Production-first','Never moves equipment. Same CO&#8322; limit as Balanced.']};
+function stratCards(R,b){const D={cost:['Cost-saving','Lowest bill. May add a little CO&#8322;.'],bal:['Balanced','Moves half as much equipment and limits extra CO&#8322;.'],prod:['Production-first','Never moves equipment. Same CO&#8322; limit as Balanced.'],zero:['Lowest-carbon','Adds no extra CO&#8322;. EV charging is still shifted.']};
  return `<div class="card" data-tour="strategies"><h2>Choose an optimisation strategy</h2><div class="muted small">Pick one to see its plan across the dashboard.</div><div class="stratgrid">`+['cost','bal','prod','zero'].map(k=>{const x=R[k],v=x&&b.cost>0?(1-x.cost/b.cost)*100:null;return `<button class="strategy${sel==k?' selected':''}" data-sc="${k}"><h3>${D[k][0]}</h3><p>${D[k][1]}</p><span class="tiny">${v==null?'':N1(v)+'% saving'}</span></button>`}).join('')+`</div></div>`}
 function flowCard(r,b){
  const segs=x=>{const d=sum(x.d)*DT,bt=sum(x.b)*DT,g=sum(x.g)*DT;return{d,bt,g,t:d+bt+g||1}};
  const bar=(x,l)=>{const s=segs(x),lab=v=>v/s.t>0.1?N0(v)+' kWh':'';return `<div class="fl"><div class="fl-l">${l}</div><div class="fl-b" role="img" aria-label="${l}: solar ${N0(s.d)} kWh, battery ${N0(s.bt)} kWh, grid ${N0(s.g)} kWh"><span class="s1" style="flex:${s.d}">${lab(s.d)}</span><span class="s2" style="flex:${s.bt}">${lab(s.bt)}</span><span class="s3" style="flex:${s.g}">${lab(s.g)}</span></div></div>`};
  const s=segs(r);
  return `<div class="card" data-tour="flow" data-role="tech"><h2>Where the day's energy comes from</h2>${bar(b,'Baseline (solar only)')}${sel=='base'?'':bar(r,NAMES[sel].replace('Optimiser: ',''))}
- <div class="legend"><span><i style="background:var(--sun)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (including battery charging)</span></div>
+ <div class="legend"><span><i style="background:var(--solar)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (including battery charging)</span></div>
  <div class="stats"><div><span>Self-consumption</span><b>${N0(r.util)}%</b><span>of the solar produced is used on site</span></div><div><span>Solar share of supply</span><b>${N0(100*s.d/s.t)}%</b><span>of the energy supplied came from solar</span></div><div><span>Solar available</span><b>${N0(sum(r.sol)*DT)} kWh</b></div></div>
  <p class="note">Totals for the day, in kWh. The battery's energy first came from solar or the grid.</p></div>`}
 
@@ -539,8 +541,8 @@ function liveTemplate(){const q=sameReq();if(!q)return;const d=new Date(),k=Math
 function liveChart(title,fc,act,bel,k,col){const W=760,H=190,L=54,R=12,T=14,B=26,mx=Math.max(...fc,...act,...bel,1),ax=niceAxis(0,mx*1.05),y=v=>T+(ax.hi-v)/(ax.hi-ax.lo)*(H-T-B),xf=t=>L+(W-L-R)*t/24,
   pth=(a,from,to)=>{let d='';for(let i=from;i<to;i++)d+=(d?'L':'M')+xf((i+.5)/S).toFixed(1)+' '+y(a[i]).toFixed(1);return d},nx=xf(k/S).toFixed(1);
  return `<h3 class="sec" style="margin:10px 0 2px">${title}</h3><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="${esc(title)}">${yGrid(ax,y,L,W-R)}${yTitle(T,H-B,'kW')}${xAxis(xf,H-B,0,24,4)}
- <path d="${pth(fc,0,NS)}" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4"/><path d="${pth(bel,k,NS)}" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="2 3"/><path d="${pth(act,0,k)}" fill="none" stroke="${col}" stroke-width="2.5"/>
- <line x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="#334155" stroke-dasharray="3 3"/><text x="${(+nx+4)}" y="${T+10}" font-size="11" fill="#334155">now</text></svg>`}
+ <path d="${pth(fc,0,NS)}" fill="none" stroke="#BDB48F" stroke-width="1.5" stroke-dasharray="5 4"/><path d="${pth(bel,k,NS)}" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="2 3"/><path d="${pth(act,0,k)}" fill="none" stroke="${col}" stroke-width="2.5"/>
+ <line x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="#252B2A" stroke-dasharray="3 3"/><text x="${(+nx+4)}" y="${T+10}" font-size="11" fill="#252B2A">now</text></svg>`}
 function liveRender(j,q){const fe=j.forecast_error,ex=j.expected,o=ex.old_plan,n=ex.new_plan,pr=x=>x==null?'n/a':N0(x*100)+'%',now=tm(j.now_step),dq=j.data_quality,s=j.series,b=q.p.b.c.mdH.length>0,
   st=(r,nm)=>r==null?`${nm} cannot be compared (forecast was zero so far).`:`${nm} is running at <b>${N0(r*100)}%</b> of forecast`;
  const tiles=kpis([['Solar vs forecast, last 2 hours',pr(j.correction.pv_ratio),'','since midnight '+pr(fe.pv.ratio)+', average error '+N0(fe.pv.mae_kw)+' kW'],['Load vs forecast, last 2 hours',pr(j.correction.load_ratio),'','since midnight '+pr(fe.load.ratio)+', average error '+N0(fe.load.mae_kw)+' kW'],['Spent so far',money(j.spent_so_far_rm),'',b?'peak so far '+N0(j.peak_so_far_kw)+' kW':'no demand charge today'],
@@ -550,7 +552,7 @@ function liveRender(j,q){const fe=j.forecast_error,ex=j.expected,o=ex.old_plan,n
  $('lvOut').innerHTML=`<div class="ribbon${j.simulated?'':' past'}"><b>${j.simulated?'SIMULATED REPLAY.':'MEASURED DATA.'}</b> Up to ${now}. ${j.simulated?'The day so far is the forecast with simulated deviations; it is not measured.':'The rest of the day is a corrected forecast, not a measurement.'}</div>${over}
  ${dq.warn?`<div class="ribbon warn"><b>CHECK YOUR DATA.</b> Your grid readings differ from what the other readings imply by ${N0(dq.grid_gap_kw)} kW on average (${N0(dq.grid_gap_pct_of_load)}% of load). Check units, timezone and whether load includes EV charging.</div>`:''}
  ${j.learned&&j.learned.applied?`<p class="note" style="margin:6px 0"><b>Learning applied.</b> The forecast was first corrected with what was learned over ${j.learned.days} day${j.learned.days==1?'':'s'}. Average error since midnight: solar ${N0(j.forecast_error.pv.mae_kw)} kW (raw forecast ${N0(j.forecast_error_raw.pv.mae_kw)} kW), load ${N0(j.forecast_error.load.mae_kw)} kW (raw ${N0(j.forecast_error_raw.load.mae_kw)} kW).</p>`:''}<p style="margin:6px 0">Over the last 2 hours: ${st(j.correction.pv_ratio,'solar')} and ${st(j.correction.load_ratio,'load').toLowerCase()}. The rest of the day is corrected by these recent ratios, fading back to the forecast over about ${N0(j.correction.fade_hours)} hours.</p>${tiles}
- ${liveChart('Solar: forecast (dashed grey), measured so far (solid), corrected for the rest of the day (dotted)',s.forecast_pv,s.actual_pv,s.belief_pv,j.now_step,'#f29f3d')}${liveChart('Site load (without EV): forecast, measured so far, corrected',s.forecast_load,s.actual_load,s.belief_load,j.now_step,'#64748b')}
+ ${liveChart('Solar: forecast (dashed grey), measured so far (solid), corrected for the rest of the day (dotted)',s.forecast_pv,s.actual_pv,s.belief_pv,j.now_step,'#F59E0B')}${liveChart('Site load (without EV): forecast, measured so far, corrected',s.forecast_load,s.actual_load,s.belief_load,j.now_step,'#5B6360')}
  <h3 class="sec">Recommended next 4 hours (battery + discharge, &minus; charging)</h3><div class="scroll"><table class="sch"><tr><th>Time</th><th>Battery, kW</th><th>EV charging, kW</th><th>Grid import, kW</th></tr>${nx}</table></div>
  <p class="note">Battery data: ${esc(dq.battery_source)}. EV data: ${esc(dq.ev_source)}. Battery charge: ${esc(dq.soc_source)}. The old and new plans are compared on the same corrected forecast, from the same state, with the same grid-limit guard, so the saving is an estimate, not a measurement. ${esc(j.data_kind)}</p>`}
 async function liveRun(body,msg){const q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return;const m=$('lvMsg');m.textContent=msg||'Calculating...';$('lvOut').innerHTML='';const lp=lrnGet();
@@ -581,8 +583,8 @@ async function lrnTeach(inp){const f=inp.files&&inp.files[0];if(!f)return;const 
   catch(e){out.innerHTML=`<span class="err">${esc(e.message)}</span>`}};rd.readAsText(f)}
 function lrnChart(rows){const W=760,H=190,L=54,R=12,T=14,B=26,mx=Math.max(...rows.map(r=>Math.max(r.pv_mae_raw_kw,r.pv_mae_learned_kw)),1),ax=niceAxis(0,mx*1.05),y=v=>T+(ax.hi-v)/(ax.hi-ax.lo)*(H-T-B),xf=i=>L+(W-L-R)*(rows.length<2?0:i/(rows.length-1)),
   pth=k=>rows.map((r,i)=>(i?'L':'M')+xf(i).toFixed(1)+' '+y(r[k]).toFixed(1)).join('');
- return `<h3 class="sec" style="margin:10px 0 2px">Solar forecast error each day: raw (grey) and with learning (orange)</h3><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="Daily solar forecast error, raw and learned">${yGrid(ax,y,L,W-R)}${yTitle(T,H-B,'kW')}<line x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}" stroke="#94a3b8"/><text x="${L}" y="${H-8}" font-size="11" fill="var(--mute)">day 1</text><text x="${W-R}" y="${H-8}" text-anchor="end" font-size="11" fill="var(--mute)">day ${rows.length}</text>
- <path d="${pth('pv_mae_raw_kw')}" fill="none" stroke="#94a3b8" stroke-width="2"/><path d="${pth('pv_mae_learned_kw')}" fill="none" stroke="#f29f3d" stroke-width="2.5"/></svg>`}
+ return `<h3 class="sec" style="margin:10px 0 2px">Solar forecast error each day: raw (grey) and with learning (orange)</h3><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="Daily solar forecast error, raw and learned">${yGrid(ax,y,L,W-R)}${yTitle(T,H-B,'kW')}<line x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}" stroke="#BDB48F"/><text x="${L}" y="${H-8}" font-size="11" fill="var(--mute)">day 1</text><text x="${W-R}" y="${H-8}" text-anchor="end" font-size="11" fill="var(--mute)">day ${rows.length}</text>
+ <path d="${pth('pv_mae_raw_kw')}" fill="none" stroke="#BDB48F" stroke-width="2"/><path d="${pth('pv_mae_learned_kw')}" fill="none" stroke="#F59E0B" stroke-width="2.5"/></svg>`}
 async function lrnDemo(){const q=sameReq('cost');if(!q)return;const msg=$('lrnMsg'),out=$('lrnOut');msg.textContent='Simulating 30 days...';out.innerHTML='';
  let j;try{j=await api('/api/learn',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,{action:'demo',days:30,bias:$('lrdBias').checked}))})}catch(e){msg.textContent='';out.innerHTML=`<span class="err">${esc(e.message)}</span>`;return}
  msg.textContent='';const s=j.summary,pc=(a,b)=>b>0?(a<=b?N0(100*(1-a/b))+'% lower':N0(100*(a/b-1))+'% higher'):'',
@@ -617,7 +619,7 @@ function dayHtml(R,rows){
  if(!R[sel])sel='base';const b=R.base,r=R[sel],sv=(1-r.cost/b.cost)*100||0,c=b.c;last={view:'day',key:cur,base:b.cost,cost:r.cost,save:b.cost-r.cost};
  aiFacts={day:parse(cur).toLocaleDateString('en-GB',{weekday:'long'}),strategy:NAMES[sel].replace('Optimiser: ',''),tariff:tf().n,billed:c.mdH.length>0,base_cost:+b.cost.toFixed(2),plan_cost:+r.cost.toFixed(2),base_peak:+b.peak.toFixed(1),plan_peak:+r.peak.toFixed(1),solar_pct:+r.util.toFixed(1),co2_pct:b.co2?+((r.co2/b.co2-1)*100).toFixed(2):null,charge:rg(r.ch,1),discharge:rg(r.b,1),shift:rg(r.fl,1)};lastPlan={date:cur,sel,r,b};
  const tbl=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Grid share</th><th>Billed peak, kW</th><th>CO&#8322;, kg</th><th>CO&#8322; vs baseline</th><th>CO&#8322; vs no solar</th></tr>`+rows.map(s=>{const x=R[s.k],v=(1-x.cost/b.cost)*100,cd=b.co2?(x.co2/b.co2-1)*100:0;
-  return `<tr class="${s.k==sel?'sel':''}"><td>${NAMES[s.k]}</td><td>${N2(x.cost)}</td><td class="${v>0.05?'good':''}">${s.k=='base'?'&mdash;':v.toFixed(1)+'%'}</td><td>${N0(x.util)}%</td><td>${N0(sum(x.g)/sum(x.ld)*100)}%</td><td>${N0(x.peak)}</td><td>${N0(x.co2)}</td><td style="${s.k!='base'&&cd>0.05?'color:#d9a441':''}" class="${s.k!='base'&&cd<-0.05?'good':''}">${s.k=='base'||!b.co2?'&mdash;':(cd>=0?'+':'')+cd.toFixed(1)+'%'}</td><td class="good">${((x.co2/(sum(b.ld)*DT*F.ef)-1)*100).toFixed(0)}%</td></tr>`}).join('');
+  return `<tr class="${s.k==sel?'sel':''}"><td>${NAMES[s.k]}</td><td>${N2(x.cost)}</td><td class="${v>0.05?'good':''}">${s.k=='base'?'&mdash;':v.toFixed(1)+'%'}</td><td>${N0(x.util)}%</td><td>${N0(sum(x.g)/sum(x.ld)*100)}%</td><td>${N0(x.peak)}</td><td>${N0(x.co2)}</td><td style="${s.k!='base'&&cd>0.05?'color:#92400E':''}" class="${s.k!='base'&&cd<-0.05?'good':''}">${s.k=='base'||!b.co2?'&mdash;':(cd>=0?'+':'')+cd.toFixed(1)+'%'}</td><td class="good">${((x.co2/(sum(b.ld)*DT*F.ef)-1)*100).toFixed(0)}%</td></tr>`}).join('');
  const ng=sum(b.ld)*DT*F.ef,cc=b.co2?(r.co2/b.co2-1)*100:0,nm=NAMES[sel];
  const carbon=(ng>0?`Carbon: solar already cuts CO&#8322; by ${((1-b.co2/ng)*100).toFixed(0)}% versus buying everything from the grid (${N0(ng-b.co2)} kg avoided on this day). `:'')+(sel=='base'?'':(Math.abs(cc)<0.05?`${nm} leaves CO&#8322; unchanged versus the baseline. `:cc<0?`${nm} cuts CO&#8322; by a further ${(-cc).toFixed(1)}% versus the baseline. `:`${nm} adds ${cc.toFixed(1)}% CO&#8322; versus the baseline: charging the battery from the grid loses about ${Math.round(100-F.eff)}% of the energy, so here the saving is money, not carbon. `))+`Uses one flat grid factor (${F.ef} kg/kWh), so it cannot tell cleaner hours from dirtier ones.`;
  const ann=sel=='base'?'Baseline: solar only, no battery, no load shifting.':(c.wk?`Saving versus baseline: about ${money((b.cost-r.cost)*300)} a year if 300 weekdays looked like this one. Rough guide only: the real demand charge is set by the highest peak of the month, so it holds only if the worst day is held down as well as this one. Battery purchase cost is not included.`:'This is a weekend day, so it is not scaled up to a yearly figure.');
@@ -684,7 +686,7 @@ function changeCard(){if(!pend)return;const p=pend;pend=null;const a=p.before,b=
  if(a&&b&&a.view==b.view&&a.key==b.key){const same=Math.abs(a.base-b.base)<0.005&&Math.abs(a.cost-b.cost)<0.005;
   num=same?'The numbers on this screen did not change, because these settings do not affect them.':`Baseline cost ${money(a.base)} &rarr; ${money(b.base)}. Cost with the strategy ${money(a.cost)} &rarr; ${money(b.cost)}. You save ${money(a.save)} &rarr; ${money(b.save)}.`}
  else num='The numbers below now use the new settings.';
- $('out').insertAdjacentHTML('afterbegin',`<div class="card" data-tour="changed" style="border-color:var(--sun)"><div class="bar" style="margin:0"><h2 style="margin:0">What just changed</h2><span class="sp"></span><button data-x="1">Dismiss</button></div><ul>${p.items.map(x=>`<li>${x}</li>`).join('')}</ul><p class="note">${num}</p></div>`)}
+ $('out').insertAdjacentHTML('afterbegin',`<div class="card" data-tour="changed" style="border-color:var(--solar)"><div class="bar" style="margin:0"><h2 style="margin:0">What just changed</h2><span class="sp"></span><button data-x="1">Dismiss</button></div><ul>${p.items.map(x=>`<li>${x}</li>`).join('')}</ul><p class="note">${num}</p></div>`)}
 async function render(){
  const my=++tok,dates=span();$('dt').value=cur;tabs();
  ['day','week','month'].forEach(v=>{$('v'+v).classList.toggle('on',view==v);$('b'+v).classList.toggle('on',view==v)});
