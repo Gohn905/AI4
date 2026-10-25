@@ -122,6 +122,8 @@ main[data-role=owner] .action p{font-size:14px}
 main[data-role=owner] .muted.small,main[data-role=owner] .footnote{font-size:13px}
 main[data-role=owner] .ribbon{font-size:15px}
 input,select,textarea{border-color:#D6CCA6}
+input[type=range]{accent-color:#F59E0B}
+@media(max-width:640px){.pa{width:100%}.pg{grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}.pn{width:auto;min-width:0}.pn b{font-size:12px}}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span class="sp"></span><span id="auth" class="note"></span></header>
 <main id="app" data-role="owner">
 <div id="amsg" class="note" style="margin:0 0 6px"></div>
@@ -304,7 +306,7 @@ const getRun=(date,mode)=>memo('r|'+date+'|'+mode+'|'+hk(rkey()),async()=>{
  r.fc=fc;r.c=c;if(off)r.offline=off;return r});
 
 // ---- chart helpers: clean axis ranges ----
-const chT=past=>chartTab=='wx'?(past?'Weather and solar record (recorded)':'Forecast inputs: weather, solar and demand (forecast)'):chartTab=='pc'?(past?'Power curve (rebuilt from recorded weather)':'Power curve (forecast)'):'Where the power comes from, every 30 minutes'+(past?'':' (forecast)');
+const chT=past=>chartTab=='pl'?'Panel layout, every 30 minutes'+(past?'':' (forecast)'):chartTab=='wx'?(past?'Weather and solar record (recorded)':'Forecast inputs: weather, solar and demand (forecast)'):chartTab=='pc'?(past?'Power curve (rebuilt from recorded weather)':'Power curve (forecast)'):'Where the power comes from, every 30 minutes'+(past?'':' (forecast)');
 function niceAxis(lo,hi,n=5){lo=Math.min(lo,0);hi=Math.max(hi,lo+1e-9);const p=Math.pow(10,Math.floor(Math.log10((hi-lo)/n)));let st=p;for(const m of [1,2,5,10]){st=m*p;if((hi-lo)/st<=n)break}return{lo:Math.floor(lo/st+1e-9)*st,hi:Math.ceil(hi/st-1e-9)*st,st}}
 function yGrid(ax,y,x1,x2){let o='';for(let v=ax.lo;v<=ax.hi+ax.st/1e3;v+=ax.st){const yy=y(v).toFixed(1),z=Math.abs(v)<ax.st/1e3;o+=`<line x1="${x1}" x2="${x2}" y1="${yy}" y2="${yy}" stroke="${z?'#BDB48F':'var(--line)'}"/><text x="${x1-6}" y="${(+yy+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--mute)">${(ax.st<1?N1:N0)(Math.abs(v)<ax.st/1e3?0:v)}</text>`}return o}
 const yTitle=(T,Bt,txt)=>`<text transform="rotate(-90 11 ${(T+Bt)/2})" x="11" y="${(T+Bt)/2}" text-anchor="middle" font-size="11" fill="var(--mute)">${txt}</text>`;
@@ -332,11 +334,11 @@ function plGridHtml(r,t){const n=plN(),base=(r.sol[t]||0)*1000/n,day=+cur.slice(
  const arr=(a,b,name)=>`<div class="pa"><div class="note" style="margin:0 0 4px"><b>${name}</b></div><div class="pg">${out.slice(a,b).map((v,j)=>tile(v,a+j)).join('')}</div></div>`;
  const html=arr(0,32,'Array A')+arr(32,64,'Array B');
  return{html,info:`<b>${tm(t)}</b>: site solar ${N0(r.sol[t]||0)} kW over ${N0(n)} panels, about ${N0(base)} W each. `+(fl?`<b style="color:#92400E">${fl} of the 64 panels shown are more than 10% below the middle value (red).</b>`:'No panel shown is more than 10% below the middle value.')}}
-function panelCard(r){if(!(+F.kwp>0))return `<div class="card" data-tour="panels" data-role="tech"><h2>Panel layout</h2><p class="note">Enter a solar size under Facility to see the panel layout.</p></div>`;
+function panelCard(r){if(!(+F.kwp>0))return `<div id="plBox"><p class="note">Enter a solar size under Facility to see the panel layout.</p></div>`;
  if(plDay!=cur){plDay=cur;plT=Math.max(0,r.sol.indexOf(Math.max(...r.sol)))}
  const g=plGridHtml(r,plT);
- return `<div class="card" data-tour="panels" data-role="tech"><h2>Panel layout</h2><p class="note">Output of each panel in watts, like a monitoring app. Drag the slider to move through the day. Orange = normal, red = more than 10% below the middle value, grey = no sun.</p>
- <div class="bar" style="margin:6px 0"><span class="note" style="margin:0">Time</span><input type="range" id="plSl" min="0" max="${NS-1}" value="${plT}" style="flex:1;min-width:160px" aria-label="Time of day"></div>
+ return `<div id="plBox"><p class="note">Output of each panel in watts, like a monitoring app. Drag the slider or use the arrows to move through the day in 30-minute steps. Orange = normal, red = more than 10% below the middle value, grey = no sun.</p>
+ <div class="bar" style="margin:6px 0"><span class="note" style="margin:0">Time</span><button data-pls="-1" aria-label="30 minutes earlier" title="30 minutes earlier">&#9664;</button><input type="range" id="plSl" min="0" max="${NS-1}" step="1" value="${plT}" style="flex:1;min-width:160px" aria-label="Time of day, 30-minute steps"><button data-pls="1" aria-label="30 minutes later" title="30 minutes later">&#9654;</button></div>
  <div id="plInfo" class="note" style="margin:0 0 8px">${g.info}</div><div id="plGrid" class="plwrap">${g.html}</div>
  <p class="note"><b>Demo values.</b> These are not meter readings: the site solar forecast is split evenly across ${N0(plN())} panels (${N0(+F.kwp)} kWp), with a small made-up spread and two made-up weak panels to show how a fault would look. Only 64 panels are drawn. When the customer's per-panel data is loaded, it replaces these numbers.</p></div>`}
 function pcCard(r,past){
@@ -402,7 +404,7 @@ function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a
  return `<p class="note"><b>CO&#8322; trade-off:</b> Cost-saving earns ${money(dS)} more per day than Balanced, at the price of ${Math.round(dC)} kg more CO&#8322; (about ${money(dS/dC)} per kg).</p>`}
 
 // ================= pages: Brief (owner view) and Detailed (tabs) =================
-const TABS={ov:['ribbon','headline','kpi','costbars','flow','changed'],fc:['ribbon','chart','panels','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','live','schedule','approve','changed'],ad:['reopt','learn','stress','sweep','assume','audit','changed'],fa:['changed']};let dtab='ov';
+const TABS={ov:['ribbon','headline','kpi','costbars','flow','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','live','schedule','approve','changed'],ad:['reopt','learn','stress','sweep','assume','audit','changed'],fa:['changed']};let dtab='ov';
 function applyTab(){const t=role=='tech';Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&dtab=='fa'});$('facPanel').hidden=!(t&&dtab=='fa');
  if(document.querySelectorAll)document.querySelectorAll('#dtabs button').forEach(b=>b.classList.toggle('on',b.dataset.dt==dtab));fairLoad()}
 $('dtabs').onclick=e=>{const b=e.target.closest('[data-dt]');if(b){dtab=b.dataset.dt;applyTab()}};
@@ -636,9 +638,8 @@ function dayHtml(R,rows){
   limB=(L>0&&mxg>L+1?`<div class="ribbon warn"><b>GRID LIMIT NOT MET.</b> Highest grid import is ${N0(mxg)} kW, above the ${N0(L)} kW limit.${sel=='base'?' Pick a strategy to see whether it can be held.':' The battery and chargers cannot hold it, so this is the closest plan.'}</div>`:'')+(L>0&&sel!='base'&&mxb>L+1&&mxg<=L+1?`<div class="ribbon"><b>GRID LIMIT.</b> Solar only, the site would draw up to ${N0(mxb)} kW, above the ${N0(L)} kW limit. This plan holds it at or under ${N0(L)} kW.</div>`:'')+(+F.evn>0&&fc.evun>0.5?`<div class="ribbon warn"><b>EV CHARGING.</b> ${N0(fc.evun)} kWh of the EV demand cannot be delivered on this day: the chargers are closed or there are too few hours or too little power.</div>`:'');
  return rib+offB+limB+headCard(r,b,c,sv,past)+`${kpiRow(r,b,c,sv)}${costCard(r,b,sv,past)}${actCard(r,b)}
  ${flowCard(r,b)}
- <div class="card${past?'':' fcast'}" data-tour="chart" data-role="tech"><div class="bar" style="margin-bottom:6px"><h2 id="chTitle" style="margin:0">${chT(past)}</h2><span class="sp"></span><span id="chTabs"><button data-ct="use" class="${chartTab=='use'?'on':''}" data-tp="${past?1:0}">Energy usage</button> <button data-ct="wx" class="${chartTab=='wx'?'on':''}">${past?'Recorded weather':'Predicted weather'}</button> <button data-ct="pc" class="${chartTab=='pc'?'on':''}">Power curve</button></span></div>
- <div id="ct_use"${chartTab=='use'?'':' hidden'}>${draw(r,b,c.win)}</div><div id="ct_wx"${chartTab=='wx'?'':' hidden'}>${fcCard(fc,past,fn)}</div><div id="ct_pc"${chartTab=='pc'?'':' hidden'}>${pcCard(r,past)}</div></div>
- ${panelCard(r)}
+ <div class="card${past?'':' fcast'}" data-tour="chart" data-role="tech"><div class="bar" style="margin-bottom:6px"><h2 id="chTitle" style="margin:0">${chT(past)}</h2><span class="sp"></span><span id="chTabs"><button data-ct="use" class="${chartTab=='use'?'on':''}" data-tp="${past?1:0}">Energy usage</button> <button data-ct="wx" class="${chartTab=='wx'?'on':''}">${past?'Recorded weather':'Predicted weather'}</button> <button data-ct="pc" class="${chartTab=='pc'?'on':''}">Power curve</button> <button data-ct="pl" class="${chartTab=='pl'?'on':''}">Panel layout</button></span></div>
+ <div id="ct_use"${chartTab=='use'?'':' hidden'}>${draw(r,b,c.win)}</div><div id="ct_wx"${chartTab=='wx'?'':' hidden'}>${fcCard(fc,past,fn)}</div><div id="ct_pc"${chartTab=='pc'?'':' hidden'}>${pcCard(r,past)}</div><div id="ct_pl"${chartTab=='pl'?'':' hidden'}>${panelCard(r)}</div></div>
  ${stratCards(R,b)}
  <div class="card" data-tour="compare" data-role="tech"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
  <p class="note">${ann}</p>${rows.length>1&&rows.every(x=>Math.abs(R[x.k].cost-b.cost)<0.01)?'<p class="note"><b>Why are all the strategies the same?</b> On this day no peak rate or maximum demand charge applies (for example a weekend on a time-of-use tariff), so moving energy or using the battery cannot lower the bill. Try a weekday.</p>':''}<p class="note">${tc}</p><p class="note">${carbon}</p>${tradeoff(R)}</div>
@@ -852,9 +853,10 @@ $('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);$('dt').onchange=e=
 $('out').addEventListener('pointermove',pcMove);
 $('out').addEventListener('input',e=>{if(e.target&&e.target.id=='plSl'&&lastPlan){plT=+e.target.value;const g=plGridHtml(lastPlan.r,plT);$('plGrid').innerHTML=g.html;$('plInfo').innerHTML=g.info}});
 $('out').addEventListener('change',e=>{if(e.target&&e.target.id=='pcSel'){pcType=e.target.value;if(lastPlan&&$('ct_pc'))$('ct_pc').innerHTML=pcCard(lastPlan.r,cur<TODAY)}});
-$('out').onclick=e=>{const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';$('ct_wx').hidden=chartTab!='wx';$('ct_pc').hidden=chartTab!='pc';
+$('out').onclick=e=>{const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';$('ct_wx').hidden=chartTab!='wx';$('ct_pc').hidden=chartTab!='pc';$('ct_pl').hidden=chartTab!='pl';
   $('chTitle').textContent=chT(past);
   document.querySelectorAll?document.querySelectorAll('#chTabs button').forEach(b=>b.classList.toggle('on',b.dataset.ct==chartTab)):0;return}
+ const ps=e.target.closest('[data-pls]');if(ps&&lastPlan&&$('plSl')){plT=Math.max(0,Math.min(NS-1,plT+(+ps.dataset.pls)));$('plSl').value=plT;const g=plGridHtml(lastPlan.r,plT);$('plGrid').innerHTML=g.html;$('plInfo').innerHTML=g.info;return}
  if(e.target.closest('[data-ai]')){explainClick();return}
  if(e.target.closest('[data-pr]')){printOwner();return}
  if(e.target.closest('[data-sw]')){sweepRun();return}
