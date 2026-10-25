@@ -27,7 +27,11 @@ from urllib.request import Request, urlopen
 STRATS = ("Baseline", "Cost-saving", "Balanced", "Production-first")
 TARIFFS = ("LV General", "LV Time-of-Use", "MV General", "MV Time-of-Use", "HV General", "HV Time-of-Use")
 DAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
-RUN = re.compile(r"^\d{2}:00 to \d{2}:00(, \d{2}:00 to \d{2}:00){0,5}$")
+# A time of day on the half hour (00:00 to 23:30, or 24:00 for the end of the day) and 1 to 24 runs of "start to end".
+# The plan has 48 half-hour steps, so a day can hold at most 24 separate runs. The pattern is strict on purpose: it is the
+# only free-text-like input that reaches the model prompt.
+_T = r"(?:(?:[01]\d|2[0-3]):[03]0|24:00)"
+RUN = re.compile(rf"^{_T} to {_T}(?:, {_T} to {_T}){{0,23}}$")
 NUM = re.compile(r"\d[\d,]*(?:\.\d+)?")
 _calls = deque()
 MAX_PER_MIN = 8            # stay under the deployment's 10 requests per minute
@@ -85,7 +89,7 @@ def validate(f):
     for k in ("charge", "discharge", "shift"):
         v = f.get(k) or ""
         if v and not (isinstance(v, str) and RUN.match(v)):
-            raise ValueError(k + " must look like 10:00 to 13:00")
+            raise ValueError(k + " must look like 10:00 to 13:00 or 09:30 to 10:00 (half hours, at most 24 runs)")
         out[k] = v
     return out
 
