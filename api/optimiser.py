@@ -183,13 +183,20 @@ def optimise(d):
 
     ix, k = {}, 0
     for name, size in [("Imp", N), ("MD", 1), ("Ch", N), ("Dis", N),
-                       ("SOC", N + 1), ("Flex", N), ("PVu", N), ("Over", N), ("MDo", 1), ("CapO", 1)]:
+                       ("SOC", N + 1), ("Flex", N), ("PVu", N), ("Over", N), ("MDo", 1), ("CapO", 1), ("Dev", N)]:
         ix[name] = np.arange(k, k + size); k += size
     nv = k
     c = np.zeros(nv); c[ix["Imp"]] = (rate + carbon) * dt; c[ix["MD"]] = md_rate
     c[ix["Ch"]] = wear * dt; c[ix["Dis"]] = wear * dt
     c[ix["Over"]] = 50.0 * dt    # soft limit: exceeding the grid limit is allowed but very costly
     c[ix["MDo"]] = 0.01 * dt     # tiny tie-break: keep unbilled-hour imports flat, not spiky
+    # Tie-break: when moving EV charging does not lower the bill, leave it where it would normally be (charge immediately).
+    # 0.005 RM per kWh moved is far below any real saving (smallest tariff gap is 4 sen/kWh), so a shift that pays is never blocked.
+    # Send "shift_penalty": 0 to switch this off.
+    shift_pen = float(d.get("shift_penalty", 0.005))
+    if not math.isfinite(shift_pen) or not 0 <= shift_pen <= 0.02:
+        raise ValueError("shift_penalty must be between 0 and 0.02")
+    c[ix["Dev"]] = shift_pen * dt
     c[ix["CapO"]] = 1000.0  # soft cap on total grid energy: peak savings are worth ~RM 8 per kWh here, so this must be far higher
 
     bounds = [(0, None)] * nv
@@ -247,6 +254,11 @@ def optimise(d):
             r = np.zeros(nv); r[ix["Imp"][t]] = 1; r[ix["MDo"][0]] = -1
             Aub.append(r); bub.append(0.0)
 
+    if ev and shift_pen > 0:                  # Dev[t] >= |Flex[t] - baseline[t]|
+        base_ev = np.array(ev_baseline(d))
+        for t in range(N):
+            r = np.zeros(nv); r[ix["Flex"][t]] = 1; r[ix["Dev"][t]] = -1; Aub.append(r); bub.append(base_ev[t])
+            r = np.zeros(nv); r[ix["Flex"][t]] = -1; r[ix["Dev"][t]] = -1; Aub.append(r); bub.append(-base_ev[t])
     if gcap > 0:
         r = np.zeros(nv); r[ix["Imp"]] = dt; r[ix["CapO"][0]] = -1
         Aub.append(r); bub.append(gcap)
