@@ -91,7 +91,6 @@ th{font-weight:700}table th{background:#f8fafc}.ribbon{border-radius:10px}
 @media(max-width:1050px){.kpirow{grid-template-columns:repeat(2,minmax(0,1fr))}.card.ai{grid-template-columns:1fr}.ai-side{text-align:left}#out>*{grid-column:1/-1!important}}
 @media(max-width:640px){.top{padding:10px 14px}.brand{order:-1;width:100%;justify-content:flex-start}.costbars{grid-template-columns:70px 1fr 80px}}
 .shiny{width:28px;height:28px;border-radius:50%;object-fit:cover;flex:none}
-#chatBtn{display:inline-flex;align-items:center;gap:8px;padding:6px 16px 6px 8px}
 .chead .shiny{width:34px;height:34px;margin-right:8px}
 .brow{display:flex;gap:8px;align-items:flex-start;align-self:flex-start;max-width:94%}.brow .shiny{margin-top:2px}.brow .msg{max-width:none}
 .stratbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;justify-content:flex-end}
@@ -207,7 +206,7 @@ main[data-role=owner] .ribbon{font-size:15px}
 <div class="card" id="rates"></div>
 </div></div></div>
 </main>
-<button id="chatBtn" class="on" aria-expanded="false" aria-controls="chatPanel"><img class="shiny" src="shiny.png" alt="" onerror="this.style.display='none'"><span>Ask Shiny</span></button>
+<button id="chatBtn" class="on" aria-expanded="false" aria-controls="chatPanel">Ask Shiny</button>
 <div id="chatPanel" role="dialog" aria-label="Shiny" hidden>
 <div class="chead"><img class="shiny" src="shiny.png" alt="" onerror="this.style.display='none'"><b>Shiny</b><span class="sp"></span><button id="chatX" aria-label="Close Shiny">Close</button></div>
 <div id="chatLog" aria-live="polite"></div>
