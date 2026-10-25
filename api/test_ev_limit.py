@@ -57,6 +57,25 @@ for allow in (0.5, 0):
     rc = optimise({**BASE, "ev": EV, "co2_allow": allow})
     ok(f"co2_allow {allow} with EVs: the grid-energy cap is not broken", rc["cap_over_kwh"] < 1e-6)
 
+# EV charging is only moved when that lowers the bill (regression: pointless cost-neutral shifts used to appear in every strategy)
+off = {"shift_penalty": 0}
+for name, extra in (("Cost-saving", {}), ("Balanced", {"co2_allow": 0.5}), ("Lowest-carbon", {"co2_allow": 0})):
+    on_ = optimise({**BASE, "ev": EV, **extra}); free = optimise({**BASE, "ev": EV, **extra, **off})
+    moved = np.abs(np.array(on_["flex"]) - np.array(ev_baseline({**BASE, "ev": EV}))).sum() * 0.5 / 2
+    ok(f"{name}: same bill with or without the shift tie-break", abs(on_["cost"] - free["cost"]) < 0.5)
+    if name != "Lowest-carbon":
+        ok(f"{name}: on this day no EV energy is moved when moving saves nothing", moved < 1)
+# a shift that really pays must survive: big solar surplus at midday, small load, no battery
+SUN = {**BASE, "load": [v * 0.25 for v in LOAD], "pv": PV, "batt_kwh": 0, "ev": {**EV, "energy_kwh": 1200}}
+paid, nofix = optimise(SUN), optimise({**SUN, **off})
+ok("a profitable shift is kept: same bill as without the tie-break", abs(paid["cost"] - nofix["cost"]) < 0.5)
+eb = np.array(ev_baseline(SUN)); pf = np.array(paid["flex"])
+ok("... and the chargers really move into the sunny hours (10:30-15:00), where baseline has none", pf[21:30].sum() * 0.5 > 100 and eb[21:30].sum() == 0)
+try:
+    optimise({**BASE, "ev": EV, "shift_penalty": 5}); ok("rejected: shift_penalty too large", False)
+except ValueError:
+    ok("rejected: shift_penalty too large", True)
+
 for badev, why in (({"window": [18, 7]}, "window start after end"), ({"energy_kwh": -5}, "negative energy"), ({"chargers": "x"}, "text chargers"), ({"window": [7.5]}, "one-value window")):
     try:
         optimise({**BASE, "ev": {**EV, **badev}}); ok("rejected: " + why, False)
