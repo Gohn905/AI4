@@ -98,6 +98,9 @@ th{font-weight:700}table th{background:#f8fafc}.ribbon{border-radius:10px}
 .shortline{color:#d5e1e9;margin:0;font-size:14px}
 .action{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.action:last-child{border-bottom:0;padding-bottom:0}
 .action-icon{width:35px;height:35px;border-radius:10px;background:#f1f5f9;display:grid;place-items:center;flex-shrink:0}.action strong{display:block;color:var(--acc);font-size:13px}.action p{margin:3px 0 0;color:var(--mut);font-size:12px}
+.plwrap{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}.pg{display:grid;grid-template-columns:repeat(8,46px);gap:6px}
+.pn{width:46px;height:50px;border-radius:3px;overflow:hidden;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.25);background:#f39c12}.pn i{display:block;height:26px;background:#1e3a5f repeating-linear-gradient(90deg,transparent 0 10px,rgba(255,255,255,.25) 10px 11px),repeating-linear-gradient(0deg,transparent 0 8px,rgba(255,255,255,.25) 8px 9px)}
+.pn b{display:block;color:#fff;font-size:13px;text-align:center;line-height:24px}.pn.fl{background:#d64545}.pn.z{background:#94a3b8}
 .stratgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:14px 0 0}
 .strategy{border:1px solid var(--line);border-radius:12px;padding:15px;background:#fff;text-align:left;color:var(--ink);width:100%;height:100%;display:block}
 .strategy.selected{border:2px solid var(--good);padding:14px;background:#f5fbf7;box-shadow:0 0 0 3px rgba(39,132,90,.08)}
@@ -318,6 +321,22 @@ function pcMove(e){const s=pcS;if(!s)return;const svg=e.target&&e.target.closest
  if(!svg){if(s.moved){s.moved=false;pcShow(s.peak)}return}
  const rc=svg.getBoundingClientRect(),vx=(e.clientX-rc.left)/rc.width*s.W,t=s.h0+(vx-s.L)/(s.W-s.L-s.R)*(s.h1-s.h0);
  const i=Math.max(s.h0*S,Math.min(s.h1*S-1,Math.round(t*S-.5)));s.moved=true;pcShow(i)}
+let plDay=null,plT=0;
+const plN=()=>{const w=+(document.getElementById('cv_w')||{}).value||550;return Math.max(1,Math.round((+F.kwp||0)*1000/w))};
+function plGridHtml(r,t){const n=plN(),base=(r.sol[t]||0)*1000/n,day=+cur.slice(8,10)+31*(+cur.slice(5,7)),out=[];
+ for(let i=0;i<64;i++){let x=Math.sin((i+1)*127.1+day*311.7)*43758.5453;x-=Math.floor(x);let f=1+(x-.5)*.05;if(i==13)f=.78;if(i==44)f=.85;out.push(Math.round(Math.max(0,base*f)))}
+ const med=[...out].sort((a,b)=>a-b)[32];let fl=0;
+ const tile=(v,i)=>{const f=med>30&&v<med*.9;if(f)fl++;const nm=(i<32?'A':'B')+(i%32+1);return `<div class="pn${f?' fl':''}${v<=0?' z':''}" title="Panel ${nm}: ${v} W"><i></i><b>${v}</b></div>`};
+ const arr=(a,b,name)=>`<div class="pa"><div class="note" style="margin:0 0 4px"><b>${name}</b></div><div class="pg">${out.slice(a,b).map((v,j)=>tile(v,a+j)).join('')}</div></div>`;
+ const html=arr(0,32,'Array A')+arr(32,64,'Array B');
+ return{html,info:`<b>${tm(t)}</b>: site solar ${N0(r.sol[t]||0)} kW over ${N0(n)} panels, about ${N0(base)} W each. `+(fl?`<b style="color:#b45309">${fl} of the 64 panels shown are more than 10% below the middle value (red).</b>`:'No panel shown is more than 10% below the middle value.')}}
+function panelCard(r){if(!(+F.kwp>0))return `<div class="card" data-tour="panels" data-role="tech"><h2>Panel layout</h2><p class="note">Enter a solar size under Facility to see the panel layout.</p></div>`;
+ if(plDay!=cur){plDay=cur;plT=Math.max(0,r.sol.indexOf(Math.max(...r.sol)))}
+ const g=plGridHtml(r,plT);
+ return `<div class="card" data-tour="panels" data-role="tech"><h2>Panel layout</h2><p class="note">Output of each panel in watts, like a monitoring app. Drag the slider to move through the day. Orange = normal, red = more than 10% below the middle value, grey = no sun.</p>
+ <div class="bar" style="margin:6px 0"><span class="note" style="margin:0">Time</span><input type="range" id="plSl" min="0" max="${NS-1}" value="${plT}" style="flex:1;min-width:160px" aria-label="Time of day"></div>
+ <div id="plInfo" class="note" style="margin:0 0 8px">${g.info}</div><div id="plGrid" class="plwrap">${g.html}</div>
+ <p class="note"><b>Demo values.</b> These are not meter readings: the site solar forecast is split evenly across ${N0(plN())} panels (${N0(+F.kwp)} kWp), with a small made-up spread and two made-up weak panels to show how a fault would look. Only 64 panels are drawn. When the customer's per-panel data is loaded, it replaces these numbers.</p></div>`}
 function pcCard(r,past){
  const TY={sol:['Solar power',r.sol,'#f29f3d'],ld:['Site demand',r.ld,'#64748b'],g:['Grid import (planned)',r.g,'#2b6cb0'],bat:['Battery (discharge +, charging \u2212)',r.b.map((v,i)=>v-r.ch[i]),'#27845a']};
  if(!TY[pcType])pcType='sol';const [nm,vals,col]=TY[pcType],NW=typeof innerWidth=='number'&&innerWidth<640,W=NW?400:760,H=300,L=NW?48:54,R=12,T=14,B=30;
@@ -381,7 +400,7 @@ function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a
  return `<p class="note"><b>CO&#8322; trade-off:</b> Cost-saving earns ${money(dS)} more per day than Balanced, at the price of ${Math.round(dC)} kg more CO&#8322; (about ${money(dS/dC)} per kg).</p>`}
 
 // ================= pages: Brief (owner view) and Detailed (tabs) =================
-const TABS={ov:['ribbon','headline','kpi','costbars','flow','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','live','schedule','approve','changed'],ad:['reopt','learn','stress','sweep','assume','audit','changed'],fa:['changed']};let dtab='ov';
+const TABS={ov:['ribbon','headline','kpi','costbars','flow','changed'],fc:['ribbon','chart','panels','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','live','schedule','approve','changed'],ad:['reopt','learn','stress','sweep','assume','audit','changed'],fa:['changed']};let dtab='ov';
 function applyTab(){const t=role=='tech';Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&dtab=='fa'});$('facPanel').hidden=!(t&&dtab=='fa');
  if(document.querySelectorAll)document.querySelectorAll('#dtabs button').forEach(b=>b.classList.toggle('on',b.dataset.dt==dtab));fairLoad()}
 $('dtabs').onclick=e=>{const b=e.target.closest('[data-dt]');if(b){dtab=b.dataset.dt;applyTab()}};
@@ -617,6 +636,7 @@ function dayHtml(R,rows){
  ${flowCard(r,b)}
  <div class="card${past?'':' fcast'}" data-tour="chart" data-role="tech"><div class="bar" style="margin-bottom:6px"><h2 id="chTitle" style="margin:0">${chT(past)}</h2><span class="sp"></span><span id="chTabs"><button data-ct="use" class="${chartTab=='use'?'on':''}" data-tp="${past?1:0}">Energy usage</button> <button data-ct="wx" class="${chartTab=='wx'?'on':''}">${past?'Recorded weather':'Predicted weather'}</button> <button data-ct="pc" class="${chartTab=='pc'?'on':''}">Power curve</button></span></div>
  <div id="ct_use"${chartTab=='use'?'':' hidden'}>${draw(r,b,c.win)}</div><div id="ct_wx"${chartTab=='wx'?'':' hidden'}>${fcCard(fc,past,fn)}</div><div id="ct_pc"${chartTab=='pc'?'':' hidden'}>${pcCard(r,past)}</div></div>
+ ${panelCard(r)}
  ${stratCards(R,b)}
  <div class="card" data-tour="compare" data-role="tech"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
  <p class="note">${ann}</p>${rows.length>1&&rows.every(x=>Math.abs(R[x.k].cost-b.cost)<0.01)?'<p class="note"><b>Why are all the strategies the same?</b> On this day no peak rate or maximum demand charge applies (for example a weekend on a time-of-use tariff), so moving energy or using the battery cannot lower the bill. Try a weekday.</p>':''}<p class="note">${tc}</p><p class="note">${carbon}</p>${tradeoff(R)}</div>
@@ -828,6 +848,7 @@ $('vday').onclick=()=>{view='day';render()};$('vweek').onclick=()=>{view='week';
 $('bView').onclick=e=>{const b=e.target.closest('button');if(b){view=b.id.slice(1);render()}};
 $('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);$('dt').onchange=e=>{if(e.target.value){cur=e.target.value;render()}};
 $('out').addEventListener('pointermove',pcMove);
+$('out').addEventListener('input',e=>{if(e.target&&e.target.id=='plSl'&&lastPlan){plT=+e.target.value;const g=plGridHtml(lastPlan.r,plT);$('plGrid').innerHTML=g.html;$('plInfo').innerHTML=g.info}});
 $('out').addEventListener('change',e=>{if(e.target&&e.target.id=='pcSel'){pcType=e.target.value;if(lastPlan&&$('ct_pc'))$('ct_pc').innerHTML=pcCard(lastPlan.r,cur<TODAY)}});
 $('out').onclick=e=>{const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';$('ct_wx').hidden=chartTab!='wx';$('ct_pc').hidden=chartTab!='pc';
   $('chTitle').textContent=chT(past);
