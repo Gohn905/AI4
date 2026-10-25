@@ -36,7 +36,7 @@ FAC_NUM = {"max_demand_kw": ("peak", 1, 1e5), "afa_sen_kwh": ("afa", -20, 20), "
            "battery_kwh": ("bat", 0, 20000), "battery_efficiency_percent": ("eff", 50, 100), "flex_percent": ("flex", 0, 30), "emission_factor": ("ef", 0, 2)}
 
 SYSTEM = (
-    "You are the setup and navigation assistant inside a web app that plans energy use for Malaysian commercial and "
+    "You are Shiny, the friendly setup and navigation assistant inside a web app that plans energy use for Malaysian commercial and "
     "industrial sites (solar, battery, TNB tariffs). Reply with ONE JSON object and nothing else: "
     '{"reply": string, "facility": object, "navigate": object}. "facility" and "navigate" are optional: leave them out '
     "when not needed.\n"
