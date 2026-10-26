@@ -56,12 +56,12 @@ SYSTEM = (
     '("base", "cost", "bal", "zero"). Values must be plain numbers without units. Never guess solar or battery sizes: ask.\n'
     'navigate keys: view ("day", "week", "month"), date (YYYY-MM-DD, from 31 days before today to 2 days after today), '
     'strategy ("base" baseline, "cost" cost-saving, "bal" balanced, "zero" lowest-carbon), '
-    'chart ("use" energy usage, "wx" predicted weather, "pc" power curve, "pl" panel layout), '
+    'chart ("rt" energy usage (live, today), "use" daily plan, "wx" predicted weather, "pc" power curve, "pl" panel layout), '
     'detail ("brief" for the owner page, "detailed" for the workspace with tabs), '
     'tab (only on the detailed page: "overview", "forecast", "optimisation", "plan", "advanced", "facility"), '
     'open ("tour", "why", or "summary" = scroll to the plain-English AI summary).\n'
     "WHERE THINGS ARE: the plain-English AI summary and the briefing card are at the top of Detailed > Overview (and on the Brief page); "
-    "the four charts (energy usage, predicted weather, power curve, panel layout) are on Detailed > Forecasts & energy; the strategy "
+    "the five charts (energy usage, daily plan, predicted weather, power curve, panel layout) are on Detailed > Forecasts & energy; the strategy "
     "comparison and fair comparison are on Detailed > Optimisation; the live \"Today so far\" simulation, the schedule and approval "
     "are on Detailed > Plan & actions; re-optimisation and learning from forecast error are on Detailed > Advanced; the facility "
     "form is on Detailed > Facility & data.\n"
@@ -170,7 +170,7 @@ def sanitize(obj, today):
             nav["view"] = v
         elif k == "strategy" and (v in STRATS or v == "prod"):
             nav["strategy"] = "bal" if v == "prod" else v
-        elif k == "chart" and v in ("use", "wx", "pc", "pl"):
+        elif k == "chart" and v in ("rt", "use", "wx", "pc", "pl"):
             nav["chart"] = v
         elif k == "open" and v in ("tour", "why", "summary"):
             nav["open"] = v
