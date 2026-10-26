@@ -20,11 +20,10 @@ import re
 import time
 
 import aoai
-from collections import deque
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-STRATS = ("Baseline", "Cost-saving", "Balanced", "Production-first")
+STRATS = ("Baseline", "Cost-saving", "Balanced", "Production-first", "Lowest-carbon")
 TARIFFS = ("LV General", "LV Time-of-Use", "MV General", "MV Time-of-Use", "HV General", "HV Time-of-Use")
 DAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 # A time of day on the half hour (00:00 to 23:30, or 24:00 for the end of the day) and 1 to 24 runs of "start to end".
@@ -33,8 +32,6 @@ DAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sun
 _T = r"(?:(?:[01]\d|2[0-3]):[03]0|24:00)"
 RUN = re.compile(rf"^{_T} to {_T}(?:, {_T} to {_T}){{0,23}}$")
 NUM = re.compile(r"\d[\d,]*(?:\.\d+)?")
-_calls = deque()
-MAX_PER_MIN = 8            # stay under the deployment's 10 requests per minute
 
 SYSTEM = ("You explain one day's energy plan to a facility manager in plain English. "
           "Write exactly 3 short sentences, under 80 words, no lists, no markdown. "
@@ -188,12 +185,8 @@ def call_model(p, fix=None):
         raise Unavailable("AI sign-in failed: " + type(e).__name__)
     if not (ep and dep and auth):
         raise Unavailable("AI model is not configured")
-    now = time.time()
-    while _calls and now - _calls[0] > 60:
-        _calls.popleft()
-    if len(_calls) >= MAX_PER_MIN:
+    if not aoai.reserve():                      # one budget shared with the assistant (see aoai.py)
         raise Unavailable("AI model is busy")
-    _calls.append(now)
     body = {"model": dep, "max_completion_tokens": 900,
             "messages": [{"role": "system", "content": SYSTEM}, {"role": "user", "content": json.dumps(p)}]
             + ([{"role": "assistant", "content": fix["text"]}, {"role": "user", "content": fix["msg"]}] if fix else [])}
@@ -201,7 +194,7 @@ def call_model(p, fix=None):
     if eff:
         body["reasoning_effort"] = eff
     url = ep + "/openai/v1/chat/completions"
-    last = ""
+    last, waited = "", False
     for _ in range(4):
         req = Request(url, data=json.dumps(body).encode(),
                       headers={"Content-Type": "application/json", **auth})
@@ -213,6 +206,10 @@ def call_model(p, fix=None):
             raw = e.read().decode("utf-8", "ignore")
             msg = raw[:300]
             last = "[" + url.split("?")[0] + "] " + _detail(e, raw)
+            if e.code == 429 and not waited:        # the model asked us to slow down: wait a moment, try once more
+                waited = True
+                time.sleep(aoai.retry_wait(e))
+                continue
             if e.code == 400 and "reasoning_effort" in body and "reasoning" in msg.lower():
                 body.pop("reasoning_effort")       # this deployment does not accept it: retry once without
                 continue
