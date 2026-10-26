@@ -6,9 +6,36 @@
 If both are set, the key is used. Used by explain.py and assist.py.
 """
 import os
+import threading
 import time
+from collections import deque
 
 _tok = {"v": None, "exp": 0.0}
+
+# The summary (explain.py) and the assistant (assist.py) call the SAME model deployment, so they must share ONE per-minute budget.
+# (Before, each kept its own counter: 8 + 6 > the deployment's 10 a minute, so one feature could starve the other.)
+MAX_PER_MIN = int(os.environ.get("AI_MAX_PER_MIN", "9") or 9)
+_recent, _lock = deque(), threading.Lock()
+
+
+def reserve():
+    """Take one slot of this minute's model budget. False = the model is busy, do not call it."""
+    now = time.time()
+    with _lock:
+        while _recent and now - _recent[0] > 60:
+            _recent.popleft()
+        if len(_recent) >= MAX_PER_MIN:
+            return False
+        _recent.append(now)
+        return True
+
+
+def retry_wait(err, cap=4.0):
+    """Seconds to wait after a 429 from the model: its Retry-After header, capped, default 2 s."""
+    try:
+        return max(0.5, min(cap, float(err.headers.get("Retry-After", 2))))
+    except Exception:
+        return 2.0
 
 
 def configured():
