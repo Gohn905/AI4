@@ -590,7 +590,7 @@ function rtDraw(j,q){const s=j.series,K=j.now_step,c=q.p.b.c,qb=q.p.b;
  const r={g:s.new_grid,b:s.new_dis,d:pu,ld,sol:P,peak:pk};
  const d=new Date(),clk=$('rtAt').value=='now'?'Clock '+p2(d.getHours())+':'+p2(d.getMinutes())+'. ':'';
  const pv=j.correction.pv_ratio,sol=pv==null?'':' Solar is running at <b>'+N0(pv*100)+'%</b> of forecast.';
- return draw(r,b0,c.win,K)}
+ return `<p style="margin:0 0 6px"><b>Recorded up to ${tm(K)}.</b> Spent so far <b>${money(j.spent_so_far_rm)}</b>.${sol} ${j.expected.saving_rm>=0.5?'Re-planning the rest of the day is expected to save <b>'+money(j.expected.saving_rm)+'</b> compared with sticking to the old plan.':'The day-ahead plan still looks about right for the rest of the day.'}</p>`+draw(r,b0,c.win,K)}
 document.addEventListener('change',e=>{if(e.target&&(e.target.id=='rtSc'||e.target.id=='rtAt'))rtLoad()});
 setInterval(()=>{const e=document.getElementById('rtClock');if(e)e.textContent=clockTxt()},1000);
 // ================= Live clock (SIMULATED): plays the day forward and hands data to /api/replan like a meter feed would =================
@@ -725,6 +725,14 @@ function dayHtml(R,rows){
  ${fairCard()}${liveCard()}${schedCard(r,c)}${apCard()}${reoptCard()}${learnCard()}${stressCard()}${sweepCard()}${assumeCard(fc,past)}${auditCard()}`}
 
 function rel(d){return d<TODAY?['Past (recorded weather)','']:d==TODAY?['Today (forecast)','t']:d==addD(TODAY,1)?['Tomorrow (forecast)','f']:['Forecast','f']}
+function weekChart(dates,items){
+ const v=dates.map((d,i)=>{const x=items[i];return x&&x.r?{d,k:sum(x.r.sol)*DT}:{d,k:null}});if(!v.some(x=>x.k!=null))return '';
+ const ax=niceAxis(0,Math.max(...v.map(x=>x.k||0))),W=760,H=300,L=52,R=12,T=14,B=44,pw=W-L-R,ph=H-T-B,bw=Math.min(52,pw/v.length*.62),sl=pw/v.length,y=n=>T+ph-(n-ax.lo)/(ax.hi-ax.lo)*ph;
+ let g='';for(let t=ax.lo;t<=ax.hi+1e-9;t+=ax.st)g+=`<line x1="${L}" x2="${W-R}" y1="${y(t)}" y2="${y(t)}" stroke="#e5e7eb"/><text x="${L-8}" y="${y(t)+4}" text-anchor="end" font-size="12" fill="#6b7280">${N0(t)}</text>`;
+ const bars=v.map((x,i)=>{const cx=L+sl*(i+.5),dn=parse(x.d),lab=dn.toLocaleDateString('en-GB',{weekday:'short'})+' '+p2(dn.getDate()),f=x.d>=TODAY;
+  const bar=x.k==null?`<text x="${cx}" y="${y(0)-6}" text-anchor="middle" font-size="11" fill="#9ca3af">no data</text>`:`<rect x="${cx-bw/2}" y="${y(x.k)}" width="${bw}" height="${Math.max(y(0)-y(x.k),0)}" rx="${Math.min(8,bw/2)}" fill="url(#wkG)"${f?' opacity=".55" stroke="#16a34a" stroke-dasharray="4 3"':''}/><text x="${cx}" y="${y(x.k)-6}" text-anchor="middle" font-size="12" font-weight="700" fill="#374151">${N0(x.k)}</text>`;
+  return `<g data-d="${x.d}" style="cursor:pointer"><rect x="${cx-sl/2}" y="${T}" width="${sl}" height="${ph+B}" fill="transparent"/>${bar}<text x="${cx}" y="${H-B+20}" text-anchor="middle" font-size="12" fill="${x.d==cur?'#111827':'#6b7280'}" font-weight="${x.d==cur?700:400}">${lab}</text></g>`}).join('');
+ return `<div class="card"><h2>Energy</h2><div class="muted small">Solar energy each day, kWh. Faded dashed bars are forecasts. Tap a bar to open that day.</div><div class="scroll"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:520px;height:auto" role="img" aria-label="Solar energy per day, kWh"><defs><linearGradient id="wkG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22c55e"/><stop offset="1" stop-color="#2b9bd0"/></linearGradient></defs><text x="${L-8}" y="10" text-anchor="end" font-size="12" fill="#374151">kWh</text>${g}${bars}</svg></div><div class="legend" style="justify-content:center"><span><i style="background:linear-gradient(#22c55e,#2b9bd0)"></i>Energy (kWh)</span></div></div>`}
 function periodHtml(dates,items){
  const ok=items.filter(x=>x&&x.r);if(!ok.length)return '<div class="card err">No data for these dates. Data is available from 31 days ago to 2 days ahead.</div>';
  const n=ok.length,t=tf(),tot=(w,k)=>sum(ok.map(x=>x[w][k])),pkb=Math.max(...ok.map(x=>x.b.peak)),pk=Math.max(...ok.map(x=>x.r.peak));
@@ -740,7 +748,7 @@ function periodHtml(dates,items){
   const body=has?`<b class="good">${money(x.b.cost-x.r.cost)}</b><small>${d>=TODAY?'forecast':''}</small>`:'<small>no data</small>';
   cells+=`<button class="c${d>=TODAY?' fc':''}${d==cur?' sel':''}${has?'':' na'}" data-d="${d}"><small>${view=='week'?parse(d).toLocaleDateString('en-GB',{weekday:'short'})+' ':''}${parse(d).getDate()}${isWk(d)?'':' (wknd)'}</small>${body}</button>`});
  return `<div class="card"><h2>Strategy vs baseline</h2>${head}<p class="note">${notes}Demand charge is prorated by the days shown, using the highest peak in the period. Dashed days are forecasts, solid days use recorded weather. Tap a day to open it with the full comparison.</p></div>
- <div class="card"><div class="cal" style="${view=='week'?'grid-template-columns:repeat(auto-fit,minmax(100px,1fr))':''}">${cells}</div></div>`}
+ ${view=='week'?weekChart(dates,items):''}<div class="card"><div class="cal" style="${view=='week'?'grid-template-columns:repeat(auto-fit,minmax(100px,1fr))':''}">${cells}</div></div>`}
 
 function span(){if(view=='day')return [cur];const d=parse(cur);
  if(view=='week'){const s=addD(cur,-((d.getDay()+6)%7));return [...Array(7).keys()].map(i=>addD(s,i))}
@@ -878,7 +886,7 @@ const redactText=t=>String(t).replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g,'[email]').r
 const cAdd=(cls,html)=>{$('chatLog').insertAdjacentHTML('beforeend',cls=='msg b'?`<div class="brow"><img class="shiny" src="shiny.png" alt="" onerror="this.style.display='none'"><div class="${cls}">${html}</div></div>`:`<div class="${cls}">${html}</div>`);const L=$('chatLog');L.scrollTop=L.scrollHeight};
 function chatOpen(on){$('chatPanel').hidden=!on;$('chatBtn').setAttribute('aria-expanded',String(on));
  if(on){if(!chat.greeted){chat.greeted=true;cAdd('msg b','Hi, I\'m Shiny! Tell me about your facility, for example: "a factory in Penang on the MV time-of-use tariff, 750 kWp solar and a 1000 kWh battery". I can also open a day, week or month, switch strategy, or read a meter CSV you attach.')}if($('chatIn').focus)$('chatIn').focus()}}
-const ctxNow=()=>({today:TODAY,page:role=='tech'?'detailed':'brief',tab:role=='tech'?({ov:'overview',fc:'forecast',op:'optimisation',pl:'plan',ad:'advanced',fa:'facility'})[dtab]:'',view,date:cur,strategy:sel,meter_loaded:!!M,facility:{name:F.name,location:F.loc=='5.41,100.33'?'penang':'kl',load_type:F.prof,tariff:F.volt+F.struct,max_demand_kw:+F.peak,afa_sen_kwh:+F.afa,solar_kwp:+F.kwp,battery_kwh:+F.bat,battery_efficiency_percent:+F.eff,flex_percent:+F.flex,grid_limit_kw:F.lim===''?null:+F.lim,emission_factor:+F.ef,strategy_followed:F.follow}});
+const ctxNow=()=>({today:TODAY,page:role=='tech'?'detailed':'brief',tab:role=='tech'?({ov:'overview',fc:'forecast',op:'optimisation',pl:'plan',ad:'advanced',fa:'facility'})[dtab]:'',view,date:cur,strategy:sel,names:Object.fromEntries(['base','cost','bal','zero'].map(k=>[k,NAMES[k].replace('Optimiser: ','')])),meter_loaded:!!M,facility:{name:F.name,location:F.loc=='5.41,100.33'?'penang':'kl',load_type:F.prof,tariff:F.volt+F.struct,max_demand_kw:+F.peak,afa_sen_kwh:+F.afa,solar_kwp:+F.kwp,battery_kwh:+F.bat,battery_efficiency_percent:+F.eff,flex_percent:+F.flex,grid_limit_kw:F.lim===''?null:+F.lim,emission_factor:+F.ef,strategy_followed:F.follow}});
 function localIntent(t){const s=t.toLowerCase(),nav={},fac={},num=x=>+String(x).replace(/,/g,'');let m;
  if(/\bmonth\b/.test(s))nav.view='month';else if(/\bweek\b/.test(s))nav.view='week';
  const d=/\btomorrow\b/.test(s)?1:/\byesterday\b/.test(s)?-1:/\btoday\b/.test(s)?0:null;if(d!==null){nav.date=addD(TODAY,d);nav.view=nav.view||'day'}
