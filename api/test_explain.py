@@ -58,4 +58,19 @@ for v, want, why in (("22:00 to 24:00", True, "a window ending at midnight (24:0
     try: ex.validate({**F, "shift": v}); got = True
     except ValueError: got = False
     res.append(ok("window format: " + why + (" accepted" if want else " rejected"), got == want))
+
+# the page now has five strategies: "Lowest-carbon" used to be rejected, so its summary never reached the AI
+LC = {**F, "strategy": "Lowest-carbon", "co2_pct": 0}
+res.append(ok("Lowest-carbon summary request is accepted", ex.validate(LC)["strategy"] == "Lowest-carbon"))
+res.append(ok("Lowest-carbon gets an AI answer (not the fallback)", ex.explain(LC, lambda p, fix=None: GOOD.replace("Balanced", "Lowest-carbon"))["source"] == "ai"))
+# summary and assistant share ONE per-minute model budget
+import aoai
+aoai._recent.clear(); old = aoai.MAX_PER_MIN; aoai.MAX_PER_MIN = 3
+got = [aoai.reserve() for _ in range(5)]
+res.append(ok("shared budget allows only MAX_PER_MIN calls a minute across both features", got == [True, True, True, False, False]))
+aoai.MAX_PER_MIN = old; aoai._recent.clear()
+class E:  # a 429 answer with Retry-After
+    headers = {"Retry-After": "30"}
+res.append(ok("Retry-After is honoured but capped at 4 s", aoai.retry_wait(E()) == 4.0))
+
 print(f"\n{sum(res)}/{len(res)} passed"); raise SystemExit(0 if all(res) else 1)
