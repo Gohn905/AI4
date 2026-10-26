@@ -70,4 +70,27 @@ try:
 except ValueError:
     ok("rejected: soc_now_kwh without fixed steps", True)
 
+
+# 10. the real-time chart rebuilds the whole day (recorded before now, predicted after) from the series: it must balance exactly
+for scen in (NONE, CLOUD):
+    for D2 in (D, {**D, "flex_share": 0.1}):
+        r = live.replan({**D2, "replay": {"now_step": 28, "scenario": scen}}); s_ = r["series"]; n = r["steps"]; k = r["now_step"]
+        Lh = np.array(s_["actual_load"] + s_["belief_load"][k:]); fl = np.array(s_["new_flex"])
+        ld, pu = np.array(s_["new_ld"]), np.array(s_["new_pv_used"])
+        ok("series: demand = recorded load before now + corrected load after + flexible load", len(ld) == n and np.allclose(ld, Lh + fl, atol=1e-3))
+        ok("series: solar used = demand + charge - discharge - grid, and never more than the solar that exists",
+           np.allclose(pu, ld + np.array(s_["new_ch"]) - np.array(s_["new_dis"]) - np.array(s_["new_grid"]), atol=1e-2)
+           and np.all(pu <= np.array(s_["actual_pv"] + s_["belief_pv"][k:]) + 1e-3))
+
+
+# 11. a re-plan must keep the SAME CO2 allowance as the day-ahead plan (regression: it used to be applied again to what was left of the
+#     day, so with nothing wrong in the forecast the re-plan cost RM 754 MORE than simply carrying on with the old plan)
+PAGE_DAY = {"batt_kwh":5000,"eff":0.9,"grid_limit":4200,"hard_limit":True,"md_rate_day":3.2353333333333336,"md_hours":[14,15,16,17,18,19,20,21],"flex_share":0,"carbon_adder":0,"wear":0.02,"ev":{"chargers":8,"kw":50,"energy_kwh":700,"window":[7.5,18]},"load":[1265.5,1260.3,1249.8,1246.8,1251.3,1251.2,1246.5,1244.5,1245.1,1244.3,1241.9,1270.4,1329.7,1423.4,1551.4,1840.8,2291.6,2662.0,2952.1,3118.4,3161.0,3224.1,3307.7,3238.6,3016.7,3094.5,3471.9,3742.6,3906.6,3945.4,3859.0,3689.9,3438.1,3192,2951.7,2684.8,2391.6,2144.9,1944.9,1761.3,1594.1,1475.8,1406.4,1353.9,1318.4,1295.6,1285.4,1280.3],"pv":[0,0,0,0,0,0,0,0,0,0,0,0,0,51.0,152.9,302.0,498.3,673.6,827.8,960.3,1070.9,1161.4,1231.5,1283.2,1316.2,1331.8,1330.0,1311.0,1274.7,1220.5,1148.2,1056.5,945.5,814.0,661.9,489.6,297.1,150.6,50.2,0,0,0,0,0,0,0,0,0],"rates":[0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.2723,0.3132,0.3132,0.3132,0.3132,0.3132,0.3132,0.3132,0.3132,0.3132,0.3132,0.3132,0.3132,0.3132,0.3132,0.3132,0.3132,0.2723,0.2723,0.2723,0.2723],"co2_allow":0.5}   # a real Monday request sent by the page (Balanced strategy), rounded
+for allow in (1.0, 0.5, 0.0):
+    r = live.replan({**PAGE_DAY, "co2_allow": allow, "replay": {"now_step": 28, "scenario": NONE}}); e = r["expected"]
+    ok(f"co2_allow {allow}: no deviation, re-plan costs no more than the day-ahead plan", e["new_plan"]["cost"] <= r["day_ahead_expected_cost"] + 0.5)
+    ok(f"co2_allow {allow}: no deviation, re-plan is no worse than carrying on with the old plan", e["saving_rm"] >= -0.5)
+    r = live.replan({**PAGE_DAY, "co2_allow": allow, "replay": {"now_step": 28, "scenario": CLOUD}})
+    ok(f"co2_allow {allow}: cloud, re-plan is no worse than carrying on with the old plan", r["expected"]["saving_rm"] >= -0.5)
+
 print(f"\n{sum(res)}/{len(res)} passed"); raise SystemExit(0 if all(res) else 1)
