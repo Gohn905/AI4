@@ -129,6 +129,7 @@ input[type=range]{accent-color:#F59E0B}
 .flash{animation:flash 2.2s ease-out}@keyframes flash{0%,60%{box-shadow:0 0 0 4px var(--sun)}100%{box-shadow:0 0 0 0 transparent}}
 @media(max-width:640px){.pa{width:100%}.pg{grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}.pn{width:auto;min-width:0}.pn b{font-size:12px}}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span class="sp"></span><span id="auth" class="note"></span></header>
+<div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
 <div id="amsg" class="note" style="margin:0 0 6px"></div>
 <div class="pagehead"><div><div class="eyebrow">Facility energy intelligence</div><h1 id="pgTitle">Your energy, at a glance.</h1><div class="note" data-role="tech" style="margin:0">Pick a day, week or month and a strategy. See what the plan saves compared with the baseline.</div><div class="bsub" id="bSub" data-role="owner"></div></div><div class="seg" id="bView" data-role="owner" role="group" aria-label="Period"><button id="bday">Day</button><button id="bweek">Week</button><button id="bmonth">Month</button></div></div>
@@ -265,7 +266,7 @@ let saved=null;try{saved=JSON.parse(localStorage.getItem('facility'))}catch(e){}
 let lastPlan=null,chartTab='use',pend=null,last=null,srcNote='',M=null,aiFacts=null;const aiCache=new Map();try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
 if(M&&M.res!==S){try{const up=a=>a.flatMap(v=>[v,v]);for(const k in M.days)M.days[k]=up(M.days[k]);for(const k in (M.typ||{}))M.typ[k]=up(M.typ[k]);M.res=S}catch(e){M=null}}
 const LEG=o=>o&&o.evn===undefined?Object.assign({evn:0,eve:0},o):(o||{});
-let F=Object.assign({},DEF,LEG(saved)),view='day',cur=TODAY,sel='bal',cache=new Map(),tok=0;if(F.follow=='zero')F.follow='bal';
+let F=Object.assign({},DEF,LEG(saved)),view='day',cur=TODAY,sel='bal',cache=new Map(),tok=0;
 const tf=()=>TF[F.volt+F.struct],tou=()=>F.struct=='T';
 
 async function api(url,opt){const ctl=typeof AbortController!='undefined'?new AbortController():null,t=ctl?setTimeout(()=>ctl.abort(),25000):0;let r;
@@ -742,7 +743,7 @@ function changeCard(){if(!pend)return;const p=pend;pend=null;const a=p.before,b=
  else num='The numbers below now use the new settings.';
  $('out').insertAdjacentHTML('afterbegin',`<div class="card" data-tour="changed" style="border-color:var(--solar)"><div class="bar" style="margin:0"><h2 style="margin:0">What just changed</h2><span class="sp"></span><button data-x="1">Dismiss</button></div><ul>${p.items.map(x=>`<li>${x}</li>`).join('')}</ul><p class="note">${num}</p></div>`)}
 async function render(){
- lvStop();lvSim=null;
+ lvStop();lvSim=null;uiSave();
  const my=++tok,dates=span();$('dt').value=cur;tabs();
  ['day','week','month'].forEach(v=>{$('v'+v).classList.toggle('on',view==v);$('b'+v).classList.toggle('on',view==v)});
  [['yes',addD(TODAY,-1)],['tod',TODAY],['tom',addD(TODAY,1)]].forEach(([id,x])=>$(id).classList.toggle('on',view=='day'&&cur==x));
@@ -960,7 +961,7 @@ function parseMeter(text,unit){const L=text.split(/\r?\n/).filter(x=>x.trim());i
 function meterMsg(){$('m_msg').textContent=M?`In use: ${M.n} complete days (${M.from} to ${M.to}), ${M.half?'30-minute':'hourly (repeated as 30-minute steps)'} readings. Highest reading ${M.pk||M.max} kW; typical weekday peak ${M.max} kW.`:'No meter data loaded.'}
 function importMeter(text,unit){let r;try{r=parseMeter(text,unit)}catch(e){r=null}
  if(!r||r.err)return{err:(r&&r.err)||'Could not read the file. It needs a header row, a timestamp column and a value column.'};
- M=r;try{localStorage.setItem('meter',JSON.stringify(M))}catch(e){}
+ M=r;try{localStorage.setItem('meter',JSON.stringify(M))}catch(e){storeFail('The meter file is too big for this browser to keep. It works for this visit, but you will need to load it again after reloading.')}
  cache.clear();meterMsg();if(r.skipped)$('m_msg').textContent+=` ${r.skipped} unreadable rows were skipped.`;
  $('f_peak').value=r.pk;
  applyLocal([`<b>Demand source:</b> your meter file, ${r.n} complete days (${r.from} to ${r.to}), read as ${r.unit=='kwh'?'kWh per interval':'kW'}. Dates inside the file now show your real demand.`,`<b>Maximum demand</b> was filled in from the file: the highest reading is ${r.pk} kW. Overwrite it with the figure from your bill if they differ.`]);return{r}}
@@ -971,8 +972,8 @@ meterMsg();
 
 function fill(){$('f_tar').value=F.volt+F.struct;FIELDS.forEach(k=>$('f_'+k).value=F[k]);fillSites();$('fsum').textContent=`My facility: ${F.name}, ${F.volt} ${F.struct=='T'?'ToU':'General'}, ${F.peak} kW peak, ${F.kwp} kWp solar, ${F.bat} kWh battery (tap to edit)`;ratesCard()}
 let user=null,sites=[];
-const say=t=>{$('fmsg').textContent=t;$('amsg').textContent=t},persist=()=>{try{localStorage.setItem('facility',JSON.stringify(F))}catch(e){}};
-function fillSites(){const s=$('sites');if(!s)return;s.innerHTML=sites.length?sites.map(x=>`<option value="${esc(x.name)}"${x.name==F.name?' selected':''}>${esc(x.name)}</option>`).join(''):'<option value="">No saved facilities yet</option>'}
+const say=t=>{$('fmsg').textContent=t;$('amsg').textContent=t},persist=()=>{try{localStorage.setItem('facility',JSON.stringify(F));storeOk()}catch(e){storeFail('Your browser refused to save your facility settings (storage is full or blocked), so they will be forgotten when you close or reload this page. Sign in and press Save to account to keep them.')}};
+function fillSites(){const s=$('sites');if(!s)return;const on=sites.some(x=>x.name==F.name);s.innerHTML=(on?'':`<option value="" selected>This device: ${esc(F.name)} (not on your account)</option>`)+sites.map(x=>`<option value="${esc(x.name)}"${x.name==F.name?' selected':''}>${esc(x.name)}</option>`).join('')}
 function authUi(){const a=$('auth');
  if(user){a.innerHTML=`Signed in as <b>${esc(user.userDetails||'user')}</b> <select id="sites" aria-label="My saved facilities"></select> <a href="/.auth/logout?post_logout_redirect_uri=/">Sign out</a>`;
   $('sites').onchange=()=>{const n=$('sites').value;if(n)loadSite(n)};fillSites()}
@@ -984,10 +985,10 @@ async function whoami(){try{const j=await (await fetch('/.auth/me')).json();user
 function readForm(){$('f_volt').value=$('f_tar').value.slice(0,2);$('f_struct').value=$('f_tar').value[2];
  const n=Object.assign({},F);FIELDS.forEach(k=>n[k]=$('f_'+k).value.trim());
  const bad=NUMS.find(k=>n[k]===''||!isFinite(+n[k])||(k!='afa'&&+n[k]<0));
- if(bad||!n.name||+n.peak<1||+n.flex>30||+n.eff<50||+n.eff>100||(n.lim!==''&&!(+n.lim>=0))){say('Please check the numbers: all boxes except the grid limit are needed.');return null}
+ if(bad||!n.name||+n.peak<1||+n.flex>30||+n.eff<50||+n.eff>100||(n.lim!==''&&!(+n.lim>=0))){const why=!n.name?'the facility name is empty':bad?'"'+(LBL[bad]||bad)+'" needs a plain number (no commas or units)':+n.peak<1?'maximum demand must be at least 1':+n.flex>30?'flexible load can be at most 30%':(+n.eff<50||+n.eff>100)?'battery efficiency must be between 50 and 100':'the grid limit must be a number or empty';say('NOT saved: '+why+'. Your earlier settings are still kept.');return null}
  NUMS.forEach(k=>n[k]=+n[k]);n.lim=n.lim===''?'':+n.lim;return n}
 function applyLocal(extra){const n=readForm();if(!n)return null;const ch=diffF(F,n),ex=extra||[];
- if(!ch.length&&!ex.length)return n;setPend(ex.concat(ch));F=n;persist();fill();render();return n}
+ if(!ch.length&&!ex.length)return n;setPend(ex.concat(ch));F=n;persist();fill();render();{const d=new Date();say('Saved on this device at '+p2(d.getHours())+':'+p2(d.getMinutes())+(user?'. It is not on your account until you press Save to account.':'. Sign in to keep it on your account too.'))}return n}
 let applyT;$('setup').onchange=e=>{if(e.target&&(e.target.id=='m_file'||e.target.id=='m_unit'))return;clearTimeout(applyT);applyT=setTimeout(()=>applyLocal(),200);say('')};
 $('fsave').onclick=async()=>{const n=readForm();if(!n||!user)return;
  try{const j=await api('/api/profile',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n.name,data:n})});sites=j.sites||[];fillSites();say('Saved to your account.')}
@@ -1005,5 +1006,19 @@ $('f_case').onchange=e=>{const c=CASES[e.target.value];if(!c)return;const nf=Obj
  FIELDS.forEach(k=>$('f_'+k).value=nf[k]);$('f_tar').value=nf.volt+nf.struct;
  applyLocal(['<b>Typical case loaded:</b> '+esc(c.name)+'. Replace these numbers with your own bill.']);e.target.value=''};
 applyRole(role||'owner');$('roleGate').hidden=true;
-fill();if(!saved){applyRole('tech');dtab='fa';applyTab()}render();whoami();
+// ---- storage health: say so when the browser cannot keep the person's data ----
+let storeBad='';
+function storeShow(){const w=$('storeWarn');if(w){w.hidden=!storeBad;w.textContent=storeBad}}
+function storeFail(m){storeBad=m;storeShow()}
+function storeOk(){if(storeBad&&storeBad.indexOf('refused')>=0){storeBad='';storeShow()}}
+function storeCheck(){try{localStorage.setItem('__t','1');if(localStorage.getItem('__t')!=='1')throw 0;localStorage.removeItem('__t')}
+ catch(e){storeFail('This browser is blocking storage (private window or a privacy setting), so your settings cannot be remembered here and will reset every visit. Use a normal window, or sign in and press Save to account.')}
+ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch(e){}}
+// ---- remember where the person was (strategy, view, tab, chart) so a reload does not jump back to the defaults ----
+function uiSave(){try{localStorage.setItem('ui',JSON.stringify({sel,view,dtab,chartTab}))}catch(e){}}
+function uiRestore(){try{const u=JSON.parse(localStorage.getItem('ui')||'null');if(!u)return;
+ if(['base','cost','bal','prod','zero'].includes(u.sel))sel=u.sel;if(['day','week','month'].includes(u.view))view=u.view;
+ if(['ov','fc','op','pl','ad','fa'].includes(u.dtab))dtab=u.dtab;if(['use','wx','pc','pl'].includes(u.chartTab))chartTab=u.chartTab;
+ if(role=='tech')applyTab()}catch(e){}}
+storeCheck();fill();if(!saved){applyRole('tech');dtab='fa';applyTab()}else uiRestore();render();whoami();
 </script></body></html>
