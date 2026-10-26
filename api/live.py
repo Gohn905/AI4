@@ -180,7 +180,7 @@ def replan(d):
         "next_steps": nxt,
         "series": {"forecast_load": list(load), "forecast_pv": list(pv), "actual_load": list(al), "actual_pv": list(ap),
                    "belief_load": list(bl), "belief_pv": list(bp), "new_grid": new["grid"], "new_ch": new["ch"], "new_dis": new["dis"],
-                   "new_flex": new["flex"], "old_grid": og},
+                   "new_flex": new["flex"], "new_pv_used": new["pv_used"], "new_ld": new["ld"], "old_grid": og},
         "notes": ["Recommendation only: no equipment is controlled.",
                   "Expected costs use the corrected forecast for the rest of the day, so they are estimates, not measurements.",
                   "Old plan and new plan are compared on the same corrected forecast, from the same state, with the same grid-limit guard."],
