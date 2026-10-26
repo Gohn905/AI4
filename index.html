@@ -123,6 +123,10 @@ main[data-role=owner] .muted.small,main[data-role=owner] .footnote{font-size:13p
 main[data-role=owner] .ribbon{font-size:15px}
 input,select,textarea{border-color:#D6CCA6}
 input[type=range]{accent-color:#F59E0B}
+.lvbox{margin-top:12px;padding-top:10px;border-top:1px dashed var(--card-line)}
+.lvtime{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0}.lvt{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.lvlog{list-style:none;padding:0;margin:6px 0}.lvlog li{padding:7px 10px;margin:0 0 5px;background:#fff;border:1px solid var(--card-line);border-left:5px solid var(--card-line);border-radius:6px;font-size:13px}.lvlog li.lvoff{border-left-color:var(--amb)}
+.flash{animation:flash 2.2s ease-out}@keyframes flash{0%,60%{box-shadow:0 0 0 4px var(--sun)}100%{box-shadow:0 0 0 0 transparent}}
 @media(max-width:640px){.pa{width:100%}.pg{grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}.pn{width:auto;min-width:0}.pn b{font-size:12px}}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span class="sp"></span><span id="auth" class="note"></span></header>
 <main id="app" data-role="owner">
@@ -527,7 +531,11 @@ function liveCard(){const td=cur==TODAY;return `<div class="card" data-role="tec
 <p class="note" style="margin-top:0">Give the system what has really happened since midnight. It measures the forecast error, corrects the rest of the day, and re-plans from now. <b>Recommendation only: no equipment is controlled.</b></p>
 ${td?`<div class="bar"><select id="lvMd">${MODES.filter(m=>m.k!='prod').map(m=>`<option value="${m.k}"${m.k==(sel=='bal'?'bal':'cost')?' selected':''}>${m.n}</option>`).join('')}</select> <label class="note">Measured data (CSV): <input type="file" id="lvFile" accept=".csv,text/csv"></label> <button data-lvt="1">Download CSV template</button></div>
 <p class="note">Columns: <code>load_kw</code> (site load, <b>without</b> EV charging) and <code>solar_kw</code> are required; optional <code>battery_kw</code> (discharge +, charging &minus;), <code>ev_kw</code>, <code>grid_kw</code> (only used to check the other readings), <code>soc_kwh</code> (battery charge now, last row). One row per 30 minutes from 00:00 today. Leave a column empty if you do not have it: then the day-ahead plan is assumed to have been followed.</p>
-<div class="bar"><b>No meter yet?</b> <select id="lvSc">${Object.entries(ROSC).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join('')}</select> <select id="lvNow"><option value="20">It is 10:00</option><option value="24">It is 12:00</option><option value="28" selected>It is 14:00</option><option value="32">It is 16:00</option></select> <button class="on" data-lv="1">Run simulated replay</button></div>`:`<p class="note"><b>Open today to use this.</b> It compares the forecast with what happened so far today.</p>`}
+<div class="bar"><b>No meter yet?</b> <select id="lvSc">${Object.entries(ROSC).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join('')}</select> <select id="lvNow"><option value="20">It is 10:00</option><option value="24">It is 12:00</option><option value="28" selected>It is 14:00</option><option value="32">It is 16:00</option></select> <button class="on" data-lv="1">Run simulated replay</button></div>
+<div class="lvbox"><div class="bar"><b>Or watch it live: a simulated clock.</b> <label class="note">Start at <select id="lvStart"><option value="12">06:00</option><option value="16" selected>08:00</option><option value="20">10:00</option><option value="now">the real time now</option></select></label> <label class="note">Speed <select id="lvSpd"><option value="demo">30 min every 4 s</option><option value="slow">30 min every 8 s</option><option value="real">real time (1 s = 1 s)</option></select></label> <button class="on" id="lvGo" data-lvs="go">&#9654; Start</button> <button data-lvs="reset">Reset</button></div>
+<div id="lvTime" class="lvtime"><span class="lvt">08:00</span> <span class="badge amber">SIMULATED CLOCK AND DATA</span> <span class="note">ready</span></div><div class="barwrap" style="margin:4px 0 8px"><div class="barfill" id="lvProg" style="width:33.3%;background:var(--amb)"></div></div>
+<p class="note" style="margin:0 0 6px">The scenario chosen above is the simulated &ldquo;reality&rdquo;. Every 30 simulated minutes the clock gives the system the data so far, like a meter would. It measures the error, corrects the rest of the day and re-plans; each decision is logged below. Nothing is real and no equipment is controlled.</p>
+<div id="lvEnd"></div><ul id="lvLog" class="lvlog"></ul></div>`:`<p class="note"><b>Open today to use this.</b> It compares the forecast with what happened so far today.</p>`}
 <span id="lvMsg" class="note"></span><div id="lvOut" style="margin-top:8px"></div></div>`}
 function liveParse(txt,full){const L=txt.replace(/^\uFEFF/,'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(L.length<2)throw new Error('The file needs a header row and at least one data row');
  const h=L[0].split(',').map(x=>x.trim().toLowerCase()),col=n=>h.indexOf(n),rows=L.slice(1).map(l=>l.split(',').map(x=>x.trim()));
@@ -559,6 +567,51 @@ function liveRender(j,q){const fe=j.forecast_error,ex=j.expected,o=ex.old_plan,n
  <p class="note">Battery data: ${esc(dq.battery_source)}. EV data: ${esc(dq.ev_source)}. Battery charge: ${esc(dq.soc_source)}. The old and new plans are compared on the same corrected forecast, from the same state, with the same grid-limit guard, so the saving is an estimate, not a measurement. ${esc(j.data_kind)}</p>`}
 async function liveRun(body,msg){const q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return;const m=$('lvMsg');m.textContent=msg||'Calculating...';$('lvOut').innerHTML='';const lp=lrnGet();
  try{const j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,lp?{learned:lp}:{},body))});m.textContent='';lvLast=j;if($('lvOut'))liveRender(j,q)}catch(e){m.textContent='';$('lvOut').innerHTML=`<span class="err">${esc(e.message)}</span>`}}
+// ================= Live clock (SIMULATED): plays the day forward and hands data to /api/replan like a meter feed would =================
+let lvSim=null;const LVSPD={demo:7.5,slow:3.75,real:1/60};   // simulated minutes per real second
+function lvStop(){if(lvSim&&lvSim.timer){clearInterval(lvSim.timer);lvSim.timer=0}}
+function lvHm(m){m=Math.max(0,Math.min(1440,Math.floor(m)));return p2(Math.floor(m/60))+':'+p2(m%60)}
+function lvStart0(){const v=$('lvStart').value;if(v=='now'){const d=new Date();return Math.max(30,Math.min(1410,d.getHours()*60+d.getMinutes()))}return +v*30}
+function lvDraw(){const s=lvSim,el=$('lvTime');if(!el)return;
+ const t=s?s.t:lvStart0(),st=!s?'ready':s.done?'end of day':s.timer?(s.busy?'planning...':'running'):'paused';
+ el.innerHTML=`<span class="lvt">${lvHm(t)}</span> <span class="badge amber">SIMULATED CLOCK AND DATA</span> <span class="note">${st}</span>`;
+ $('lvProg').style.width=(100*t/1440).toFixed(1)+'%';
+ $('lvGo').innerHTML=s&&s.timer?'&#9208; Pause':s&&s.done?'&#8635; Replay day':s&&s.last>=0?'&#9654; Resume':'&#9654; Start'}
+function lvGo(){const s=lvSim;
+ if(s&&s.timer){lvStop();lvDraw();return}
+ if(!s||s.done){lvStop();lvSim={t:lvStart0(),spd:7.5,sc:$('lvSc').value,last:-1,busy:false,log:[],timer:0,done:false};$('lvLog').innerHTML='';$('lvEnd').innerHTML='';$('lvOut').innerHTML=''}
+ $('lvMsg').textContent='';lvSim.timer=setInterval(lvTick,250);lvTick()}
+function lvReset(){lvStop();lvSim=null;$('lvLog').innerHTML='';$('lvEnd').innerHTML='';$('lvOut').innerHTML='';$('lvMsg').textContent='';lvDraw()}
+function lvTick(){const s=lvSim;if(!s||!s.timer)return;if(!$('lvTime')){lvStop();return}
+ if(s.busy){lvDraw();return}                      // the clock waits while the server plans, so the time shown is the time of the data
+ s.spd=LVSPD[$('lvSpd').value]||7.5;
+ if(s.last>=0)s.t=Math.min(1440,s.t+s.spd*.25);
+ const k=Math.min(NS-1,Math.floor(s.t*S/60));
+ if(k>=1&&k>s.last){lvStep(k);lvDraw();return}
+ if(s.t>=1440&&s.last>=NS-1){s.done=true;lvStop();lvEnd()}
+ lvDraw()}
+async function lvStep(k){const s=lvSim,q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return;s.busy=true;const lp=lrnGet();
+ try{const j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,lp?{learned:lp}:{},{replay:{now_step:k,scenario:ROSC[s.sc][1]}}))});
+  if(lvSim!==s||!$('lvOut'))return;
+  s.last=k;s.lastJ=j;lvLast=j;liveRender(j,q);lvLogAdd(j)}
+ catch(e){if(lvSim===s){lvStop();if($('lvMsg'))$('lvMsg').textContent='Paused: '+e.message+' Press Resume to continue.'}}
+ finally{s.busy=false;lvDraw()}}
+function lvLogAdd(j){const s=lvSim,c=j.correction,ex=j.expected,pv=c.pv_ratio,ld=c.load_ratio,dp=pv==null?0:Math.abs(pv-1),dl=ld==null?0:Math.abs(ld-1),off=dp>.15||dl>.1;let t;
+ if(off){const b=[];if(pv!=null&&dp>.15)b.push('solar is at <b>'+N0(pv*100)+'%</b> of forecast');if(ld!=null&&dl>.1)b.push('load is at <b>'+N0(ld*100)+'%</b> of forecast');
+  t='Reality differs from the forecast ('+b.join(' and ')+'). Rest of the day corrected and the plan recomputed. '+(ex.saving_rm>=0.5?'Re-planning is expected to save <b>'+money(ex.saving_rm)+'</b> compared with sticking to the old plan.':'The old plan is already about as good on the corrected forecast, so it is kept.')}
+ else t='On track: reality is close to the forecast, so the plan stands.';
+ s.log.unshift({h:tm(j.now_step),off,t});s.log=s.log.slice(0,14);
+ $('lvLog').innerHTML=s.log.map(x=>`<li class="${x.off?'lvoff':'lvok'}"><b>${x.h}</b> ${x.t}</li>`).join('')}
+function lvEnd(){const s=lvSim,j=s&&s.lastJ;if(!j||!$('lvEnd'))return;const fe=j.forecast_error,l=j.learned&&j.learned.applied;
+ $('lvEnd').innerHTML=`<div class="ribbon past"><b>DAY COMPLETE (simulated).</b> Average forecast error today: solar ${N0(fe.pv.mae_kw)} kW, load ${N0(fe.load.mae_kw)} kW.${l?` Without learning it would have been solar ${N0(j.forecast_error_raw.pv.mae_kw)} kW, load ${N0(j.forecast_error_raw.load.mae_kw)} kW.`:''}</div>
+ <p class="note" style="margin:6px 0">${lrnStat()} Let the system learn from today&rsquo;s mistakes, then press <b>Replay day</b>: the forecast is corrected before the day starts. It only helps for an error that <b>repeats</b> (try &ldquo;Solar at 50% of forecast all day&rdquo;); a one-off cloud front is not worth learning and would make tomorrow&rsquo;s forecast worse.</p><button class="on" data-lvl="1">Learn from this simulated day</button> <span id="lvLrn" class="note"></span>`}
+async function lvLearn(){const s=lvSim,p=lastPlan;if(!s||!p)return;const m=$('lvLrn');m.textContent='Learning...';const fc=p.b.fc,al=fc.load.slice(),ap=fc.pv.slice();
+ ROSC[s.sc][1].forEach(e=>{const a=e.from_h,z=e.to_h,arr=e.what=='pv'?ap:al;for(let t=0;t<NS;t++)if(t/S>=a-1e-9&&(t+1)/S<=z+1e-9)arr[t]*=e.factor});
+ try{const j=await api('/api/learn',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'update',profile:lrnGet(),forecast:{load:fc.load,pv:fc.pv},actual:{load:al,pv:ap}})});
+  lrnSet(j.profile,'sim-'+TODAY+'-'+(lrnDates().filter(x=>String(x).indexOf('sim-')==0).length+1));
+  m.innerHTML='<b>Learned.</b> '+lrnStat()+' Press <b>Replay day</b> to see the corrected forecast.';if($('lrnStat'))$('lrnStat').innerHTML=lrnStat()}
+ catch(e){m.innerHTML='<span class="err">'+esc(e.message)+'</span>'}}
+document.addEventListener('change',e=>{if(e.target&&e.target.id=='lvStart'&&!(lvSim&&lvSim.timer))lvDraw()});
 function liveFile(inp){const f=inp.files&&inp.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{let o;try{o=liveParse(String(rd.result))}catch(e){$('lvOut').innerHTML=`<span class="err">${esc(e.message)}</span>`;return}liveRun({now:o},'Calculating from '+o.load.length+' rows...')};rd.onerror=()=>{$('lvOut').innerHTML='<span class="err">The file could not be read.</span>'};rd.readAsText(f)}
 if(typeof document!='undefined'&&document.addEventListener)document.addEventListener('change',e=>{if(e.target&&e.target.id=='lvFile')liveFile(e.target)});
 // ================= learning from forecast error (one correction ratio per half-hour, kept on this device) =================
@@ -689,6 +742,7 @@ function changeCard(){if(!pend)return;const p=pend;pend=null;const a=p.before,b=
  else num='The numbers below now use the new settings.';
  $('out').insertAdjacentHTML('afterbegin',`<div class="card" data-tour="changed" style="border-color:var(--solar)"><div class="bar" style="margin:0"><h2 style="margin:0">What just changed</h2><span class="sp"></span><button data-x="1">Dismiss</button></div><ul>${p.items.map(x=>`<li>${x}</li>`).join('')}</ul><p class="note">${num}</p></div>`)}
 async function render(){
+ lvStop();lvSim=null;
  const my=++tok,dates=span();$('dt').value=cur;tabs();
  ['day','week','month'].forEach(v=>{$('v'+v).classList.toggle('on',view==v);$('b'+v).classList.toggle('on',view==v)});
  [['yes',addD(TODAY,-1)],['tod',TODAY],['tom',addD(TODAY,1)]].forEach(([id,x])=>$(id).classList.toggle('on',view=='day'&&cur==x));
@@ -713,13 +767,14 @@ async function render(){
  }catch(e){if(my==tok)$('out').innerHTML=errCard(e.message)}}
 
 
-function aiShow(j){$('aiTxt').innerHTML=esc(j.text)+'<br><small>'+(j.source=='ai'?'Written by an AI model (Azure AI Foundry) from the optimiser\'s numbers. Every number in it was checked against those numbers.':'Standard text built from the optimiser\'s numbers. The AI model was not used'+(j.note?'<span data-role="tech"> ('+esc(j.note)+')</span>':'')+'.')+'</small>'}
+function aiWhy(n){n=String(n||'').toLowerCase();return !n?'':/busy|429/.test(n)?'The AI is busy right now (it answers a limited number of requests a minute). Press the button again in a moment.':/rejected|numbers|too long/.test(n)?'The AI wrote a number that is not in the plan, so its text was thrown away (every number is checked). Press the button to try again.':/not configured|sign-in|404|401|403/.test(n)?'The AI service is not set up or not allowed on this server.':'The AI service did not answer. Press the button to try again.'}
+function aiShow(j){$('aiTxt').innerHTML=esc(j.text)+'<br><small>'+(j.source=='ai'?'Written by an AI model (Azure AI Foundry) from the optimiser\'s numbers. Every number in it was checked against those numbers.':'Standard text built from the optimiser\'s numbers. The AI model was not used'+(j.note?'. '+esc(aiWhy(j.note))+'<span data-role="tech"> ('+esc(j.note)+')</span>':'.'))+'</small>'}
 function aiRestore(){const k=aiFacts&&JSON.stringify(aiFacts);if(k&&aiCache.has(k)&&$('aiTxt'))aiShow(aiCache.get(k))}
 async function explainClick(){if(!aiFacts)return;const k=JSON.stringify(aiFacts),btn=$('aiBtn');
  if(aiCache.has(k)){aiShow(aiCache.get(k));return}
  btn.disabled=true;$('aiTxt').textContent='Writing the summary...';
  try{const j=await api('/api/explain',{method:'POST',headers:{'Content-Type':'application/json'},body:k});if(j.source=='ai')aiCache.set(k,j);aiShow(j)}
- catch(e){$('aiTxt').innerHTML=esc(tplSummary(aiFacts))+'<br><small>The AI service did not answer, so this is the standard text, built from the same numbers.<span data-role="tech"> ('+esc(e.message)+')</span></small>'}
+ catch(e){$('aiTxt').innerHTML=esc(tplSummary(aiFacts))+'<br><small>The AI service did not answer, so this is the standard text, built from the same numbers. '+esc(aiWhy(e.message))+'<span data-role="tech"> ('+esc(e.message)+')</span></small>'}
  btn.disabled=false}
 async function warm(my){if(my!=tok||view=='month')return;const mon=addD(cur,-((parse(cur).getDay()+6)%7));
  for(let i=0;i<7;i++){const d=addD(mon,i);if(d<MIN||d>MAX)continue;
@@ -797,25 +852,33 @@ const redactText=t=>String(t).replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g,'[email]').r
 const cAdd=(cls,html)=>{$('chatLog').insertAdjacentHTML('beforeend',cls=='msg b'?`<div class="brow"><img class="shiny" src="shiny.png" alt="" onerror="this.style.display='none'"><div class="${cls}">${html}</div></div>`:`<div class="${cls}">${html}</div>`);const L=$('chatLog');L.scrollTop=L.scrollHeight};
 function chatOpen(on){$('chatPanel').hidden=!on;$('chatBtn').setAttribute('aria-expanded',String(on));
  if(on){if(!chat.greeted){chat.greeted=true;cAdd('msg b','Hi, I\'m Shiny! Tell me about your facility, for example: "a factory in Penang on the MV time-of-use tariff, 750 kWp solar and a 1000 kWh battery". I can also open a day, week or month, switch strategy, or read a meter CSV you attach.')}if($('chatIn').focus)$('chatIn').focus()}}
-const ctxNow=()=>({today:TODAY,view,date:cur,strategy:sel,meter_loaded:!!M,facility:{name:F.name,location:F.loc=='5.41,100.33'?'penang':'kl',load_type:F.prof,tariff:F.volt+F.struct,max_demand_kw:+F.peak,afa_sen_kwh:+F.afa,solar_kwp:+F.kwp,battery_kwh:+F.bat,battery_efficiency_percent:+F.eff,flex_percent:+F.flex,grid_limit_kw:F.lim===''?null:+F.lim,emission_factor:+F.ef,strategy_followed:F.follow}});
+const ctxNow=()=>({today:TODAY,page:role=='tech'?'detailed':'brief',tab:role=='tech'?({ov:'overview',fc:'forecast',op:'optimisation',pl:'plan',ad:'advanced',fa:'facility'})[dtab]:'',view,date:cur,strategy:sel,meter_loaded:!!M,facility:{name:F.name,location:F.loc=='5.41,100.33'?'penang':'kl',load_type:F.prof,tariff:F.volt+F.struct,max_demand_kw:+F.peak,afa_sen_kwh:+F.afa,solar_kwp:+F.kwp,battery_kwh:+F.bat,battery_efficiency_percent:+F.eff,flex_percent:+F.flex,grid_limit_kw:F.lim===''?null:+F.lim,emission_factor:+F.ef,strategy_followed:F.follow}});
 function localIntent(t){const s=t.toLowerCase(),nav={},fac={},num=x=>+String(x).replace(/,/g,'');let m;
  if(/\bmonth\b/.test(s))nav.view='month';else if(/\bweek\b/.test(s))nav.view='week';
  const d=/\btomorrow\b/.test(s)?1:/\byesterday\b/.test(s)?-1:/\btoday\b/.test(s)?0:null;if(d!==null){nav.date=addD(TODAY,d);nav.view=nav.view||'day'}
  if(/cost[- ]?saving/.test(s))nav.strategy='cost';else if(/balanced/.test(s))nav.strategy='bal';else if(/no extra co2|zero co2|no extra carbon|carbon.?neutral/.test(s))nav.strategy='zero';else if(/production/.test(s))nav.strategy='prod';else if(/baseline/.test(s))nav.strategy='base';
- if(/weather|predicted/.test(s))nav.chart='wx';else if(/energy usage|usage graph/.test(s))nav.chart='use';
+ if(/power curve/.test(s))nav.chart='pc';else if(/panel layout|panels/.test(s))nav.chart='pl';else if(/weather|predicted/.test(s))nav.chart='wx';else if(/energy usage|usage graph/.test(s))nav.chart='use';
+ if(/\b(ai )?summary\b|briefing/.test(s))nav.open='summary';else if(/today so far|live|replay|schedule/.test(s))nav.tab='plan';else if(/re-?optimi[sz]|learning|advanced/.test(s))nav.tab='advanced';else if(/optimi[sz]ation|compare|comparison/.test(s))nav.tab='optimisation';
  if(/\btour\b|walk ?through/.test(s))nav.open='tour';
  if(m=s.match(/(\d[\d,.]*)\s*kwp/))fac.kwp=num(m[1]);if(m=s.match(/(\d[\d,.]*)\s*kwh/))fac.bat=num(m[1]);
  if(m=s.match(/(?:max(?:imum)?\s*demand|peak)\D{0,12}(\d[\d,.]*)\s*kw\b/))fac.peak=num(m[1]);
  const out={reply:'The AI model is not reachable, so I used simple keyword matching. Please check what I understood.'};if(Object.keys(nav).length)out.navigate=nav;if(Object.keys(fac).length)out.facility=fac;
  return out.navigate||out.facility?out:null}
-function applyNav(n){const bits=[];
+const TAB2DT={overview:'ov',forecast:'fc',optimisation:'op',plan:'pl',advanced:'ad',facility:'fa'};
+function applyNav(n){const bits=[];let toSummary=false;
+ const wantTech=n.detail=='detailed'||n.tab||n.chart||n.open=='summary';
+ if(n.detail=='brief'&&!n.tab&&!n.chart&&n.open!='summary'){applyRole('owner');try{localStorage.setItem('role','owner')}catch(e){}bits.push('Brief page')}
+ else if(wantTech&&role!='tech'){applyRole('tech');try{localStorage.setItem('role','tech')}catch(e){}bits.push('Detailed page')}
+ if(n.tab&&TAB2DT[n.tab]){dtab=TAB2DT[n.tab];bits.push(n.tab+' tab')}
+ else if(n.chart){dtab='fc'}
+ if(n.open=='summary'){dtab='ov';toSummary=true;bits.push('the AI summary')}
  if(n.date&&n.date>=MIN&&n.date<=MAX){cur=n.date;view=n.view||'day';bits.push(n.date)}
  if(n.view){view=n.view;bits.push(n.view+' view')}
  if(n.strategy){sel=n.strategy=='zero'?'bal':n.strategy;bits.push(NAMES[sel].replace('Optimiser: ',''))}
- if(n.chart){chartTab=n.chart;bits.push(n.chart=='wx'?'weather chart':'energy usage chart')}
+ if(n.chart){chartTab=n.chart;bits.push(({use:'energy usage chart',wx:'weather chart',pc:'power curve',pl:'panel layout'})[n.chart]||'chart')}
  if(n.open=='why'){$('why').hidden=false;$('qbtn').setAttribute('aria-expanded','true');bits.push('what the optimiser decides')}
  if(n.open=='tour'){chatOpen(false);tStart();return}
- if(bits.length)cAdd('msg n','Opened: '+esc([...new Set(bits)].join(', ')));render()}
+ if(bits.length)cAdd('msg n','Opened: '+esc([...new Set(bits)].join(', ')));render();if(toSummary)setTimeout(()=>{const a=$('aiTxt');if(a){const c=a.closest('.card')||a;c.scrollIntoView({behavior:'smooth',block:'center'});c.classList.add('flash');setTimeout(()=>c.classList.remove('flash'),2200)}},700)}
 function propToF(p){const n={};for(const k in p){if(k=='tar'){n.volt=p.tar.slice(0,2);n.struct=p.tar[2]}else if(k=='loc')n.loc=p.loc=='penang'?'5.41,100.33':'3.0553,101.7003';else n[k]=(k=='follow'&&p[k]=='zero')?'bal':p[k]}return n}
 function propose(p){const nf=Object.assign({},F,propToF(p)),lines=diffF(F,nf);
  if(!lines.length)return;
@@ -825,11 +888,11 @@ function cpClick(c){const id=+c.slice(1),nf=chat.props.get(id);if(!nf)return;cha
  if(c[0]=='d'){cAdd('msg n','Dismissed.');return}
  FIELDS.forEach(k=>$('f_'+k).value=nf[k]);$('f_tar').value=nf.volt+nf.struct;
  const n=applyLocal(['<b>Set by Shiny</b>, after you pressed Apply.']);cAdd('msg b',n?'Applied. The dashboard now uses these settings.':'I could not apply that: one of the values did not pass the form checks.')}
-function handleAssist(j,msg){if(j.reply)cAdd('msg b',esc(j.reply));chat.hist.push({role:'user',content:msg},{role:'assistant',content:String(j.reply||'').slice(0,300)});
+function handleAssist(j,msg,local){if(j.reply)cAdd('msg b',esc(j.reply));if(!local)chat.hist.push({role:'user',content:msg},{role:'assistant',content:String(j.reply||'').slice(0,300)});
  if(j.navigate&&Object.keys(j.navigate).length)applyNav(j.navigate);if(j.facility&&Object.keys(j.facility).length)propose(j.facility)}
 async function chatAsk(msg,doc){chat.busy=true;$('chatTyping').hidden=false;$('chatSend').disabled=true;
  try{const j=await api('/api/assist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,document:doc,history:chat.hist.slice(-6),context:ctxNow()})});handleAssist(j,msg)}
- catch(e){const l=localIntent(msg);if(l)handleAssist(l,msg);else cAdd('msg b','Shiny is not available right now'+(role=='tech'?' ('+esc(e.message)+')':'')+'. The boxes on the right still work.')}
+ catch(e){const l=localIntent(msg);if(l)handleAssist(l,msg,true);else cAdd('msg b','Shiny is not available right now'+(role=='tech'?' ('+esc(e.message)+')':'')+'. The boxes on the right still work.')}
  chat.busy=false;$('chatTyping').hidden=true;$('chatSend').disabled=false}
 async function chatSubmit(over){if(chat.busy)return;const raw=(over!=null?over:$('chatIn').value).trim();if(!raw)return;$('chatIn').value='';
  let msg=raw.slice(0,500),doc='';if(raw.length>500){msg='Here is text from my bill.';doc=redactText(raw)}
@@ -864,6 +927,8 @@ $('out').onclick=e=>{const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.d
  if(e.target.closest('[data-lvt]')){liveTemplate();return}
  if(e.target.closest('[data-lrd]')){lrnDemo();return}
  if(e.target.closest('[data-lrc]')){lrnSet(null);if($('lrnStat'))$('lrnStat').innerHTML=lrnStat();if($('lrnOut'))$('lrnOut').innerHTML='<div class="ribbon past">Cleared.</div>';return}
+ {const g=e.target.closest('[data-lvs]');if(g){g.dataset.lvs=='go'?lvGo():lvReset();return}}
+ if(e.target.closest('[data-lvl]')){lvLearn();return}
  if(e.target.closest('[data-lv]')){liveRun({replay:{now_step:+$('lvNow').value,scenario:ROSC[$('lvSc').value][1]}},'Running simulated replay...');return}
  if(e.target.closest('[data-au]')){auditRun();return}
  if(e.target.closest('[data-retry]')){render();return}
