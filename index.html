@@ -263,7 +263,7 @@ const esc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const nf=d=>n=>(+n).toLocaleString('en-MY',{minimumFractionDigits:d,maximumFractionDigits:d}),N0=nf(0),N1=nf(1),N2=nf(2),sgn=n=>(n>0?'+':n<0?'\u2212':'')+N0(Math.abs(n));
 const money=n=>'RM '+(Math.abs(n)>=100?N0(n):N2(n));
 let saved=null;try{saved=JSON.parse(localStorage.getItem('facility'))}catch(e){}
-let lastPlan=null,chartTab='use',pend=null,last=null,srcNote='',M=null,aiFacts=null;const aiCache=new Map();try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
+let lastPlan=null,chartTab='rt',rtDem=false,rtLast=null,pend=null,last=null,srcNote='',M=null,aiFacts=null;const aiCache=new Map();try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
 if(M&&M.res!==S){try{const up=a=>a.flatMap(v=>[v,v]);for(const k in M.days)M.days[k]=up(M.days[k]);for(const k in (M.typ||{}))M.typ[k]=up(M.typ[k]);M.res=S}catch(e){M=null}}
 const LEG=o=>o&&o.evn===undefined?Object.assign({evn:0,eve:0},o):(o||{});
 let F=Object.assign({},DEF,LEG(saved)),view='day',cur=TODAY,sel='bal',cache=new Map(),tok=0;if(F.follow=='prod')F.follow='bal';
@@ -311,7 +311,7 @@ const getRun=(date,mode)=>memo('r|'+date+'|'+mode+'|'+hk(rkey()),async()=>{
  r.fc=fc;r.c=c;if(off)r.offline=off;return r});
 
 // ---- chart helpers: clean axis ranges ----
-const chT=past=>chartTab=='rt'?'Real time: recorded until now, predicted after now':chartTab=='pl'?'Panel layout, every 30 minutes'+(past?'':' (forecast)'):chartTab=='wx'?(past?'Weather and solar record (recorded)':'Forecast inputs: weather, solar and demand (forecast)'):chartTab=='pc'?(past?'Power curve (rebuilt from recorded weather)':'Power curve (forecast)'):'Where the power comes from, every 30 minutes'+(past?'':' (forecast)');
+const chT=past=>chartTab=='rt'?'Energy usage: recorded until now, predicted after now':chartTab=='pl'?'Panel layout, every 30 minutes'+(past?'':' (forecast)'):chartTab=='wx'?(past?'Weather and solar record (recorded)':'Forecast inputs: weather, solar and demand (forecast)'):chartTab=='pc'?(past?'Power curve (rebuilt from recorded weather)':cur==TODAY?'Power curve: recorded until now, predicted after now':'Power curve (forecast)'):'Daily plan: where the power comes from, every 30 minutes'+(past?'':' (forecast)');
 function niceAxis(lo,hi,n=5){lo=Math.min(lo,0);hi=Math.max(hi,lo+1e-9);const p=Math.pow(10,Math.floor(Math.log10((hi-lo)/n)));let st=p;for(const m of [1,2,5,10]){st=m*p;if((hi-lo)/st<=n)break}return{lo:Math.floor(lo/st+1e-9)*st,hi:Math.ceil(hi/st-1e-9)*st,st}}
 function yGrid(ax,y,x1,x2){let o='';for(let v=ax.lo;v<=ax.hi+ax.st/1e3;v+=ax.st){const yy=y(v).toFixed(1),z=Math.abs(v)<ax.st/1e3;o+=`<line x1="${x1}" x2="${x2}" y1="${yy}" y2="${yy}" stroke="${z?'#BDB48F':'var(--line)'}"/><text x="${x1-6}" y="${(+yy+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--mute)">${(ax.st<1?N1:N0)(Math.abs(v)<ax.st/1e3?0:v)}</text>`}return o}
 const yTitle=(T,Bt,txt)=>`<text transform="rotate(-90 11 ${(T+Bt)/2})" x="11" y="${(T+Bt)/2}" text-anchor="middle" font-size="11" fill="var(--mute)">${txt}</text>`;
@@ -346,7 +346,7 @@ function panelCard(r){if(!(+F.kwp>0))return `<div id="plBox"><p class="note">Ent
  <div class="bar" style="margin:6px 0"><span class="note" style="margin:0">Time</span><button data-pls="-1" aria-label="30 minutes earlier" title="30 minutes earlier">&#9664;</button><input type="range" id="plSl" min="0" max="${NS-1}" step="1" value="${plT}" style="flex:1;min-width:160px" aria-label="Time of day, 30-minute steps"><button data-pls="1" aria-label="30 minutes later" title="30 minutes later">&#9654;</button></div>
  <div id="plInfo" class="note" style="margin:0 0 8px">${g.info}</div><div id="plGrid" class="plwrap">${g.html}</div>
  <p class="note"><b>Demo values.</b> These are not meter readings: the site solar forecast is split evenly across ${N0(plN())} panels (${N0(+F.kwp)} kWp), with a small made-up spread and two made-up weak panels to show how a fault would look. Only 64 panels are drawn. When the customer's per-panel data is loaded, it replaces these numbers.</p></div>`}
-function pcCard(r,past){
+function pcCard(r,past,K){
  const TY={sol:['Solar power',r.sol,'#F59E0B'],ld:['Site demand',r.ld,'#5B6360'],g:['Grid import (planned)',r.g,'#2b6cb0'],bat:['Battery (discharge +, charging \u2212)',r.b.map((v,i)=>v-r.ch[i]),'#16803D']};
  if(!TY[pcType])pcType='sol';const [nm,vals,col]=TY[pcType],NW=typeof innerWidth=='number'&&innerWidth<640,W=NW?400:760,H=300,L=NW?48:54,R=12,T=14,B=30;
  let h0=0,h1=24;
@@ -355,16 +355,23 @@ function pcCard(r,past){
  const pts=[];for(let i=h0*S;i<h1*S;i++)pts.push([xf((i+.5)/S),y(vals[i])]);
  let pk=h0*S;for(let i=h0*S;i<h1*S;i++)if(Math.abs(vals[i])>Math.abs(vals[pk]))pk=i;
  pcS={h0,h1,vals,L,W,R,H,T,y,xf,peak:pk,moved:false};
- const line=monoPath(pts),area=line+`L${pts[pts.length-1][0].toFixed(1)} ${y0.toFixed(1)}L${pts[0][0].toFixed(1)} ${y0.toFixed(1)}Z`,span=h1-h0,st=NW?(span<=6?1:span<=12?3:4):(span<=8?1:span<=14?2:3),p=pcPos(pk);
+ const live=K!=null,ks=live?Math.max(0,Math.min(pts.length,K-h0*S)):0,line=monoPath(pts),area=line+`L${pts[pts.length-1][0].toFixed(1)} ${y0.toFixed(1)}L${pts[0][0].toFixed(1)} ${y0.toFixed(1)}Z`,span=h1-h0,st=NW?(span<=6?1:span<=12?3:4):(span<=8?1:span<=14?2:3),p=pcPos(pk);
  const E=sum(r.sol)*DT,spk=r.sol.indexOf(Math.max(...r.sol)),ca=sum(r.d)*DT*F.ef;
  const tile=(bg,ic,v,l)=>`<div class="pcT"><span class="ico" style="background:${bg}">${ic}</span><div><b>${v}</b><span>${l}</span></div></div>`;
- const tiles=`<div class="pckpis">`+tile('#e3f4d6','&#9788;',past?'Rebuilt':'Forecast','Data (not measured)')+tile('#ffe5cc','&#9889;',N0(E),'Solar energy, kWh')+tile('#dbe8fb','&#8599;',N0(Math.max(...r.sol)),'Peak solar, kW at '+tm(spk))+tile('#fdf0c4','&#9831;',N0(ca),'CO&#8322; avoided, kg')+`</div>`;
- const sel=`<div class="bar"><label for="pcSel"><b>Data type</b></label><select id="pcSel">`+Object.entries(TY).map(([k,v])=>`<option value="${k}"${k==pcType?' selected':''}>${v[0]}</option>`).join('')+`</select></div>`;
+ const tiles=`<div class="pckpis">`+tile('#e3f4d6','&#9788;',live?'Live':past?'Rebuilt':'Forecast',live?'Not measured (no meter)':'Data (not measured)')+tile('#ffe5cc','&#9889;',N0(E),'Solar energy, kWh')+tile('#dbe8fb','&#8599;',N0(Math.max(...r.sol)),'Peak solar, kW at '+tm(spk))+tile('#fdf0c4','&#9831;',N0(ca),'CO&#8322; avoided, kg')+`</div>`;
+ const ar=P=>P.length<2?'':monoPath(P)+`L${P[P.length-1][0].toFixed(1)} ${y0.toFixed(1)}L${P[0][0].toFixed(1)} ${y0.toFixed(1)}Z`,
+  curveBody=()=>{if(!live)return `<path d="${area}" fill="url(#pcg)"/><path d="${line}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>`;
+   const P1=ks>=2?pts.slice(0,ks):[],P2=ks>=2?pts.slice(ks-1):pts,nx=xf(K/S),inr=nx>=L&&nx<=W-R,tx='font-size="11" font-weight="700" fill="#252B2A" stroke="#fff" stroke-width="3" paint-order="stroke"';
+   return (P1.length?`<path d="${ar(P1)}" fill="url(#pcg)"/><path d="${monoPath(P1)}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>`:'')
+    +(P2.length>1?`<path d="${ar(P2)}" fill="url(#pcg)" opacity=".5"/><path d="${monoPath(P2)}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="6 4"/>`:'')
+    +(inr?`<line x1="${nx.toFixed(1)}" x2="${nx.toFixed(1)}" y1="${T}" y2="${H-B}" stroke="#252B2A" stroke-width="1.5"/>`:'')
+    +`<text x="${L+6}" y="${T+10}" ${tx}>Recorded</text><text x="${W-R-6}" y="${T+10}" text-anchor="end" ${tx}>Predicted</text>`},
+  sel=`<div class="bar"><label for="pcSel"><b>Data type</b></label><select id="pcSel">`+Object.entries(TY).map(([k,v])=>`<option value="${k}"${k==pcType?' selected':''}>${v[0]}</option>`).join('')+`</select></div>`;
  return tiles+sel+`<div class="pcw"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${nm} through the day. Move over the chart to read a value."><defs><linearGradient id="pcg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".45"/><stop offset="1" stop-color="${col}" stop-opacity=".05"/></linearGradient></defs>`
-  +yGrid(ax,y,L,W-R)+yTitle(T,H-B,'kW')+`<path d="${area}" fill="url(#pcg)"/><path d="${line}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>`
+  +yGrid(ax,y,L,W-R)+yTitle(T,H-B,'kW')+curveBody()
   +`<g id="pcHov"><line id="pcLine" x1="${p.x.toFixed(1)}" x2="${p.x.toFixed(1)}" y1="${T}" y2="${H-B}" stroke="${col}" stroke-opacity=".5"/><circle id="pcHalo" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="11" fill="${col}" fill-opacity=".25"/><circle id="pcDot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="6" fill="${col}" stroke="#fff" stroke-width="2.5"/></g>`
   +xAxis(xf,H-B,h0,h1,st)+`</svg><div id="pcTip" class="pctip" style="left:${p.left}%;top:${p.top}%">${p.html}</div></div>`
-  +`<p class="note">${past?'Rebuilt from recorded weather, not from an inverter reading.':'A forecast, not a measurement: real values will differ.'} Smoothed between 30-minute values. Move over the chart to read a value.</p>`}
+  +`<p class="note">${live?'No meter is connected, so the part before the line is the forecast, not a measurement. The part after the line is the prediction, corrected for what has been seen so far.':past?'Rebuilt from recorded weather, not from an inverter reading.':'A forecast, not a measurement: real values will differ.'} Smoothed between 30-minute values. Move over the chart to read a value.</p>`}
 function draw(r,b0,win,now){const W=760,H=290,L=54,B=30,T=10,bw=(W-L-8)/NS,hb=bw*S,ax=niceAxis(0,Math.max(...r.ld,...b0.ld,...r.sol,...r.g.map((g,h)=>g+r.b[h]),1)*1.03),mx=ax.hi,y=v=>H-B-(v/mx)*(H-B-T);
  let s='<defs><pattern id="mv" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--shift)" opacity=".30"/><rect width="2.5" height="6" fill="var(--shift)"/></pattern></defs>';
  s+=yGrid(ax,y,L,W-8)+yTitle(T,H-B,'kW');
@@ -375,12 +382,13 @@ function draw(r,b0,win,now){const W=760,H=290,L=54,B=30,T=10,bw=(W-L-8)/NS,hb=bw
   const dl=r.ld[h]-b0.ld[h];
   if(dl>0.5){const m=Math.min(dl,base);s+=`<rect x="${x}" y="${y(base)}" width="${w}" height="${y(base-m)-y(base)}" fill="url(#mv)" stroke="var(--shift)"/>`}
   if(dl<-0.5){const t0=base+Math.max(un,0);s+=`<rect x="${x}" y="${y(t0-dl)}" width="${w}" height="${y(t0)-y(t0-dl)}" fill="none" stroke="var(--shift)" stroke-width="1.5" stroke-dasharray="3 2"/>`}});
- if(now!=null){s+='</g>';const nx=L+now*bw;s+=`<line x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="var(--ink)" stroke-width="1.5"/><text x="${nx-5}" y="${T+10}" text-anchor="end" font-size="11" font-weight="700" fill="var(--ink)" stroke="#fff" stroke-width="3" paint-order="stroke">recorded (simulated)</text><text x="${nx+5}" y="${T+10}" font-size="11" font-weight="700" fill="var(--ink)" stroke="#fff" stroke-width="3" paint-order="stroke">predicted</text>`}
+ if(now!=null){s+='</g>';const nx=L+now*bw;s+=`<line x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="var(--ink)" stroke-width="1.5"/><text x="${L+6}" y="${T+10}" font-size="11" font-weight="700" fill="var(--ink)" stroke="#fff" stroke-width="3" paint-order="stroke">Recorded</text><text x="${W-12}" y="${T+10}" text-anchor="end" font-size="11" font-weight="700" fill="var(--ink)" stroke="#fff" stroke-width="3" paint-order="stroke">Predicted</text>`}
  s+=xAxis(t=>L+t*hb,H-B,0,24,3);
  if(win&&r.peak>0)s+=`<line x1="${L+win[0]*hb}" x2="${L+win[1]*hb}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${L+win[1]*hb-4}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)" stroke="#fff" stroke-width="3" paint-order="stroke">billed peak ${Math.round(r.peak)} kW</text>`;
  s+=`<text x="${L}" y="${H-2}" font-size="10" fill="var(--mute)">Shaded band = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;
  return `<svg viewBox="0 0 760 290" role="img" aria-label="Supply split by source, every 30 minutes">${s}</svg><div class="legend"><span><i style="background:var(--solar)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border:1px dashed var(--solar)"></i>Unused solar</span><span><i style="background:repeating-linear-gradient(45deg,var(--shift) 0 2px,transparent 2px 5px);border:1px solid var(--shift)"></i>Work moved into this hour</span><span><i style="background:none;border:1px dashed var(--shift)"></i>Work moved out of this hour</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span>${now!=null?'<span><b>Solid</b> = recorded, <b>faded</b> = predicted</span>':''}</div>`}
 
+function pcRender(){const p=lastPlan;if(cur==TODAY&&rtLast&&rtLast.q.p===p){const o=rtSeries(rtLast.j,rtLast.q);return pcCard(o.r,false,o.K)}return pcCard(p.r,cur<TODAY)}
 function rg(a,t){const o=[];let s=null;for(let h=0;h<=NS;h++){const on=h<NS&&a[h]>t;if(on&&s===null)s=h;if(!on&&s!==null){o.push(tm(s)+' to '+tm(h));s=null}}return o.join(', ')}
 function recs(r,b){const L=[],cap=+F.bat||0;
  if(r===b)L.push('Select one of the optimiser strategies to see its action plan.');
@@ -572,22 +580,23 @@ async function liveRun(body,msg){const q=sameReq($('lvMd')?$('lvMd').value:null)
 // ================= Real time chart: the Energy usage chart with recorded data before now and predicted data after now =================
 let rtTok=0,rtTimer=0,rtLastK=-1;
 function rtStop(){clearInterval(rtTimer);rtTimer=0}
-function rtStart(){rtStop();rtTimer=setInterval(()=>{if(chartTab=='rt'&&$('rtOut')&&!document.hidden&&$('rtAt').value=='now'&&rtStep()!=rtLastK)rtLoad()},30000)}
+function rtStart(){rtStop();rtTimer=setInterval(()=>{if((chartTab=='rt'||chartTab=='pc')&&$('rtOut')&&!document.hidden&&$('rtAt').value=='now'&&rtStep()!=rtLastK)rtLoad()},30000)}
 function rtStep(){const v=$('rtAt')?$('rtAt').value:'now';if(v!='now')return +v;const d=new Date();return Math.max(1,Math.min(NS-1,Math.floor((d.getHours()*60+d.getMinutes())*S/60)))}
 function clockTxt(){const d=new Date();return p2(d.getHours())+':'+p2(d.getMinutes())+':'+p2(d.getSeconds())}
 function rtShell(){return `<div class="rtclock"><span class="note">Time now</span><b id="rtClock">${clockTxt()}</b><span class="note">${esc(new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))}</span><span id="rtMsg" class="note"></span></div><select id="rtSc" style="display:none"><option value="none" selected>Reality matches the forecast</option></select><select id="rtAt" style="display:none"><option value="now" selected>Real time (now)</option></select><div id="rtOut"><span class="note">Loading...</span></div>
 <p class="note" style="margin:6px 0 0"><b>Solid bars</b> (before the line) are what has been recorded so far. No meter is connected in this demo, so they are the forecast: <b>SIMULATED</b>. <b>Faded bars</b> (after the line) are the prediction: the forecast corrected for what has been seen, with the plan re-optimised from now. It follows the clock and refreshes by itself. Recommendation only: no equipment is controlled.</p>`}
-async function rtLoad(){const o=$('rtOut');if(!o||!lastPlan||cur!=TODAY||chartTab!='rt')return;const q=sameReq();if(!q)return;
+async function rtLoad(){const o=$('rtOut');if(!o||!lastPlan||cur!=TODAY||(chartTab!='rt'&&chartTab!='pc'))return;const q=sameReq();if(!q)return;
  const k=rtStep(),tag=++rtTok,lp=lrnGet(),m=$('rtMsg'),bn=lastPlan.sel=='base'?'Baseline has no plan to adapt, so this shows the Cost-saving plan. ':'';m.textContent=bn+'Updating...';
  try{const j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,lp?{learned:lp}:{},{replay:{now_step:k,scenario:ROSC[$('rtSc').value][1]}}))});
-  if(tag!=rtTok||!$('rtOut'))return;rtLastK=k;m.textContent=bn;o.innerHTML=rtDraw(j,q)}
+  if(tag!=rtTok||!$('rtOut'))return;rtLastK=k;m.textContent=bn;o.innerHTML=rtDraw(j,q);rtLast={j,q};if($('ct_pc')){const L2=rtSeries(j,q);$('ct_pc').innerHTML=pcCard(L2.r,false,L2.K)}}
  catch(e){if(tag==rtTok&&$('rtMsg'))m.innerHTML='<span class="err">'+esc(e.message)+'</span>'}}
-function rtDraw(j,q){const s=j.series,K=j.now_step,c=q.p.b.c,qb=q.p.b;
+function rtSeries(j,q){const s=j.series,K=j.now_step,c=q.p.b.c,qb=q.p.b;
  const Lh=N.map(t=>t<K?s.actual_load[t]:s.belief_load[t]),P=N.map(t=>t<K?s.actual_pv[t]:s.belief_pv[t]),fl=s.new_flex,ld=s.new_ld||N.map(t=>Lh[t]+fl[t]);
  const pu=s.new_pv_used||N.map(t=>Math.max(0,Math.min(P[t],ld[t]+s.new_ch[t]-s.new_dis[t]-s.new_grid[t])));
  const smart=+F.evn>0&&q.m.fx>0,bf=N.map(t=>smart?qb.ld[t]-qb.fc.load[t]:0),b0={ld:N.map(t=>Lh[t]+bf[t])};
  const pk=c.mdH&&c.mdH.length?Math.max(...c.mdH.map(t=>s.new_grid[t])):0;
- const r={g:s.new_grid,b:s.new_dis,d:pu,ld,sol:P,peak:pk};
+ const r={g:s.new_grid,b:s.new_dis,ch:s.new_ch,d:pu,ld,sol:P,peak:pk};return{r,b0,K,c}}
+function rtDraw(j,q){const {r,b0,K,c}=rtSeries(j,q);
  const d=new Date(),clk=$('rtAt').value=='now'?'Clock '+p2(d.getHours())+':'+p2(d.getMinutes())+'. ':'';
  const pv=j.correction.pv_ratio,sol=pv==null?'':' Solar is running at <b>'+N0(pv*100)+'%</b> of forecast.';
  return `<p style="margin:0 0 6px"><b>Recorded up to ${tm(K)}.</b> Spent so far <b>${money(j.spent_so_far_rm)}</b>.${sol} ${j.expected.saving_rm>=0.5?'Re-planning the rest of the day is expected to save <b>'+money(j.expected.saving_rm)+'</b> compared with sticking to the old plan.':'The day-ahead plan still looks about right for the rest of the day.'}</p>`+draw(r,b0,c.win,K)}
@@ -700,7 +709,7 @@ function dayHtml(R,rows){
  if(!R[sel])sel='base';const b=R.base,r=R[sel],sv=(1-r.cost/b.cost)*100||0,c=b.c;last={view:'day',key:cur,base:b.cost,cost:r.cost,save:b.cost-r.cost};
  aiFacts={day:parse(cur).toLocaleDateString('en-GB',{weekday:'long'}),strategy:NAMES[sel].replace('Optimiser: ',''),tariff:tf().n,billed:c.mdH.length>0,base_cost:+b.cost.toFixed(2),plan_cost:+r.cost.toFixed(2),base_peak:+b.peak.toFixed(1),plan_peak:+r.peak.toFixed(1),solar_pct:+r.util.toFixed(1),co2_pct:b.co2?+((r.co2/b.co2-1)*100).toFixed(2):null,charge:rg(r.ch,1),discharge:rg(r.b,1),shift:rg(r.fl,1)};lastPlan={date:cur,sel,r,b};
  const tbl=`<tr><th>Strategy</th><th>Cost, RM</th><th>Saving</th><th>Solar used</th><th>Grid share</th><th>Billed peak, kW</th><th>CO&#8322;, kg</th><th>CO&#8322; vs baseline</th><th>CO&#8322; vs no solar</th></tr>`+rows.map(s=>{const x=R[s.k],v=(1-x.cost/b.cost)*100,cd=b.co2?(x.co2/b.co2-1)*100:0;
-  return `<tr class="${s.k==sel?'sel':''}"><td>${NAMES[s.k]}</td><td>${N2(x.cost)}</td><td class="${v>0.05?'good':''}">${s.k=='base'?'&mdash;':v.toFixed(1)+'%'}</td><td>${N0(x.util)}%</td><td>${N0(sum(x.g)/sum(x.ld)*100)}%</td><td>${N0(x.peak)}</td><td>${N0(x.co2)}</td><td style="${s.k!='base'&&cd>0.05?'color:#92400E':''}" class="${s.k!='base'&&cd<-0.05?'good':''}">${s.k=='base'||!b.co2?'&mdash;':(cd>=0?'+':'')+cd.toFixed(1)+'%'}</td><td class="good">${((x.co2/(sum(b.ld)*DT*F.ef)-1)*100).toFixed(0)}%</td></tr>`}).join('');
+  return `<tr class="${s.k==sel?'sel':''}"><td>${NAMES[s.k]}</td><td>${N2(x.cost)}</td><td class="${v>0.05?'good':''}">${s.k=='base'?'&mdash;':v.toFixed(1)+'%'}</td><td>${N0(x.util)}%</td><td>${N0(sum(x.g)/sum(x.ld)*100)}%</td><td>${N0(x.peak)}</td><td>${N0(x.co2)}</td><td style="${s.k!='base'&&cd>0.05?'color:#92400E':''}" class="${s.k!='base'&&cd<-0.05?'good':''}">${s.k=='base'||!b.co2?'&mdash;':(cd>=0?'+':'')+cd.toFixed(1)+'%'}</td><td class="good">${((x.co2/(sum(b.ld)*DT*F.ef)-1)*100).toFixed(2)}%</td></tr>`}).join('');
  const ng=sum(b.ld)*DT*F.ef,cc=b.co2?(r.co2/b.co2-1)*100:0,nm=NAMES[sel];
  const carbon=(ng>0?`Carbon: solar already cuts CO&#8322; by ${((1-b.co2/ng)*100).toFixed(0)}% versus buying everything from the grid (${N0(ng-b.co2)} kg avoided on this day). `:'')+(sel=='base'?'':(Math.abs(cc)<0.05?`${nm} leaves CO&#8322; unchanged versus the baseline. `:cc<0?`${nm} cuts CO&#8322; by a further ${(-cc).toFixed(1)}% versus the baseline. `:`${nm} adds ${cc.toFixed(1)}% CO&#8322; versus the baseline: charging the battery from the grid loses about ${Math.round(100-F.eff)}% of the energy, so here the saving is money, not carbon. `))+`Uses one flat grid factor (${F.ef} kg/kWh), so it cannot tell cleaner hours from dirtier ones.`;
  const ann=sel=='base'?'Baseline: solar only, no battery, no load shifting.':(c.wk?`Saving versus baseline: about ${money((b.cost-r.cost)*300)} a year if 300 weekdays looked like this one. Rough guide only: the real demand charge is set by the highest peak of the month, so it holds only if the worst day is held down as well as this one. Battery purchase cost is not included.`:'This is a weekend day, so it is not scaled up to a yearly figure.');
@@ -717,7 +726,7 @@ function dayHtml(R,rows){
   limB=(L>0&&mxg>L+1?`<div class="ribbon warn"><b>GRID LIMIT NOT MET.</b> Highest grid import is ${N0(mxg)} kW, above the ${N0(L)} kW limit.${sel=='base'?' Pick a strategy to see whether it can be held.':' The battery and chargers cannot hold it, so this is the closest plan.'}</div>`:'')+(L>0&&sel!='base'&&mxb>L+1&&mxg<=L+1?`<div class="ribbon"><b>GRID LIMIT.</b> Solar only, the site would draw up to ${N0(mxb)} kW, above the ${N0(L)} kW limit. This plan holds it at or under ${N0(L)} kW.</div>`:'')+(+F.evn>0&&fc.evun>0.5?`<div class="ribbon warn"><b>EV CHARGING.</b> ${N0(fc.evun)} kWh of the EV demand cannot be delivered on this day: the chargers are closed or there are too few hours or too little power.</div>`:'');
  return rib+offB+limB+headCard(r,b,c,sv,past)+`${kpiRow(r,b,c,sv)}${costCard(r,b,sv,past)}${actCard(r,b)}
  ${flowCard(r,b)}
- <div class="card${past?'':' fcast'}" data-tour="chart" data-role="tech"><div class="bar" style="margin-bottom:6px"><h2 id="chTitle" style="margin:0">${chT(past)}</h2><span class="sp"></span><span id="chTabs"><button data-ct="use" class="${chartTab=='use'?'on':''}" data-tp="${past?1:0}">Energy usage</button> ${cur==TODAY?`<button data-ct="rt" class="${chartTab=='rt'?'on':''}">Real time</button> `:''}<button data-ct="wx" class="${chartTab=='wx'?'on':''}">${past?'Recorded weather':'Predicted weather'}</button> <button data-ct="pc" class="${chartTab=='pc'?'on':''}">Power curve</button> <button data-ct="pl" class="${chartTab=='pl'?'on':''}">Panel layout</button></span></div>
+ <div class="card${past?'':' fcast'}" data-tour="chart" data-role="tech"><div class="bar" style="margin-bottom:6px"><h2 id="chTitle" style="margin:0">${chT(past)}</h2><span class="sp"></span><span id="chTabs">${cur==TODAY?`<button data-ct="rt" class="${chartTab=='rt'?'on':''}">Energy usage</button> `:''}<button data-ct="use" class="${chartTab=='use'?'on':''}" data-tp="${past?1:0}">Daily plan</button> <button data-ct="wx" class="${chartTab=='wx'?'on':''}">${past?'Recorded weather':'Predicted weather'}</button> <button data-ct="pc" class="${chartTab=='pc'?'on':''}">Power curve</button> <button data-ct="pl" class="${chartTab=='pl'?'on':''}">Panel layout</button></span></div>
  <div id="ct_use"${chartTab=='use'?'':' hidden'}>${draw(r,b,c.win)}</div><div id="ct_wx"${chartTab=='wx'?'':' hidden'}>${fcCard(fc,past,fn)}</div><div id="ct_pc"${chartTab=='pc'?'':' hidden'}>${pcCard(r,past)}</div><div id="ct_pl"${chartTab=='pl'?'':' hidden'}>${panelCard(r)}</div>${cur==TODAY?`<div id="ct_rt"${chartTab=='rt'?'':' hidden'}>${rtShell()}</div>`:''}</div>
  ${stratCards(R,b)}
  <div class="card" data-tour="compare" data-role="tech"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
@@ -776,7 +785,7 @@ function changeCard(){if(!pend)return;const p=pend;pend=null;const a=p.before,b=
  else num='The numbers below now use the new settings.';
  $('out').insertAdjacentHTML('afterbegin',`<div class="card" data-tour="changed" style="border-color:var(--solar)"><div class="bar" style="margin:0"><h2 style="margin:0">What just changed</h2><span class="sp"></span><button data-x="1">Dismiss</button></div><ul>${p.items.map(x=>`<li>${x}</li>`).join('')}</ul><p class="note">${num}</p></div>`)}
 async function render(){
- lvStop();lvSim=null;rtStop();if(chartTab=='rt'&&cur!=TODAY)chartTab='use';uiSave();
+ lvStop();lvSim=null;rtStop();if(chartTab=='rt'&&cur!=TODAY){chartTab='use';rtDem=true}else if(cur==TODAY&&rtDem&&chartTab=='use'){chartTab='rt';rtDem=false}uiSave();
  const my=++tok,dates=span();$('dt').value=cur;tabs();
  ['day','week','month'].forEach(v=>{$('v'+v).classList.toggle('on',view==v);$('b'+v).classList.toggle('on',view==v)});
  [['yes',addD(TODAY,-1)],['tod',TODAY],['tom',addD(TODAY,1)]].forEach(([id,x])=>$(id).classList.toggle('on',view=='day'&&cur==x));
@@ -793,7 +802,7 @@ async function render(){
    if(res[0].status!='fulfilled')throw res[0].reason;
    const R={},ok=[];res.forEach((x,i)=>{if(x.status=='fulfilled'){R[rows[i].k]=x.value;ok.push(rows[i])}});
    const miss=res.filter(x=>x.status!='fulfilled').length;
-   $('out').innerHTML=(miss?`<div class="ribbon warn"><b>PARTIAL.</b> The optimiser did not answer, so only the baseline is shown. <button data-retry="1">Try again</button></div>`:'')+dayHtml(R,ok);aiRestore();apShow();cvDefault();applyTab();changeCard();maybeTour();setTimeout(()=>warm(my),1500);return}
+   $('out').innerHTML=(miss?`<div class="ribbon warn"><b>PARTIAL.</b> The optimiser did not answer, so only the baseline is shown. <button data-retry="1">Try again</button></div>`:'')+dayHtml(R,ok);aiRestore();apShow();cvDefault();applyTab();changeCard();maybeTour();if(cur==TODAY&&(chartTab=='rt'||chartTab=='pc')){rtLoad();rtStart()}setTimeout(()=>warm(my),1500);return}
   const items=dates.map(()=>null),idx=dates.map((x,i)=>i).filter(i=>dates[i]>=MIN&&dates[i]<=MAX);
   let done=0;const run=async i=>{try{items[i]={b:await getRun(dates[i],'base'),r:await getRun(dates[i],dates[i]<TODAY?F.follow:sel)}}catch(e){items[i]=null}done++;const p=$('prog');if(p)p.textContent=`Loading day ${done} of ${idx.length}. A new day takes a few seconds, then it is saved on this device.`};
   if(idx.length){await run(idx[0]);for(let k=1;k<idx.length;k+=6){await Promise.all(idx.slice(k,k+6).map(run));if(my!=tok)return}}
@@ -824,7 +833,7 @@ const STEPS=[
  {s:'[data-tour=headline]',t:'Headline numbers and summary',x:'Saving per day, billed peak reduction and CO2, then a plain-English summary. Press Rewrite with AI for an AI-written version; every number in it is checked.'},
  {s:'[data-tour=kpi]',t:'The numbers behind it',x:'Cost without the plan, with the plan, what you save, the billed peak and how much solar is used.'},
  {s:'[data-tour=flow]',t:'Where the energy comes from',x:'Solar, battery and grid for the whole day, baseline against the plan, with self-consumption: how much of your solar is used on site.'},
- {s:'[data-tour=chart]',t:'Hour by hour',x:'Energy usage shows where each hour\'s power comes from. Press Predicted weather to see the weather and solar forecast with its likely range.'},
+ {s:'[data-tour=chart]',t:'Hour by hour',x:'Energy usage shows today\'s power every 30 minutes, recorded until now and predicted after. Daily plan shows the planned power for any day. Press Predicted weather to see the weather and solar forecast with its likely range.'},
  {s:'[data-tour=compare]',t:'Compare strategies',x:'Every strategy side by side: cost, saving, solar used, billed peak and CO2, with the cost of each extra kg of CO2.'},
  {s:'[data-tour=actions]',t:'What to do',x:'The schedule for the selected strategy: when to charge, when to discharge and when to run flexible equipment.'},
  {s:'[data-tour=schedule]',t:'Half-hourly schedule',x:'Every 30 minutes of the plan as numbers: battery, flexible load, grid import, solar and demand.'},
@@ -891,7 +900,7 @@ function localIntent(t){const s=t.toLowerCase(),nav={},fac={},num=x=>+String(x).
  if(/\bmonth\b/.test(s))nav.view='month';else if(/\bweek\b/.test(s))nav.view='week';
  const d=/\btomorrow\b/.test(s)?1:/\byesterday\b/.test(s)?-1:/\btoday\b/.test(s)?0:null;if(d!==null){nav.date=addD(TODAY,d);nav.view=nav.view||'day'}
  if(/cost[- ]?saving/.test(s))nav.strategy='cost';else if(/balanced/.test(s))nav.strategy='bal';else if(/no extra co2|zero co2|no extra carbon|carbon.?neutral/.test(s))nav.strategy='zero';else if(/production/.test(s))nav.strategy='bal';else if(/baseline/.test(s))nav.strategy='base';
- if(/power curve/.test(s))nav.chart='pc';else if(/panel layout|panels/.test(s))nav.chart='pl';else if(/weather|predicted/.test(s))nav.chart='wx';else if(/energy usage|usage graph/.test(s))nav.chart='use';
+ if(/power curve/.test(s))nav.chart='pc';else if(/panel layout|panels/.test(s))nav.chart='pl';else if(/weather|predicted/.test(s))nav.chart='wx';else if(/daily plan/.test(s))nav.chart='use';else if(/energy usage|usage graph|real.?time/.test(s))nav.chart='rt';
  if(/\b(ai )?summary\b|briefing/.test(s))nav.open='summary';else if(/today so far|live|replay|schedule/.test(s))nav.tab='plan';else if(/re-?optimi[sz]|learning|advanced/.test(s))nav.tab='advanced';else if(/optimi[sz]ation|compare|comparison/.test(s))nav.tab='optimisation';
  if(/\btour\b|walk ?through/.test(s))nav.open='tour';
  if(m=s.match(/(\d[\d,.]*)\s*kwp/))fac.kwp=num(m[1]);if(m=s.match(/(\d[\d,.]*)\s*kwh/))fac.bat=num(m[1]);
@@ -909,7 +918,7 @@ function applyNav(n){const bits=[];let toSummary=false;
  if(n.date&&n.date>=MIN&&n.date<=MAX){cur=n.date;view=n.view||'day';bits.push(n.date)}
  if(n.view){view=n.view;bits.push(n.view+' view')}
  if(n.strategy){sel=n.strategy=='zero'?'bal':n.strategy;bits.push(NAMES[sel].replace('Optimiser: ',''))}
- if(n.chart){chartTab=n.chart;bits.push(({use:'energy usage chart',wx:'weather chart',pc:'power curve',pl:'panel layout'})[n.chart]||'chart')}
+ if(n.chart){chartTab=n.chart;rtDem=false;bits.push(({rt:'energy usage chart',use:'daily plan chart',wx:'weather chart',pc:'power curve',pl:'panel layout'})[n.chart]||'chart')}
  if(n.open=='why'){$('why').hidden=false;$('qbtn').setAttribute('aria-expanded','true');bits.push('what the optimiser decides')}
  if(n.open=='tour'){chatOpen(false);tStart();return}
  if(bits.length)cAdd('msg n','Opened: '+esc([...new Set(bits)].join(', ')));render();if(toSummary)setTimeout(()=>{const a=$('aiTxt');if(a){const c=a.closest('.card')||a;c.scrollIntoView({behavior:'smooth',block:'center'});c.classList.add('flash');setTimeout(()=>c.classList.remove('flash'),2200)}},700)}
@@ -949,9 +958,9 @@ $('bView').onclick=e=>{const b=e.target.closest('button');if(b){view=b.id.slice(
 $('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);$('dt').onchange=e=>{if(e.target.value){cur=e.target.value;render()}};
 $('out').addEventListener('pointermove',pcMove);
 $('out').addEventListener('input',e=>{if(e.target&&e.target.id=='plSl'&&lastPlan){plT=+e.target.value;const g=plGridHtml(lastPlan.r,plT);$('plGrid').innerHTML=g.html;$('plInfo').innerHTML=g.info}});
-$('out').addEventListener('change',e=>{if(e.target&&e.target.id=='pcSel'){pcType=e.target.value;if(lastPlan&&$('ct_pc'))$('ct_pc').innerHTML=pcCard(lastPlan.r,cur<TODAY)}});
-$('out').onclick=e=>{const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';$('ct_wx').hidden=chartTab!='wx';$('ct_pc').hidden=chartTab!='pc';$('ct_pl').hidden=chartTab!='pl';if($('ct_rt'))$('ct_rt').hidden=chartTab!='rt';
-  $('chTitle').textContent=chT(past);if(chartTab=='rt'){rtLoad();rtStart()}
+$('out').addEventListener('change',e=>{if(e.target&&e.target.id=='pcSel'){pcType=e.target.value;if(lastPlan&&$('ct_pc'))$('ct_pc').innerHTML=pcRender()}});
+$('out').onclick=e=>{const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;rtDem=false;const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';$('ct_wx').hidden=chartTab!='wx';$('ct_pc').hidden=chartTab!='pc';$('ct_pl').hidden=chartTab!='pl';if($('ct_rt'))$('ct_rt').hidden=chartTab!='rt';
+  $('chTitle').textContent=chT(past);if((chartTab=='rt'||chartTab=='pc')&&cur==TODAY){rtLoad();rtStart()}
   document.querySelectorAll?document.querySelectorAll('#chTabs button').forEach(b=>b.classList.toggle('on',b.dataset.ct==chartTab)):0;return}
  const ps=e.target.closest('[data-pls]');if(ps&&lastPlan&&$('plSl')){plT=Math.max(0,Math.min(NS-1,plT+(+ps.dataset.pls)));$('plSl').value=plT;const g=plGridHtml(lastPlan.r,plT);$('plGrid').innerHTML=g.html;$('plInfo').innerHTML=g.info;return}
  if(e.target.closest('[data-ai]')){explainClick();return}
