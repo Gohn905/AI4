@@ -162,11 +162,14 @@ def optimise(d):
         if not math.isfinite(soc_now) or not 0 <= soc_now <= cap + 1e-6:
             raise ValueError("soc_now_kwh must be between 0 and the battery size")
     if allow is not None and allow < 1 and gcap == 0:
-        free = optimise({**d, "co2_allow": 1})                   # the cheapest plan, no cap
+        # The allowance is always measured against the cheapest plan for the WHOLE day. A re-plan locks the hours already gone
+        # ("fixed") but must keep the same allowance: measuring it against what is left of the day halves it a second time, and the
+        # re-plan then costs more than just carrying on with the old plan even when nothing in the forecast was wrong.
+        free = optimise({**{k: v for k, v in d.items() if k not in ("fixed", "soc_now_kwh")}, "co2_allow": 1})   # the cheapest plan, no cap
         base = float(np.maximum(load + np.array(ev_baseline(d)) - pv, 0).sum()) * dt   # solar-only baseline grid energy incl. EVs charging immediately, kWh
         extra = float(sum(free["grid"])) * dt - base
-        if extra <= 0.5:
-            return free                                         # nothing extra to hold back
+        if extra <= 0.5:                                        # nothing extra to hold back
+            return free if "fixed" not in d else optimise({**d, "co2_allow": 1})
         return optimise({**d, "co2_allow": 1, "grid_kwh_cap": base + allow * extra})
     per = N // 24                             # steps per hour
     md_hours = sorted({h * per + j for h in (int(x) for x in d.get("md_hours", []) if 0 <= int(x) < 24) for j in range(per)})
