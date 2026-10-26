@@ -26,6 +26,7 @@ td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}td:fi
 
 .ribbon{border-left:6px solid var(--blue);background:rgba(37,99,235,.09);padding:9px 12px;border-radius:6px;font-size:14px;margin-bottom:12px}.ribbon b{letter-spacing:.04em}.ribbon.past{border-left-color:var(--mut);background:rgba(102,114,128,.10)}
 .card.fcast{border-style:dashed;border-color:var(--blue)}.c.fc{border-style:dashed}.pckpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:2px 0 12px}.pcT{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px}.pcT b{display:block;font-size:20px;color:var(--acc);line-height:1.15}.pcT span:not(.ico){font-size:12px;color:var(--mut);display:block}
+.drw{position:relative}.drw svg{touch-action:pan-y;cursor:crosshair}.drtip{position:absolute;top:4px;transform:translateX(-50%);pointer-events:none;background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:12px;line-height:1.55;box-shadow:var(--shadow);white-space:nowrap;z-index:2}.drtip i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}.drs{color:var(--mute);font-weight:600}
 .pcw{position:relative}.pcw svg{touch-action:pan-y;cursor:crosshair}.pctip{position:absolute;pointer-events:none;transform:translate(-50%,calc(-100% - 16px));background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;box-shadow:var(--shadow);white-space:nowrap;line-height:1.4}
 @media(max-width:640px){.pckpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .stats{display:flex;flex-wrap:wrap;gap:18px;margin-top:8px;font-size:14px}.stats span{color:var(--mut);font-size:12px;display:block}
@@ -99,7 +100,7 @@ th{font-weight:700}table th{background:#E6F1DC}.ribbon{border-radius:10px}
 .shortline{color:#E6DFC3;margin:0;font-size:14px}
 .action{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.action:last-child{border-bottom:0;padding-bottom:0}
 .action-icon{width:35px;height:35px;border-radius:10px;background:#FEF2C4;display:grid;place-items:center;flex-shrink:0}.action strong{display:block;color:var(--acc);font-size:13px}.action p{margin:3px 0 0;color:var(--mut);font-size:12px}
-.plwrap{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}.pg{display:grid;grid-template-columns:repeat(8,46px);gap:6px}
+.plwrap{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}.pg{display:grid;grid-template-columns:repeat(var(--c,8),46px);gap:6px}
 .pn{width:46px;height:50px;border-radius:3px;overflow:hidden;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.25);background:#f39c12}.pn i{display:block;height:26px;background:#1e3a5f repeating-linear-gradient(90deg,transparent 0 10px,rgba(255,255,255,.25) 10px 11px),repeating-linear-gradient(0deg,transparent 0 8px,rgba(255,255,255,.25) 8px 9px)}
 .pn b{display:block;color:#fff;font-size:13px;text-align:center;line-height:24px}.pn:not(.fl):not(.z) b{color:var(--ink)}.pn.fl{background:#d64545}.pn.z{background:#94a3b8}
 .stratgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:14px 0 0}
@@ -127,7 +128,7 @@ input[type=range]{accent-color:#F59E0B}
 .lvtime{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0}.lvt{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .lvlog{list-style:none;padding:0;margin:6px 0}.lvlog li{padding:7px 10px;margin:0 0 5px;background:#fff;border:1px solid var(--card-line);border-left:5px solid var(--card-line);border-radius:6px;font-size:13px}.lvlog li.lvoff{border-left-color:var(--amb)}
 .flash{animation:flash 2.2s ease-out}@keyframes flash{0%,60%{box-shadow:0 0 0 4px var(--sun)}100%{box-shadow:0 0 0 0 transparent}}
-@media(max-width:640px){.pa{width:100%}.pg{grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}.pn{width:auto;min-width:0}.pn b{font-size:12px}}
+@media(max-width:640px){.pa{width:100%}.pg{grid-template-columns:repeat(var(--c,8),minmax(0,1fr));gap:4px}.pn{width:auto;min-width:0}.pn b{font-size:12px}}
 .rtclock{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px;margin:0 0 8px}.rtclock b{font-size:34px;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.02em}</style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span class="sp"></span><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -192,7 +193,7 @@ input[type=range]{accent-color:#F59E0B}
 <div><label>Power per charger, kW</label><input id="f_evkw" type="number" min="0"></div>
 <div><label>EV energy wanted per day, kWh (assumption)</label><input id="f_eve" type="number" min="0"></div>
 </div>
-<details class="adv" id="conv"><summary>Solar size helper: panels to kWp to kWh</summary>
+<details class="adv" id="conv"><summary>Solar panels: size helper and panel layout</summary>
 <div class="form" style="margin-top:8px">
 <div><label>Number of panels</label><input id="cv_n" type="number" min="1"></div>
 <div><label>Watts per panel (W), from the datasheet</label><input id="cv_w" type="number" min="1" value="550"></div>
@@ -201,6 +202,21 @@ input[type=range]{accent-color:#F59E0B}
 <div id="cv_out" class="note" style="margin-top:8px"></div>
 <div id="cv_note" class="note"></div>
 <button class="on" id="cv_use" style="margin-top:6px">Use this kWp</button> <span class="note">Nothing changes until you press this.</span>
+<h3 class="sec" style="margin-top:16px">Panel layout (for the Panel layout chart)</h3>
+<div class="form" style="margin-top:6px">
+<div><label>Number of arrays (roof sections)</label><input id="pl_a" type="number" min="1" max="6"></div>
+<div><label>Rows per array</label><input id="pl_r" type="number" min="1" max="20"></div>
+<div><label>Panels per row</label><input id="pl_c" type="number" min="1" max="20"></div>
+<div><label>What is fitted to each panel?</label><select id="pl_t"><option value="micro">Micro-inverter (one per panel)</option><option value="opt">Power optimiser (one per panel)</option><option value="string">String inverter only</option></select></div>
+</div>
+<div id="pl_out" class="note" style="margin-top:6px"></div>
+<details style="margin-top:6px"><summary>What real data does a panel layout need?</summary>
+<p class="note"><b>1. Per-panel readings.</b> Power (W) of each panel, usually every 5 minutes. They only exist if every panel has its own device: a micro-inverter or a power optimiser. A string inverter reports one number for the whole string, so a per-panel map is impossible.</p>
+<p class="note"><b>2. A gateway or logger</b> (APsystems calls it the ECU) that collects those readings and sends them to the cloud.</p>
+<p class="note"><b>3. A map.</b> The serial number of each device matched to a place on the roof: which array, which row, which column. An installer does this once.</p>
+<p class="note"><b>4. Panel facts.</b> Watts per panel (datasheet) and how many panels are in each array. Tilt and compass direction per array make the comparison fairer.</p>
+<p class="note"><b>5. A fair test for a weak panel.</b> Compare each panel with its neighbours in the same array at the same time. The page flags a panel more than 10% below the middle value.</p>
+<p class="note">Until that data exists, the chart splits the site's solar forecast evenly and adds two made-up weak panels, as a demo.</p></details>
 <p class="note"><b>Units.</b> kWp is the panel's peak power (a power, in kW). kWh is energy: power &times; time. A day's solar energy is kWh per day. We never write "kW/h".</p>
 <p class="note"><b>String inverter:</b> one inverter serves a whole string of panels, so shading on one panel limits the whole string. <b>Micro-inverter:</b> one small inverter per panel, so it copes better with shading, but costs more. The model does not simulate inverters one by one: its system efficiency of 0.88 covers inverter, wiring, dirt and mismatch together.</p>
 </details>
@@ -323,6 +339,17 @@ function monoPath(P){const n=P.length;if(n<2)return'';const dx=[],m=[],t=[];for(
  let d='M'+P[0][0].toFixed(1)+' '+P[0][1].toFixed(1);for(let i=0;i<n-1;i++){const x0=P[i][0],x1=P[i+1][0],h3=dx[i]/3;d+=`C${(x0+h3).toFixed(1)} ${(P[i][1]+t[i]*h3).toFixed(1)} ${(x1-h3).toFixed(1)} ${(P[i+1][1]-t[i+1]*h3).toFixed(1)} ${x1.toFixed(1)} ${P[i+1][1].toFixed(1)}`}return d}
 function pcPos(i){const s=pcS,v=s.vals[i],x=s.xf((i+.5)/S),y=s.y(v),pc=Math.max(14,Math.min(86,x/s.W*100));
  return{x,y,left:pc,top:y/s.H*100,html:`Time: ${tm(i)} to ${tm(i+1)}<br>Power: ${(Math.abs(v)<100?N1:N0)(v).replace('-','\u2212')} kW`}}
+function drMove(e){const svg=e.target&&e.target.closest?e.target.closest('.drw svg'):null;
+ document.querySelectorAll('.drw').forEach(w=>{if(!svg||!w.contains(svg)){const t=w.querySelector('.drtip'),h=w.querySelector('.drhl');if(t)t.hidden=true;if(h)h.setAttribute('display','none')}});
+ if(!svg)return;const g=drReg[svg.dataset.dr];if(!g)return;const tip=svg.parentNode.querySelector('.drtip'),hl=svg.querySelector('.drhl');
+ const rc=svg.getBoundingClientRect(),vx=(e.clientX-rc.left)/rc.width*760,i=Math.floor((vx-g.L)/g.bw);
+ if(!(i>=0&&i<NS)){tip.hidden=true;hl.setAttribute('display','none');return}
+ const r=g.r,sq=c=>`<i style="background:var(${c})"></i>`,dis=r.b[i]>0.5,chg=r.ch&&r.ch[i]>0.5,un=r.sol[i]-r.d[i],
+  st=g.now==null?'':(i<g.now?' <span class="drs">recorded</span>':' <span class="drs">predicted</span>');
+ tip.innerHTML=`<b>${tm(i)} to ${tm(i+1)}</b>${st}<br>${sq('--solar')}Solar generated <b>${N0(r.sol[i])} kW</b><br>${sq('--sun')}Solar used on site <b>${N0(r.d[i])} kW</b>`+(un>0.5?` <span class="drs">(${N0(un)} kW unused)</span>`:'')
+  +`<br>${sq('--grid')}Grid import <b>${N0(r.g[i])} kW</b>`+`<br>${sq('--bat')}Battery <b>${dis?'discharging '+N0(r.b[i])+' kW':chg?'charging '+N0(r.ch[i])+' kW':'idle'}</b><br>${sq('--mute')}Site demand <b>${N0(r.ld[i])} kW</b>`;
+ hl.setAttribute('x',(g.L+i*g.bw).toFixed(1));hl.setAttribute('width',g.bw.toFixed(1));hl.removeAttribute('display');
+ tip.hidden=false;tip.style.left=Math.max(14,Math.min(86,(g.L+(i+.5)*g.bw)/760*100))+'%'}
 function pcShow(i){const s=pcS;if(!s)return;const p=pcPos(i),set=(id,o)=>{const e=$(id);for(const k in o)e.setAttribute(k,o[k])};
  set('pcLine',{x1:p.x.toFixed(1),x2:p.x.toFixed(1)});set('pcDot',{cx:p.x.toFixed(1),cy:p.y.toFixed(1)});set('pcHalo',{cx:p.x.toFixed(1),cy:p.y.toFixed(1)});
  const t=$('pcTip');t.innerHTML=p.html;t.style.left=p.left+'%';t.style.top=p.top+'%'}
@@ -330,22 +357,27 @@ function pcMove(e){const s=pcS;if(!s)return;const svg=e.target&&e.target.closest
  if(!svg){if(s.moved){s.moved=false;pcShow(s.peak)}return}
  const rc=svg.getBoundingClientRect(),vx=(e.clientX-rc.left)/rc.width*s.W,t=s.h0+(vx-s.L)/(s.W-s.L-s.R)*(s.h1-s.h0);
  const i=Math.max(s.h0*S,Math.min(s.h1*S-1,Math.round(t*S-.5)));s.moved=true;pcShow(i)}
-let plDay=null,plT=0;
+let plDay=null,plT=0,drReg={},drN=0,drNow=null;
+const PLD={a:2,r:4,c:8,t:'micro'};let PLC=Object.assign({},PLD);try{Object.assign(PLC,JSON.parse(localStorage.getItem('plcfg')||'{}'))}catch(e){}
+const plCfg=()=>{const a=Math.max(1,Math.min(6,Math.round(+PLC.a)||PLD.a)),r=Math.max(1,Math.min(20,Math.round(+PLC.r)||PLD.r)),c=Math.max(1,Math.min(20,Math.round(+PLC.c)||PLD.c));return{a,r,c,per:r*c,all:a*r*c,tot:Math.min(240,a*r*c),t:['micro','opt','string'].includes(PLC.t)?PLC.t:'micro'}};
+function plOut(){const o=document.getElementById('pl_out');if(!o)return;const L=plCfg(),n=plN();
+ o.innerHTML=`${L.a} array${L.a>1?'s':''} &times; ${L.r} rows &times; ${L.c} panels = <b>${N0(L.all)}</b> panels in the layout. The site has about <b>${N0(n)}</b> panels (kWp &divide; watts per panel).`+(L.all>240?' Only the first 240 are drawn.':'')+(L.all!=n?' These two numbers should match for a real site.':'')+(L.t=='string'?'<br><b style="color:#92400E">A string inverter gives no per-panel readings, so the chart can only be a demo.</b>':'')}
+function plFill(){const L=plCfg();[['pl_a',L.a],['pl_r',L.r],['pl_c',L.c],['pl_t',L.t]].forEach(([id,v])=>{const e=document.getElementById(id);if(e&&document.activeElement!==e)e.value=v});plOut()}
 const plN=()=>{const w=+(document.getElementById('cv_w')||{}).value||550;return Math.max(1,Math.round((+F.kwp||0)*1000/w))};
-function plGridHtml(r,t){const n=plN(),base=(r.sol[t]||0)*1000/n,day=+cur.slice(8,10)+31*(+cur.slice(5,7)),out=[];
- for(let i=0;i<64;i++){let x=Math.sin((i+1)*127.1+day*311.7)*43758.5453;x-=Math.floor(x);let f=1+(x-.5)*.05;if(i==13)f=.78;if(i==44)f=.85;out.push(Math.round(Math.max(0,base*f)))}
- const med=[...out].sort((a,b)=>a-b)[32];let fl=0;
- const tile=(v,i)=>{const f=med>30&&v<med*.9;if(f)fl++;const nm=(i<32?'A':'B')+(i%32+1);return `<div class="pn${f?' fl':''}${v<=0?' z':''}" title="Panel ${nm}: ${v} W"><i></i><b>${v}</b></div>`};
- const arr=(a,b,name)=>`<div class="pa"><div class="note" style="margin:0 0 4px"><b>${name}</b></div><div class="pg">${out.slice(a,b).map((v,j)=>tile(v,a+j)).join('')}</div></div>`;
- const html=arr(0,32,'Array A')+arr(32,64,'Array B');
- return{html,info:`<b>${tm(t)}</b>: site solar ${N0(r.sol[t]||0)} kW over ${N0(n)} panels, about ${N0(base)} W each. `+(fl?`<b style="color:#92400E">${fl} of the 64 panels shown are more than 10% below the middle value (red).</b>`:'No panel shown is more than 10% below the middle value.')}}
+function plGridHtml(r,t){const n=plN(),Lc=plCfg(),T=Lc.tot,base=(r.sol[t]||0)*1000/n,day=+cur.slice(8,10)+31*(+cur.slice(5,7)),out=[],w1=Math.min(13,T-1),w2=T>44?44:Math.floor(T*.7);
+ for(let i=0;i<T;i++){let x=Math.sin((i+1)*127.1+day*311.7)*43758.5453;x-=Math.floor(x);let f=1+(x-.5)*.05;if(T>2&&i==w1)f=.78;if(T>3&&i==w2&&w2!=w1)f=.85;out.push(Math.round(Math.max(0,base*f)))}
+ const med=[...out].sort((a,b)=>a-b)[Math.floor(T/2)];let fl=0;
+ const tile=(v,i)=>{const f=med>30&&v<med*.9;if(f)fl++;const nm=String.fromCharCode(65+Math.floor(i/Lc.per))+(i%Lc.per+1);return `<div class="pn${f?' fl':''}${v<=0?' z':''}" title="Panel ${nm}: ${v} W"><i></i><b>${v}</b></div>`};
+ const arr=(a,b,name)=>`<div class="pa"><div class="note" style="margin:0 0 4px"><b>${name}</b></div><div class="pg" style="--c:${Lc.c}">${out.slice(a,b).map((v,j)=>tile(v,a+j)).join('')}</div></div>`;
+ let html='';for(let k=0;k*Lc.per<T;k++)html+=arr(k*Lc.per,Math.min(T,(k+1)*Lc.per),'Array '+String.fromCharCode(65+k));
+ return{html,info:`<b>${tm(t)}</b>: site solar ${N0(r.sol[t]||0)} kW over ${N0(n)} panels, about ${N0(base)} W each. `+(fl?`<b style="color:#92400E">${fl} of the ${T} panels shown are more than 10% below the middle value (red).</b>`:`No panel shown is more than 10% below the middle value.`)}}
 function panelCard(r){if(!(+F.kwp>0))return `<div id="plBox"><p class="note">Enter a solar size under Facility to see the panel layout.</p></div>`;
  if(plDay!=cur){plDay=cur;plT=Math.max(0,r.sol.indexOf(Math.max(...r.sol)))}
  const g=plGridHtml(r,plT);
  return `<div id="plBox"><p class="note">Output of each panel in watts, like a monitoring app. Drag the slider or use the arrows to move through the day in 30-minute steps. Orange = normal, red = more than 10% below the middle value, grey = no sun.</p>
  <div class="bar" style="margin:6px 0"><span class="note" style="margin:0">Time</span><button data-pls="-1" aria-label="30 minutes earlier" title="30 minutes earlier">&#9664;</button><input type="range" id="plSl" min="0" max="${NS-1}" step="1" value="${plT}" style="flex:1;min-width:160px" aria-label="Time of day, 30-minute steps"><button data-pls="1" aria-label="30 minutes later" title="30 minutes later">&#9654;</button></div>
  <div id="plInfo" class="note" style="margin:0 0 8px">${g.info}</div><div id="plGrid" class="plwrap">${g.html}</div>
- <p class="note"><b>Demo values.</b> These are not meter readings: the site solar forecast is split evenly across ${N0(plN())} panels (${N0(+F.kwp)} kWp), with a small made-up spread and two made-up weak panels to show how a fault would look. Only 64 panels are drawn. When the customer's per-panel data is loaded, it replaces these numbers.</p></div>`}
+ <p class="note"><b>Demo values.</b> These are not meter readings: the site solar forecast is split evenly across ${N0(plN())} panels (${N0(+F.kwp)} kWp), with a small made-up spread and two made-up weak panels to show how a fault would look. ${plCfg().t=='string'?'<b>String inverter:</b> real per-panel readings do not exist with this setup, so this can only be a demo. ':''}Layout: ${plCfg().a} array${plCfg().a>1?'s':''} of ${plCfg().r} rows by ${plCfg().c} panels, set in Facility &amp; data. When the customer's per-panel data is loaded, it replaces these numbers.</p></div>`}
 function pcCard(r,past,K){
  const TY={sol:['Solar power',r.sol,'#F59E0B'],ld:['Site demand',r.ld,'#5B6360'],g:['Grid import (planned)',r.g,'#2b6cb0'],bat:['Battery (discharge +, charging \u2212)',r.b.map((v,i)=>v-r.ch[i]),'#16803D']};
  if(!TY[pcType])pcType='sol';const [nm,vals,col]=TY[pcType],NW=typeof innerWidth=='number'&&innerWidth<640,W=NW?400:760,H=300,L=NW?48:54,R=12,T=14,B=30;
@@ -359,12 +391,13 @@ function pcCard(r,past,K){
  const E=sum(r.sol)*DT,spk=r.sol.indexOf(Math.max(...r.sol)),ca=sum(r.d)*DT*F.ef;
  const tile=(bg,ic,v,l)=>`<div class="pcT"><span class="ico" style="background:${bg}">${ic}</span><div><b>${v}</b><span>${l}</span></div></div>`;
  const tiles=`<div class="pckpis">`+tile('#e3f4d6','&#9788;',live?'Live':past?'Rebuilt':'Forecast',live?'Not measured (no meter)':'Data (not measured)')+tile('#ffe5cc','&#9889;',N0(E),'Solar energy, kWh')+tile('#dbe8fb','&#8599;',N0(Math.max(...r.sol)),'Peak solar, kW at '+tm(spk))+tile('#fdf0c4','&#9831;',N0(ca),'CO&#8322; avoided, kg')+`</div>`;
+ pcS.live=live;
  const ar=P=>P.length<2?'':monoPath(P)+`L${P[P.length-1][0].toFixed(1)} ${y0.toFixed(1)}L${P[0][0].toFixed(1)} ${y0.toFixed(1)}Z`,
   curveBody=()=>{if(!live)return `<path d="${area}" fill="url(#pcg)"/><path d="${line}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>`;
    const P1=ks>=2?pts.slice(0,ks):[],P2=ks>=2?pts.slice(ks-1):pts,nx=xf(K/S),inr=nx>=L&&nx<=W-R,tx='font-size="11" font-weight="700" fill="#252B2A" stroke="#fff" stroke-width="3" paint-order="stroke"';
    return (P1.length?`<path d="${ar(P1)}" fill="url(#pcg)"/><path d="${monoPath(P1)}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>`:'')
     +(P2.length>1?`<path d="${ar(P2)}" fill="url(#pcg)" opacity=".5"/><path d="${monoPath(P2)}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="6 4"/>`:'')
-    +(inr?`<line x1="${nx.toFixed(1)}" x2="${nx.toFixed(1)}" y1="${T}" y2="${H-B}" stroke="#252B2A" stroke-width="1.5"/>`:'')
+     +(inr?`<line id="pcNow" x1="${nx.toFixed(1)}" x2="${nx.toFixed(1)}" y1="${T}" y2="${H-B}" stroke="#252B2A" stroke-width="1.5"/>`:'')
     +`<text x="${L+6}" y="${T+10}" ${tx}>Recorded</text><text x="${W-R-6}" y="${T+10}" text-anchor="end" ${tx}>Predicted</text>`},
   sel=`<div class="bar"><label for="pcSel"><b>Data type</b></label><select id="pcSel">`+Object.entries(TY).map(([k,v])=>`<option value="${k}"${k==pcType?' selected':''}>${v[0]}</option>`).join('')+`</select></div>`;
  return tiles+sel+`<div class="pcw"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${nm} through the day. Move over the chart to read a value."><defs><linearGradient id="pcg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".45"/><stop offset="1" stop-color="${col}" stop-opacity=".05"/></linearGradient></defs>`
@@ -382,11 +415,12 @@ function draw(r,b0,win,now){const W=760,H=290,L=54,B=30,T=10,bw=(W-L-8)/NS,hb=bw
   const dl=r.ld[h]-b0.ld[h];
   if(dl>0.5){const m=Math.min(dl,base);s+=`<rect x="${x}" y="${y(base)}" width="${w}" height="${y(base-m)-y(base)}" fill="url(#mv)" stroke="var(--shift)"/>`}
   if(dl<-0.5){const t0=base+Math.max(un,0);s+=`<rect x="${x}" y="${y(t0-dl)}" width="${w}" height="${y(t0)-y(t0-dl)}" fill="none" stroke="var(--shift)" stroke-width="1.5" stroke-dasharray="3 2"/>`}});
- if(now!=null){s+='</g>';const nx=L+now*bw;s+=`<line x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="var(--ink)" stroke-width="1.5"/><text x="${L+6}" y="${T+10}" font-size="11" font-weight="700" fill="var(--ink)" stroke="#fff" stroke-width="3" paint-order="stroke">Recorded</text><text x="${W-12}" y="${T+10}" text-anchor="end" font-size="11" font-weight="700" fill="var(--ink)" stroke="#fff" stroke-width="3" paint-order="stroke">Predicted</text>`}
+ if(now!=null){s+='</g>';const nx=L+now*bw;drNow={L,bw};s+=`<line id="nowLn" x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="var(--ink)" stroke-width="1.5"/><text x="${L+6}" y="${T+10}" font-size="11" font-weight="700" fill="var(--ink)" stroke="#fff" stroke-width="3" paint-order="stroke">Recorded</text><text x="${W-12}" y="${T+10}" text-anchor="end" font-size="11" font-weight="700" fill="var(--ink)" stroke="#fff" stroke-width="3" paint-order="stroke">Predicted</text>`}
  s+=xAxis(t=>L+t*hb,H-B,0,24,3);
  if(win&&r.peak>0)s+=`<line x1="${L+win[0]*hb}" x2="${L+win[1]*hb}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${L+win[1]*hb-4}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)" stroke="#fff" stroke-width="3" paint-order="stroke">billed peak ${Math.round(r.peak)} kW</text>`;
  s+=`<text x="${L}" y="${H-2}" font-size="10" fill="var(--mute)">Shaded band = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;
- return `<svg viewBox="0 0 760 290" role="img" aria-label="Supply split by source, every 30 minutes">${s}</svg><div class="legend"><span><i style="background:var(--solar)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border:1px dashed var(--solar)"></i>Unused solar</span><span><i style="background:repeating-linear-gradient(45deg,var(--shift) 0 2px,transparent 2px 5px);border:1px solid var(--shift)"></i>Work moved into this hour</span><span><i style="background:none;border:1px dashed var(--shift)"></i>Work moved out of this hour</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span>${now!=null?'<span><b>Solid</b> = recorded, <b>faded</b> = predicted</span>':''}</div>`}
+ const id='d'+(++drN);drReg[id]={r,L,bw,now};{const ks=Object.keys(drReg);if(ks.length>12)delete drReg[ks[0]]}
+ return `<div class="drw"><svg data-dr="${id}" viewBox="0 0 760 290" role="img" aria-label="Supply split by source, every 30 minutes. Move over the chart to read the values."><g>${s}</g><rect class="drhl" x="0" y="${T}" width="${bw}" height="${H-B-T}" fill="#000" opacity=".07" display="none" pointer-events="none"/></svg><div class="drtip" hidden></div></div><div class="legend"><span><i style="background:var(--solar)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border:1px dashed var(--solar)"></i>Unused solar</span><span><i style="background:repeating-linear-gradient(45deg,var(--shift) 0 2px,transparent 2px 5px);border:1px solid var(--shift)"></i>Work moved into this hour</span><span><i style="background:none;border:1px dashed var(--shift)"></i>Work moved out of this hour</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span>${now!=null?'<span><b>Solid</b> = recorded, <b>faded</b> = predicted</span>':''}</div>`}
 
 function pcRender(){const p=lastPlan;if(cur==TODAY&&rtLast&&rtLast.q.p===p){const o=rtSeries(rtLast.j,rtLast.q);return pcCard(o.r,false,o.K)}return pcCard(p.r,cur<TODAY)}
 function rg(a,t){const o=[];let s=null;for(let h=0;h<=NS;h++){const on=h<NS&&a[h]>t;if(on&&s===null)s=h;if(!on&&s!==null){o.push(tm(s)+' to '+tm(h));s=null}}return o.join(', ')}
@@ -599,9 +633,13 @@ function rtSeries(j,q){const s=j.series,K=j.now_step,c=q.p.b.c,qb=q.p.b;
 function rtDraw(j,q){const {r,b0,K,c}=rtSeries(j,q);
  const d=new Date(),clk=$('rtAt').value=='now'?'Clock '+p2(d.getHours())+':'+p2(d.getMinutes())+'. ':'';
  const pv=j.correction.pv_ratio,sol=pv==null?'':' Solar is running at <b>'+N0(pv*100)+'%</b> of forecast.';
- return `<p style="margin:0 0 6px"><b>Recorded up to ${tm(K)}.</b> Spent so far <b>${money(j.spent_so_far_rm)}</b>.${sol} ${j.expected.saving_rm>=0.5?'Re-planning the rest of the day is expected to save <b>'+money(j.expected.saving_rm)+'</b> compared with sticking to the old plan.':'The day-ahead plan still looks about right for the rest of the day.'}</p>`+draw(r,b0,c.win,K)}
+ const bc=q.p.b.cost,nc=j.expected.new_plan.cost,svp=bc>0&&isFinite(nc)?' Expected saving today: <b class="'+(nc<=bc?'good':'')+'">'+N1(100*(bc-nc)/bc)+'%</b> against solar only.':'';
+ return `<p style="margin:0 0 6px"><b>Recorded up to ${tm(K)}.</b> Spent so far <b class="good">${money(j.spent_so_far_rm)}</b>.${svp}${sol} ${j.expected.saving_rm>=0.5?'Re-planning the rest of the day is expected to save <b>'+money(j.expected.saving_rm)+'</b> compared with sticking to the old plan.':'The day-ahead plan still looks about right for the rest of the day.'}</p>`+draw(r,b0,c.win,K)}
 document.addEventListener('change',e=>{if(e.target&&(e.target.id=='rtSc'||e.target.id=='rtAt'))rtLoad()});
-setInterval(()=>{const e=document.getElementById('rtClock');if(e)e.textContent=clockTxt()},1000);
+setInterval(()=>{const e=document.getElementById('rtClock');if(e)e.textContent=clockTxt();
+ const d=new Date(),h=d.getHours()+d.getMinutes()/60+d.getSeconds()/3600,a=document.getElementById('nowLn');
+ if(a&&drNow){const x=(drNow.L+h*S*drNow.bw).toFixed(1);a.setAttribute('x1',x);a.setAttribute('x2',x)}
+ const c=document.getElementById('pcNow');if(c&&pcS&&pcS.live){const x=pcS.xf(h);if(x>=pcS.L&&x<=pcS.W-pcS.R){c.setAttribute('x1',x.toFixed(1));c.setAttribute('x2',x.toFixed(1));c.removeAttribute('display')}else c.setAttribute('display','none')}},1000);
 // ================= Live clock (SIMULATED): plays the day forward and hands data to /api/replan like a meter feed would =================
 let lvSim=null;const LVSPD={demo:7.5,slow:3.75,real:1/60};   // simulated minutes per real second
 function lvStop(){if(lvSim&&lvSim.timer){clearInterval(lvSim.timer);lvSim.timer=0}}
@@ -956,7 +994,7 @@ $('yes').onclick=()=>go(addD(TODAY,-1));$('tod').onclick=()=>go(TODAY);$('tom').
 $('vday').onclick=()=>{view='day';render()};$('vweek').onclick=()=>{view='week';render()};$('vmonth').onclick=()=>{view='month';render()};
 $('bView').onclick=e=>{const b=e.target.closest('button');if(b){view=b.id.slice(1);render()}};
 $('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);$('dt').onchange=e=>{if(e.target.value){cur=e.target.value;render()}};
-$('out').addEventListener('pointermove',pcMove);
+$('out').addEventListener('pointermove',pcMove);$('out').addEventListener('pointermove',drMove);
 $('out').addEventListener('input',e=>{if(e.target&&e.target.id=='plSl'&&lastPlan){plT=+e.target.value;const g=plGridHtml(lastPlan.r,plT);$('plGrid').innerHTML=g.html;$('plInfo').innerHTML=g.info}});
 $('out').addEventListener('change',e=>{if(e.target&&e.target.id=='pcSel'){pcType=e.target.value;if(lastPlan&&$('ct_pc'))$('ct_pc').innerHTML=pcRender()}});
 $('out').onclick=e=>{const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;rtDem=false;const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';$('ct_wx').hidden=chartTab!='wx';$('ct_pc').hidden=chartTab!='pc';$('ct_pl').hidden=chartTab!='pl';if($('ct_rt'))$('ct_rt').hidden=chartTab!='rt';
@@ -1010,20 +1048,30 @@ function importMeter(text,unit){let r;try{r=parseMeter(text,unit)}catch(e){r=nul
 $('m_go').onclick=async()=>{const f=$('m_file').files[0];if(!f){$('m_msg').textContent='Choose a CSV file first.';return}
  const x=importMeter(await f.text(),$('m_unit').value);if(x.err)$('m_msg').textContent=x.err};
 $('m_clear').onclick=()=>{setPend(['<b>Demand source:</b> meter data removed. Demand is back to the modelled profile.']);M=null;try{localStorage.removeItem('meter')}catch(e){}cache.clear();meterMsg();render()};
+['pl_a','pl_r','pl_c','pl_t'].forEach(id=>{const e=document.getElementById(id);if(!e)return;e.oninput=e.onchange=()=>{PLC={a:$('pl_a').value,r:$('pl_r').value,c:$('pl_c').value,t:$('pl_t').value};try{localStorage.setItem('plcfg',JSON.stringify(PLC))}catch(x){}plOut();if(lastPlan&&$('ct_pl'))$('ct_pl').innerHTML=panelCard(lastPlan.r)}});
 meterMsg();
 
-function fill(){$('f_tar').value=F.volt+F.struct;FIELDS.forEach(k=>$('f_'+k).value=F[k]);fillSites();$('fsum').textContent=`My facility: ${F.name}, ${F.volt} ${F.struct=='T'?'ToU':'General'}, ${F.peak} kW peak, ${F.kwp} kWp solar, ${F.bat} kWh battery (tap to edit)`;ratesCard()}
+function fill(){plFill();$('f_tar').value=F.volt+F.struct;FIELDS.forEach(k=>$('f_'+k).value=F[k]);fillSites();$('fsum').textContent=`My facility: ${F.name}, ${F.volt} ${F.struct=='T'?'ToU':'General'}, ${F.peak} kW peak, ${F.kwp} kWp solar, ${F.bat} kWh battery (tap to edit)`;ratesCard()}
 let user=null,sites=[];
 const say=t=>{$('fmsg').textContent=t;$('amsg').textContent=t},persist=()=>{try{localStorage.setItem('facility',JSON.stringify(F));storeOk()}catch(e){storeFail('Your browser refused to save your facility settings (storage is full or blocked), so they will be forgotten when you close or reload this page. Sign in and press Save to account to keep them.')}};
 function fillSites(){const s=$('sites');if(!s)return;const on=sites.some(x=>x.name==F.name);s.innerHTML=(on?'':`<option value="" selected>This device: ${esc(F.name)} (not on your account)</option>`)+sites.map(x=>`<option value="${esc(x.name)}"${x.name==F.name?' selected':''}>${esc(x.name)}</option>`).join('')}
 function authUi(){const a=$('auth');
  if(user){a.innerHTML=`Signed in as <b>${esc(user.userDetails||'user')}</b> <select id="sites" aria-label="My saved facilities"></select> <a href="/.auth/logout?post_logout_redirect_uri=/">Sign out</a>`;
-  $('sites').onchange=()=>{const n=$('sites').value;if(n)loadSite(n)};fillSites()}
+  $('sites').onchange=()=>{const n=$('sites').value;if(n)loadSite(n)};fillSites();
+  const so=a.querySelector('a[href*="logout"]');if(so)so.onclick=e=>{if(!sites.some(x=>x.name==F.name)&&!confirm('"'+F.name+'" is not saved to your account. Signing out removes it from this device. Sign out anyway?')){e.preventDefault();return}wipeLocal();try{localStorage.removeItem('owner');sessionStorage.removeItem('acct')}catch(x){}}}
  else a.innerHTML='<a href="/.auth/login/github?post_login_redirect_uri=/">Sign in with GitHub</a> &middot; <a href="/.auth/login/aad?post_login_redirect_uri=/">Microsoft</a>';
  $('acctBtns').hidden=!user;$('fsave').hidden=!user;$('signhint').hidden=!!user}
 async function loadSite(name){try{const j=await api('/api/profile?site='+encodeURIComponent(name));{const nf=Object.assign({},DEF,LEG(j.data),{name}),ch=diffF(F,nf);setPend(['Loaded <b>'+esc(name)+'</b> from your account.'].concat(ch))}F=Object.assign({},DEF,LEG(j.data),{name});persist();cache.clear();fill();render();say('Loaded '+name+'.')}catch(e){say(e.message);fillSites()}}
+// Everything below is kept in this browser, not on the server. It must not pass from one person to the next on a shared device.
+const PERSONAL=['facility','meter','learned','approvals','calc','plcfg','ui'];
+function wipeLocal(){PERSONAL.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}})}
 async function whoami(){try{const j=await (await fetch('/.auth/me')).json();user=j.clientPrincipal||null}catch(e){user=null}
- authUi();if(user){try{const j=await api('/api/profile');sites=j.sites||[];fillSites();if(!saved&&sites.length)loadSite(sites[0].name)}catch(e){say(e.message)}}}
+ if(user){const who=String(user.userId||user.userDetails||'');let prev=null;try{prev=localStorage.getItem('owner')}catch(e){}
+  if(prev&&prev!==who){wipeLocal();F=Object.assign({},DEF);M=null;PC={};PLC=Object.assign({},PLD);cache.clear();try{sessionStorage.removeItem('acct')}catch(e){}meterMsg();fill();render()}
+  try{localStorage.setItem('owner',who)}catch(e){}}
+ authUi();if(user){try{const j=await api('/api/profile');sites=j.sites||[];fillSites();
+  let first=true;try{first=!sessionStorage.getItem('acct');sessionStorage.setItem('acct','1')}catch(e){}
+  if(sites.length&&(!saved||(first&&!sites.some(x=>x.name==F.name))))loadSite(sites[0].name)}catch(e){say(e.message)}}}
 function readForm(){$('f_volt').value=$('f_tar').value.slice(0,2);$('f_struct').value=$('f_tar').value[2];
  const n=Object.assign({},F);FIELDS.forEach(k=>n[k]=$('f_'+k).value.trim());
  const bad=NUMS.find(k=>n[k]===''||!isFinite(+n[k])||(k!='afa'&&+n[k]<0));
