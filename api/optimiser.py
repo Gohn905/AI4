@@ -126,6 +126,19 @@ def ev_baseline(d):
 
 
 def optimise(d):
+    """Plan the day. Optional "soc_reserve" (0 to 0.5): share of the battery kept in reserve for the whole day (outages, forecast error).
+    The reserve is a comfort rule, the grid limit is a safety rule: if keeping the reserve makes a hard grid limit impossible, the
+    plan is made again without the reserve and the result says so ("reserve_relaxed": true)."""
+    rsv = d.get("soc_reserve", 0) or 0
+    if rsv and not d.get("_rsv_pass"):
+        r = optimise({**d, "_rsv_pass": True})
+        limited = float(d.get("grid_limit", 0) or 0) > 0 and bool(d.get("hard_limit", True))
+        if limited and not r.get("limit_ok", True):
+            r0 = optimise({**d, "_rsv_pass": True, "soc_reserve": 0})
+            r0["reserve_relaxed"] = True
+            return r0
+        r["reserve_relaxed"] = False
+        return r
     N = _steps(d)                            # 24 or 48 steps
     dt = 24.0 / N                            # hours per step: kW x dt = kWh
     load = _vec(d, "load", 0, 1e6, N)        # kW, original load (average over each step)
@@ -142,6 +155,7 @@ def optimise(d):
     if not math.isfinite(eff) or not 0.5 <= eff <= 1.0:
         raise ValueError("eff must be between 0.5 and 1.0")
     eta = math.sqrt(eff)
+    reserve = _num(d, "soc_reserve", 0, 0.5)   # share of the battery never used (kept for outages and forecast error)
     allow = d.get("co2_allow")
     if allow is not None:
         allow = float(allow)
@@ -214,6 +228,12 @@ def optimise(d):
         bounds[ix["SOC"][t]] = (0, cap)
     bounds[ix["SOC"][0]] = (0.5 * cap, 0.5 * cap)      # start at 50%
     bounds[ix["SOC"][N]] = (0.5 * cap, cap)            # end at least at start
+    if reserve > 0 and cap > 0:                         # never drop below the reserve during the day
+        floor = reserve * cap
+        if soc_now is not None:
+            floor = min(floor, float(soc_now))          # a re-plan cannot demand more than the meter says is there
+        for t in range(1, N):
+            bounds[ix["SOC"][t]] = (floor, cap)
     if fx:                                    # past steps are history: executed decisions, not decisions to make
         for t in range(fx["k"]):
             ch_, dis_, fl_ = float(fx["ch"][t]), float(fx["dis"][t]), float(fx["flex"][t])
