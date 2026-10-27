@@ -129,7 +129,10 @@ input[type=range]{accent-color:#F59E0B}
 .lvlog{list-style:none;padding:0;margin:6px 0}.lvlog li{padding:7px 10px;margin:0 0 5px;background:#fff;border:1px solid var(--card-line);border-left:5px solid var(--card-line);border-radius:6px;font-size:13px}.lvlog li.lvoff{border-left-color:var(--amb)}
 .flash{animation:flash 2.2s ease-out}@keyframes flash{0%,60%{box-shadow:0 0 0 4px var(--sun)}100%{box-shadow:0 0 0 0 transparent}}
 @media(max-width:640px){.pa{width:100%}.pg{grid-template-columns:repeat(var(--c,8),minmax(0,1fr));gap:4px}.pn{width:auto;min-width:0}.pn b{font-size:12px}}
-.rtclock{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px;margin:0 0 8px}.rtclock b{font-size:34px;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.02em}</style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span class="sp"></span><span id="auth" class="note"></span></header>
+.rtclock{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px;margin:0 0 8px}.rtclock b{font-size:34px;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.02em}.qh{display:block;margin:8px 0 4px}.qh>summary{list-style:none;cursor:pointer;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--mut);color:var(--mut);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;background:#fff;user-select:none}.qh>summary::-webkit-details-marker{display:none}.qh>summary:hover,.qh[open]>summary{background:var(--amb);color:var(--ink);border-color:var(--amb)}.qh .qb{margin-top:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}.qh .qb p:first-child{margin-top:0}.qh .qb p:last-child{margin-bottom:0}
+.flg{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}.flg .lg{display:flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:13px}.flg .lg i{width:12px;height:12px;border-radius:3px;flex:none}.flg .lg b{font-variant-numeric:tabular-nums}.flg .lg em{font-style:normal;color:var(--mut)}
+.fst{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px}.fst>div{background:rgba(0,0,0,.035);border-radius:10px;padding:10px 12px}.fst small{display:block;color:var(--mut);font-size:12px;line-height:1.35}.fst b{display:block;font-size:22px;line-height:1.25;font-variant-numeric:tabular-nums}.fst .fl-h{color:var(--ink);font-size:13px;font-weight:650}
+</style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span class="sp"></span><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
 <div id="amsg" class="note" style="margin:0 0 6px"></div>
@@ -166,7 +169,7 @@ input[type=range]{accent-color:#F59E0B}
 <div id="out"><div class="card note">Loading&hellip;</div></div>
 <div id="facPanel" data-role="tech" hidden>
 <details class="card" id="setup" open><summary id="fsum">My facility</summary>
-<p class="note">Changes apply as soon as you leave a box. There is nothing to press.</p>
+<p class="note">Changes apply as soon as you leave a box.</p>
 <div class="form" style="margin-bottom:8px;display:none"><div><label>Start from a typical case</label><select id="f_case"><option value="">Choose a case...</option><option value="lv">LV: small shop or office</option><option value="mv">MV: large campus (challenge case)</option><option value="hv">HV: large factory</option></select></div></div>
 <h3 class="sec">1. Your site</h3>
 <div class="form">
@@ -188,10 +191,10 @@ input[type=range]{accent-color:#F59E0B}
 <div class="form">
 <div><label>Solar size, kWp</label><input id="f_kwp" type="number" min="0"></div>
 <div><label>Battery, kWh (0 = none)</label><input id="f_bat" type="number" min="0"></div>
-<div><label>Shiftable daytime load, % (0 to 30; used only when EV chargers = 0)</label><input id="f_flex" type="number" min="0" max="30"></div>
-<div><label>EV chargers (number; 0 = none)</label><input id="f_evn" type="number" min="0"></div>
+<div><label>Shiftable daytime load, % (0 to 30)</label><input id="f_flex" type="number" min="0" max="30"></div>
+<div><label>EV chargers</label><input id="f_evn" type="number" min="0"></div>
 <div><label>Power per charger, kW</label><input id="f_evkw" type="number" min="0"></div>
-<div><label>EV energy wanted per day, kWh (assumption)</label><input id="f_eve" type="number" min="0"></div>
+<div><label>EV energy wanted per day, kWh</label><input id="f_eve" type="number" min="0"></div>
 </div>
 <details class="adv" id="conv"><summary>Solar panels: size helper and panel layout</summary>
 <div class="form" style="margin-top:8px">
@@ -420,96 +423,9 @@ function draw(r,b0,win,now){const W=760,H=290,L=54,B=30,T=10,bw=(W-L-8)/NS,hb=bw
  if(win&&r.peak>0)s+=`<line x1="${L+win[0]*hb}" x2="${L+win[1]*hb}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${L+win[1]*hb-4}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)" stroke="#fff" stroke-width="3" paint-order="stroke">billed peak ${Math.round(r.peak)} kW</text>`;
  s+=`<text x="${L}" y="${H-2}" font-size="10" fill="var(--mute)">Shaded band = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;
  const id='d'+(++drN);drReg[id]={r,L,bw,now};{const ks=Object.keys(drReg);if(ks.length>12)delete drReg[ks[0]]}
- return `<div class="drw"><svg data-dr="${id}" viewBox="0 0 760 290" role="img" aria-label="Supply split by source, every 30 minutes. Move over the chart to read the values."><g>${s}</g><rect class="drhl" x="0" y="${T}" width="${bw}" height="${H-B-T}" fill="#000" opacity=".07" display="none" pointer-events="none"/></svg><div class="drtip" hidden></div></div><div class="legend"><span><i style="background:var(--solar)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border:1px dashed var(--solar)"></i>Unused solar</span><span><i style="background:repeating-linear-gradient(45deg,var(--shift) 0 2px,transparent 2px 5px);border:1px solid var(--shift)"></i>Work moved into this hour</span><span><i style="background:none;border:1px dashed var(--shift)"></i>Work moved out of this hour</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span>${now!=null?'<span><b>Solid</b> = recorded, <b>faded</b> = predicted</span>':''}</div>`}
-
-function pcRender(){const p=lastPlan;if(cur==TODAY&&rtLast&&rtLast.q.p===p){const o=rtSeries(rtLast.j,rtLast.q);return pcCard(o.r,false,o.K)}return pcCard(p.r,cur<TODAY)}
-function rg(a,t){const o=[];let s=null;for(let h=0;h<=NS;h++){const on=h<NS&&a[h]>t;if(on&&s===null)s=h;if(!on&&s!==null){o.push(tm(s)+' to '+tm(h));s=null}}return o.join(', ')}
-function recs(r,b){const L=[],cap=+F.bat||0;
- if(r===b)L.push('Select one of the optimiser strategies to see its action plan.');
- else{const fl=rg(r.fl,1);L.push(fl?`Run flexible equipment between ${fl}. Charging stays inside the allowed operating window.`:'No equipment is moved. Operations keep their normal schedule.');
-  if(cap>0){const c=rg(r.ch,1),d=rg(r.b,1);L.push((c?`Charge the battery ${c}. `:'')+(d?`Discharge it ${d} to cap the billed grid peak.`:'The battery is not needed in this plan.'))}else L.push('No battery in this plan.');
-  L.push(r.c.mdH.length?`Hold billed grid demand to ${r.peak.toFixed(0)} kW (baseline ${b.peak.toFixed(0)} kW). Highest draw in any 30 minutes is ${Math.max(...r.g).toFixed(0)} kW${+F.lim>0?`, against a grid limit of ${F.lim} kW`:''}.`:`No maximum demand is billed on this day. Highest draw in any 30 minutes is ${Math.max(...r.g).toFixed(0)} kW.`);
-  const su=rg(r.sol.map((s,h)=>s-r.ld[h]),0);L.push(su?`Solar surplus expected ${su}: store it or run flexible load then.`:'Solar never exceeds site load, so all of it is used on site and the grid covers the shortfall.')}
- return L.map(t=>`<li>${t}</li>`).join('')}
-
-function fcCard(fc,past,fn){
- const W=760,Hh=220,L=54,B=28,T=10,x=h=>L+(W-L-8)*h/NS,hi=fc.pv_p90&&!past?fc.pv_p90:fc.pv,ax=niceAxis(0,Math.max(...fc.load,...hi,1)*1.03),mx=ax.hi,y=v=>Hh-B-(v/mx)*(Hh-B-T);
- const pa=a=>a.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join('');let g='';
- g+=yGrid(ax,y,L,W-8)+yTitle(T,Hh-B,'kW')+xAxis(t=>x(t*S),Hh-B,0,24,3);
- const band=fc.pv_p10&&fc.pv_p90&&!past;
- if(band){const up=fc.pv_p90.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)),dn=fc.pv_p10.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)).reverse();g+=`<path d="M${up.join('L')}L${dn.join('L')}Z" fill="var(--solar)" opacity=".25"/>`}
- g+=`<path d="${pa(fc.load)}" stroke="var(--mute)" stroke-dasharray="5 4" fill="none" stroke-width="2"/><path d="${pa(fc.pv)}" stroke="var(--solar)" fill="none" stroke-width="2.5"/>`;
- const dl=fc.meter=='actual'?'Demand (your meter reading)':fc.meter=='typical'?'Demand (typical pattern from your meter data)':past?'Demand (modelled)':'Demand (forecast)',
-  E=sum(fc.pv)*DT,av=a=>sum(a)/a.length;
- const rng=band?` Likely range ${Math.round(sum(fc.pv_p10)*DT)} to ${Math.round(sum(fc.pv_p90)*DT)} kWh.`:'';
- return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Solar and demand ${past?'record':'forecast'}">${g}</svg>
- <div class="legend"><span><i style="background:var(--solar)"></i>Solar output, kW${past?'':' (expected)'}</span>${band?'<span><i style="background:var(--solar);opacity:.3"></i>Likely range (10% to 90%)</span>':''}<span><i style="background:none;border-top:2px dashed var(--mute);height:0;width:14px"></i>${dl}, kW</span></div>
- <div class="stats"><div><span>Highest temperature</span><b>${Math.max(...fc.temp).toFixed(1)} &deg;C</b></div><div><span>Average cloud cover</span><b>${Math.round(av(fc.cloud))}%</b></div><div><span>Strongest sunshine</span><b>${Math.round(Math.max(...fc.ghi))} W/m&sup2;</b></div><div><span>Solar energy ${past?'':'expected '}</span><b>${Math.round(E)} kWh</b></div></div>
- <p class="note">${past?'Rebuilt from recorded weather, not from an inverter reading.':'Not measured: this is a prediction, so real values will differ.'}${rng}</p><p class="note">${esc(fn)}</p>`}
-
-function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a.cost,dC=a.co2-z.co2;
- if(dS<1||dC<0.5)return'<p class="note">CO&#8322; trade-off: Cost-saving and Balanced give almost the same result on this day.</p>';
- return `<p class="note"><b>CO&#8322; trade-off:</b> Cost-saving earns ${money(dS)} more per day than Balanced, at the price of ${Math.round(dC)} kg more CO&#8322; (about ${money(dS/dC)} per kg).</p>`}
-
-// ================= pages: Brief (owner view) and Detailed (tabs) =================
-const TABS={ov:['ribbon','headline','kpi','costbars','flow','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','schedule','approve','changed'],ad:['live','reopt','learn','stress','sweep','assume','audit','changed'],fa:['changed']};let dtab='ov';
-function applyTab(){const t=role=='tech';Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&dtab=='fa'});$('facPanel').hidden=!(t&&dtab=='fa');
- if(document.querySelectorAll)document.querySelectorAll('#dtabs button').forEach(b=>b.classList.toggle('on',b.dataset.dt==dtab));fairLoad()}
-$('dtabs').onclick=e=>{const b=e.target.closest('[data-dt]');if(b){dtab=b.dataset.dt;applyTab()}};
-// ================= roles =================
-let role=null;try{role=localStorage.getItem('role')}catch(e){}
-let techCur=null;
-function applyRole(r){const prev=role;role=r;if(prev&&prev!==r){if(r=='owner'&&cur!==TODAY){techCur=cur;cur=TODAY;render()}else if(r=='tech'&&techCur){cur=techCur;techCur=null;render()}}$('pgTitle').textContent=r=='tech'?'Energy optimisation workspace':'Your energy, at a glance.';$('app').setAttribute('data-role',r);applyTab();if(document.querySelectorAll)document.querySelectorAll('[data-rp]').forEach(b=>b.classList.toggle('on',b.dataset.rp==r))}
-function setRole(r){applyRole(r);try{localStorage.setItem('role',r)}catch(e){}$('roleGate').hidden=true;maybeTour()}
-$('roleGate').onclick=$('roleSwitch').onclick=e=>{const b=e.target.closest('[data-rp]');if(b)setRole(b.dataset.rp)};
-
-// ================= headline, summary, flow =================
-function tplSummary(f){const sv=f.base_cost-f.plan_cost,pct=f.base_cost>0?100*sv/f.base_cost:0;
- if(f.strategy=='Baseline')return `Baseline means solar only, with no battery and no load shifting. On ${f.day} it costs ${money(f.base_cost)} on the ${f.tariff} tariff.`;
- const s=[];
- if(sv>=0.5)s.push(`On ${f.day}, ${f.strategy} lowers the day's cost from ${money(f.base_cost)} to ${money(f.plan_cost)}, a saving of ${money(sv)} (${N1(pct)}%).`);
- else if(sv<0)s.push(`On ${f.day}, ${f.strategy} costs ${money(-sv)} more than the baseline of ${money(f.base_cost)}.`);
- else s.push(`On ${f.day}, ${f.strategy} saves nothing: the day costs ${money(f.base_cost)} either way.`);
- s.push(f.billed?`The billed peak goes from ${N0(f.base_peak)} kW to ${N0(f.plan_peak)} kW.`:'No maximum demand charge is billed on this day, so there is no peak to reduce.');
- const bits=[];if(f.charge)bits.push(`the battery charges ${f.charge}`);if(f.discharge)bits.push(`discharges ${f.discharge}`);if(f.shift)bits.push(`flexible equipment runs ${f.shift}`);
- if(bits.length)s.push('In the plan, '+bits.join(', ')+'.');return s.join(' ')}
-function headCard(r,b,c,sv,past){const sb=sel=='base',sav=b.cost-r.cost,dco=r.co2-b.co2,ng0=sum(b.ld)*DT*F.ef,dns=r.co2-ng0,day=aiFacts.day,tail=dco>0.5?' \u2014 with one trade-off to review.':'.',
- short=(c.mdH.length&&!sb?'Billed peak '+N0(b.peak)+' \u2192 '+N0(r.peak)+' kW. ':'')+(sb?'Solar only, no battery, no load shifting.':'CO\u2082 emission '+(dns>=0?'+':'\u2212')+N1(Math.abs(ng0?100*dns/ng0:0))+'%.'),
- ttl=sb?`Baseline: solar only, on ${day}.`:sav<0.5?`This plan saves almost nothing on ${day}.`:(past?'This plan would have saved ':'Potential savings of ')+money(sav)+tail;
- return `<div class="card ai${past?'':' fcast'}" data-tour="headline"><div><div class="eyebrow">&#10022; Sun Shine briefing &middot; ${NAMES[sel].replace('Optimiser: ','')} <span class="tag ${past?'':'f'}">${past?'recorded weather':'forecast'}</span></div>
- <h2>${esc(ttl)}</h2><p class="shortline" data-role="owner">${esc(short)}</p><p id="aiTxt" data-role="tech">${esc(tplSummary(aiFacts))}<br><small class="note">Built from the optimiser's numbers. Press the button for an AI-written version.</small></p>
- <div class="bar" style="margin:12px 0 0"><button class="on" id="aiBtn" data-ai="1" data-role="tech">Rewrite with AI</button><button data-role="owner" data-pr="1">Print one-page summary</button></div></div>
- <div class="ai-side"><span class="small">${sb?'Baseline cost':past?'Daily saving':'Potential daily savings'}</span><strong>${sb?money(b.cost):money(sav)}</strong><button class="on" data-role="owner" data-goto="1">Explore plan &rarr;</button></div></div>`}
-function kpiRow(r,b,c,sv){const sb=sel=='base',sav=b.cost-r.cost,ng=sum(b.ld)*DT*F.ef,dco=r.co2-ng,cp=ng?100*dco/ng:0,
- k=(l,i,v,cl,f)=>`<div class="card kpi"><div class="kpi-top"><span>${l}</span><span class="ico">${i}</span></div><div class="metric ${cl||''}">${v}</div><div class="kpi-foot">${f}</div></div>`;
- return `<div class="kpirow" data-tour="kpi">`+
-  k('Estimated cost savings','&#8600;',sb?'&mdash;':money(sav),sav>0.5?'positive':'',sb?'Baseline is solar only':sv>=0?N1(sv)+'% lower than baseline':N1(-sv)+'% higher than baseline')+
-  k('Billed peak demand','&#989;',c.mdH.length?N0(r.peak)+' kW':'None <small style="font-size:14px;font-weight:600;color:var(--mut)">('+new Date(cur+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'})+')</small>','',c.mdH.length?'From '+N0(b.peak)+' kW at baseline':'No demand charge on this day')+
-  k('Solar utilisation','&#9788;',N0(r.util)+'%','',N0(sum(r.sol)*DT)+' kWh available')+
-  k('CO&#8322; emission','&#9831;',ng>0?(dco>=0?'+':'\u2212')+N1(Math.abs(cp))+'%':'&mdash;',ng>0&&dco<-0.5?'positive':Math.abs(dco)<0.5?'':'warning',ng>0?(dco<-0.5?N0(-dco)+' kg avoided':Math.abs(dco)<0.5?'About the same':N0(dco)+' kg extra'):'')+`</div>`}
-function costCard(r,b,sv,past){const sb=sel=='base',w=b.cost>0?Math.min(100*r.cost/b.cost,100):100;
- return `<div class="card" data-tour="costbars"><div class="cardhead"><div><h2>Electricity cost comparison</h2><div class="muted small">Baseline vs selected strategy</div></div>${!sb&&sv>=0.05?`<span class="badge green">${N1(sv)}% lower</span>`:''}</div>
- <div class="costbars"><div class="barlabel">Baseline</div><div class="barwrap"><div class="barfill base" style="width:100%"></div></div><div class="barvalue">${money(b.cost)}</div></div>
- <div class="costbars"><div class="barlabel">${sb?'Baseline':NAMES[sel].replace('Optimiser: ','')}</div><div class="barwrap"><div class="barfill opt" style="width:${w.toFixed(1)}%"></div></div><div class="barvalue">${money(r.cost)}</div></div>
- <div class="footnote">${past?'Estimate from recorded weather.':'Forecast estimate, not a measurement.'}<span data-role="tech"> Daily cost includes the monthly demand charge spread over 30 days. Check the tariff assumptions against your own bill.</span></div></div>`}
-function ownerSteps(r,b){const cap=+F.bat||0,L=[],it=(i,t,p)=>`<div class="action"><div class="action-icon">${i}</div><div><strong>${t}</strong><p>${p}</p></div></div>`;
- if(sel=='base')return it('&#9788;','Pick a strategy','Choose one above to see the plan.');
- const c=rg(r.ch,1),d=rg(r.b,1),f=rg(r.fl,1);
- if(cap>0)L.push(it('&#989;','Battery',(c?'Charge '+c+'. ':'')+(d?'Discharge '+d+'.':'Not needed today.')));
- L.push(it('&#9638;',+F.evn>0?'EV charging':'Flexible equipment',f?'Run '+f+'.':'No change to the normal schedule.'));
- if(r.c.mdH.length)L.push(it('&#8600;','Billed peak','Hold it to '+N0(r.peak)+' kW.'));
- return L.join('')}
-function actCard(r,b){return `<div class="card" data-tour="actions"><div class="cardhead"><div><h2>Recommended next steps</h2><div class="muted small">For this strategy</div></div><span class="badge amber">For your review</span></div><div data-role="owner">${ownerSteps(r,b)}</div><ul data-role="tech">${recs(r,b)}</ul><button class="on" data-role="owner" data-goto="1" style="width:100%;margin-top:15px">View detailed energy plan &rarr;</button></div>`}
-function stratCards(R,b){const D={cost:['Cost-saving','Lowest bill. May add a little CO&#8322;.'],bal:['Balanced','Moves half as much equipment and limits extra CO&#8322;.'],prod:['Production-first','Never moves equipment. Same CO&#8322; limit as Balanced.'],zero:['Lowest-carbon','Adds no extra CO&#8322;. EV charging is still shifted.']};
- return `<div class="card" data-tour="strategies"><h2>Choose an optimisation strategy</h2><div class="muted small">Pick one to see its plan across the dashboard.</div><div class="stratgrid">`+['cost','bal','zero'].map(k=>{const x=R[k],v=x&&b.cost>0?(1-x.cost/b.cost)*100:null;return `<button class="strategy${sel==k?' selected':''}" data-sc="${k}"><h3>${D[k][0]}</h3><p>${D[k][1]}</p><span class="tiny">${v==null?'':N1(v)+'% saving'}</span></button>`}).join('')+`</div></div>`}
-function flowCard(r,b){
- const segs=x=>{const d=sum(x.d)*DT,bt=sum(x.b)*DT,g=sum(x.g)*DT;return{d,bt,g,t:d+bt+g||1}};
- const bar=(x,l)=>{const s=segs(x),lab=v=>v/s.t>0.1?N0(v)+' kWh':'';return `<div class="fl"><div class="fl-l">${l}</div><div class="fl-b" role="img" aria-label="${l}: solar ${N0(s.d)} kWh, battery ${N0(s.bt)} kWh, grid ${N0(s.g)} kWh"><span class="s1" style="flex:${s.d}">${lab(s.d)}</span><span class="s2" style="flex:${s.bt}">${lab(s.bt)}</span><span class="s3" style="flex:${s.g}">${lab(s.g)}</span></div></div>`};
- const s=segs(r);
- return `<div class="card" data-tour="flow" data-role="tech"><h2>Where the day's energy comes from</h2>${bar(b,'Baseline (solar only)')}${sel=='base'?'':bar(r,NAMES[sel].replace('Optimiser: ',''))}
- <div class="legend"><span><i style="background:var(--solar)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (including battery charging)</span></div>
- <div class="stats"><div><span>Self-consumption</span><b>${N0(r.util)}%</b><span>of the solar produced is used on site</span></div><div><span>Solar share of supply</span><b>${N0(100*s.d/s.t)}%</b><span>of the energy supplied came from solar</span></div><div><span>Solar available</span><b>${N0(sum(r.sol)*DT)} kWh</b></div></div>
- <p class="note">Totals for the day, in kWh. The battery's energy first came from solar or the grid.</p></div>`}
+ return `<div class="drw"><svg data-dr="${id}" viewBox="0 0 760 290" role="img" aria-label="Supply split by source, every 30 minutes. Move over the chart to read the values."><g>${s}</g><rect class="drhl" x="0" y="${T}" width="${bw}" height="${H-B-T}" fill="#000" opacity=".07" display="none" pointer-events="none"/></svg><div class="drtip" hidden></div></div><div class="flg">${[['--sun','Solar used',s.d],['--bat','Battery',s.bt],['--grid','Grid (incl. battery charging)',s.g]].map(([c,n,v])=>`<div class="lg"><i style="background:var(${c})"></i><span>${n}</span><b>${N0(v)} kWh</b><em>${N0(100*v/s.t)}%</em></div>`).join('')}</div>
+  <div class="fst"><div><span class="fl-h">Self-consumption</span><b>${N0(r.util)}%</b><small>of the solar produced is used on site</small></div><div><span class="fl-h">Solar share of supply</span><b>${N0(100*s.d/s.t)}%</b><small>of the energy supplied came from solar</small></div><div><span class="fl-h">Solar available</span><b>${N0(sum(r.sol)*DT)} kWh</b><small>forecast for the day</small></div></div>
+  <p class="note" style="margin-top:10px">Totals for the day. Battery energy first came from solar or the grid.</p></div>`}
 
 // ================= print (owner) =================
 function printOwner(){const p=lastPlan;if(!p||!aiFacts)return;const r=p.r,b=p.b,c=b.c,f=aiFacts,k=JSON.stringify(f),txt=aiCache.has(k)?aiCache.get(k).text:tplSummary(f),past=p.date<TODAY;
@@ -544,18 +460,7 @@ async function sweepRun(){const p=lastPlan;if(!p)return;const b=p.b,fc=b.fc,c=b.
 // ================= fair comparison (same inputs, four strategies) and re-optimisation simulation =================
 const fairP=new Map(),sameReq=mk=>{const p=lastPlan;if(!p)return null;const m=MODES.find(x=>x.k==(mk||(p.sel=='base'?'cost':p.sel=='prod'?'bal':p.sel)));return{p,m,req:optReq(p.b.fc,p.b.c,m,+F.bat||0)}};
 const hrs=n=>N1(n*DT)+' h';
-function fairCard(){return `<div class="card" data-role="tech" data-tour="fair"><h2>Fair comparison: same inputs, four ways to run the day</h2><p class="note" style="margin-top:0">Every row uses the same load, solar, EV energy, rates, demand-charge hours and battery. The battery rows show what the battery does <b>without</b> optimisation, so the optimiser's own value is not mixed up with the battery's. Calculated by the server from the half-hourly series.</p><div id="fairOut" class="scroll"><span class="note">Open this tab to calculate.</span></div></div>`}
-async function fairLoad(){if(role!='tech'||dtab!='op'||!$('fairOut'))return;const q=sameReq();if(!q)return;const key=hk([cur,q.m.k,q.req]);
- let pr=fairP.get(key);if(!pr){$('fairOut').innerHTML='<span class="note">Calculating...</span>';pr=api('/api/compare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(q.req)});fairP.set(key,pr);pr.catch(()=>fairP.delete(key))}
- let j;try{j=await pr}catch(e){if($('fairOut')&&lastPlan===q.p)$('fairOut').innerHTML=`<span class="err">${esc(e.message)}</span>`;return}
- const out=$('fairOut');if(!out||lastPlan!==q.p)return;
- const c=q.p.b.c,bill=c.mdH.length>0,L=+F.lim,nm='Optimised: '+q.m.n,sv=j.savings,
-  rows=[['solar_only','Solar only (baseline)'],['battery_self','Battery, self-consumption rule'],['battery_tou','Battery, simple time-of-use rule'],['optimised',nm]],
-  best=j.savings.best_reference,bn=(rows.find(r=>r[0]==best)||[0,''])[1],
-  tb=rows.map(([k,n])=>{const x=j[k],o=k=='optimised',vs=o?'':(j.optimised.cost<=x.cost?'<span class="good">'+N1(100*(x.cost-j.optimised.cost)/x.cost)+'%</span>':N1(100*(x.cost-j.optimised.cost)/x.cost)+'%');
-   return `<tr class="${o?'sel':''}"><td style="text-align:left">${esc(n)}</td><td>${N0(x.cost)}</td><td>${N0(x.grid_kwh)}</td><td>${bill?N0(x.billed_peak_kw):'&mdash;'}</td><td>${N0(x.max_grid_kw)}</td><td>${x.solar_self_consumption_pct==null?'&mdash;':N0(x.solar_self_consumption_pct)+'%'}</td><td>${N0(x.solar_curtailed_kwh)}</td><td class="${L>0&&x.limit_violation_steps?'err':''}">${L>0?(x.limit_violation_steps?hrs(x.limit_violation_steps):'none'):'&mdash;'}</td><td>${vs}</td></tr>`}).join('');
- const gain=j.optimised.cost<=j[best].cost?`Against the best simple alternative (${esc(bn.replace(' (baseline)',''))}), the optimiser saves <b>${money(sv.optimised_vs_best_reference_rm)}</b> on this day (${N1(sv.optimised_vs_best_reference_pct)}%). ${best=='solar_only'?'':` Against solar only it saves ${money(sv.optimised_vs_solar_only_rm)} (${N1(sv.optimised_vs_solar_only_pct)}%).`}`:`On this day the optimiser costs ${money(j.optimised.cost-j[best].cost)} more than ${esc(bn)}. It trades cost for the ${N0(L)} kW limit or the CO&#8322; cap, which the simple rules ignore.`;
- out.innerHTML=`<p style="margin:0 0 8px">${gain}</p><table class="sch"><tr><th>Strategy</th><th>Cost, RM</th><th>Grid energy, kWh</th><th>Billed peak, kW</th><th>Highest import, kW</th><th>Solar used</th><th>Solar curtailed, kWh</th><th>Time over ${L>0?N0(L)+' kW':'limit'}</th><th>Optimiser saves vs this</th></tr>${tb}</table><p class="note">Solar used = solar that served load or charged the battery, as a share of the solar available. Curtailed = solar that had nowhere to go (no export is modelled). The battery rules start at 50% charge like the optimiser; if a rule ends the day lower, the missing energy is bought back at the cheapest rate so no strategy borrows from tomorrow. The time-of-use rule charges only in the cheapest-rate hours, within the grid limit, and discharges at full power in dearer hours. On this tariff the gap between peak and off-peak energy is small, so most of the optimiser's saving comes from lowering the billed peak.</p>`}
+function fairCard(){return `<div class="card" data-role="tech" data-tour="fair"><h2>Fair comparison: same inputs, four ways to run the day</h2><details class="qh"><summary title="How to read this comparison" aria-label="How to read this comparison">?</summary><div class="qb"><p class="note">Every row uses the same load, solar, EV energy, rates, demand-charge hours and battery. The battery rows show what the battery does <b>without</b> optimisation, so the optimiser's own value is not mixed up with the battery's. Calculated by the server from the half-hourly series.</p>`}
 const ROSC={cloud:['Cloud front, 12:00 to 15:00 (solar at 40% of forecast)',[{what:'pv',from_h:12,to_h:15,factor:.4}]],low:['Solar at 50% of forecast all day',[{what:'pv',from_h:0,to_h:24,factor:.5}]],surge:['Demand +20%, 15:00 to 19:00',[{what:'load',from_h:15,to_h:19,factor:1.2}]],both:['Cloud 11:00 to 16:00 and demand +15%, 14:00 to 20:00',[{what:'pv',from_h:11,to_h:16,factor:.5},{what:'load',from_h:14,to_h:20,factor:1.15}]],none:['Reality matches the forecast',[{what:'pv',from_h:0,to_h:24,factor:1}]]};
 function reoptCard(){return `<div class="card" data-role="tech" data-tour="reopt"><h2>Re-optimisation simulation</h2><p class="note" style="margin-top:0"><b>SIMULATION ONLY. No equipment is controlled.</b> The day-ahead plan comes from the forecast. Here the day turns out differently (a simulated deviation you choose), and the plan is either followed unchanged or re-calculated during the day using only what is known at that time. Perfect foresight shows the best any plan could do and is not achievable.</p>
 <div class="bar"><select id="roSc">${Object.entries(ROSC).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join('')}</select> <select id="roMd">${MODES.map(m=>`<option value="${m.k}"${m.k==(sel=='base'?'cost':sel)?' selected':''}>${m.n}</option>`).join('')}</select> <select id="roEv"><option value="2">Re-plan every hour</option><option value="4" selected>Re-plan every 2 hours</option><option value="8">Re-plan every 4 hours</option><option value="0">Only when the forecast is wrong</option></select> <button class="on" data-ro="1">Run simulation</button> <span id="roMsg" class="note"></span></div><div id="roOut" class="scroll" style="margin-top:8px"></div></div>`}
@@ -768,7 +673,7 @@ function dayHtml(R,rows){
  <div id="ct_use"${chartTab=='use'?'':' hidden'}>${draw(r,b,c.win)}</div><div id="ct_wx"${chartTab=='wx'?'':' hidden'}>${fcCard(fc,past,fn)}</div><div id="ct_pc"${chartTab=='pc'?'':' hidden'}>${pcCard(r,past)}</div><div id="ct_pl"${chartTab=='pl'?'':' hidden'}>${panelCard(r)}</div>${cur==TODAY?`<div id="ct_rt"${chartTab=='rt'?'':' hidden'}>${rtShell()}</div>`:''}</div>
  ${stratCards(R,b)}
  <div class="card" data-tour="compare" data-role="tech"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
- <p class="note">${ann}</p>${rows.length>1&&rows.every(x=>Math.abs(R[x.k].cost-b.cost)<0.01)?'<p class="note"><b>Why are all the strategies the same?</b> On this day no peak rate or maximum demand charge applies (for example a weekend on a time-of-use tariff), so moving energy or using the battery cannot lower the bill. Try a weekday.</p>':''}<p class="note">${tc}</p><p class="note">${carbon}</p>${tradeoff(R)}</div>
+ ${rows.length>1&&rows.every(x=>Math.abs(R[x.k].cost-b.cost)<0.01)?'<p class="note"><b>Why are all the strategies the same?</b> On this day no peak rate or maximum demand charge applies (for example a weekend on a time-of-use tariff), so moving energy or using the battery cannot lower the bill. Try a weekday.</p>':''}${tradeoff(R)}<details class="qh"><summary title="Yearly saving, tariff check and carbon notes" aria-label="Notes on this table">?</summary><div class="qb"><p class="note">${ann}</p><p class="note">${tc}</p><p class="note">${carbon}</p></div></details></div>
  ${fairCard()}${liveCard()}${schedCard(r,c)}${apCard()}${reoptCard()}${learnCard()}${stressCard()}${sweepCard()}${assumeCard(fc,past)}${auditCard()}`}
 
 function rel(d){return d<TODAY?['Past (recorded weather)','']:d==TODAY?['Today (forecast)','t']:d==addD(TODAY,1)?['Tomorrow (forecast)','f']:['Forecast','f']}
@@ -805,7 +710,7 @@ function ratesCard(){const t=tf(),k=F.volt+F.struct;
  $('rates').innerHTML=`<h2>TNB rates in use: ${t.n}</h2><p class="note" style="margin-top:0">${t.t} AFA added on top: ${F.afa} sen/kWh.</p>
  <details style="margin-top:8px"><summary>See all tariffs</summary><div class="scroll"><table><tr><th>Tariff</th><th>Peak, sen/kWh</th><th>Off-peak, sen/kWh</th><th>Capacity + network, sen/kWh</th><th>Capacity charge, RM/kW/month</th><th>Network charge, RM/kW/month</th><th>Max demand, RM/kW/month</th></tr>`+
  Object.keys(TF).map(x=>`<tr class="${x==k?'sel':''}"><td>${TF[x].n}</td><td>${TF[x].ep}</td><td>${TF[x].eo}</td><td>${TF[x].ad||'&mdash;'}</td><td>${TF[x].cap||'&mdash;'}</td><td>${TF[x].net||'&mdash;'}</td><td>${TF[x].md||'&mdash;'}</td></tr>`).join('')+
- `</table></div></details><p class="note">Rates follow the TNB RP4 schedule (1 Jul 2025 to 31 Dec 2027) and are fixed here. AFA changes every month, so enter the current value in My facility. Verify against your own bill on mytnb.com.my.</p>`}
+ `</table></div></details><p class="note">Rates follow the TNB RP4 schedule (1 Jul 2025 to 31 Dec 2027). AFA changes every month, so enter the current value in My facility. Verify against your own bill on <a href="https://www.mytnb.com.my/" target="_blank" rel="noopener noreferrer">mytnb.com.my</a>.</p>`}
 
 function tabs(){const k=['base',...MODES.map(m=>m.k)];$('tabs').innerHTML=k.map(x=>`<button data-s="${x}" aria-pressed="${x==sel}" class="${x==sel?'on':''}">${NAMES[x].replace('Optimiser: ','')}</button>`).join('')}
 
@@ -827,6 +732,7 @@ async function render(){
  const my=++tok,dates=span();$('dt').value=cur;tabs();
  ['day','week','month'].forEach(v=>{$('v'+v).classList.toggle('on',view==v);$('b'+v).classList.toggle('on',view==v)});
  [['yes',addD(TODAY,-1)],['tod',TODAY],['tom',addD(TODAY,1)]].forEach(([id,x])=>$(id).classList.toggle('on',view=='day'&&cur==x));
+ {const dayOnly=['fc','op','pl','ad'];document.querySelectorAll('#dtabs button').forEach(b=>{if(dayOnly.includes(b.dataset.dt))b.hidden=view!='day'});if(view!='day'&&dayOnly.includes(dtab)){dtab='ov';applyTab()}}
  const f=(x,o)=>parse(x).toLocaleDateString('en-GB',o);
  $('ttl').textContent=view=='day'?f(cur,{weekday:'long',day:'numeric',month:'long',year:'numeric'}):view=='week'?'Week of '+f(dates[0],{day:'numeric',month:'short'})+' to '+f(dates[6],{day:'numeric',month:'short'}):f(cur,{month:'long',year:'numeric'});
  const [bt,bc]=rel(cur);$('badge').innerHTML=view=='day'?`<span class="tag ${bc}">${bt}</span>`:'';
