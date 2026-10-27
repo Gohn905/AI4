@@ -264,10 +264,10 @@ const $=id=>document.getElementById(id),S=2,NS=24*S,DT=1/S,N=[...Array(NS).keys(
 const TF={
 LVG:{n:'LV General',ep:27.03,eo:27.03,md:0,ad:23.65,t:'LV General: 27.03 sen/kWh energy, plus capacity 8.83 and network 14.82 sen/kWh. No maximum demand charge. Retail RM20/month.'},
 LVT:{n:'LV Time-of-Use',ep:28.52,eo:24.43,md:0,ad:23.65,t:'LV ToU: peak 28.52, off-peak 24.43 sen/kWh, plus capacity and network 23.65 sen/kWh. No maximum demand charge. Retail RM20/month.'},
-MVG:{n:'MV General',ep:29.83,eo:29.83,md:89.27,ad:0,t:'MV General: 29.83 sen/kWh. Maximum demand RM89.27/kW/month (capacity 29.43 + network 59.84), billed on all-day peak demand. Retail RM200/month.'},
-MVT:{n:'MV Time-of-Use',ep:31.32,eo:27.23,md:97.06,ad:0,t:'MV ToU: peak 31.32, off-peak 27.23 sen/kWh. Maximum demand RM97.06/kW/month (30.19 + 66.87), billed on peak-period demand only. Retail RM200/month.'},
-HVG:{n:'HV General',ep:43.03,eo:43.03,md:31.21,ad:0,t:'HV General: 43.03 sen/kWh. Maximum demand RM31.21/kW/month (16.68 + 14.53). Retail RM250/month.'},
-HVT:{n:'HV Time-of-Use',ep:44.52,eo:40.43,md:44.82,ad:0,t:'HV ToU: peak 44.52, off-peak 40.43 sen/kWh. Maximum demand RM44.82/kW/month (21.76 + 23.06), peak-period demand only. Retail RM250/month.'}};
+MVG:{n:'MV General',ep:29.83,eo:29.83,md:89.27,cap:29.43,net:59.84,ad:0,t:'MV General: 29.83 sen/kWh. Maximum demand RM89.27/kW/month (capacity 29.43 + network 59.84), billed on all-day peak demand. Retail RM200/month.'},
+MVT:{n:'MV Time-of-Use',ep:31.32,eo:27.23,md:97.06,cap:30.19,net:66.87,ad:0,t:'MV ToU: peak 31.32, off-peak 27.23 sen/kWh. Maximum demand RM97.06/kW/month (30.19 + 66.87), billed on peak-period demand only. Retail RM200/month.'},
+HVG:{n:'HV General',ep:43.03,eo:43.03,md:31.21,cap:16.68,net:14.53,ad:0,t:'HV General: 43.03 sen/kWh. Maximum demand RM31.21/kW/month (16.68 + 14.53). Retail RM250/month.'},
+HVT:{n:'HV Time-of-Use',ep:44.52,eo:40.43,md:44.82,cap:21.76,net:23.06,ad:0,t:'HV ToU: peak 44.52, off-peak 40.43 sen/kWh. Maximum demand RM44.82/kW/month (21.76 + 23.06), peak-period demand only. Retail RM250/month.'}};
 const MODES=[{k:'cost',n:'Cost-saving',fx:1,wr:0,ca:1},{k:'bal',n:'Balanced',fx:.5,wr:.02,ca:.5},{k:'zero',n:'Lowest-carbon',fx:1,wr:.02,ca:0}];
 const NAMES={base:'Baseline',cost:'Optimiser: Cost-saving',bal:'Optimiser: Balanced',prod:'Optimiser: Production-first',zero:'Optimiser: Lowest-carbon'};
 const DEF={name:'APU',loc:'3.0553,101.7003',prof:'campus',follow:'bal',volt:'MV',struct:'T',afa:0,peak:4000,kwp:3000,bat:5000,flex:10,lim:4200,evn:8,evkw:50,eve:700,ef:0.6,eff:90};
@@ -803,8 +803,8 @@ function span(){if(view=='day')return [cur];const d=parse(cur);
 
 function ratesCard(){const t=tf(),k=F.volt+F.struct;
  $('rates').innerHTML=`<h2>TNB rates in use: ${t.n}</h2><p class="note" style="margin-top:0">${t.t} AFA added on top: ${F.afa} sen/kWh.</p>
- <details style="margin-top:8px"><summary>See all tariffs</summary><div class="scroll"><table><tr><th>Tariff</th><th>Peak, sen/kWh</th><th>Off-peak, sen/kWh</th><th>Capacity + network, sen/kWh</th><th>Max demand, RM/kW/month</th></tr>`+
- Object.keys(TF).map(x=>`<tr class="${x==k?'sel':''}"><td>${TF[x].n}</td><td>${TF[x].ep}</td><td>${TF[x].eo}</td><td>${TF[x].ad||'&mdash;'}</td><td>${TF[x].md||'&mdash;'}</td></tr>`).join('')+
+ <details style="margin-top:8px"><summary>See all tariffs</summary><div class="scroll"><table><tr><th>Tariff</th><th>Peak, sen/kWh</th><th>Off-peak, sen/kWh</th><th>Capacity + network, sen/kWh</th><th>Capacity charge, RM/kW/month</th><th>Network charge, RM/kW/month</th><th>Max demand, RM/kW/month</th></tr>`+
+ Object.keys(TF).map(x=>`<tr class="${x==k?'sel':''}"><td>${TF[x].n}</td><td>${TF[x].ep}</td><td>${TF[x].eo}</td><td>${TF[x].ad||'&mdash;'}</td><td>${TF[x].cap||'&mdash;'}</td><td>${TF[x].net||'&mdash;'}</td><td>${TF[x].md||'&mdash;'}</td></tr>`).join('')+
  `</table></div></details><p class="note">Rates follow the TNB RP4 schedule (1 Jul 2025 to 31 Dec 2027) and are fixed here. AFA changes every month, so enter the current value in My facility. Verify against your own bill on mytnb.com.my.</p>`}
 
 function tabs(){const k=['base',...MODES.map(m=>m.k)];$('tabs').innerHTML=k.map(x=>`<button data-s="${x}" aria-pressed="${x==sel}" class="${x==sel?'on':''}">${NAMES[x].replace('Optimiser: ','')}</button>`).join('')}
