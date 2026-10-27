@@ -12,7 +12,7 @@ Planning tool for commercial and industrial facilities with on-site solar, batte
 2. **Facility inputs.** Peak demand, load shape, solar size, battery, flexible load, EV chargers and energy, and an optional hard grid-import limit.
 3. **Forecast.** Weather from Open-Meteo is converted to solar output by a PV physics model; demand uses a calendar-and-temperature regression trained on synthetic history.
 4. **Optimiser.** A linear program plans the site's energy use. The current dashboard and forecast pipeline use 24 hourly values; the optimiser accepts hourly or half-hourly input. Flexible load is currently scheduled 09:00 to 17:00, and the EV model supports facility operating windows.
-5. **Digital twin.** Compare solar-only baseline with **Cost-saving**, **Balanced**, and **Production-first** plans. The page shows cost, solar use, grid share, billed peak, CO2, and a plain-language action list.
+5. **Digital twin.** Compare solar-only baseline with **Cost-saving** (uses the whole battery), **Balanced** (keeps 20% of the battery in reserve) and **Lowest-carbon** (no extra CO2, keeps 30% in reserve) plans. The page shows cost, solar use, grid share, billed peak, CO2, and a plain-language action list.
 
 ## Architecture
 
@@ -31,7 +31,7 @@ flowchart LR
 | Azure Static Web Apps | Hosts the page, deploys from this repo, built-in GitHub / Microsoft sign-in | In use |
 | Azure Functions API integrated with Static Web Apps | Runs the optimiser, forecast and other HTTP functions from the api/ folder | In use |
 | Azure Table Storage | Audit log of every optimiser and forecast call | In code, active when `AUDIT_STORAGE_CONNECTION` is set |
-| Application Insights | Monitoring and traces | Resource exists in Azure (per owner); this repo has no explicit connection configured. Verify the Static Web App telemetry link in Azure. |
+| Application Insights | Monitoring and traces | Resource exists in Azure (per owner). The repo ships the logging settings (`api/host.json`); telemetry only starts when `APPLICATIONINSIGHTS_CONNECTION_STRING` is set on the app that runs the API (the Static Web App's API, or the separate Function App). Not confirmed from this repo, so it stays marked as planned until checked in the portal. |
 | Separate Function App with managed identity, Key Vault | Alternative hosting for the API and production-grade secrets/identity | Resource exists in Azure (per owner); the current workflow deploys the API through Static Web Apps, not to this Function App. |
 | Azure OpenAI | Plain-language plan explanations and setup/navigation assistant | In use (Azure gpt-5-mini deployment) |
 
@@ -73,7 +73,8 @@ Services considered and not used: Microsoft Fabric (smallest capacity costs abou
 pip install numpy scipy
 (cd api && python test_reference.py)                            # fair comparison and fixed-step checks (34)
 (cd api && python test_reopt.py)                                 # re-optimisation simulation checks (44)
-(cd api && python test_live.py)                               # today-so-far re-plan checks (30)
+(cd api && python test_live.py)                               # today-so-far re-plan checks (47)
+(cd api && python test_reserve.py)                            # battery reserve checks (8)
 (cd api && python test_learn.py)                              # error-learning checks (38)
 (cd api && python test_ratelimit.py)                          # rate limiter checks (9)
 python mems_milp.py                                    # optimiser checks against the course case study
