@@ -394,11 +394,11 @@ function pcCard(r,past,K){
  pcS.live=live;
  const ar=P=>P.length<2?'':monoPath(P)+`L${P[P.length-1][0].toFixed(1)} ${y0.toFixed(1)}L${P[0][0].toFixed(1)} ${y0.toFixed(1)}Z`,
   curveBody=()=>{if(!live)return `<path d="${area}" fill="url(#pcg)"/><path d="${line}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>`;
-   const P1=ks>=2?pts.slice(0,ks):[],P2=ks>=2?pts.slice(ks-1):pts,nx=xf(K/S),inr=nx>=L&&nx<=W-R,tx='font-size="11" font-weight="700" fill="#252B2A" stroke="#fff" stroke-width="3" paint-order="stroke"';
+   const bd=ks>=2?[xf(K/S),pts[ks-1][1]]:null,P1=ks>=2?pts.slice(0,ks).concat([bd]):[],P2=ks>=2?[bd].concat(pts.slice(ks)):pts,nx=xf(K/S),inr=nx>=L&&nx<=W-R,tx='font-size="11" font-weight="700" fill="#252B2A" stroke="#fff" stroke-width="3" paint-order="stroke"';
    return (P1.length?`<path d="${ar(P1)}" fill="url(#pcg)"/><path d="${monoPath(P1)}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>`:'')
     +(P2.length>1?`<path d="${ar(P2)}" fill="url(#pcg)" opacity=".5"/><path d="${monoPath(P2)}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="6 4"/>`:'')
      +(inr?`<line id="pcNow" x1="${nx.toFixed(1)}" x2="${nx.toFixed(1)}" y1="${T}" y2="${H-B}" stroke="#252B2A" stroke-width="1.5"/>`:'')
-    +`<text x="${L+6}" y="${T+10}" ${tx}>Recorded</text><text x="${W-R-6}" y="${T+10}" text-anchor="end" ${tx}>Predicted</text>`},
+    +`<text x="${L+6}" y="${T+10}" ${tx}>${recLbl()}</text><text x="${W-R-6}" y="${T+10}" text-anchor="end" ${tx}>Predicted</text>`},
   sel=`<div class="bar"><label for="pcSel"><b>Data type</b></label><select id="pcSel">`+Object.entries(TY).map(([k,v])=>`<option value="${k}"${k==pcType?' selected':''}>${v[0]}</option>`).join('')+`</select></div>`;
  return tiles+sel+`<div class="pcw"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${nm} through the day. Move over the chart to read a value."><defs><linearGradient id="pcg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".45"/><stop offset="1" stop-color="${col}" stop-opacity=".05"/></linearGradient></defs>`
   +yGrid(ax,y,L,W-R)+yTitle(T,H-B,'kW')+curveBody()
@@ -415,7 +415,7 @@ function draw(r,b0,win,now){const W=760,H=290,L=54,B=30,T=10,bw=(W-L-8)/NS,hb=bw
   const dl=r.ld[h]-b0.ld[h];
   if(dl>0.5){const m=Math.min(dl,base);s+=`<rect x="${x}" y="${y(base)}" width="${w}" height="${y(base-m)-y(base)}" fill="url(#mv)" stroke="var(--shift)"/>`}
   if(dl<-0.5){const t0=base+Math.max(un,0);s+=`<rect x="${x}" y="${y(t0-dl)}" width="${w}" height="${y(t0)-y(t0-dl)}" fill="none" stroke="var(--shift)" stroke-width="1.5" stroke-dasharray="3 2"/>`}});
- if(now!=null){s+='</g>';const nx=L+now*bw;drNow={L,bw};s+=`<line id="nowLn" x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="var(--ink)" stroke-width="1.5"/><text x="${L+6}" y="${T+10}" font-size="11" font-weight="700" fill="var(--ink)" stroke="#fff" stroke-width="3" paint-order="stroke">Recorded</text><text x="${W-12}" y="${T+10}" text-anchor="end" font-size="11" font-weight="700" fill="var(--ink)" stroke="#fff" stroke-width="3" paint-order="stroke">Predicted</text>`}
+ if(now!=null){s+='</g>';const nx=L+now*bw;drNow={L,bw};s+=`<line id="nowLn" x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="var(--ink)" stroke-width="1.5"/><text x="${L+6}" y="${T+10}" font-size="11" font-weight="700" fill="var(--ink)" stroke="#fff" stroke-width="3" paint-order="stroke">${recLbl()}</text><text x="${W-12}" y="${T+10}" text-anchor="end" font-size="11" font-weight="700" fill="var(--ink)" stroke="#fff" stroke-width="3" paint-order="stroke">Predicted</text>`}
  s+=xAxis(t=>L+t*hb,H-B,0,24,3);
  if(win&&r.peak>0)s+=`<line x1="${L+win[0]*hb}" x2="${L+win[1]*hb}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${L+win[1]*hb-4}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)" stroke="#fff" stroke-width="3" paint-order="stroke">billed peak ${Math.round(r.peak)} kW</text>`;
  s+=`<text x="${L}" y="${H-2}" font-size="10" fill="var(--mute)">Shaded band = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;
@@ -612,7 +612,7 @@ function liveRender(j,q){const fe=j.forecast_error,ex=j.expected,o=ex.old_plan,n
 async function liveRun(body,msg){const q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return;const m=$('lvMsg');m.textContent=msg||'Calculating...';$('lvOut').innerHTML='';const lp=lrnGet();
  try{const j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,lp?{learned:lp}:{},body))});m.textContent='';lvLast=j;if($('lvOut'))liveRender(j,q)}catch(e){m.textContent='';$('lvOut').innerHTML=`<span class="err">${esc(e.message)}</span>`}}
 // ================= Real time chart: the Energy usage chart with recorded data before now and predicted data after now =================
-let rtTok=0,rtTimer=0,rtLastK=-1;
+let rtTok=0,rtTimer=0,rtLastK=-1,recSim=true;const recLbl=()=>recSim?'Forecast so far (no meter)':'Recorded';
 function rtStop(){clearInterval(rtTimer);rtTimer=0}
 function rtStart(){rtStop();rtTimer=setInterval(()=>{if((chartTab=='rt'||chartTab=='pc')&&$('rtOut')&&!document.hidden&&$('rtAt').value=='now'&&rtStep()!=rtLastK)rtLoad()},30000)}
 function rtStep(){const v=$('rtAt')?$('rtAt').value:'now';if(v!='now')return +v;const d=new Date();return Math.max(1,Math.min(NS-1,Math.floor((d.getHours()*60+d.getMinutes())*S/60)))}
@@ -630,16 +630,16 @@ function rtSeries(j,q){const s=j.series,K=j.now_step,c=q.p.b.c,qb=q.p.b;
  const smart=+F.evn>0&&q.m.fx>0,bf=N.map(t=>smart?qb.ld[t]-qb.fc.load[t]:0),b0={ld:N.map(t=>Lh[t]+bf[t])};
  const pk=c.mdH&&c.mdH.length?Math.max(...c.mdH.map(t=>s.new_grid[t])):0;
  const r={g:s.new_grid,b:s.new_dis,ch:s.new_ch,d:pu,ld,sol:P,peak:pk};return{r,b0,K,c}}
-function rtDraw(j,q){const {r,b0,K,c}=rtSeries(j,q);
+function rtDraw(j,q){recSim=j.simulated!==false;const {r,b0,K,c}=rtSeries(j,q);
  const d=new Date(),clk=$('rtAt').value=='now'?'Clock '+p2(d.getHours())+':'+p2(d.getMinutes())+'. ':'';
  const pv=j.correction.pv_ratio,sol=pv==null?'':' Solar is running at <b>'+N0(pv*100)+'%</b> of forecast.';
  const bc=q.p.b.cost,nc=j.expected.new_plan.cost,svp=bc>0&&isFinite(nc)?' Expected saving today: <b class="'+(nc<=bc?'good':'')+'">'+N1(100*(bc-nc)/bc)+'%</b> against solar only.':'';
- return `<p style="margin:0 0 6px"><b>Recorded up to ${tm(K)}.</b> Spent so far <b class="good">${money(j.spent_so_far_rm)}</b>.${svp}${sol} ${j.expected.saving_rm>=0.5?'Re-planning the rest of the day is expected to save <b>'+money(j.expected.saving_rm)+'</b> compared with sticking to the old plan.':'The day-ahead plan still looks about right for the rest of the day.'}</p>`+draw(r,b0,c.win,K)}
+ return `<p style="margin:0 0 6px"><b>${recSim?'Forecast stands in for meter data up to':'Recorded up to'} ${tm(K)}.</b> Spent so far <b class="good">${money(j.spent_so_far_rm)}</b>.${svp}${sol} ${j.expected.saving_rm>=0.5?'Re-planning the rest of the day is expected to save <b>'+money(j.expected.saving_rm)+'</b> compared with sticking to the old plan.':'The day-ahead plan still looks about right for the rest of the day.'}</p>`+draw(r,b0,c.win,K)}
 document.addEventListener('change',e=>{if(e.target&&(e.target.id=='rtSc'||e.target.id=='rtAt'))rtLoad()});
 setInterval(()=>{const e=document.getElementById('rtClock');if(e)e.textContent=clockTxt();
  const d=new Date(),h=d.getHours()+d.getMinutes()/60+d.getSeconds()/3600,a=document.getElementById('nowLn');
  if(a&&drNow){const x=(drNow.L+h*S*drNow.bw).toFixed(1);a.setAttribute('x1',x);a.setAttribute('x2',x)}
- const c=document.getElementById('pcNow');if(c&&pcS&&pcS.live){const x=pcS.xf(h);if(x>=pcS.L&&x<=pcS.W-pcS.R){c.setAttribute('x1',x.toFixed(1));c.setAttribute('x2',x.toFixed(1));c.removeAttribute('display')}else c.setAttribute('display','none')}},1000);
+ },1000);
 // ================= Live clock (SIMULATED): plays the day forward and hands data to /api/replan like a meter feed would =================
 let lvSim=null;const LVSPD={demo:7.5,slow:3.75,real:1/60};   // simulated minutes per real second
 function lvStop(){if(lvSim&&lvSim.timer){clearInterval(lvSim.timer);lvSim.timer=0}}
@@ -892,7 +892,7 @@ function tPlace(){if(tI<0)return;const el=document.querySelector(STEPS[tI].s);if
 function tShow(i,dir){dir=dir||1;while(i>=0&&i<STEPS.length&&!tOK(i))i+=dir;if(i<0||i>=STEPS.length){tEnd();return}
  tI=i;const st=STEPS[i];if(st.s=='#setup')$('setup').open=true;
  $('tourShade').hidden=$('tourHole').hidden=$('tourTip').hidden=false;
- $('tourTitle').textContent=st.t;$('tourText').textContent=st.x;$('tourCount').textContent=(i+1)+' of '+STEPS.length;
+ $('tourTitle').textContent=st.t;$('tourText').textContent=st.x;{const vis=STEPS.map((x,j)=>tOK(j));$('tourCount').textContent=vis.slice(0,i+1).filter(Boolean).length+' of '+vis.filter(Boolean).length}
  $('tourBack').disabled=!STEPS.slice(0,i).some((x,j)=>tOK(j));$('tourNext').textContent=STEPS.slice(i+1).some((x,j)=>tOK(i+1+j))?'Next':'Done';
  const el=document.querySelector(st.s);if(el.scrollIntoView)el.scrollIntoView({block:'center',behavior:'smooth'});
  tPlace();setTimeout(tPlace,350);setTimeout(tPlace,800)}
@@ -908,7 +908,7 @@ if(typeof window!='undefined'&&window.addEventListener){const rp=()=>{if(tI>=0)(
 const apKey=()=>lastPlan?lastPlan.date+'|'+lastPlan.sel+'|'+hk(rkey()):'';
 const apLoad=()=>{try{return JSON.parse(localStorage.getItem('approvals')||'[]')}catch(e){return[]}};
 function apCard(){const p=lastPlan;if(!p||p.sel=='base'||p.date<TODAY)return'';
- return `<div class="card" data-tour="approve" data-role="tech"><h2>Approve this plan</h2><p class="note" style="margin-top:0">You stay in control. Approving records who accepted the plan and prepares a schedule file for your operators or building system. Nothing is sent to any equipment.</p><button class="on" data-ap="approve">Approve and prepare schedule</button><div id="apOut" style="margin-top:8px"></div><p class="note">Autonomy level 1 of 3: advice that a person approves, then an exported schedule. Levels 2 and 3 (automatic control of equipment) need live meter and device links, safety interlocks and sign-off, and are not switched on.</p></div>`}
+ return `<div class="card" data-tour="approve" data-role="tech"><h2>Approve this plan</h2><p class="note" style="margin-top:0">You stay in control. Approving records who accepted the plan and prepares a schedule file for your operators or building system. Nothing is sent to any equipment.</p><button class="on" data-ap="approve">Approve and prepare schedule</button><div id="apOut" style="margin-top:8px"></div></div>`}
 function schedule(p,rec){const r=p.r,b=p.b;
  const hours=N.map(h=>({time_start:tm(h),battery_setpoint_kw:+(r.b[h]-r.ch[h]).toFixed(1),flexible_load_kw:+(+r.fl[h]).toFixed(1),planned_grid_import_kw:+r.g[h].toFixed(1),expected_solar_kw:+r.sol[h].toFixed(1),site_demand_kw:+r.ld[h].toFixed(1)}));
  return{schema:'facility-energy-planner/schedule/v1',advisory:'Forecast-based plan approved by a person. This is not a control signal: check it against live readings before acting.',facility:F.name,tariff:tf().n,date:p.date,strategy:NAMES[p.sel].replace('Optimiser: ',''),
