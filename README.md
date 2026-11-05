@@ -113,3 +113,21 @@ optimizer/mems_milp.py     MILP with diesel generator (course case study)
 - The retail charge, the 1.6% KWTBB levy and tax are not modelled. AFA changes monthly; confirm the tariff category and bill adjustments against the customer's bill.
 - Open-Meteo's free tier is for non-commercial use. A licensed weather source would replace it in production.
 - Re-planning is a simulation with a fading-persistence correction (6 h, chosen on a few synthetic scenarios). It helps clearly when solar falls short under Cost-saving, but is not guaranteed to win: with the CO2 cap (Balanced, Lowest-carbon) or demand surprises it can be slightly worse. No export income, no diesel or gas in the web optimiser.
+
+## Operations console (added for the finals)
+
+A self-contained add-on that opens from the **Operations** button in the header (or by adding `#ops` to the page address). It lives in `ops.js` and `leader_site.csv` and does not change the existing page, API or optimiser. Everything runs in the browser, and uploaded files are never sent anywhere. It is a **planning simulation**: it never controls equipment.
+
+| Tab | What it does |
+|---|---|
+| Live replay | Replays a day interval by interval. The planner only sees readings up to "now", corrects its forecast from what was measured, re-plans the peak cap each interval, and raises alerts when demand, solar or grid import drift from the forecast or the digital twin. What-if buttons inject a cloud front or demand surge. |
+| Scenarios | Baseline, two simple rules and three optimiser strategies on one chart, for a day, a month or the whole year. |
+| Monthly bill | A TNB-shaped monthly estimate (peak and off-peak energy, maximum demand, retail) for baseline versus a chosen strategy, with a box to compare against a real bill. |
+| Twin check | The same planner run on the day-ahead forecast versus the day as executed, with tolerance flags. |
+| Data health | Checks on every file: timestamp meaning and mixed formats, gaps, meter dropouts, kW versus kWh, and whether the demand column already has solar taken off. |
+| Approvals & audit | Analyst/operator, approver and auditor views. Plan changes can require approver sign-off. Every step goes into a hash-chained audit trail that detects edits. |
+| Settings & data | Battery size, tariff, emission factor, forecast margin. Switch to the Leader Energy preset or upload a CSV or the organisers' .xlsx. |
+
+**Honest limits.** Roles are switched on the page, and the audit trail is kept in the browser; production would take roles from Azure sign-in and write the log server-side. The battery size is an assumption and its cost is not counted. No export income is assumed. The KWTBB levy and tax are not modelled. Results are model outputs on synthetic data, not proven savings.
+
+**Data note.** In the organisers' file the "VCB2 Grid Draw" column falls to about 17 kW at midday on sunny weekends, which suggests solar was already taken off. The console detects this and adds solar back by default. Confirm the meaning with the data provider; the reading can be changed in Settings.
