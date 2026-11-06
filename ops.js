@@ -625,6 +625,9 @@ const CSS = `
 #sunops input[type=range]{padding:0;width:min(420px,100%)}
 #sunops .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
 #sunOpsBtn{margin-left:6px}
+#sunopsEntry{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;border:1px solid #F0D98A;background:#FFF9E3}
+#sunopsEntry b{font-size:15px}#sunopsEntry .sp{flex:1}
+#sunopsEntry button.pri{background:var(--amb,#F59E0B);border-color:var(--amb,#F59E0B);font-weight:700}
 @media print{#sunops{display:none!important}}
 `;
 
@@ -794,8 +797,17 @@ async function recompute() {
   }
   ST.R = R;
   // default day: the highest billed-window peak in the baseline, after the first two weeks of warm-up
-  const md = dailyMd(ST.ctx, R.base_plan), mc = dailyMd(ST.ctx, R.cost_live); let best = 14, bv = -1;
-  for (let d = 14; d < ST.D.nD; d++) if (md[d] - mc[d] > bv) { bv = md[d] - mc[d]; best = d; }      // day where the optimiser cuts the billed-window peak the most
+  const md = dailyMd(ST.ctx, R.base_plan), mc = dailyMd(ST.ctx, R.cost_live), cl = R.cost_live, spd = ST.ctx.spd, dt = ST.ctx.dt; let best = 14, bv = -1, any = false;
+  // best day to show: biggest cut in the billed-window peak, among weekdays where the battery is topped up before the window and EV charging really moves
+  for (let d = 14; d < ST.D.nD; d++) {
+    if (!isWeekday(ST.D.days[d].dow)) continue;
+    const o = d * spd; let pre = 0, evE = 0, thr = 0;
+    for (let s = Math.round(10 / dt); s < Math.round(14 / dt); s++) pre = Math.max(pre, cl.soc[o + s]);
+    for (let s = 0; s < spd; s++) { evE += cl.ev[o + s] * dt; thr += Math.abs(cl.batt[o + s]) * dt; }
+    const ok = pre >= 0.7 && evE >= 800 && thr >= 800, sh = md[d] - mc[d];
+    if ((ok && !any) || (ok === any && sh > bv)) { any = any || ok; bv = sh; best = d; }
+  }
+  ST.demoDay = best;
   ST.sel.day = best; ST.picks = null;
   const ms = monthsOf(ST.D); ST.sel.month = Math.min(ST.sel.month, ms.length - 1); if (ST.sel.month === 0 && ms.length > 1) ST.sel.month = ms.findIndex(m => ST.sel.day >= m.d0 && ST.sel.day <= m.d1);
   setStatus('ready', '');
@@ -906,7 +918,7 @@ const dayLabel = d => DOWS[ST.D.days[d].dow] + ' ' + ST.D.days[d].date;
 const monthOpts = sel => monthsOf(ST.D).map((m, i) => `<option value="${i}" ${i === sel ? 'selected' : ''}>${MONTHS[m.month]} ${m.key.slice(0, 4)}</option>`).join('');
 const stratOpts = (sel, keys) => (keys || STRAT_ORDER).map(k => `<option value="${k}" ${k === sel ? 'selected' : ''}>${esc(STRATS[k].short)}</option>`).join('');
 const dis = ok => ok ? '' : 'disabled';
-const TABS = [['live', 'Live replay'], ['scen', 'Scenarios'], ['bill', 'Monthly bill'], ['twin', 'Twin check'], ['data', 'Data health'], ['appr', 'Approvals & audit'], ['set', 'Settings & data']];
+const TABS = [['live', 'Live replay'], ['scen', 'Scenarios'], ['bill', 'Monthly bill'], ['twin', 'Twin check'], ['data', 'Data health'], ['appr', 'Approvals & audit'], ['fac', 'Demo factory'], ['set', 'Settings & data']];
 
 function shell() {
   const roleBtns = Object.keys(ROLES).map(k => `<button data-act="role" data-v="${k}" class="${ST.role === k ? 'on' : ''}" title="${esc(ROLES[k].blurb)}">${esc(ROLES[k].name)}</button>`).join('');
@@ -924,13 +936,14 @@ function loadingCard() {
 function renderStatusOnly() { const el = $q('#so_status'); if (el && ST.status === 'loading') el.textContent = ST.msg; else if (ST.open && ST.status !== 'ready') render(); }
 function render() {
   const root = $root(); if (!root || !ST.open) return;
+  facStop();
   root.querySelector('.wrap').innerHTML = shell();
   const body = $q('#so_body');
   if (ST.tab === 'set') { body.innerHTML = bodySettings(); return; }
   if (ST.status !== 'ready') { body.innerHTML = loadingCard(); return; }
-  const fn = { live: bodyLive, scen: bodyScen, bill: bodyBill, twin: bodyTwin, data: bodyData, appr: bodyAppr }[ST.tab];
+  const fn = { live: bodyLive, scen: bodyScen, bill: bodyBill, twin: bodyTwin, data: bodyData, appr: bodyAppr, fac: bodyFactory }[ST.tab];
   body.innerHTML = fn();
-  ({ live: mountLive, scen: mountScen, bill: mountBill, twin: mountTwin, data: mountData, appr: () => { } }[ST.tab] || (() => { }))();
+  ({ live: mountLive, scen: mountScen, bill: mountBill, twin: mountTwin, data: mountData, appr: () => { }, fac: mountFactory }[ST.tab] || (() => { }))();
 }
 function renderApprovalsIfOpen() { if (ST.open && ST.tab === 'appr') render(); }
 
@@ -955,7 +968,7 @@ function pickDays() {
   wk.sort((a, b) => a[1] - b[1]); const typ = wk.length ? wk[wk.length >> 1][0] : 14;
   const sat = D.days.findIndex((x, i) => i > 14 && x.dow === 6);
   const gap = D.days.findIndex((x, i) => D.flags.subarray(i * spd, i * spd + spd).some(v => v));
-  p.list = [['Biggest peak cut by the optimiser', cut], ['Highest billed peak of the year', hiPeak], ['Biggest solar surprise', solar], ['Biggest demand surprise', dem], ['A typical weekday', typ], ['A Saturday', sat]];
+  p.list = [['Best day to demo (big peak cut, battery and EV active)', ST.demoDay != null ? ST.demoDay : cut], ['Biggest peak cut by the optimiser', cut], ['Highest billed peak of the year', hiPeak], ['Biggest solar surprise', solar], ['Biggest demand surprise', dem], ['A typical weekday', typ], ['A Saturday', sat]];
   if (gap >= 0) p.list.push(['Meter dropout (repaired data)', gap + 1 < D.nD ? gap + 1 : gap]);
   ST.picks = p; return p;
 }
@@ -993,6 +1006,7 @@ function renderLiveButtons() {
 }
 function mountLive() { renderLiveButtons(); drawLive(); }
 function drawLive() {
+  factorySend();
   if (!ST.open || ST.tab !== 'live' || !ST.live) return;
   const L = ST.live, X = L.X, ctx = ST.ctx, spd = ctx.spd, dt = ctx.dt, idx = L.idx, D = ST.D, T = ctx.tariff, wd = X.wd;
   const kpi = $q('#lv_kpi'); if (!kpi) return;
@@ -1230,6 +1244,106 @@ function bodySettings() {
 }
 
 /* ==========================================================================
+   Demo factory: binds factory3d.html (the 3D hardware-demo model) to the site.
+   The model exposes SunShine.update(reading) and listens for
+   postMessage({type:"sunshine-reading", reading}). Three sources feed it:
+     replay - the planner's live replay on this page (default)
+     sim    - the model's own sunlight simulation
+     hw     - a web address that returns the reading as JSON (ESP32 / Azure, later)
+   Reading shape (unchanged):
+     {panels:[{v},{v},{v}], battery:{v,pct,charging}, conveyor:{running,speed,dir,mode}, ev:{charging,reason}}
+   ========================================================================== */
+const FAC = { mode: HAS_DOM ? LS.get('sunops_facmode', 'replay') : 'replay', url: HAS_DOM ? LS.get('sunops_hwurl', '') : '', timer: 0, poll: 0, msg: '' };
+function facStop() { if (FAC.timer) { clearInterval(FAC.timer); FAC.timer = 0; } if (FAC.poll) { clearInterval(FAC.poll); FAC.poll = 0; } }
+const facFrame = () => $q('#fac_frame');
+function facPost(reading) {
+  const f = facFrame(); if (!f || !f.contentWindow) return;
+  try { f.contentWindow.postMessage({ type: 'sunshine-reading', reading }, location.origin === 'null' ? '*' : location.origin); } catch (e) { }
+  const j = $q('#fac_json'); if (j) j.textContent = JSON.stringify(reading, null, 1);
+}
+/* Turn the planner's state at the slot just replayed into the model's reading. */
+function facReading() {
+  const L = ST.live, D = ST.D; if (!L || !D || !ST.ctx) return null;
+  if (!D.facRef) {
+    let pvMax = 0; for (let i = 0; i < D.n; i++) if (D.pv[i] > pvMax) pvMax = D.pv[i];
+    const sorted = Float64Array.from(D.load).sort(); D.facRef = { pvMax: pvMax || 1, loadRef: sorted[Math.floor(0.9 * sorted.length)] || 1 };
+  }
+  const ref = D.facRef, X = L.X, spd = ST.ctx.spd, started = L.idx > 0, s = started ? Math.min(spd - 1, L.idx - 1) : 0;
+  const pv = started ? X.P[s] : X.f0.P[0], load = started ? X.L[s] : X.f0.L[0];
+  const ev = started ? X.out.ev[s] : 0, batt = started ? X.out.batt[s] : 0, soc = started ? X.out.soc[s] : X.soc;   // batt: + discharge, - charge
+  const rel = clamp(pv / ref.pvMax, 0, 1), spread = [1, 0.98, 1.015];
+  const running = load >= 0.4 * ref.loadRef, speed = running ? Math.max(30, clamp(Math.round(100 * load / ref.loadRef), 0, 100)) : 0;
+  const mode = batt > 1 ? 'Battery' : pv >= load + ev ? 'Solar' : pv > 0.2 * (load + ev) ? 'Solar + grid' : 'Grid';
+  const inWin = X.inWin(s);
+  const reason = ev > 1 ? (pv >= load + ev ? 'Surplus solar' : !inWin ? 'Planned outside the peak window' : 'Scheduled in the peak window') : (inWin ? 'Held back in the peak window' : 'No EV demand now');
+  return {
+    panels: spread.map(k => ({ v: +(3.3 * clamp(rel * k, 0, 1)).toFixed(2) })),
+    battery: { v: +(3.3 + 0.9 * soc).toFixed(2), pct: Math.round(soc * 100), charging: batt < -1 },
+    conveyor: { running, speed, dir: 'Forward', mode },
+    ev: { charging: ev > 1, reason }
+  };
+}
+function factorySend() {                         // called after every replay tick (see drawLive)
+  if (!ST.open || ST.tab !== 'fac' || FAC.mode !== 'replay') return;
+  const r = facReading(); if (r) facPost(r);
+  drawFactoryStatus();
+}
+function facBeat() {                             // the model shows "No data" after 12 s of silence, so repeat the last reading
+  if (!ST.open || ST.tab !== 'fac') { facStop(); return; }
+  if (FAC.mode === 'replay') { const r = facReading(); if (r) facPost(r); }
+}
+async function facPollOnce() {
+  try {
+    if (!FAC.url) throw new Error('no address set');
+    const r = await fetch(FAC.url, { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
+    let j = await r.json(); j = j && j.reading ? j.reading : j; if (!j || typeof j !== 'object') throw new Error('not a reading');
+    facPost(j); FAC.msg = 'Last reading received at ' + new Date().toLocaleTimeString() + '.';
+  } catch (e) { FAC.msg = 'Could not read the feed: ' + (e.message || e) + '. The model shows "No data" after 12 seconds.'; }
+  drawFactoryStatus();
+}
+function facApply() {
+  if (FAC.mode === 'replay') { const r = facReading(); if (r) facPost(r); drawFactoryStatus(); }
+  else if (FAC.mode === 'sim') { try { facFrame().contentWindow.SunShine.simulate(); } catch (e) { } drawFactoryStatus(); }
+  else { if (FAC.poll) clearInterval(FAC.poll); facPollOnce(); FAC.poll = setInterval(facPollOnce, 2000); }
+}
+function drawFactoryStatus() {
+  const el = $q('#fac_status'); if (!el) return;
+  if (FAC.mode === 'replay') {
+    const L = ST.live; if (!L) { el.textContent = ''; return; }
+    el.innerHTML = 'Replaying <b>' + esc(dayLabel(L.d)) + '</b> at <b>' + tmS(Math.min(L.idx, ST.ctx.spd)) + '</b>, ' + esc(STRATS[ST.sel.strat].short) + (L.inject !== 'none' ? ' <span class="tag">simulated disturbance</span>' : '') +
+      (L.pending ? '<div class="warn">The replay is paused: a plan change is waiting for an approver. Open Live replay as Approver to decide.</div>' : '') + (L.done ? ' (day complete)' : '');
+  } else if (FAC.mode === 'sim') el.textContent = "The model is running its own sunlight simulation. Use its Sunlight slider.";
+  else el.textContent = FAC.msg || 'Enter the address of the feed and press Connect.';
+}
+function bodyFactory() {
+  if (!ST.live) liveStart(ST.sel.day);
+  const D = ST.D, L = ST.live, a = can('run'), picks = pickDays().list, m = FAC.mode;
+  const replayCtl = m === 'replay' ? `<div class="bar">
+      <label class="note">Day <input type="date" id="lv_date" value="${D.days[L.d].date}" min="${D.days[0].date}" max="${D.days[D.nD - 1].date}" ${dis(a)}></label>
+      <select id="lv_pick" ${dis(a)}><option value="">Jump to...</option>${picks.map(p => `<option value="${p[1]}">${esc(p[0])}: ${D.days[p[1]].date}</option>`).join('')}</select>
+      <label class="note">Strategy <select id="lv_strat" ${dis(a)}>${stratOpts(ST.sel.strat, ['cost', 'bal', 'zero'])}</select></label>
+      <label class="note">What-if <select id="lv_inj" ${dis(a)}><option value="none" ${L.inject === 'none' ? 'selected' : ''}>As recorded</option><option value="cloud" ${L.inject === 'cloud' ? 'selected' : ''}>Cloud front 12:00-15:00</option><option value="surge" ${L.inject === 'surge' ? 'selected' : ''}>Demand +25% 15:00-19:00</option><option value="both" ${L.inject === 'both' ? 'selected' : ''}>Both</option></select></label></div>
+    <div class="bar" id="lv_btns"></div>` : '';
+  const hwCtl = m === 'hw' ? `<div class="bar"><label class="note">Feed address <input type="url" id="fac_url" value="${esc(FAC.url)}" placeholder="https://your-endpoint/latest" style="min-width:300px"></label><button class="pri" data-act="fac_connect">Connect</button></div>
+    <div class="note">The address must return the reading as JSON (see below) and allow requests from this site (CORS). The ESP32 firmware and the Azure endpoint are still to be built.</div>` : '';
+  return `<div class="card soft"><div class="bar"><b>Demo factory.</b><span class="note" style="margin:0">The 3D model of the hardware demo, bound to this site. Drag to rotate, click a part for its status.</span></div>
+    <div class="bar"><label class="note">Readings come from <select id="fac_mode"><option value="replay" ${m === 'replay' ? 'selected' : ''}>The planner's live replay</option><option value="sim" ${m === 'sim' ? 'selected' : ''}>The model's own sunlight simulation</option><option value="hw" ${m === 'hw' ? 'selected' : ''}>A hardware feed (web address)</option></select></label></div>${replayCtl}${hwCtl}
+    <div class="note" id="fac_status"></div></div>
+  <div class="card"><iframe id="fac_frame" src="factory3d.html?embed=1" title="Sun Shine demo factory" style="width:100%;height:740px;border:0;border-radius:10px;background:#fff" allowfullscreen></iframe>
+    <div class="note">If this is blank, <code>factory3d.html</code> is not in the repo root next to <code>index.html</code>. The model loads three.js from cdnjs, so it needs internet.</div></div>
+  <div class="card"><h2>How the replay drives the model</h2>
+    <div class="note"><b>Panels:</b> the planner's solar output as a share of the site's best output, shown as panel voltage (3.3 V = full sun, three panels with a small spread). <b>Battery:</b> the planned battery charge, shown as cell voltage (3.3 V empty to 4.2 V full) and charging when the plan charges it. <b>Conveyor:</b> production, running while site demand is above 40% of its usual high level, with the power source taken from the plan. <b>EV station:</b> the planned EV charging, with the reason. This is a visual of the planner's schedule on the organisers' data. It does not control any hardware, and the model's scale is a demo, not the site's size.</div>
+    <details><summary>Reading being sent to the model</summary><pre class="mono" id="fac_json" style="white-space:pre-wrap"></pre></details>
+    <div class="note">Same format for the hardware feed: <code>{"panels":[{"v":2.9},{"v":2.8},{"v":3.0}],"battery":{"v":3.95,"pct":72,"charging":true},"conveyor":{"running":true,"speed":80,"dir":"Forward","mode":"Solar"},"ev":{"charging":true,"reason":"Surplus solar"}}</code>. Send one at least every 12 seconds.</div></div>`;
+}
+function mountFactory() {
+  const f = facFrame(); if (f) f.addEventListener('load', facApply);
+  renderLiveButtons(); drawFactoryStatus();
+  FAC.timer = setInterval(facBeat, 3000);
+}
+SunOps.factoryUpdate = r => { if (HAS_DOM) facPost(r); };      // other pages can push a reading: SunOps.factoryUpdate({...})
+
+/* ==========================================================================
    Events, upload, open/close, boot
    ========================================================================== */
 function downloadText(name, text, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: type || 'text/plain' })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
@@ -1268,7 +1382,8 @@ function onClick(e) {
   const t = e.target.closest('[data-act]'); if (!t) return; const act = t.dataset.act, v = t.dataset.v;
   if (act === 'role') { if (ST.role !== v) { ST.role = v; audit('role_switch', 'Now viewing as ' + ROLES[v].name); } render(); }
   else if (act === 'close') closeConsole();
-  else if (act === 'tab') { if (v !== 'live') stopLive(); ST.tab = v; render(); }
+  else if (act === 'tab') { if (v !== 'live' && v !== 'fac') stopLive(); ST.tab = v; render(); }
+  else if (act === 'fac_connect') { FAC.url = ($q('#fac_url').value || '').trim(); LS.set('sunops_hwurl', FAC.url); audit('setting', 'Hardware feed address ' + (FAC.url ? 'set' : 'cleared')); facApply(); }
   else if (act === 'retry') loadPreset();
   else if (act === 'leg') { ST.sel.vis[v] = ST.sel.vis[v] === false; mountScen(); t.classList.toggle('off', ST.sel.vis[v] === false); }
   else if (act === 'leg1') { const l = ST.sel.l1; l[v] = !l[v]; drawLive(); }
@@ -1292,10 +1407,11 @@ function onChange(e) {
   const id = e.target.id, v = e.target.value; if (!id) return;
   if (id === 'up_file') { if (e.target.files[0]) handleUpload(e.target.files[0]); return; }
   if (id === 'lv_date') { const d = dayIdx(v); if (d >= 0) { ST.sel.day = d; liveStart(d); renderLiveButtons(); } }
-  else if (id === 'lv_pick') { if (v !== '') { ST.sel.day = parseInt(v, 10); render(); liveStart(ST.sel.day); renderLiveButtons(); } }
+  else if (id === 'lv_pick') { if (v !== '') { ST.sel.day = parseInt(v, 10); if (ST.tab === 'live') render(); liveStart(ST.sel.day); renderLiveButtons(); const di = $q('#lv_date'); if (di) di.value = ST.D.days[ST.sel.day].date; } }
   else if (id === 'lv_strat') { ST.sel.strat = v; liveStart(ST.live.d); renderLiveButtons(); }
   else if (id === 'lv_mode') { ST.sel.mode = v; liveStart(ST.live.d); renderLiveButtons(); }
-  else if (id === 'lv_inj') { const k = v; ST.live.inject = k; liveStart(ST.live.d, { inject: k }); render(); }
+  else if (id === 'lv_inj') { const k = v; ST.live.inject = k; liveStart(ST.live.d, { inject: k }); if (ST.tab === 'live') render(); else { renderLiveButtons(); drawLive(); } }
+  else if (id === 'fac_mode') { stopLive(); FAC.mode = v; LS.set('sunops_facmode', v); render(); }
   else if (id === 'lv_req') { ST.live.require = e.target.checked; audit('setting', 'Approver sign-off ' + (e.target.checked ? 'required' : 'not required') + ' for plan changes'); drawLive(); }
   else if (id === 'lv_speed') { ST.live.speed = parseInt(v, 10); if (ST.live.playing) { stopLive(); livePlay(); } }
   else if (id === 'sc_date') { const d = dayIdx(v); if (d >= 0) { ST.sel.day = d; ST.live = null; mountScen(); } }
@@ -1310,7 +1426,7 @@ function openConsole() {
   if (!ST.raw && ST.status !== 'loading') loadPreset();
   render();
 }
-function closeConsole() { stopLive(); ST.open = false; const r = $root(); if (r) r.hidden = true; document.body.style.overflow = ''; if (location.hash === '#ops') history.replaceState(null, '', location.pathname + location.search); }
+function closeConsole() { stopLive(); facStop(); ST.open = false; const r = $root(); if (r) r.hidden = true; document.body.style.overflow = ''; if (location.hash === '#ops') history.replaceState(null, '', location.pathname + location.search); }
 function ensureRoot() {
   let r = $root(); if (r) return r;
   r = document.createElement('div'); r.id = 'sunops'; r.hidden = true; r.setAttribute('role', 'dialog'); r.setAttribute('aria-label', 'Operations console'); r.innerHTML = '<div class="wrap"></div>';
@@ -1318,12 +1434,21 @@ function ensureRoot() {
   r.addEventListener('click', onClick); r.addEventListener('change', onChange); r.addEventListener('input', onInput);
   return r;
 }
+function entryCard() {
+  if (LS.get('sunops_entry_off', false)) return;
+  const app = document.getElementById('app'), ph = app && app.querySelector('.pagehead'); if (!ph || document.getElementById('sunopsEntry')) return;
+  const c = document.createElement('div'); c.id = 'sunopsEntry'; c.className = 'card';
+  c.innerHTML = '<b>New: Operations console</b><span class="note" style="margin:0">Live replay, all strategies on one chart, monthly bill, digital-twin check, approvals and audit trail, and the 3D demo factory.</span><span class="sp"></span><button class="pri" data-e="ops">Open the console</button><button data-e="fac">See the demo factory</button><button data-e="x" aria-label="Dismiss this card">Dismiss</button>';
+  c.addEventListener('click', e => { const t = e.target.closest('[data-e]'); if (!t) return; const k = t.dataset.e; if (k === 'x') { LS.set('sunops_entry_off', true); c.remove(); } else { ST.tab = k === 'fac' ? 'fac' : 'live'; openConsole(); } });
+  app.insertBefore(c, ph);
+}
 function boot() {
   const st = document.createElement('style'); st.id = 'sunops-css'; st.textContent = CSS; document.head.appendChild(st);
   const b = document.createElement('button'); b.id = 'sunOpsBtn'; b.type = 'button'; b.textContent = 'Operations'; b.title = 'Live replay, scenarios, monthly bill, digital twin, approvals'; b.addEventListener('click', openConsole);
   const head = document.querySelector('header.top'), anchor = document.getElementById('roleSwitch');
   if (head && anchor) anchor.insertAdjacentElement('afterend', b); else { b.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:50;background:#F59E0B;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer'; document.body.appendChild(b); }
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && ST.open) closeConsole(); });
+  entryCard();
   if (location.hash === '#ops') openConsole();
   window.addEventListener('hashchange', () => { if (location.hash === '#ops' && !ST.open) openConsole(); });
 }
