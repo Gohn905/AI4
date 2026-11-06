@@ -1124,4 +1124,5 @@ function uiRestore(){try{const u=JSON.parse(localStorage.getItem('ui')||'null');
  if(['ov','fc','op','pl','ad','fa'].includes(u.dtab))dtab=u.dtab;if(['use','wx','pc','pl','rt'].includes(u.chartTab))chartTab=u.chartTab;
  if(role=='tech')applyTab()}catch(e){}}
 storeCheck();fill();if(!saved){applyRole('tech');dtab='fa';applyTab()}else uiRestore();render();whoami();
-</script></body></html>
+</script><script src="ops.js" defer></script>
+</body></html>
