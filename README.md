@@ -131,3 +131,16 @@ A self-contained add-on that opens from the **Operations** button in the header 
 **Honest limits.** Roles are switched on the page, and the audit trail is kept in the browser; production would take roles from Azure sign-in and write the log server-side. The battery size is an assumption and its cost is not counted. No export income is assumed. The KWTBB levy and tax are not modelled. Results are model outputs on synthetic data, not proven savings.
 
 **Data note.** In the organisers' file the "VCB2 Grid Draw" column falls to about 17 kW at midday on sunny weekends, which suggests solar was already taken off. The console detects this and adds solar back by default. Confirm the meaning with the data provider; the reading can be changed in Settings.
+
+
+### Demo factory tab (3D hardware-demo model)
+
+`factory3d.html` (the 3D model of the hardware demo) is embedded in the console as the **Demo factory** tab, and the main page shows an entry card for it. The model is unchanged. The console feeds it through its own interface, `SunShine.update(reading)` / `postMessage({type:"sunshine-reading", reading})`, from one of three sources:
+
+| Source | What drives the model |
+|---|---|
+| The planner's live replay (default) | Solar output as panel volts, planned battery charge as cell volts and charging state, site demand as conveyor speed, planned EV charging with its reason |
+| The model's own sunlight simulation | The model's built-in simulation |
+| A hardware feed | Any web address returning the reading as JSON (polled every 2 s). The ESP32 firmware and Azure endpoint are still to be built |
+
+Other pages can push a reading with `SunOps.factoryUpdate({...})`. The model shows "No data" after 12 seconds of silence, so the console repeats the last reading every 3 seconds. The model loads three.js r128 from cdnjs, so it needs internet unless you host it yourself (see your hardware notes).
