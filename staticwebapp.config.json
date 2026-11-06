@@ -1,44 +1,16 @@
 {
   "routes": [
-    {
-      "route": "/api/explain",
-      "allowedRoles": [
-        "authenticated"
-      ]
-    },
-    {
-      "route": "/api/assist",
-      "allowedRoles": [
-        "authenticated"
-      ]
-    },
-    {
-      "route": "/login",
-      "redirect": "/.auth/login/aad?post_login_redirect_uri=/",
-      "statusCode": 302
-    },
-    {
-      "route": "/logout",
-      "redirect": "/.auth/logout?post_logout_redirect_uri=/",
-      "statusCode": 302
-    },
-    {
-      "route": "/api/audit",
-      "allowedRoles": [
-        "authenticated"
-      ]
-    },
-    {
-      "route": "/api/profile",
-      "allowedRoles": [
-        "authenticated"
-      ]
-    }
+    { "route": "/api/explain", "allowedRoles": ["authenticated"] },
+    { "route": "/api/assist", "allowedRoles": ["authenticated"] },
+    { "route": "/login", "redirect": "/.auth/login/aad?post_login_redirect_uri=/", "statusCode": 302 },
+    { "route": "/logout", "redirect": "/.auth/logout?post_logout_redirect_uri=/", "statusCode": 302 },
+    { "route": "/api/audit", "allowedRoles": ["authenticated"] },
+    { "route": "/api/profile", "allowedRoles": ["authenticated"] }
   ],
   "globalHeaders": {
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
-    "X-Frame-Options": "DENY",
+    "X-Frame-Options": "SAMEORIGIN",
     "Cache-Control": "no-cache"
   }
 }
