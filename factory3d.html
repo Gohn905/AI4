@@ -33,8 +33,8 @@ label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--mut)}
 <div class="r" id="ctl"></div>
 <div class="note" id="sst" style="margin-top:8px"></div>
 <details id="logbox" style="margin-top:8px" hidden><summary>Serial log (for troubleshooting)</summary><pre id="log" style="max-height:170px;overflow:auto;font-size:12px;background:var(--btn);border:1px solid var(--line);border-radius:8px;padding:8px;white-space:pre-wrap"></pre></details>
-<div class="note" style="margin-top:8px">Page version 2026-11-08-d</div>
-<div class="r"><span class="badge off" id="src">Simulated here</span><button id="conn">Connect ESP32 (USB)</button><span class="simctl r" style="margin:0"><button data-cov="0">Cover panel 1</button><button data-cov="1">Cover panel 2</button><button data-cov="2">Cover panel 3</button><button id="unc">Uncover all</button></span></div>
+<div class="note" style="margin-top:8px">Page version 2026-11-08-e</div>
+<div class="r"><span class="badge off" id="src">Simulated here</span><button id="conn">Connect ESP32 (USB)</button><button id="connb">Connect ESP32 (Bluetooth)</button><span class="simctl r" style="margin:0"><button data-cov="0">Cover panel 1</button><button data-cov="1">Cover panel 2</button><button data-cov="2">Cover panel 3</button><button id="unc">Uncover all</button></span></div>
 <div class="r"><button id="v1">Iso</button><button id="v2">Top</button><button id="v3">Front</button><button id="v4">Back (door)</button><button id="v5">Left</button><button id="v6">Right</button>
 <label><input type="checkbox" id="troof" checked> Roof</label><label><input type="checkbox" id="tpan" checked> Office front panel</label></div>
 </main>
@@ -164,7 +164,21 @@ function applyProto(dt,now){const ok=pFresh();
 let port=null,rd=null,wr=null,keep=false;
 const SER={bytes:0,lines:0,last:0,since:0,err:''},LOG=[];
 const dec=new TextDecoder(),enc=new TextEncoder();
-async function cmd(c){if(wr)try{await wr.write(enc.encode(c+'\n'));}catch(e){}}
+let btMode=false,bdev=null,brx=null,btx=null,bbuf='';
+const NUS='6e400001-b5a3-f393-e0a9-e50e24dcca9e',NRX='6e400002-b5a3-f393-e0a9-e50e24dcca9e',NTX='6e400003-b5a3-f393-e0a9-e50e24dcca9e',bdec=new TextDecoder();
+async function cmd(c){if(btMode){if(brx)try{await brx.writeValue(enc.encode(c+'\n'));}catch(e){SER.err='Bluetooth send failed: '+e.message;}return;}if(wr)try{await wr.write(enc.encode(c+'\n'));}catch(e){}}
+function onBle(e){const v=e.target.value,u=new Uint8Array(v.buffer,v.byteOffset,v.byteLength);SER.bytes+=u.length;bbuf+=bdec.decode(u,{stream:true});let i;while((i=bbuf.indexOf('\n'))>=0){parseLine(bbuf.slice(0,i).replace(/\r/g,'').trim());bbuf=bbuf.slice(i+1);}if(bbuf.length>2000)bbuf='';}
+function onBleDown(){btMode=false;bdev=null;brx=btx=null;bbuf='';mode=(EMB&&!PQ)?'lab':'sim';renderCtl();renderUI();}
+async function connectBLE(){
+ SER.err='';
+ if(!navigator.bluetooth){SER.err='This browser has no Web Bluetooth. Use Chrome or Edge on a computer or Android (not Safari or iPhone).';renderUI();return;}
+ try{bdev=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'SunShine'}],optionalServices:[NUS]});}
+ catch(e){bdev=null;if(e.name==='SecurityError')SER.err='Web Bluetooth is blocked in this frame. Open factory3d.html directly, or add allow="bluetooth" to the iframe.';else if(e.name!=='NotFoundError')SER.err='Could not choose a device: '+e.message;renderUI();return;}
+ try{const srv=await bdev.gatt.connect(),svc=await srv.getPrimaryService(NUS);btx=await svc.getCharacteristic(NTX);brx=await svc.getCharacteristic(NRX);
+  btx.addEventListener('characteristicvaluechanged',onBle);await btx.startNotifications();bdev.addEventListener('gattserverdisconnected',onBleDown);}
+ catch(e){SER.err='Bluetooth connection failed: '+e.message+'. Make sure no other device is connected to the ESP32 and the new sketch is uploaded.';try{bdev&&bdev.gatt.connected&&bdev.gatt.disconnect();}catch(x){}bdev=null;renderUI();return;}
+ btMode=true;mode='proto';P.at=0;SER.bytes=0;SER.lines=0;SER.last=0;SER.since=performance.now();LOG.length=0;bbuf='';renderCtl();renderUI();
+}
 function renderCtl(){const c=$('ctl');c.innerHTML='';if(mode!=='proto'||!sel)return;
  const defs={line1:[['Run','CONVEYOR ON'],['Stop','CONVEYOR OFF'],['Auto','CONVEYOR AUTO']],ev:[['Green on','LED GREEN'],['Red on','LED RED'],['Both on','LED BOTH'],['LEDs off','LED OFF'],['Auto','LED AUTO']],battery:[['Charger on','RELAY ON'],['Charger off','RELAY OFF'],['Auto','RELAY AUTO']]}[sel];if(!defs)return;
  const s=document.createElement('span');s.className='note';s.textContent='Send to ESP32:';c.appendChild(s);
@@ -184,7 +198,8 @@ async function connect(auto){
 }
 async function closePort(){keep=false;try{if(rd){await rd.cancel();rd.releaseLock();}}catch(e){}try{if(wr)wr.releaseLock();}catch(e){}try{if(port)await port.close();}catch(e){}
  rd=wr=port=null;mode=(EMB&&!PQ)?'lab':'sim';renderCtl();renderUI();}
-$('conn').onclick=()=>{if(mode==='proto'){keep=false;try{rd&&rd.cancel();}catch(e){}}else connect(false);};
+$('conn').onclick=()=>{if(mode==='proto'){if(btMode){try{bdev.gatt.disconnect();}catch(e){}onBleDown();}else{keep=false;try{rd&&rd.cancel();}catch(e){}}}else connect(false);};
+$('connb').onclick=connectBLE;
 if('serial' in navigator&&(!EMB||PQ))setTimeout(()=>{if(mode!=='proto')connect(true);},400);
 function serStatus(){
  const box=$('logbox'),s=$('sst');box.hidden=mode!=='proto';
@@ -198,14 +213,14 @@ function serStatus(){
 function renderUI(){
  const ch=$('chips');if(!ch.children.length)EL.forEach(a=>{const b=document.createElement('button');b.dataset.id=a[0];b.innerHTML='<span class="dot off"></span><span>'+a[1]+'</span>';b.onclick=()=>select(a[0]);ch.appendChild(b);});
  [...ch.children].forEach(b=>{const s=stat(b.dataset.id);b.querySelector('.dot').className='dot '+s.k;b.classList.toggle('on',b.dataset.id===sel);});
- const card=$('card');document.querySelector('.simctl').hidden=mode!=='sim';serStatus();$('conn').hidden=EMB&&!PQ;$('conn').textContent=mode==='proto'?'Disconnect':'Connect ESP32 (USB)';
+ const card=$('card');document.querySelector('.simctl').hidden=mode!=='sim';serStatus();$('conn').hidden=EMB&&!PQ;$('connb').hidden=(EMB&&!PQ)||mode==='proto';$('conn').textContent=mode==='proto'?'Disconnect':'Connect ESP32 (USB)';
  if(mode==='proto'&&!sel){card.innerHTML=protoSummary();}
  else if(!sel){const ok=S&&!stale()&&S.state!=='WAIT';
   card.innerHTML='<b>'+(ok?'Power source: '+S.power:'Pick a part')+'</b><div class="note">'+(ok?S.act+' Click a part to see its status.':(mode==='lab'&&labMode==='none'?'Connect the ESP32 or press Use simulator on the lab page.':'Click a part in the model or one of the buttons above to see its status.'))+'</div>';}
  else{const s=stat(sel),name=EL.find(a=>a[0]===sel)[1];
   card.innerHTML='<div class="h"><b>'+name+'</b><span class="badge '+s.k+'">'+s.t+'</span></div>'+(s.rows.length?'<table>'+s.rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join('')+'</table>':'')+(s.note?'<div class="note">'+s.note+'</div>':'');}
  const sb=$('src');let txt='Simulated here',k='warn';
- if(mode==='proto'){txt=pFresh()?'ESP32 over USB (live)':'Connected, no data yet';k=pFresh()?'ok':'off';}else if(mode==='lab'){if(labMode==='none'){txt='Not connected';k='off';}else if(stale()){txt='No data';k='off';}else if(labMode==='serial'){txt='ESP32 over USB (live)';k='ok';}else{txt='Lab simulator';k='warn';}}
+ if(mode==='proto'){txt=pFresh()?'ESP32 over '+(btMode?'Bluetooth':'USB')+' (live)':'Connected, no data yet';k=pFresh()?'ok':'off';}else if(mode==='lab'){if(labMode==='none'){txt='Not connected';k='off';}else if(stale()){txt='No data';k='off';}else if(labMode==='serial'){txt='ESP32 over USB (live)';k='ok';}else{txt='Lab simulator';k='warn';}}
  sb.textContent=txt;sb.className='badge '+k;
  document.querySelectorAll('[data-cov]').forEach(b=>{b.textContent=(cov[+b.dataset.cov]?'Uncover':'Cover')+' panel '+(+b.dataset.cov+1);});
 }
