@@ -212,7 +212,7 @@ input[type=range]{accent-color:#F59E0B}
 <div class="note" id="info" data-role="tech" style="margin-top:0"></div>
 </div>
 
-<div class="bar" id="dtabs" data-role="tech" style="margin:0 0 12px"><button data-dt="ov" class="on">Overview</button><button data-dt="fc">Forecasts &amp; energy</button><button data-dt="op">Optimisation</button><button data-dt="pl">Plan &amp; actions</button><button data-dt="ad">Advanced</button><button data-dt="lab">Lab model</button><button data-dt="fa">Facility &amp; data</button></div>
+<div class="bar" id="dtabs" data-role="tech" style="margin:0 0 12px"><button data-dt="ov" class="on">Overview</button><button data-dt="fc">Forecasts &amp; energy</button><button data-dt="op">Optimisation</button><button data-dt="pl">Plan &amp; actions</button><button data-dt="ad">Advanced</button><button data-dt="lab">Lab model</button><button data-dt="proto">Live prototype</button><button data-dt="fa">Facility &amp; data</button></div>
 <div class="card" id="why" hidden><h2>What the optimiser decides</h2>
 <p class="note" style="margin-top:0">Every 30 minutes of the day, the optimiser chooses all of these together, so it can plan the battery and the equipment around the highest billed 30 minutes.</p>
 <ul style="font-size:14px">
@@ -237,6 +237,11 @@ input[type=range]{accent-color:#F59E0B}
 <details class="labset"><summary>Settings</summary><div class="bar" style="margin:8px 0 0"><label class="note" style="margin:0">Panel counts as blocked below <b id="labThrO">60</b>% of normal</label><input type="range" id="labThr" min="30" max="90" step="5" value="60"><label class="note" style="margin:0">Battery drain, % per second</label><input type="number" id="labDr" min="0.1" max="10" step="0.1" value="1.5" style="width:80px"><button id="labBat">Reset battery to 100%</button></div></details>
 <div id="labLog" class="lablog"></div>
 <p class="note">This is a lab model. The panels are small solar panels used as light sensors, the battery level is simulated, and the laptop's USB stands in for grid power. The rules here are a simplified version of the optimiser's logic. The full day plan comes from the other tabs.</p>
+</div>
+<div class="card" id="protoPanel" data-role="tech" hidden>
+<div class="cardhead"><div><h2>Live prototype: the small factory, in real time</h2><div class="muted small">Reads the ESP32 over USB or Bluetooth and lets you control the relay, conveyor speed and LEDs.</div></div></div>
+<iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1" allow="serial; bluetooth" title="Live 3D prototype" loading="lazy" style="width:100%;height:780px;border:1px solid var(--line);border-radius:12px;margin:12px 0 0;background:transparent"></iframe>
+<div class="note" style="margin:8px 0 0">Press <b>Connect ESP32 (Bluetooth)</b> or <b>(USB)</b> inside the model, then click a part to see its readings and controls. Needs Chrome or Edge (Bluetooth also works on Android). USB: close the Arduino Serial Monitor first. Only one connection to the ESP32 at a time, so disconnect the Lab model tab&rsquo;s USB connection before using this one.</div>
 </div>
 <div id="facPanel" data-role="tech" hidden>
 <details class="card" id="setup" open><summary id="fsum">My facility</summary>
@@ -531,8 +536,8 @@ function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a
  return `<p class="note"><b>CO&#8322; trade-off:</b> Cost-saving earns ${money(dS)} more per day than Balanced, at the price of ${Math.round(dC)} kg more CO&#8322; (about ${money(dS/dC)} per kg).</p>`}
 
 // ================= pages: Brief (owner view) and Detailed (tabs) =================
-const TABS={ov:['ribbon','headline','kpi','costbars','flow','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','schedule','approve','changed'],ad:['live','reopt','learn','stress','sweep','assume','audit','changed'],fa:['changed'],lab:[]};let dtab='ov';
-function applyTab(){const t=role=='tech';Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&(dtab=='fa'||dtab=='lab')});$('facPanel').hidden=!(t&&dtab=='fa');$('labPanel').hidden=!(t&&dtab=='lab');
+const TABS={ov:['ribbon','headline','kpi','costbars','flow','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','schedule','approve','changed'],ad:['live','reopt','learn','stress','sweep','assume','audit','changed'],fa:['changed'],lab:[],proto:[]};let dtab='ov';
+function applyTab(){const t=role=='tech';Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&(dtab=='fa'||dtab=='lab'||dtab=='proto')});$('facPanel').hidden=!(t&&dtab=='fa');$('labPanel').hidden=!(t&&dtab=='lab');$('protoPanel').hidden=!(t&&dtab=='proto');
  if(document.querySelectorAll)document.querySelectorAll('#dtabs button').forEach(b=>b.classList.toggle('on',b.dataset.dt==dtab));fairLoad()}
 $('dtabs').onclick=e=>{const b=e.target.closest('[data-dt]');if(b){dtab=b.dataset.dt;applyTab()}};
 // ================= roles =================
