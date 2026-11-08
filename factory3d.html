@@ -33,7 +33,7 @@ label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--mut)}
 <div class="r" id="ctl"></div>
 <div class="note" id="sst" style="margin-top:8px"></div>
 <details id="logbox" style="margin-top:8px" hidden><summary>Serial log (for troubleshooting)</summary><pre id="log" style="max-height:170px;overflow:auto;font-size:12px;background:var(--btn);border:1px solid var(--line);border-radius:8px;padding:8px;white-space:pre-wrap"></pre></details>
-<div class="note" style="margin-top:8px">Page version 2026-11-08-e</div>
+<div class="note" style="margin-top:8px">Page version 2026-11-08-f</div>
 <div class="r"><span class="badge off" id="src">Simulated here</span><button id="conn">Connect ESP32 (USB)</button><button id="connb">Connect ESP32 (Bluetooth)</button><span class="simctl r" style="margin:0"><button data-cov="0">Cover panel 1</button><button data-cov="1">Cover panel 2</button><button data-cov="2">Cover panel 3</button><button id="unc">Uncover all</button></span></div>
 <div class="r"><button id="v1">Iso</button><button id="v2">Top</button><button id="v3">Front</button><button id="v4">Back (door)</button><button id="v5">Left</button><button id="v6">Right</button>
 <label><input type="checkbox" id="troof" checked> Roof</label><label><input type="checkbox" id="tpan" checked> Office front panel</label></div>
@@ -269,8 +269,11 @@ window.SunShine={updateLab(l){labMode=l&&l.mode||'none';labAt=performance.now();
 window.addEventListener('message',e=>{if(mode!=='lab'||e.source!==window.parent)return;const d=e.data;if(d&&d.type==='sunshine-lab')window.SunShine.updateLab(d.lab);});
 let last=performance.now(),acc=1;
 function frame(now){const dt=Math.min(0.1,(now-last)/1000);last=now;
- if(mode==='sim')simStep(dt);
+ try{if(mode==='sim')simStep(dt);
  apply3D(dt,now);acc+=dt;if(acc>0.2){acc=0;renderUI();}
- upd();R.render(Sc,cam);requestAnimationFrame(frame);}
+ upd();R.render(Sc,cam);}catch(e){console.error(e);if(!SER.ferr){SER.ferr=1;SER.err='Display error: '+e.message;}}
+ requestAnimationFrame(frame);}
 size();requestAnimationFrame(frame);
+/* Refresh the readout on a timer too, so it never depends on the animation loop (which browsers pause or throttle inside iframes). */
+setInterval(()=>{try{renderUI();}catch(e){}},250);
 </script></body></html>
