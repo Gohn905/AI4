@@ -24,17 +24,18 @@ label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--mut)}
 .note{color:var(--mut);font-size:13px;margin-top:6px}
 #sun{width:150px}
 .embed h1,.embed p.t,.embed .simctl{display:none}.embed main{padding:0}body.embed{background:transparent}.embed canvas{height:calc(100vh - 215px);min-height:260px}
-.mini{overflow:hidden}.mini main{padding:0;max-width:none}.mini main>*:not(canvas){display:none!important}.mini canvas{display:block;width:100%;height:100vh!important;min-height:0!important}
+.cvwrap{position:relative}.zoom{position:absolute;left:10px;bottom:10px;display:flex;gap:6px}.zoom button{width:34px;height:34px;padding:0;font-size:20px;line-height:1;font-weight:700;border-radius:8px}
+.mini{overflow:hidden}.mini main{padding:0;max-width:none}.mini main>*:not(.cvwrap){display:none!important}.mini .zoom{display:none}.mini canvas{display:block;width:100%;height:100vh!important;min-height:0!important}
 </style></head><body><main>
 <h1>Sun Shine demo factory</h1>
 <p class="t">Click a part in the model, or pick one below, to see its status. Drag to rotate, scroll or pinch to zoom. The conveyor is a placeholder block at the assumed size, and the EV station stands separately on the right. Opened on its own it runs a simulator, and Connect ESP32 (USB) shows your real prototype in Chrome or Edge. Inside the lab page it shows the lab model.</p>
-<canvas id="cv"></canvas>
+<div class="cvwrap"><canvas id="cv"></canvas><div class="zoom"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">&minus;</button></div></div>
 <div class="r" id="chips"></div>
 <div class="card" id="card"></div>
 <div class="r" id="ctl"></div>
 <div class="note" id="sst" style="margin-top:8px"></div>
 <details id="logbox" style="margin-top:8px" hidden><summary>Serial log (for troubleshooting)</summary><pre id="log" style="max-height:170px;overflow:auto;font-size:12px;background:var(--btn);border:1px solid var(--line);border-radius:8px;padding:8px;white-space:pre-wrap"></pre></details>
-<div class="note" style="margin-top:8px">Page version 2026-11-09-b</div>
+<div class="note" style="margin-top:8px">Page version 2026-11-09-d</div>
 <div class="r"><span class="badge off" id="src">Simulated here</span><button id="conn">Connect ESP32 (USB)</button><button id="connb">Connect ESP32 (Bluetooth)</button><span class="simctl r" style="margin:0"><button data-cov="0">Cover panel 1</button><button data-cov="1">Cover panel 2</button><button data-cov="2">Cover panel 3</button><button id="unc">Uncover all</button></span></div>
 <div class="r"><button id="v1">Iso</button><button id="v2">Top</button><button id="v3">Front</button><button id="v4">Back (door)</button><button id="v5">Left</button><button id="v6">Right</button>
 <label><input type="checkbox" id="troof" checked> Roof</label><label><input type="checkbox" id="tpan" checked> Office front panel</label></div>
@@ -69,8 +70,12 @@ const BAT=reg('b',new THREE.Mesh(new THREE.CylinderGeometry(BR,BR,BL,24),new THR
 const BCAP=reg('b',new THREE.Mesh(new THREE.CylinderGeometry(3.5,3.5,5,16),new THREE.MeshLambertMaterial({color:0xb8c2cc})),'battery');BCAP.rotation.x=Math.PI/2;BCAP.position.set(BX,BY,BZ+BL/2+2.5);
 [-18,18].forEach(d=>{const c=reg('b',new THREE.Mesh(new THREE.CylinderGeometry(BR+1,BR+1,4,24),new THREE.MeshLambertMaterial({color:0x555b63})),'battery');c.rotation.x=Math.PI/2;c.position.set(BX,BY,BZ+d);});
 const LED=[39,31].map(z=>{const m=new THREE.Mesh(new THREE.SphereGeometry(1.8,12,10),new THREE.MeshBasicMaterial({color:0x888888}));m.position.set(289.5,z,-76);return reg('l',m,'ev');});
-const mkPR=(z,el)=>[0,1,2].map(i=>{const m=new THREE.Mesh(new THREE.BoxGeometry(20,15,20),new THREE.MeshLambertMaterial({color:0xf0a028}));m.position.set(40+i*70,63.5,z);m.userData.el=el;m.userData.prod=true;Sc.add(m);M.push(m);return m;});
+const mkPR=(z,el)=>[0,1,2].map(i=>{const m=new THREE.Mesh(new THREE.BoxGeometry(20,15,20),new THREE.MeshLambertMaterial({color:0xf0a028}));m.position.set(22+i*70,63.5,z);m.userData.el=el;m.userData.prod=true;Sc.add(m);M.push(m);return m;});
 const PR1=mkPR(-98,'line1');
+/* Boxes ride the belt (x 12 to 232) and loop every 210 units = 3 boxes x 70, so the gaps stay even. They grow in and shrink out at the two ends so they never pop in or hang off the belt. */
+const PRL=210,PRA=22,PRB=232;
+function placePR(P){P.forEach(m=>{if(m.position.x>PRB)m.position.x-=PRL;const s=Math.max(0.02,Math.min(1,Math.min(m.position.x-PRA,PRB-m.position.x)/20));m.scale.set(s,s,s);m.position.y=56+7.5*s;});}
+placePR(PR1);
 const EL=[['panel1','Solar panel 1'],['panel2','Solar panel 2'],['panel3','Solar panel 3'],['battery','Battery'],['line1','Conveyor belt'],['ev','EV charger']];
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),plaus=v=>isFinite(v)&&v>=2.5&&v<=4.5;
 let S=null,sel=null,hl=null,labMode='none',labAt=0;
@@ -168,7 +173,7 @@ function applyProto(dt,now){const ok=pFresh();
  PAN.forEach((m,i)=>{const v=ok&&isFinite(P.panels[i].v)?clamp(P.panels[i].v/3.0,0,1):0.5;m.material.color.setHex(0x1a2a4a).lerp(new THREE.Color(0x2f6fd6),v);});
  LED[0].material.color.setHex(ok&&(P.ledo.g!==null?P.ledo.g:P.led==='GREEN')?0x2ecc71:0x1d4d33);LED[1].material.color.setHex(ok&&(P.ledo.r!==null?P.ledo.r:P.led==='RED')?0xe74c3c:0x5a1f1f);
  l1.intensity=0.35+0.55*(ok?P.panels.reduce((a,p)=>a+clamp((p.v||0)/3,0,1),0)/3:0.4);
- PR1.forEach(m=>{if(ok&&P.conv.run)m.position.x+=70*dt;if(m.position.x>222)m.position.x-=196;});
+ if(ok&&P.conv.run)PR1.forEach(m=>{m.position.x+=70*dt;});placePR(PR1);
 }
 let port=null,rd=null,wr=null,keep=false;
 const SER={paints:0,bytes:0,lines:0,last:0,since:0,err:''},LOG=[];
@@ -251,7 +256,7 @@ function apply3D(dt,now){
  const g=ok&&S.g,r=ok?S.r:0,rOn=r==1||(r==2&&Math.floor(now/400)%2==0);
  LED[0].material.color.setHex(g?0x2ecc71:0x1d4d33);LED[1].material.color.setHex(rOn?0xe74c3c:0x5a1f1f);
  l1.intensity=0.35+0.55*(ok?(S.rel[0]+S.rel[1]+S.rel[2])/3:0.4);
- const mv=(P,on)=>P.forEach(m=>{if(on)m.position.x+=70*dt;if(m.position.x>222)m.position.x-=196;});
+ const mv=(P,on)=>{if(on)P.forEach(m=>{m.position.x+=70*dt;});placePR(P);};
  mv(PR1,ok&&S.s1);
 }
 const tgt=new THREE.Vector3(150,40,-100);let th=Math.PI-0.6,ph=0.5,dist=MINI?700:640;
@@ -271,7 +276,9 @@ cv.addEventListener('pointermove',e=>{
  ps.set(e.pointerId,[e.clientX,e.clientY]);});
 const up=e=>{const wasOne=ps.size===1;ps.delete(e.pointerId);cv.style.cursor='grab';if(e.type==='pointerup'&&wasOne&&moved<6){const id=pick(e);if(id)select(id);else if(sel)select(sel);}};
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
-cv.addEventListener('wheel',e=>{e.preventDefault();dist=clamp(dist*(1+e.deltaY*0.001),120,1000);},{passive:false});
+/* Inside the app (embed) the mouse wheel scrolls the page; use the + and - buttons to zoom. Opened on its own, the wheel still zooms. */
+if(!EMB)cv.addEventListener('wheel',e=>{e.preventDefault();dist=clamp(dist*(1+e.deltaY*0.001),120,1000);},{passive:false});
+$('zin').onclick=()=>{dist=clamp(dist*0.85,120,1000);};$('zout').onclick=()=>{dist=clamp(dist/0.85,120,1000);};
 const V=(a,b,c)=>()=>{th=a;ph=b;dist=c;};
 $('v1').onclick=V(Math.PI-0.6,0.5,640);$('v2').onclick=V(Math.PI,1.52,640);$('v3').onclick=V(Math.PI,0.12,580);
 $('v4').onclick=V(0,0.12,580);$('v5').onclick=V(-Math.PI/2,0.12,580);$('v6').onclick=V(Math.PI/2,0.12,580);
