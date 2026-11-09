@@ -207,6 +207,7 @@ main[data-role=tech] .chside{display:none}main[data-role=tech] .plangrid{grid-te
 
 .mini3dcard{padding:0;overflow:hidden;display:flex}.mini3dcard .mini3d{flex:1;min-height:210px;border-radius:0;border:0}#out>[data-tour=mini3d]{grid-column:span 5}.mini3d{position:relative;min-height:170px;border:1px solid var(--line,#e5dcc0);border-radius:12px;overflow:hidden;background:#fffaf0;cursor:pointer}.mini3d iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none;background:transparent}.mini3d:hover,.mini3d:focus-visible{border-color:var(--amb,#f59e0b);box-shadow:0 0 0 3px rgba(245,158,11,.25);outline:0}.mini3dlbl{position:absolute;left:0;right:0;bottom:0;padding:6px 8px;font-size:12px;font-weight:700;text-align:center;background:rgba(255,250,240,.92);color:var(--ink,#222)}@media(max-width:760px){.mini3d{min-height:200px}}
 main.fit #protoPanel{padding:6px}html.protoTab{scrollbar-width:none}html.protoTab::-webkit-scrollbar{display:none}
+main .ai h2{text-transform:none}main h2{text-transform:uppercase;letter-spacing:.12em;font-size:12px;line-height:1.4;color:var(--amb-d);font-weight:800;margin:0 0 10px}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><span class="sp"></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -257,7 +258,8 @@ main.fit #protoPanel{padding:6px}html.protoTab{scrollbar-width:none}html.protoTa
 <p class="note">This is a lab model. The panels are small solar panels used as light sensors, the battery level is simulated, and the laptop's USB stands in for grid power. The rules here are a simplified version of the optimiser's logic. The full day plan comes from the other tabs.</p>
 </div>
 <div class="card" id="protoPanel" data-role="tech" hidden>
-<iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1&amp;v=2026-11-09-h" allow="serial; bluetooth" title="Live 3D prototype" loading="lazy" style="width:100%;height:calc(100vh - 150px);min-height:460px;border:1px solid var(--line);border-radius:12px;margin:0;background:transparent;display:block"></iframe>
+<h2 title="Reads the ESP32 over USB or Bluetooth and lets you control the relay, conveyor speed and LEDs. Press Connect ESP32 inside the model, then click a part. Needs Chrome or Edge. Close the Arduino Serial Monitor first. One connection at a time.">Live prototype: the small factory, in real time</h2>
+<iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1&amp;v=2026-11-09-j" allow="serial; bluetooth" title="Live 3D prototype" loading="lazy" style="width:100%;height:calc(100vh - 150px);min-height:460px;border:0;border-radius:0;margin:0;background:transparent;display:block"></iframe>
 <div class="note" style="margin:8px 0 0">Press <b>Connect ESP32 (Wireless)</b> or <b>(USB)</b> inside the model, then click a part to see its readings and controls. Needs Chrome or Edge (Bluetooth also works on Android). USB: close the Arduino Serial Monitor first. Only one connection to the ESP32 at a time, so disconnect the Lab model tab&rsquo;s USB connection before using this one.</div>
 </div>
 <div id="facPanel" data-role="tech" hidden>
