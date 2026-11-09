@@ -60,7 +60,12 @@ D.forEach(g=>{const b=atob(g.d),u=new Uint8Array(b.length);for(let i=0;i<b.lengt
 const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(u.buffer),3));geo.computeVertexNormals();
 reg(g.t,new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:g.c,side:THREE.DoubleSide})),ELMAP[g.t]);});
 const PAN=[47,120,193].map((x,i)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(65,2,48),new THREE.MeshLambertMaterial({color:0x2f6fd6}));m.position.set(x,99,-36.5);return reg('p',m,'panel'+(i+1));});
-const BAT=reg('b',new THREE.Mesh(new THREE.CylinderGeometry(9,9,65,24),new THREE.MeshLambertMaterial({color:0x4a6fa5})),'battery');BAT.position.set(258,32.5,-30);
+/* Battery LYING DOWN and MOUNTED ON THE WALL: horizontal cylinder (axis along z) touching the outer face of the west wall (x=4), held by two straps.
+   Move it with BY (height above floor) and BZ (position along the wall: -4 = door end, -192 = far end). */
+const BR=8,BL=60,BX=4-BR,BY=62,BZ=-100;
+const BAT=reg('b',new THREE.Mesh(new THREE.CylinderGeometry(BR,BR,BL,24),new THREE.MeshLambertMaterial({color:0x4a6fa5})),'battery');BAT.rotation.x=Math.PI/2;BAT.position.set(BX,BY,BZ);
+const BCAP=reg('b',new THREE.Mesh(new THREE.CylinderGeometry(3.5,3.5,5,16),new THREE.MeshLambertMaterial({color:0xb8c2cc})),'battery');BCAP.rotation.x=Math.PI/2;BCAP.position.set(BX,BY,BZ+BL/2+2.5);
+[-18,18].forEach(d=>{const c=reg('b',new THREE.Mesh(new THREE.CylinderGeometry(BR+1,BR+1,4,24),new THREE.MeshLambertMaterial({color:0x555b63})),'battery');c.rotation.x=Math.PI/2;c.position.set(BX,BY,BZ+d);});
 const LED=[39,31].map(z=>{const m=new THREE.Mesh(new THREE.SphereGeometry(1.8,12,10),new THREE.MeshBasicMaterial({color:0x888888}));m.position.set(289.5,z,-76);return reg('l',m,'ev');});
 const mkPR=(z,el)=>[0,1,2].map(i=>{const m=new THREE.Mesh(new THREE.BoxGeometry(20,15,20),new THREE.MeshLambertMaterial({color:0xf0a028}));m.position.set(40+i*70,63.5,z);m.userData.el=el;m.userData.prod=true;Sc.add(m);M.push(m);return m;});
 const PR1=mkPR(-98,'line1');
