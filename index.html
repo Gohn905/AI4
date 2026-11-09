@@ -197,14 +197,15 @@ main[data-role=tech] .pagehead{display:none}
 .top .rs button.on,.top .rs button.on:hover{background:rgba(37,43,42,.16);box-shadow:inset 0 0 0 1.5px rgba(37,43,42,.55)}
 
 /* one vertical list: main tabs + chart tabs */
-main[data-role=tech] .mainCol{display:grid;grid-template-columns:minmax(0,1fr) 190px;column-gap:16px;align-items:start}
-main[data-role=tech] .mainCol>*{grid-column:1;min-width:0}
-main[data-role=tech] .mainCol>#dtabs{grid-column:2;grid-row:1/span 40;position:sticky;top:80px;max-height:calc(100vh - 92px);display:flex;flex-direction:column;flex-wrap:nowrap;gap:4px;margin:0!important;padding:0 2px 0 0;overflow-y:auto;scrollbar-width:thin;z-index:6}
+main[data-role=tech]{padding-right:calc(clamp(16px,3vw,42px) + 206px)}
+main[data-role=tech] .mainCol>#dtabs{position:fixed;top:80px;width:190px;right:calc(max(0px,(100vw - 1480px)/2) + clamp(16px,3vw,42px));max-height:calc(100vh - 92px);display:flex;flex-direction:column;flex-wrap:nowrap;gap:4px;margin:0!important;padding:0 2px 0 0;overflow-y:auto;scrollbar-width:thin;z-index:6}
 main[data-role=tech] #dtabs button{width:100%;text-align:left;margin:0;flex:none}
 main[data-role=tech] #dtabs button.sub{padding:7px 10px 7px 22px;font-weight:600;font-size:13px}
 #dtabs .dgrp{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);padding:8px 4px 0}
 main[data-role=tech] .chside{display:none}main[data-role=tech] .plangrid{grid-template-columns:minmax(0,1fr)}
-@media(max-width:760px){main[data-role=tech] .mainCol{display:block}main[data-role=tech] .mainCol>#dtabs{position:sticky;top:0;max-height:none;overflow-y:visible;flex-direction:row;overflow-x:auto;padding:6px 0;background:var(--bg);margin:0 0 8px!important;gap:6px}main[data-role=tech] #dtabs button{width:auto;white-space:nowrap}main[data-role=tech] #dtabs button.sub{padding:9px 13px;font-size:inherit}#dtabs .dgrp{display:none}}
+@media(max-width:760px){main[data-role=tech]{padding-right:12px}main[data-role=tech] .mainCol>#dtabs{position:sticky;top:0;width:auto;right:auto;max-height:none;overflow-y:visible;flex-direction:row;overflow-x:auto;padding:6px 0;background:var(--bg);margin:0 0 8px!important;gap:6px}main[data-role=tech] #dtabs button{width:auto;white-space:nowrap}main[data-role=tech] #dtabs button.sub{padding:9px 13px;font-size:inherit}#dtabs .dgrp{display:none}}
+
+.costgrid{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:18px;align-items:stretch}.costmain{min-width:0}.mini3d{position:relative;min-height:170px;border:1px solid var(--line,#e5dcc0);border-radius:12px;overflow:hidden;background:#fffaf0;cursor:pointer}.mini3d iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none;background:transparent}.mini3d:hover,.mini3d:focus-visible{border-color:var(--amb,#f59e0b);box-shadow:0 0 0 3px rgba(245,158,11,.25);outline:0}.mini3dlbl{position:absolute;left:0;right:0;bottom:0;padding:6px 8px;font-size:12px;font-weight:700;text-align:center;background:rgba(255,250,240,.92);color:var(--ink,#222)}@media(max-width:760px){.costgrid{grid-template-columns:1fr}.mini3d{min-height:190px}}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><span class="sp"></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -589,10 +590,10 @@ function kpiRow(r,b,c,sv){const sb=sel=='base',sav=b.cost-r.cost,ng=sum(b.ld)*DT
   k('Solar utilisation','&#9788;',N0(r.util)+'%','',N0(sum(r.sol)*DT)+' kWh available')+
   k('CO&#8322; emission','&#9831;',ng>0?(dco>=0?'+':'\u2212')+N1(Math.abs(cp))+'%':'&mdash;',ng>0&&dco<-0.5?'positive':Math.abs(dco)<0.5?'':'warning',ng>0?(dco<-0.5?N0(-dco)+' kg avoided':Math.abs(dco)<0.5?'About the same':N0(dco)+' kg extra'):'')+`</div>`}
 function costCard(r,b,sv,past){const sb=sel=='base',w=b.cost>0?Math.min(100*r.cost/b.cost,100):100;
- return `<div class="card" data-tour="costbars"><div class="cardhead"><div><h2>Electricity cost comparison</h2><div class="muted small">Baseline vs selected strategy</div></div>${!sb&&sv>=0.05?`<span class="badge green">${N1(sv)}% lower</span>`:''}</div>
+ return `<div class="card" data-tour="costbars"><div class="costgrid"><div class="costmain"><div class="cardhead"><div><h2>Electricity cost comparison</h2><div class="muted small">Baseline vs selected strategy</div></div>${!sb&&sv>=0.05?`<span class="badge green">${N1(sv)}% lower</span>`:''}</div>
  <div class="costbars"><div class="barlabel">Baseline</div><div class="barwrap"><div class="barfill base" style="width:100%"></div></div><div class="barvalue">${money(b.cost)}</div></div>
  <div class="costbars"><div class="barlabel">${sb?'Baseline':NAMES[sel].replace('Optimiser: ','')}</div><div class="barwrap"><div class="barfill opt" style="width:${w.toFixed(1)}%"></div></div><div class="barvalue">${money(r.cost)}</div></div>
- <div class="footnote">${past?'Estimate from recorded weather.':'Forecast estimate, not a measurement.'}<span data-role="tech"> Daily cost includes the monthly demand charge spread over 30 days. Check the tariff assumptions against your own bill.</span></div></div>`}
+ <div class="footnote">${past?'Estimate from recorded weather.':'Forecast estimate, not a measurement.'}<span data-role="tech"> Daily cost includes the monthly demand charge spread over 30 days. Check the tariff assumptions against your own bill.</span></div></div><div class="mini3d" data-go="proto" role="button" tabindex="0" title="Open the Live prototype"><iframe src="factory3d.html?embed=1&amp;proto=1&amp;mini=1&amp;v=2026-11-09-b" tabindex="-1" loading="lazy" title="3D model of the demo factory"></iframe><span class="mini3dlbl">3D model &middot; open Live prototype &rarr;</span></div></div></div>`}
 function ownerSteps(r,b){const cap=+F.bat||0,L=[],it=(i,t,p)=>`<div class="action"><div class="action-icon">${i}</div><div><strong>${t}</strong><p>${p}</p></div></div>`;
  if(sel=='base')return it('&#9788;','Pick a strategy','Choose one above to see the plan.');
  const c=rg(r.ch,1),d=rg(r.b,1),f=rg(r.fl,1);
@@ -1102,7 +1103,9 @@ $('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);$('dt').onchange=e=
 $('out').addEventListener('pointermove',pcMove);$('out').addEventListener('pointermove',drMove);
 $('out').addEventListener('input',e=>{if(e.target&&e.target.id=='plSl'&&lastPlan){plLive=false;plSync();plT=+e.target.value;const g=plGridHtml(lastPlan.r,plT);$('plGrid').innerHTML=g.html;$('plGrid').classList.toggle('plfade',!!g.pred);$('plInfo').innerHTML=g.info}});
 $('out').addEventListener('change',e=>{if(e.target&&e.target.id=='pcSel'){pcType=e.target.value;if(lastPlan&&$('ct_pc'))$('ct_pc').innerHTML=pcRender()}});
-$('out').onclick=e=>{const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;rtDem=false;const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';$('ct_wx').hidden=chartTab!='wx';$('ct_pc').hidden=chartTab!='pc';$('ct_pl').hidden=chartTab!='pl';if($('ct_rt'))$('ct_rt').hidden=chartTab!='rt';
+$('out').onkeydown=e=>{if((e.key=='Enter'||e.key==' ')&&e.target.closest&&e.target.closest('[data-go]')){e.preventDefault();e.target.closest('[data-go]').click()}};
+$('out').onclick=e=>{const go=e.target.closest('[data-go]');if(go){if(role!='tech')setRole('tech');dtab=go.dataset.go;applyTab();window.scrollTo(0,0);return}
+const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;rtDem=false;const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';$('ct_wx').hidden=chartTab!='wx';$('ct_pc').hidden=chartTab!='pc';$('ct_pl').hidden=chartTab!='pl';if($('ct_rt'))$('ct_rt').hidden=chartTab!='rt';
   $('chTitle').textContent=chT(past);if((chartTab=='rt'||chartTab=='pc')&&cur==TODAY){rtLoad();rtStart()}
   document.querySelectorAll?document.querySelectorAll('#chTabs button').forEach(b=>b.classList.toggle('on',b.dataset.ct==chartTab)):0;navHl();return}
  const ps=e.target.closest('[data-pls]');if(ps&&lastPlan&&$('plSl')){if(ps.dataset.pls=='now'){plLive=true;plTick();plSync();return}plLive=false;plSync();plT=Math.max(0,Math.min(NS-1,plT+(+ps.dataset.pls)));$('plSl').value=plT;const g=plGridHtml(lastPlan.r,plT);$('plGrid').innerHTML=g.html;$('plGrid').classList.toggle('plfade',!!g.pred);$('plInfo').innerHTML=g.info;return}
