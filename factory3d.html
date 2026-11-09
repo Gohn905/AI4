@@ -26,17 +26,71 @@ label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--mut)}
 .embed h1,.embed p.t,.embed .simctl{display:none}.embed main{padding:0}body.embed{background:transparent}.embed canvas{height:calc(100vh - 215px);min-height:260px}
 .cvwrap{position:relative}.zoom{position:absolute;left:10px;bottom:10px;display:flex;gap:6px}.zoom button{width:34px;height:34px;padding:0;font-size:20px;line-height:1;font-weight:700;border-radius:8px}
 .mini{overflow:hidden}.mini main{padding:0;max-width:none}.mini main>*:not(.cvwrap){display:none!important}.mini .zoom{display:none}.mini canvas{display:block;width:100%;height:100vh!important;min-height:0!important}
+
+/* ===== Sci-Fi HUD callout ===== */
+body:not(.mini) .cvwrap{background:radial-gradient(ellipse at 50% 45%,#0d2233 0%,#07121d 60%,#040b13 100%);border-radius:10px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,255,200,.22),inset 0 0 60px rgba(0,180,255,.08)}
+body:not(.mini) .cvwrap::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(rgba(0,255,220,.045) 1px,transparent 1px) 0 0/44px 44px,linear-gradient(90deg,rgba(0,255,220,.045) 1px,transparent 1px) 0 0/44px 44px;z-index:1}
+body:not(.mini) .cvwrap canvas{border:0;position:relative;z-index:2;background:transparent}
+body:not(.mini) .cvwrap .zoom{z-index:6}
+.cvwrap .zoom button{background:rgba(4,16,28,.85);color:#8ff3ff;border-color:rgba(0,255,220,.4)}
+.cvwrap{--n:#00ffa3}
+.hudsvg,.hud{display:none}
+.hudlive .hudsvg{display:block}.hudlive .hud{display:block}
+.hudsvg{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:4;overflow:visible;filter:drop-shadow(0 0 3px var(--n)) drop-shadow(0 0 9px var(--n))}
+.hudsvg path{fill:none;stroke-linejoin:miter;stroke-linecap:square}
+.hudsvg .hu{stroke:#020a12;stroke-width:5;opacity:.7}
+.hudsvg .hg{stroke:var(--n);stroke-width:3;opacity:.35}
+.hudsvg .hl{stroke:var(--n);stroke-width:1.6}
+.hudsvg .hp{stroke:#fff;stroke-width:1.6;stroke-dasharray:3 11;opacity:0}
+.hudlive .hu,.hudlive .hg,.hudlive .hl{stroke-dasharray:1;animation:hdraw .55s cubic-bezier(.3,.7,.2,1) both}
+.hudlive .hp{animation:hflow .9s linear infinite,hin .3s .55s both}
+.hudsvg .hdot{fill:var(--n)}.hudsvg .hcore{fill:#fff}
+.hudsvg .hring{fill:none;stroke:var(--n);stroke-width:1.2;stroke-dasharray:5 4;transform-box:fill-box;transform-origin:center;animation:hspin 6s linear infinite}
+.hudsvg .hping{fill:none;stroke:var(--n);stroke-width:1.4;transform-box:fill-box;transform-origin:center;animation:hping 1.6s ease-out infinite}
+.hudsvg .htick{stroke:var(--n);stroke-width:1.4}
+.hudsvg .hmark{fill:var(--n);stroke:none}
+.hud{position:absolute;left:0;top:0;z-index:5;will-change:transform;font-family:ui-monospace,"SF Mono",Consolas,"Liberation Mono",monospace}
+.hudlive .hud{animation:hboot .5s .35s both;filter:drop-shadow(0 0 10px color-mix(in srgb,var(--n) 55%,transparent))}
+.hudf{padding:1px;background:linear-gradient(135deg,var(--n),color-mix(in srgb,var(--n) 25%,transparent) 55%,var(--n));clip-path:polygon(0 0,calc(100% - 15px) 0,100% 15px,100% 100%,15px 100%,0 calc(100% - 15px))}
+.hudin{position:relative;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--n) transparent;padding:9px 13px 11px;color:#d8f6ff;font-size:12px;line-height:1.4;background:linear-gradient(160deg,rgba(6,26,40,.93),rgba(3,12,22,.95));clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
+.hudin::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px)}
+.hudin::after{content:"";position:absolute;left:0;top:0;width:46%;height:2px;background:var(--n);box-shadow:0 0 8px var(--n)}
+.hudin .ok{--c:#00ffa3}.hudin .warn{--c:#ffb800}.hudin .bad{--c:#ff3d5a}.hudin .off{--c:#6fa8c7}
+.hcap{display:flex;justify-content:space-between;align-items:center;font-size:9.5px;letter-spacing:.18em;color:color-mix(in srgb,var(--n) 80%,#fff);opacity:.9;margin-bottom:4px}
+.hlive{display:inline-flex;align-items:center;gap:5px}.hlive i{width:6px;height:6px;border-radius:50%;background:var(--n);box-shadow:0 0 6px var(--n);animation:hblink 1.2s steps(2,jump-none) infinite}
+.hh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:2px 0 7px}
+.hh b{font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:#fff;text-shadow:0 0 8px var(--n)}
+.hudin .badge{background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c);border:1px solid var(--c);border-radius:2px;padding:1px 7px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;box-shadow:0 0 8px color-mix(in srgb,var(--c) 45%,transparent) inset}
+.hudin table{width:100%;border-collapse:collapse}
+.hudin td{padding:3px 0;border-top:1px dashed rgba(120,230,255,.2);vertical-align:top}
+.hudin td:first-child{color:#78b9cf;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding-right:10px;width:46%}
+.hudin td:last-child{text-align:right;color:#eaffff;font-variant-numeric:tabular-nums;text-shadow:0 0 6px rgba(120,255,255,.35)}
+.hudin .bar{height:5px;border-radius:0;background:rgba(255,255,255,.12);margin-top:4px}
+.hudin .bar i{background:var(--c);box-shadow:0 0 8px var(--c)}
+.hudin svg{color:#78b9cf}
+.hnote{margin-top:7px;padding-top:6px;border-top:1px solid rgba(120,230,255,.25);font:10.5px/1.45 system-ui,sans-serif;color:#8fb3c2}
+.hid{margin-top:6px;display:flex;justify-content:space-between;font-size:9px;letter-spacing:.16em;color:#4f7f93}
+.compact .hnote{display:none}
+@keyframes hdraw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes hflow{to{stroke-dashoffset:-28}}
+@keyframes hin{from{opacity:0}to{opacity:.9}}
+@keyframes hspin{to{transform:rotate(360deg)}}
+@keyframes hping{from{transform:scale(.5);opacity:1}to{transform:scale(2.2);opacity:0}}
+@keyframes hblink{50%{opacity:.25}}
+@keyframes hboot{0%{opacity:0;transform:var(--hx) scaleY(.2)}20%{opacity:1}30%{opacity:.3}45%{opacity:1}60%{opacity:.6}100%{opacity:1;transform:var(--hx) scaleY(1)}}
+@media (prefers-reduced-motion:reduce){.hudlive .hu,.hudlive .hg,.hudlive .hl,.hudlive .hp,.hudlive .hud,.hudsvg .hring,.hudsvg .hping,.hlive i{animation:none!important}.hudsvg .hp{opacity:0}}
+.mini .hudsvg,.mini .hud{display:none!important}
 </style></head><body><main>
 <h1>Sun Shine demo factory</h1>
 <p class="t">Click a part in the model, or pick one below, to see its status. Drag to rotate, scroll or pinch to zoom. The conveyor is a placeholder block at the assumed size, and the EV station stands separately on the right. Opened on its own it runs a simulator, and Connect ESP32 (USB) shows your real prototype in Chrome or Edge. Inside the lab page it shows the lab model.</p>
-<div class="cvwrap"><canvas id="cv"></canvas><div class="zoom"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">&minus;</button></div></div>
+<div class="cvwrap"><canvas id="cv"></canvas><svg class="hudsvg" aria-hidden="true"><path id="hudUnder" class="hu" pathLength="1"/><path id="hudGlow" class="hg" pathLength="1"/><path id="hudLine" class="hl" pathLength="1"/><path id="hudPulse" class="hp"/><rect id="hudEnd" class="hmark" x="-1.5" y="-7" width="3" height="14"/><circle id="hudElb" class="hmark" r="2.6"/><g id="hudDot"><circle class="hping" r="9"/><circle class="hring" r="10"/><line class="htick" x1="-17" y1="0" x2="-13" y2="0"/><line class="htick" x1="13" y1="0" x2="17" y2="0"/><line class="htick" x1="0" y1="-17" x2="0" y2="-13"/><line class="htick" x1="0" y1="13" x2="0" y2="17"/><circle class="hdot" r="3.6"/><circle class="hcore" r="1.3"/></g></svg><div class="hud" id="hud"><div class="hudf"><div class="hudin" id="hudin"></div></div></div><div class="zoom"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">&minus;</button></div></div>
 <div class="r" id="chips"></div>
 <div class="card" id="card"></div>
 <div class="r" id="ctl"></div>
 <div class="note" id="sst" style="margin-top:8px"></div>
 <details id="logbox" style="margin-top:8px" hidden><summary>Serial log (for troubleshooting)</summary><pre id="log" style="max-height:170px;overflow:auto;font-size:12px;background:var(--btn);border:1px solid var(--line);border-radius:8px;padding:8px;white-space:pre-wrap"></pre></details>
-<div class="note" style="margin-top:8px">Page version 2026-11-09-d</div>
-<div class="r"><span class="badge off" id="src">Simulated here</span><button id="conn">Connect ESP32 (USB)</button><button id="connb">Connect ESP32 (Bluetooth)</button><span class="simctl r" style="margin:0"><button data-cov="0">Cover panel 1</button><button data-cov="1">Cover panel 2</button><button data-cov="2">Cover panel 3</button><button id="unc">Uncover all</button></span></div>
+<div class="note" style="margin-top:8px">Page version 2026-11-09-e</div>
+<div class="r"><span class="badge off" id="src">Simulated here</span><button id="conn">Connect ESP32 (USB)</button><button id="connb">Connect ESP32 (Wireless)</button><span class="simctl r" style="margin:0"><button data-cov="0">Cover panel 1</button><button data-cov="1">Cover panel 2</button><button data-cov="2">Cover panel 3</button><button id="unc">Uncover all</button></span></div>
 <div class="r"><button id="v1">Iso</button><button id="v2">Top</button><button id="v3">Front</button><button id="v4">Back (door)</button><button id="v5">Left</button><button id="v6">Right</button>
 <label><input type="checkbox" id="troof" checked> Roof</label><label><input type="checkbox" id="tpan" checked> Office front panel</label></div>
 </main>
@@ -234,9 +288,70 @@ function renderUI(){
  else{const s=stat(sel),name=EL.find(a=>a[0]===sel)[1];
   card.innerHTML='<div class="h"><b>'+name+'</b><span class="badge '+s.k+'">'+s.t+'</span></div>'+(s.rows.length?'<table>'+s.rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join('')+'</table>':'')+(s.note?'<div class="note">'+s.note+'</div>':'');}
  const sb=$('src');let txt='Simulated here',k='warn';
- if(mode==='proto'){txt=pFresh()?'ESP32 over '+(btMode?'Bluetooth':'USB')+' (live)':'Connected, no data yet';k=pFresh()?'ok':'off';}else if(mode==='lab'){if(labMode==='none'){txt='Not connected';k='off';}else if(stale()){txt='No data';k='off';}else if(labMode==='serial'){txt='ESP32 over USB (live)';k='ok';}else{txt='Lab simulator';k='warn';}}
+ if(mode==='proto'){txt=pFresh()?'ESP32 '+(btMode?'wireless':'over USB')+' (live)':'Connected, no data yet';k=pFresh()?'ok':'off';}else if(mode==='lab'){if(labMode==='none'){txt='Not connected';k='off';}else if(stale()){txt='No data';k='off';}else if(labMode==='serial'){txt='ESP32 over USB (live)';k='ok';}else{txt='Lab simulator';k='warn';}}
  sb.textContent=txt;sb.className='badge '+k;
  document.querySelectorAll('[data-cov]').forEach(b=>{b.textContent=(cov[+b.dataset.cov]?'Uncover':'Cover')+' panel '+(+b.dataset.cov+1);});
+hudRender();
+}
+
+/* ===== HUD callout: dot on the part -> angled line -> neon data box ===== */
+const cw=document.querySelector('.cvwrap'),hudBox=$('hud'),hudIn=$('hudin');
+const NEON={ok:'#00ffa3',warn:'#ffb800',bad:'#ff3d5a',off:'#6fa8c7'};
+const TAG={panel1:'PNL-01',panel2:'PNL-02',panel3:'PNL-03',battery:'BAT-01',line1:'CNV-01',ev:'EVC-01'};
+let hudAnchor=null,hudHtml='';
+function hudSetTarget(){
+ cw.classList.remove('hudlive');void cw.offsetWidth;hudHtml='';hudAnchor=null;
+ if(!sel||MINI)return;
+ const b=new THREE.Box3();M.filter(m=>m.userData.el===sel&&!m.userData.prod).forEach(m=>{m.updateMatrixWorld(true);b.expandByObject(m);});
+ if(!b.isEmpty())hudAnchor=b.getCenter(new THREE.Vector3());
+}
+function hudRender(){
+ const on=!!sel&&!MINI;$('card').hidden=on;
+ if(!on)return;
+ const s=stat(sel),nm=EL.find(a=>a[0]===sel)[1];
+ cw.style.setProperty('--n',NEON[s.k]||NEON.off);
+ const h='<div class="hcap"><span>// TARGET LOCK</span><span class="hlive"><i></i>LIVE</span></div>'
+  +'<div class="hh"><b>'+nm+'</b><span class="badge '+s.k+'">'+s.t+'</span></div>'
+  +(s.rows.length?'<table>'+s.rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join('')+'</table>':'')
+  +(s.note?'<div class="hnote">'+s.note+'</div>':'')
+  +'<div class="hid"><span>'+(TAG[sel]||'')+'</span><span>'+$('src').textContent.toUpperCase()+'</span></div>';
+ if(h!==hudHtml){hudHtml=h;hudIn.innerHTML=h;}
+}
+const hv=new THREE.Vector3(),hEl=id=>document.getElementById(id);
+const hP=[hEl('hudUnder'),hEl('hudGlow'),hEl('hudLine'),hEl('hudPulse')],hDot=hEl('hudDot'),hElb=hEl('hudElb'),hEnd=hEl('hudEnd');
+function hudPlace(){
+ const live=!!sel&&!MINI&&!!hudAnchor;
+ if(!live){cw.classList.remove('hudlive');return;}
+ const W=cw.clientWidth,H=cw.clientHeight;
+ hv.copy(hudAnchor).project(cam);
+ if(hv.z>1||W<80||H<80){cw.classList.remove('hudlive');return;}
+ cw.classList.add('hudlive');cw.classList.toggle('compact',H<420);
+ const ax=(hv.x+1)/2*W,ay=(1-hv.y)/2*H,narrow=W<520;
+ hudBox.style.width=(narrow?W-16:Math.min(280,Math.round(W*0.46)))+'px';
+ hudIn.style.maxHeight=Math.max(80,H-18)+'px';
+ const bw=hudBox.offsetWidth,bh=hudBox.offsetHeight;
+ let left,top,pts;
+ if(!narrow){
+  const sx=(W-ax)>ax?1:-1,sy=ay>H*0.5?-1:1;
+  top=clamp(ay+sy*70-18,8,Math.max(8,H-bh-8));
+  const cy=top+18,d=Math.abs(cy-ay);let ex=ax+sx*Math.max(d,16);
+  left=clamp(sx>0?ex+26:ex-26-bw,8,Math.max(8,W-bw-8));
+  const edge=sx>0?left:left+bw;
+  if((edge-ex)*sx<12)ex=edge-sx*12;
+  pts=[[ax,ay],[ex,cy],[edge,cy]];
+  hEnd.setAttribute('transform','translate('+edge.toFixed(1)+' '+cy.toFixed(1)+')');
+ }else{
+  const above=ay>H*0.5;left=8;top=above?8:Math.max(8,H-bh-8);
+  const edgeY=above?top+bh:top,px=clamp(ax,left+24,left+bw-24),ey=edgeY+(above?16:-16);
+  pts=[[ax,ay],[px,ey],[px,edgeY]];
+  hEnd.setAttribute('transform','translate('+px.toFixed(1)+' '+edgeY.toFixed(1)+') rotate(90)');
+ }
+ const dd='M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L');
+ hP.forEach(p=>p.setAttribute('d',dd));
+ hDot.setAttribute('transform','translate('+ax.toFixed(1)+' '+ay.toFixed(1)+')');
+ hElb.setAttribute('cx',pts[1][0].toFixed(1));hElb.setAttribute('cy',pts[1][1].toFixed(1));
+ hudBox.style.setProperty('--hx','translate('+left.toFixed(1)+'px,'+top.toFixed(1)+'px)');
+ hudBox.style.transform='translate('+left.toFixed(1)+'px,'+top.toFixed(1)+'px)';
 }
 function setHL(){
  if(hl){Sc.remove(hl);hl=null;}M.forEach(m=>{if(m.material.emissive)m.material.emissive.setHex(0);});
@@ -248,7 +363,7 @@ function setHL(){
   e.position.copy(m.position);e.quaternion.copy(m.quaternion);e.scale.copy(m.scale);hl.add(e);});
  Sc.add(hl);
 }
-function select(id){sel=sel===id?null:id;setHL();renderCtl();renderUI();}
+function select(id){sel=sel===id?null:id;setHL();hudSetTarget();renderCtl();renderUI();}
 function apply3D(dt,now){
  if(mode==='proto'){applyProto(dt,now);return;}
  const ok=S&&!stale()&&S.state!=='WAIT';
@@ -291,7 +406,7 @@ let last=performance.now(),acc=1;
 function frame(now){const dt=Math.min(0.1,(now-last)/1000);last=now;
  try{if(mode==='sim')simStep(dt);
  apply3D(dt,now);acc+=dt;if(acc>0.2){acc=0;renderUI();}
- if(MINI)th+=dt*0.3;upd();R.render(Sc,cam);}catch(e){console.error(e);if(!SER.ferr){SER.ferr=1;SER.err='Display error: '+e.message;}}
+ if(MINI)th+=dt*0.3;upd();R.render(Sc,cam);hudPlace();}catch(e){console.error(e);if(!SER.ferr){SER.ferr=1;SER.err='Display error: '+e.message;}}
  requestAnimationFrame(frame);}
 size();requestAnimationFrame(frame);
 /* Refresh the readout on a timer too, so it never depends on the animation loop (which browsers pause or throttle inside iframes). */
