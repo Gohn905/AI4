@@ -197,14 +197,14 @@ main[data-role=tech] .pagehead{display:none}
 .top .rs button.on,.top .rs button.on:hover{background:rgba(37,43,42,.16);box-shadow:inset 0 0 0 1.5px rgba(37,43,42,.55)}
 
 /* one vertical list: main tabs + chart tabs */
-main[data-role=tech]{display:grid;grid-template-columns:minmax(0,1fr) 190px;column-gap:16px;align-items:start}
-main[data-role=tech]>*{grid-column:1;min-width:0}
-main[data-role=tech]>#dtabs{grid-column:2;grid-row:1/span 40;position:sticky;top:8px;display:flex;flex-direction:column;flex-wrap:nowrap;gap:4px;margin:0!important;padding:0;overflow:visible;z-index:6}
+main[data-role=tech] .mainCol{display:grid;grid-template-columns:minmax(0,1fr) 190px;column-gap:16px;align-items:start}
+main[data-role=tech] .mainCol>*{grid-column:1;min-width:0}
+main[data-role=tech] .mainCol>#dtabs{grid-column:2;grid-row:1/span 40;position:sticky;top:8px;display:flex;flex-direction:column;flex-wrap:nowrap;gap:4px;margin:0!important;padding:0;overflow:visible;z-index:6}
 main[data-role=tech] #dtabs button{width:100%;text-align:left;margin:0;flex:none}
 main[data-role=tech] #dtabs button.sub{padding:7px 10px 7px 22px;font-weight:600;font-size:13px}
 #dtabs .dgrp{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);padding:8px 4px 0}
 main[data-role=tech] .chside{display:none}main[data-role=tech] .plangrid{grid-template-columns:minmax(0,1fr)}
-@media(max-width:760px){main[data-role=tech]{display:block}main[data-role=tech]>#dtabs{position:sticky;top:0;flex-direction:row;overflow-x:auto;padding:6px 0;background:var(--bg);margin:0 0 8px!important;gap:6px}main[data-role=tech] #dtabs button{width:auto;white-space:nowrap}main[data-role=tech] #dtabs button.sub{padding:9px 13px;font-size:inherit}#dtabs .dgrp{display:none}}
+@media(max-width:760px){main[data-role=tech] .mainCol{display:block}main[data-role=tech] .mainCol>#dtabs{position:sticky;top:0;flex-direction:row;overflow-x:auto;padding:6px 0;background:var(--bg);margin:0 0 8px!important;gap:6px}main[data-role=tech] #dtabs button{width:auto;white-space:nowrap}main[data-role=tech] #dtabs button.sub{padding:9px 13px;font-size:inherit}#dtabs .dgrp{display:none}}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><span class="sp"></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
