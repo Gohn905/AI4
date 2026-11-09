@@ -33,7 +33,7 @@ label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--mut)}
 <div class="r" id="ctl"></div>
 <div class="note" id="sst" style="margin-top:8px"></div>
 <details id="logbox" style="margin-top:8px" hidden><summary>Serial log (for troubleshooting)</summary><pre id="log" style="max-height:170px;overflow:auto;font-size:12px;background:var(--btn);border:1px solid var(--line);border-radius:8px;padding:8px;white-space:pre-wrap"></pre></details>
-<div class="note" style="margin-top:8px">Page version 2026-11-08-f</div>
+<div class="note" style="margin-top:8px">Page version 2026-11-09-a</div>
 <div class="r"><span class="badge off" id="src">Simulated here</span><button id="conn">Connect ESP32 (USB)</button><button id="connb">Connect ESP32 (Bluetooth)</button><span class="simctl r" style="margin:0"><button data-cov="0">Cover panel 1</button><button data-cov="1">Cover panel 2</button><button data-cov="2">Cover panel 3</button><button id="unc">Uncover all</button></span></div>
 <div class="r"><button id="v1">Iso</button><button id="v2">Top</button><button id="v3">Front</button><button id="v4">Back (door)</button><button id="v5">Left</button><button id="v6">Right</button>
 <label><input type="checkbox" id="troof" checked> Roof</label><label><input type="checkbox" id="tpan" checked> Office front panel</label></div>
@@ -108,6 +108,8 @@ function statLab(id){
 }
 
 /* ===== Prototype mode: reads your sketch's Serial text over Web Serial (Chrome or Edge, 115200 baud) ===== */
+const VER='2026-11-09-a';let CHG_POS=true;try{const q=localStorage.getItem('chgpos');if(q!==null)CHG_POS=q==='1';}catch(e){}
+function flipSign(){CHG_POS=!CHG_POS;try{localStorage.setItem('chgpos',CHG_POS?'1':'0');}catch(e){}renderUI();}
 const EV_MIN_V=1.8;/* what counts as high solar for the EV load */
 const P={panels:[{v:NaN,low:null},{v:NaN,low:null},{v:NaN,low:null}],relay:{on:null,auto:null},conv:{run:null,auto:null,pct:null},led:null,ledc:null,ledo:{g:null,r:null},ina:{st:'unknown',bus:NaN,shunt:NaN,load:NaN,ma:NaN,mw:NaN},at:0};
 const pFresh=()=>P.at>0&&performance.now()-P.at<4000;
@@ -146,9 +148,9 @@ function statP(id){
  if(id==='battery'){const a=P.ina;
   if(a.st==='none')return{t:'No sensor',k:'bad',rows:[],note:'INA219 not detected. Check VCC, GND, SDA (GPIO18), SCL (GPIO19) and address 0x40.'};
   if(a.st!=='ok')return{t:'Waiting',k:'off',rows:[],note:'Waiting for the first INA219 reading.'};
-  const v=isFinite(a.load)?a.load:a.bus,pct=Math.round(clamp((v-3.3)/0.9*100,0,100)),m=a.ma;
-  const [t,k]=m<-20?['Charging','ok']:m>20?['Discharging','warn']:['Idle','off'];
-  return{t,k,rows:[['Voltage (VIN+)',v.toFixed(3)+' V'],['Current',(m<-20?'charging, '+Math.round(-m):m>20?'discharging, '+Math.round(m):'idle, '+Math.round(m))+' mA'],['Power',a.mw.toFixed(0)+' mW'],['Shunt voltage',a.shunt.toFixed(2)+' mV'],['Charger relay (GPIO 5)',(P.relay.on?'ON':'OFF')+' / '+(P.relay.auto?'automatic':'manual')],['Current, last ~90 s',spark(HIST.ma,150,28,'#d98a00',true)],['Charge (rough estimate)',pct+'%<div class="bar '+k+'"><i style="width:'+pct+'%"></i></div>']],note:'From the INA219. Negative current means charging. The percentage is only a rough estimate from voltage.'};}
+  const v=isFinite(a.load)?a.load:a.bus,pct=Math.round(clamp((v-3.3)/0.9*100,0,100)),m=CHG_POS?a.ma:-a.ma;
+  const [t,k]=m>20?['Charging','ok']:m<-20?['Discharging','warn']:['Idle','off'];
+  return{t,k,rows:[['Voltage (VIN+)',v.toFixed(3)+' V'],['Net current into battery',(m>20?'charging, '+Math.round(m):m<-20?'discharging, '+Math.round(-m):'idle, '+Math.round(Math.abs(m)))+' mA'],['Power',a.mw.toFixed(0)+' mW'],['Shunt voltage',a.shunt.toFixed(2)+' mV'],['Charger relay (GPIO 5)',(P.relay.on?'ON':'OFF')+' / '+(P.relay.auto?'automatic':'manual')],['Current, last ~90 s (up = charging)',spark(HIST.ma.map(x=>CHG_POS?x:-x),150,28,'#d98a00',true)],['Conveyor right now',P.conv.run?'Running':'Stopped'],['Current direction',CHG_POS?'positive = charging':'negative = charging'],['Charge (rough estimate)',pct+'%<div class="bar '+k+'"><i style="width:'+pct+'%"></i></div>']],note:'The INA219 measures the net current through its own shunt: anything else on that wire (such as the conveyor servo) is added in, so charging minus load can read as idle. If charging shows as discharging, press Flip current direction. The percentage is only a rough estimate from voltage.'};}
  if(id==='line1')return{t:P.conv.run?'Running':'Stopped',k:P.conv.run?'ok':'off',rows:[['Control',P.conv.auto?'Automatic (2 s run, 5 s stop)':'Manual'],['Speed',P.conv.pct!=null?P.conv.pct+'%':'unknown (upload the new sketch)']],note:'Use the buttons below to send Run, Stop or Auto to the ESP32.'};
  const best=Math.max(0,...P.panels.map(q=>isFinite(q.v)?q.v:0)),hi=best>=EV_MIN_V,gOn=P.ledo.g!==null?P.ledo.g:P.led==='GREEN',rOn=P.ledo.r!==null?P.ledo.r:P.led==='RED';
  return{t:hi?'Allowed to charge':'Paused (low solar)',k:hi?'ok':'warn',rows:[['Best panel voltage',best.toFixed(2)+' V'],['Needed to allow EV charging','at least '+EV_MIN_V.toFixed(1)+' V'],['LED control',P.ledc===null?'unknown (upload the new sketch)':P.ledc?'Automatic (follows solar)':'Manual'],['Green LED',gOn?'On':'Off'],['Red LED',rOn?'On':'Off']],note:'The sketch has no EV charger output yet, so this is the rule the page applies: the shiftable EV load may run only while a panel is high. The relay on GPIO 5 is shown under Battery as the charger switch.'};
@@ -162,7 +164,7 @@ function applyProto(dt,now){const ok=pFresh();
  PR1.forEach(m=>{if(ok&&P.conv.run)m.position.x+=70*dt;if(m.position.x>222)m.position.x-=196;});
 }
 let port=null,rd=null,wr=null,keep=false;
-const SER={bytes:0,lines:0,last:0,since:0,err:''},LOG=[];
+const SER={paints:0,bytes:0,lines:0,last:0,since:0,err:''},LOG=[];
 const dec=new TextDecoder(),enc=new TextEncoder();
 let btMode=false,bdev=null,brx=null,btx=null,bbuf='';
 const NUS='6e400001-b5a3-f393-e0a9-e50e24dcca9e',NRX='6e400002-b5a3-f393-e0a9-e50e24dcca9e',NTX='6e400003-b5a3-f393-e0a9-e50e24dcca9e',bdec=new TextDecoder();
@@ -180,9 +182,9 @@ async function connectBLE(){
  btMode=true;mode='proto';P.at=0;SER.bytes=0;SER.lines=0;SER.last=0;SER.since=performance.now();LOG.length=0;bbuf='';renderCtl();renderUI();
 }
 function renderCtl(){const c=$('ctl');c.innerHTML='';if(mode!=='proto'||!sel)return;
- const defs={line1:[['Run','CONVEYOR ON'],['Stop','CONVEYOR OFF'],['Auto','CONVEYOR AUTO']],ev:[['Green on','LED GREEN'],['Red on','LED RED'],['Both on','LED BOTH'],['LEDs off','LED OFF'],['Auto','LED AUTO']],battery:[['Charger on','RELAY ON'],['Charger off','RELAY OFF'],['Auto','RELAY AUTO']]}[sel];if(!defs)return;
+ const defs={line1:[['Run','CONVEYOR ON'],['Stop','CONVEYOR OFF'],['Auto','CONVEYOR AUTO']],ev:[['Green on','LED GREEN'],['Red on','LED RED'],['Both on','LED BOTH'],['LEDs off','LED OFF'],['Auto','LED AUTO']],battery:[['Flip current direction',':flip'],['Charger on','RELAY ON'],['Charger off','RELAY OFF'],['Auto','RELAY AUTO']]}[sel];if(!defs)return;
  const s=document.createElement('span');s.className='note';s.textContent='Send to ESP32:';c.appendChild(s);
- defs.forEach(d=>{const b=document.createElement('button');b.textContent=d[0];b.onclick=()=>cmd(d[1]);c.appendChild(b);});
+ defs.forEach(d=>{const b=document.createElement('button');b.textContent=d[0];b.onclick=()=>d[1]===':flip'?flipSign():cmd(d[1]);c.appendChild(b);});
  if(sel==='line1'){const w=document.createElement('label'),lab=document.createElement('span'),r=document.createElement('input'),val=document.createElement('span');lab.className='note';lab.textContent='Speed';r.type='range';r.min=0;r.max=100;r.step=5;r.value=P.conv.pct>0?P.conv.pct:25;val.textContent=r.value+'%';r.oninput=()=>{val.textContent=r.value+'%';};r.onchange=()=>cmd('CONVEYOR SPEED '+r.value);w.append(lab,r,val);c.appendChild(w);}}
 async function connect(auto){
  SER.err='';
@@ -208,7 +210,7 @@ function serStatus(){
  let h='Connected. '+SER.bytes+' bytes, '+SER.lines+' lines, last line '+age+'.';
  if(wait>3000&&SER.bytes===0)h+=' No bytes yet: check the USB cable carries data, press the ESP32 EN (reset) button, and make sure the Arduino Serial Monitor is closed.';
  else if(wait>5000&&!pFresh())h+=' Text is arriving but no "Panel 1 (GPIO32)" lines were recognised. Open the log below and compare with your sketch output.';
- s.textContent=h;$('log').textContent=LOG.join('\n');
+ h+=' [page '+VER+', screen refreshed '+(++SER.paints)+' times]';s.textContent=h;$('log').textContent=LOG.join('\n');
 }
 function renderUI(){
  const ch=$('chips');if(!ch.children.length)EL.forEach(a=>{const b=document.createElement('button');b.dataset.id=a[0];b.innerHTML='<span class="dot off"></span><span>'+a[1]+'</span>';b.onclick=()=>select(a[0]);ch.appendChild(b);});
