@@ -28,23 +28,23 @@ html.embed,body.embed{height:100%;overflow:hidden}
 body.embed main{height:100vh;display:flex;flex-direction:column;max-width:none}
 .embed .cvwrap{flex:1;min-height:0;margin-top:6px}.embed canvas{height:100%;min-height:0}
 .tb{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}.tb .r{margin:0}.tb .ttl{display:none;font-size:15px;font-weight:650;margin-right:6px;white-space:nowrap}
-.pq .tb .ttl{display:inline}.tb button{padding:4px 10px}.tb .badge{white-space:nowrap}
-.tb .simctl{margin:0}.tb .simctl[hidden]{display:none}
+.tb button{padding:4px 10px}.tb .badge{white-space:nowrap}
+.cnx{margin-top:6px}.cnx button{padding:4px 10px}.cnx .badge{white-space:nowrap}
 /* the status card and controls float over the canvas so the model gets the room */
-.dock{margin-top:10px}.embed .dock{position:absolute;left:10px;bottom:52px;z-index:8;width:min(330px,calc(100% - 20px));max-height:calc(100% - 70px);overflow-y:auto;scrollbar-width:none}
+.dock{margin-top:10px}.embed .dock{position:absolute;right:10px;bottom:58px;z-index:8;width:min(330px,calc(100% - 20px));max-height:calc(100% - 76px);overflow-y:auto;scrollbar-width:none}
 .embed .dock::-webkit-scrollbar{display:none}.embed .dock .card{margin-top:0;min-height:0;padding:9px 12px;background:color-mix(in srgb,var(--btn) 94%,transparent);backdrop-filter:blur(4px)}
 .embed .dock .r{margin-top:6px}.embed .dock .note{margin-top:4px}
 /* view cube (SolidWorks style): click a face to look from that side */
-.vc{position:absolute;right:14px;top:14px;z-index:8;width:92px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.vc{position:absolute;left:14px;bottom:14px;z-index:8;width:92px;display:flex;flex-direction:column;align-items:center}
 .vcs{width:60px;height:60px;perspective:380px;margin:12px 0 4px}
 .vcube{position:relative;width:60px;height:60px;transform-style:preserve-3d;transform:rotateX(-28deg) rotateY(-0.5rad)}
 .vcube div{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:650;color:var(--fg);background:color-mix(in srgb,var(--btn) 92%,transparent);border:1px solid var(--mut);cursor:pointer;user-select:none;backface-visibility:hidden}
 .vcube div:hover{background:#cfe9d9;color:#12301f}.vcube div.nb{cursor:default;background:color-mix(in srgb,var(--line) 70%,transparent)}.vcube div.nb:hover{background:color-mix(in srgb,var(--line) 70%,transparent)}
 .vcube .fF{transform:rotateY(180deg) translateZ(30px)}.vcube .fB{transform:translateZ(30px)}.vcube .fR{transform:rotateY(90deg) translateZ(30px)}.vcube .fL{transform:rotateY(-90deg) translateZ(30px)}.vcube .fT{transform:rotateX(90deg) translateZ(30px)}.vcube .fD{transform:rotateX(-90deg) translateZ(30px)}
-.vc .zoom{position:static;display:flex;gap:6px}.vc .zoom button{width:30px;height:30px;font-size:18px}.vc .vh{padding:2px 10px;font-size:12px}
+.cvwrap>.zoom{position:absolute;right:14px;bottom:14px;z-index:8;align-items:center}.zoom button{width:34px;height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;gap:0;line-height:0}.zoom button svg{display:block}.zoom button.vh{width:auto;padding:0 12px;font-size:13px;font-weight:650;line-height:1}
 .embed .vtog{display:none}.vtog{margin-top:8px}
 .embed .verbox{display:none}
-.cvwrap{position:relative}.zoom{display:flex;gap:6px}.zoom button{width:34px;height:34px;padding:0;font-size:20px;line-height:1;font-weight:700;border-radius:8px}
+.cvwrap{position:relative}.zoom{display:flex;gap:6px}.zoom button{border-radius:8px}
 .mini{overflow:hidden}.mini main{padding:0;max-width:none}.mini main>*:not(.cvwrap){display:none!important}.mini .zoom,.mini .vc{display:none}.mini canvas{display:block;width:100%;height:100vh!important;min-height:0!important}
 
 /* ===== Status labels: plain text in two side columns, thin leader lines ===== */
@@ -72,12 +72,13 @@ body.embed main{height:100vh;display:flex;flex-direction:column;max-width:none}
 </style></head><body><main>
 <h1>Sun Shine demo factory</h1>
 <p class="t">Click a part in the model, or pick one below, to see its status. Drag to rotate, scroll or pinch to zoom. The conveyor is a placeholder block at the assumed size, and the EV station stands separately on the right. Opened on its own it runs a simulator, and Connect ESP32 (USB) shows your real prototype in Chrome or Edge. Inside the lab page it shows the lab model.</p>
-<div class="tb" id="tb"><span class="ttl" id="ttl" title="Reads the ESP32 over USB or Bluetooth and lets you control the relay, conveyor speed and LEDs. Press Connect ESP32, then click a part. Needs Chrome or Edge. Close the Arduino Serial Monitor first. One connection at a time.">Live prototype: the small factory, in real time</span><div class="r" id="chips"></div><span class="badge off" id="src">Simulated here</span><button id="conn">Connect ESP32 (USB)</button><button id="connb">Connect ESP32 (Wireless)</button><span class="simctl r"><button data-cov="0">Cover panel 1</button><button data-cov="1">Cover panel 2</button><button data-cov="2">Cover panel 3</button><button id="unc">Uncover all</button></span></div>
+<div class="tb" id="tb"><div class="r" id="chips"></div></div>
 <div class="cvwrap"><canvas id="cv"></canvas><svg class="hudsvg" id="hsvg" aria-hidden="true"></svg><div class="ovl" id="ovl"></div><div class="ovbar" id="ovsum"></div>
-<div class="vc" id="vc"><div class="vcs"><div class="vcube" id="vcube"><div class="fF" data-v="3" title="Front view">Front</div><div class="fB" data-v="4" title="Back view (door)">Back</div><div class="fR" data-v="6" title="Right view">Right</div><div class="fL" data-v="5" title="Left view">Left</div><div class="fT" data-v="2" title="Top view">Top</div><div class="fD nb"></div></div></div>
-<button class="vh" id="v1" title="Isometric view">Iso</button><div class="zoom"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">&minus;</button></div></div>
+<div class="vc" id="vc"><div class="vcs"><div class="vcube" id="vcube"><div class="fF" data-v="3" title="Front view">Front</div><div class="fB" data-v="4" title="Back view (door)">Back</div><div class="fR" data-v="6" title="Right view">Right</div><div class="fL" data-v="5" title="Left view">Left</div><div class="fT" data-v="2" title="Top view">Top</div><div class="fD nb"></div></div></div></div>
+<div class="zoom" id="zoomb"><button id="zin" title="Zoom in" aria-label="Zoom in"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button><button class="vh" id="v1" title="Isometric view">Iso</button><button id="zout" title="Zoom out" aria-label="Zoom out"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button></div>
 <div class="dock"><div class="card" id="card"></div><div class="r" id="ctl"></div><div class="note" id="sst"></div>
 <details id="logbox" hidden><summary>Serial log (for troubleshooting)</summary><pre id="log" style="max-height:170px;overflow:auto;font-size:12px;background:var(--btn);border:1px solid var(--line);border-radius:8px;padding:8px;white-space:pre-wrap"></pre></details></div></div>
+<div class="r cnx" id="cnx"><span class="badge off" id="src">Simulated here</span><button id="conn">Connect ESP32 (USB)</button><button id="connb">Connect ESP32 (Wireless)</button></div>
 <div class="r vtog"><label><input type="checkbox" id="troof" checked> Roof</label><label><input type="checkbox" id="tpan" checked> Office front panel</label></div>
 <div class="note verbox">Page version 2026-11-09-g</div>
 </main>
@@ -268,7 +269,7 @@ function serStatus(){
 function renderUI(){
  const ch=$('chips');if(!ch.children.length)EL.forEach(a=>{const b=document.createElement('button');b.dataset.id=a[0];b.innerHTML='<span class="dot off"></span><span>'+a[1]+'</span>';b.onclick=()=>select(a[0]);ch.appendChild(b);});
  [...ch.children].forEach(b=>{const s=stat(b.dataset.id);b.querySelector('.dot').className='dot '+s.k;b.classList.toggle('on',b.dataset.id===sel);});
- const card=$('card');document.querySelector('.simctl').hidden=mode!=='sim';serStatus();$('conn').hidden=EMB&&!PQ;$('connb').hidden=(EMB&&!PQ)||mode==='proto';$('conn').textContent=mode==='proto'?'Disconnect':'Connect ESP32 (USB)';
+ const card=$('card');serStatus();$('conn').hidden=EMB&&!PQ;$('connb').hidden=(EMB&&!PQ)||mode==='proto';$('conn').textContent=mode==='proto'?'Disconnect':'Connect ESP32 (USB)';
  if(mode==='proto'&&!sel){card.innerHTML=protoSummary();}
  else if(!sel){const ok=S&&!stale()&&S.state!=='WAIT';
   card.innerHTML='<b>'+(ok?'Power source: '+S.power:'Pick a part')+'</b><div class="note">'+(ok?S.act+' Click a part to see its status.':(mode==='lab'&&labMode==='none'?'Connect the ESP32 or press Use simulator on the lab page.':'Click a part in the model or one of the buttons above to see its status.'))+'</div>';}
@@ -277,7 +278,6 @@ function renderUI(){
  const sb=$('src');let txt='Simulated here',k='warn';
  if(mode==='proto'){txt=pFresh()?'ESP32 '+(btMode?'wireless':'over USB')+' (live)':'Connected, no data yet';k=pFresh()?'ok':'off';}else if(mode==='lab'){if(labMode==='none'){txt='Not connected';k='off';}else if(stale()){txt='No data';k='off';}else if(labMode==='serial'){txt='ESP32 over USB (live)';k='ok';}else{txt='Lab simulator';k='warn';}}
  sb.textContent=txt;sb.className='badge '+k;
- document.querySelectorAll('[data-cov]').forEach(b=>{b.textContent=(cov[+b.dataset.cov]?'Uncover':'Cover')+' panel '+(+b.dataset.cov+1);});
 hudRender();
 }
 
@@ -356,7 +356,7 @@ function apply3D(dt,now){
  const mv=(P,on)=>{if(on)P.forEach(m=>{m.position.x+=70*dt;});placePR(P);};
  mv(PR1,ok&&S.s1);
 }
-const DEF=new THREE.Vector3(150,40,-100),tgt=DEF.clone();let th=Math.PI-0.6,ph=0.5,dist=MINI?700:720,anim=null,prevView=null;
+const DEF=new THREE.Vector3(150,40,-100),tgt=DEF.clone();let th=Math.PI-0.6,ph=0.5,dist=MINI?700:Math.round(720*0.85*0.85*0.85),anim=null,prevView=null;
 /* Close-up camera for each part when it is selected: target point (x,y,z), horizontal angle th, elevation ph, distance d.
    th: 0 = from the +z side, PI = from the -z side, PI/2 = from the +x side (EV), -PI/2 = from the -x side (battery). */
 const VIEW={
@@ -390,12 +390,11 @@ cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
 /* Inside the app (embed) the mouse wheel scrolls the page; use the + and - buttons to zoom. Opened on its own, the wheel still zooms. */
 if(!EMB)cv.addEventListener('wheel',e=>{e.preventDefault();anim=null;dist=clamp(dist*(1+e.deltaY*0.001),120,1000);},{passive:false});
 $('zin').onclick=()=>{anim=null;dist=clamp(dist*0.85,120,1000);};$('zout').onclick=()=>{anim=null;dist=clamp(dist/0.85,120,1000);};
-const V=(a,b,c)=>()=>{flyTo({th:a,ph:b,d:c,x:DEF.x,y:DEF.y,z:DEF.z});};
+const ZK=MINI?1:0.85*0.85*0.85;
+const V=(a,b,c)=>()=>{flyTo({th:a,ph:b,d:Math.max(120,c*ZK),x:DEF.x,y:DEF.y,z:DEF.z});};
 const VW={1:V(Math.PI-0.6,0.5,720),2:V(Math.PI,1.52,640),3:V(Math.PI,0.12,580),4:V(0,0.12,580),5:V(-Math.PI/2,0.12,580),6:V(Math.PI/2,0.12,580)};
 $('v1').onclick=VW[1];document.querySelectorAll('#vcube [data-v]').forEach(f=>f.onclick=VW[f.dataset.v]);
 $('troof').onchange=e=>O.roof.forEach(m=>m.visible=e.target.checked);$('tpan').onchange=e=>O.panel.forEach(m=>m.visible=e.target.checked);
-document.querySelectorAll('[data-cov]').forEach(b=>b.onclick=()=>{cov[+b.dataset.cov]=!cov[+b.dataset.cov];});
-$('unc').onclick=()=>{cov[0]=cov[1]=cov[2]=false;};
 window.SunShine={updateLab(l){labMode=l&&l.mode||'none';labAt=performance.now();S=fromLab(l);}};
 window.addEventListener('message',e=>{if(mode!=='lab'||e.source!==window.parent)return;const d=e.data;if(d&&d.type==='sunshine-lab')window.SunShine.updateLab(d.lab);});
 let last=performance.now(),acc=1;
