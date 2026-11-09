@@ -58,7 +58,7 @@ label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--mut)}
 <div class="r" id="ctl"></div>
 <div class="note" id="sst" style="margin-top:8px"></div>
 <details id="logbox" style="margin-top:8px" hidden><summary>Serial log (for troubleshooting)</summary><pre id="log" style="max-height:170px;overflow:auto;font-size:12px;background:var(--btn);border:1px solid var(--line);border-radius:8px;padding:8px;white-space:pre-wrap"></pre></details>
-<div class="note" style="margin-top:8px">Page version 2026-11-09-f</div>
+<div class="note" style="margin-top:8px">Page version 2026-11-09-g</div>
 <div class="r"><span class="badge off" id="src">Simulated here</span><button id="conn">Connect ESP32 (USB)</button><button id="connb">Connect ESP32 (Wireless)</button><span class="simctl r" style="margin:0"><button data-cov="0">Cover panel 1</button><button data-cov="1">Cover panel 2</button><button data-cov="2">Cover panel 3</button><button id="unc">Uncover all</button></span></div>
 <div class="r"><button id="v1">Iso</button><button id="v2">Top</button><button id="v3">Front</button><button id="v4">Back (door)</button><button id="v5">Left</button><button id="v6">Right</button>
 <label><input type="checkbox" id="troof" checked> Roof</label><label><input type="checkbox" id="tpan" checked> Office front panel</label></div>
@@ -288,20 +288,20 @@ function hudRender(){
   if(t.b.className!==cls)t.b.className=cls;t.k=s.k;
   if(h!==t.html){t.html=h;t.b.innerHTML=h;t.h=0;t.w=0;dirty=true;}});
  $('ovsum').textContent=Object.keys(cnt).length===1&&cnt.Good?'Everything looks good':Object.keys(cnt).map(k=>cnt[k]+' '+k.toLowerCase()).join(' · ');
- $('card').hidden=!!sel&&!MINI&&cw.clientWidth>=560;
+ $('card').hidden=!(sel&&cw.clientWidth<560);
 }
 function place(){
  if(MINI)return;
- const W=cw.clientWidth,H=cw.clientHeight,wide=W>=560,key=[th.toFixed(3),ph.toFixed(3),dist.toFixed(1),W,H,sel].join();
+ const W=cw.clientWidth,H=cw.clientHeight,wide=W>=560,key=[th.toFixed(3),ph.toFixed(3),dist.toFixed(1),W,H,sel,tgt.x.toFixed(1),tgt.y.toFixed(1),tgt.z.toFixed(1)].join();
  if(key===lastKey&&!dirty)return;lastKey=key;dirty=false;
  cw.classList.toggle('nolab',!wide);if(!wide)return;
  const colW=Math.round(clamp(W*0.21,140,200));
  if(colW!==lastW){lastW=colW;EL.forEach(a=>{const t=TG[a[0]];t.b.style.maxWidth=colW+'px';t.h=0;t.w=0;});}
  const A=anchors(),L=[];
- EL.forEach(a=>{const id=a[0],t=TG[id];hv.copy(A[id]).project(cam);const vis=hv.z<=1;t.b.style.display=vis?'':'none';t.g.style.display=vis?'':'none';
+ EL.forEach(a=>{const id=a[0],t=TG[id];hv.copy(A[id]).project(cam);const vis=hv.z<=1&&(!sel||id===sel);t.b.style.display=vis?'':'none';t.g.style.display=vis?'':'none';
   if(vis){if(!t.h){t.h=t.b.offsetHeight||40;t.w=t.b.offsetWidth||colW;}L.push({id,t,x:(hv.x+1)/2*W,y:(1-hv.y)/2*H});}});
  L.sort((a,b)=>a.x-b.x);const half=Math.ceil(L.length/2);
- [L.slice(0,half),L.slice(half)].forEach((col,ci)=>{
+ (L.length===1?(L[0].x<W/2?[[],L]:[L,[]]):[L.slice(0,half),L.slice(half)]).forEach((col,ci)=>{
   const right=ci===1,top0=34,gap=12;col.sort((a,b)=>a.y-b.y);
   col.forEach(o=>{o.ty=clamp(o.y-10,top0,Math.max(top0,H-o.t.h-8));});
   for(let i=1;i<col.length;i++){const m=col[i-1].ty+col[i-1].t.h+gap;if(col[i].ty<m)col[i].ty=m;}
@@ -326,7 +326,8 @@ function setHL(){
   e.position.copy(m.position);e.quaternion.copy(m.quaternion);e.scale.copy(m.scale);hl.add(e);});
  Sc.add(hl);
 }
-function select(id){sel=sel===id?null:id;setHL();hudSetTarget();renderCtl();renderUI();}
+function select(id){const was=sel;sel=sel===id?null:id;setHL();hudSetTarget();
+ if(!MINI){if(sel){if(!was)prevView={th,ph,d:dist,x:tgt.x,y:tgt.y,z:tgt.z};flyTo(VIEW[sel]);}else if(prevView){flyTo(prevView);prevView=null;}}renderCtl();renderUI();}
 function apply3D(dt,now){
  if(mode==='proto'){applyProto(dt,now);return;}
  const ok=S&&!stale()&&S.state!=='WAIT';
@@ -337,15 +338,28 @@ function apply3D(dt,now){
  const mv=(P,on)=>{if(on)P.forEach(m=>{m.position.x+=70*dt;});placePR(P);};
  mv(PR1,ok&&S.s1);
 }
-const tgt=new THREE.Vector3(150,40,-100);let th=Math.PI-0.6,ph=0.5,dist=MINI?700:720;
-function upd(){cam.position.set(tgt.x+dist*Math.cos(ph)*Math.sin(th),tgt.y+dist*Math.sin(ph),tgt.z+dist*Math.cos(ph)*Math.cos(th));cam.lookAt(tgt);}
+const DEF=new THREE.Vector3(150,40,-100),tgt=DEF.clone();let th=Math.PI-0.6,ph=0.5,dist=MINI?700:720,anim=null,prevView=null;
+/* Close-up camera for each part when it is selected: target point (x,y,z), horizontal angle th, elevation ph, distance d.
+   th: 0 = from the +z side, PI = from the -z side, PI/2 = from the +x side (EV), -PI/2 = from the -x side (battery). */
+const VIEW={
+ panel1:{x:47,y:99,z:-36,th:Math.PI-0.3,ph:0.8,d:250},
+ panel2:{x:120,y:99,z:-36,th:Math.PI-0.3,ph:0.8,d:250},
+ panel3:{x:193,y:99,z:-36,th:Math.PI-0.3,ph:0.8,d:250},
+ battery:{x:-4,y:62,z:-100,th:-1.1,ph:0.25,d:200},
+ line1:{x:122,y:35,z:-98,th:Math.PI-0.5,ph:1.0,d:360},
+ ev:{x:278,y:32,z:-90,th:Math.PI/2-0.5,ph:0.35,d:240}};
+function flyTo(v){anim={t0:performance.now(),dur:700,f:{th,ph,d:dist,x:tgt.x,y:tgt.y,z:tgt.z},to:v};}
+function stepAnim(now){if(!anim)return;const k=Math.min(1,(now-anim.t0)/anim.dur),e=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2,f=anim.f,t=anim.to;
+ const d=((t.th-f.th+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
+ th=f.th+d*e;ph=f.ph+(t.ph-f.ph)*e;dist=f.d+(t.d-f.d)*e;tgt.set(f.x+(t.x-f.x)*e,f.y+(t.y-f.y)*e,f.z+(t.z-f.z)*e);if(k>=1)anim=null;}
+function upd(){stepAnim(performance.now());cam.position.set(tgt.x+dist*Math.cos(ph)*Math.sin(th),tgt.y+dist*Math.sin(ph),tgt.z+dist*Math.cos(ph)*Math.cos(th));cam.lookAt(tgt);}
 function size(){const w=cv.clientWidth||800,h=cv.clientHeight||450;R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
 new ResizeObserver(size).observe(cv);
 const rc=new THREE.Raycaster(),pt=new THREE.Vector2();
 function pick(e){const r=cv.getBoundingClientRect();pt.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);rc.setFromCamera(pt,cam);
  const h=rc.intersectObjects(M.filter(m=>m.visible),false)[0];return h?h.object.userData.el:null;}
 const ps=new Map();let moved=0;
-cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ps.set(e.pointerId,[e.clientX,e.clientY]);if(ps.size===1)moved=0;cv.style.cursor='grabbing';});
+cv.addEventListener('pointerdown',e=>{anim=null;cv.setPointerCapture(e.pointerId);ps.set(e.pointerId,[e.clientX,e.clientY]);if(ps.size===1)moved=0;cv.style.cursor='grabbing';});
 cv.addEventListener('pointermove',e=>{
  if(!ps.has(e.pointerId)){cv.style.cursor=pick(e)?'pointer':'grab';return;}
  const p=ps.get(e.pointerId);moved+=Math.abs(e.clientX-p[0])+Math.abs(e.clientY-p[1]);
@@ -355,9 +369,9 @@ cv.addEventListener('pointermove',e=>{
 const up=e=>{const wasOne=ps.size===1;ps.delete(e.pointerId);cv.style.cursor='grab';if(e.type==='pointerup'&&wasOne&&moved<6){const id=pick(e);if(id)select(id);else if(sel)select(sel);}};
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
 /* Inside the app (embed) the mouse wheel scrolls the page; use the + and - buttons to zoom. Opened on its own, the wheel still zooms. */
-if(!EMB)cv.addEventListener('wheel',e=>{e.preventDefault();dist=clamp(dist*(1+e.deltaY*0.001),120,1000);},{passive:false});
-$('zin').onclick=()=>{dist=clamp(dist*0.85,120,1000);};$('zout').onclick=()=>{dist=clamp(dist/0.85,120,1000);};
-const V=(a,b,c)=>()=>{th=a;ph=b;dist=c;};
+if(!EMB)cv.addEventListener('wheel',e=>{e.preventDefault();anim=null;dist=clamp(dist*(1+e.deltaY*0.001),120,1000);},{passive:false});
+$('zin').onclick=()=>{anim=null;dist=clamp(dist*0.85,120,1000);};$('zout').onclick=()=>{anim=null;dist=clamp(dist/0.85,120,1000);};
+const V=(a,b,c)=>()=>{flyTo({th:a,ph:b,d:c,x:DEF.x,y:DEF.y,z:DEF.z});};
 $('v1').onclick=V(Math.PI-0.6,0.5,720);$('v2').onclick=V(Math.PI,1.52,640);$('v3').onclick=V(Math.PI,0.12,580);
 $('v4').onclick=V(0,0.12,580);$('v5').onclick=V(-Math.PI/2,0.12,580);$('v6').onclick=V(Math.PI/2,0.12,580);
 $('troof').onchange=e=>O.roof.forEach(m=>m.visible=e.target.checked);$('tpan').onchange=e=>O.panel.forEach(m=>m.visible=e.target.checked);
