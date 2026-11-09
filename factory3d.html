@@ -12,7 +12,7 @@ h1{font-size:18px;margin:4px 0}p{margin:0 0 8px;color:var(--mut)}
 canvas{width:100%;height:56vh;min-height:340px;display:block;touch-action:none;cursor:grab;border:1px solid var(--line);border-radius:10px}
 .r{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:10px;align-items:center}
 button{background:var(--btn);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
-button.on{border-color:#ffc400;box-shadow:0 0 0 1px #ffc400}
+button.on{border-color:#1e9e5a;box-shadow:0 0 0 2px #1e9e5a}
 label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--mut)}
 .ok{--c:#1e9e5a}.warn{--c:#d98a00}.bad{--c:#d64545}.off{--c:#7a828c}
 .dot{width:10px;height:10px;border-radius:50%;background:var(--c)}
@@ -60,7 +60,7 @@ D.forEach(g=>{const b=atob(g.d),u=new Uint8Array(b.length);for(let i=0;i<b.lengt
 const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(u.buffer),3));geo.computeVertexNormals();
 reg(g.t,new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:g.c,side:THREE.DoubleSide})),ELMAP[g.t]);});
 const PAN=[47,120,193].map((x,i)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(65,2,48),new THREE.MeshLambertMaterial({color:0x2f6fd6}));m.position.set(x,99,-36.5);return reg('p',m,'panel'+(i+1));});
-const BAT=reg('b',new THREE.Mesh(new THREE.CylinderGeometry(9,9,65,24),new THREE.MeshLambertMaterial({color:0x4a6fa5})),'battery');BAT.position.set(98,37.5,-54);
+const BAT=reg('b',new THREE.Mesh(new THREE.CylinderGeometry(9,9,65,24),new THREE.MeshLambertMaterial({color:0x4a6fa5})),'battery');BAT.position.set(258,32.5,-30);
 const LED=[39,31].map(z=>{const m=new THREE.Mesh(new THREE.SphereGeometry(1.8,12,10),new THREE.MeshBasicMaterial({color:0x888888}));m.position.set(289.5,z,-76);return reg('l',m,'ev');});
 const mkPR=(z,el)=>[0,1,2].map(i=>{const m=new THREE.Mesh(new THREE.BoxGeometry(20,15,20),new THREE.MeshLambertMaterial({color:0xf0a028}));m.position.set(40+i*70,63.5,z);m.userData.el=el;m.userData.prod=true;Sc.add(m);M.push(m);return m;});
 const PR1=mkPR(-98,'line1');
@@ -228,9 +228,13 @@ function renderUI(){
 }
 function setHL(){
  if(hl){Sc.remove(hl);hl=null;}M.forEach(m=>{if(m.material.emissive)m.material.emissive.setHex(0);});
- if(!sel)return;const b=new THREE.Box3();
- M.filter(m=>m.userData.el===sel&&!m.userData.prod).forEach(m=>{if(m.material.emissive)m.material.emissive.setHex(0x3a3410);b.expandByObject(m);});
- b.expandByScalar(2);hl=new THREE.Box3Helper(b,0xffc400);Sc.add(hl);
+ if(!sel)return;hl=new THREE.Group();
+ M.filter(m=>m.userData.el===sel&&!m.userData.prod).forEach(m=>{
+  if(m.material.emissive)m.material.emissive.setHex(0x0c6b34);
+  m.material.polygonOffset=true;m.material.polygonOffsetFactor=1;m.material.polygonOffsetUnits=1;
+  const e=new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry,20),new THREE.LineBasicMaterial({color:0x00e676}));
+  e.position.copy(m.position);e.quaternion.copy(m.quaternion);e.scale.copy(m.scale);hl.add(e);});
+ Sc.add(hl);
 }
 function select(id){sel=sel===id?null:id;setHL();renderCtl();renderUI();}
 function apply3D(dt,now){
