@@ -197,9 +197,9 @@ main[data-role=tech] .pagehead{display:none}
 .top .rs button.on,.top .rs button.on:hover{background:rgba(37,43,42,.16);box-shadow:inset 0 0 0 1.5px rgba(37,43,42,.55)}
 
 /* one vertical list: main tabs + chart tabs */
-main[data-role=tech]{display:grid;grid-template-columns:190px minmax(0,1fr);column-gap:16px;align-items:start}
-main[data-role=tech]>*{grid-column:2;min-width:0}
-main[data-role=tech]>#dtabs{grid-column:1;grid-row:1/span 40;position:sticky;top:8px;display:flex;flex-direction:column;flex-wrap:nowrap;gap:4px;margin:0!important;padding:0;overflow:visible;z-index:6}
+main[data-role=tech]{display:grid;grid-template-columns:minmax(0,1fr) 190px;column-gap:16px;align-items:start}
+main[data-role=tech]>*{grid-column:1;min-width:0}
+main[data-role=tech]>#dtabs{grid-column:2;grid-row:1/span 40;position:sticky;top:8px;display:flex;flex-direction:column;flex-wrap:nowrap;gap:4px;margin:0!important;padding:0;overflow:visible;z-index:6}
 main[data-role=tech] #dtabs button{width:100%;text-align:left;margin:0;flex:none}
 main[data-role=tech] #dtabs button.sub{padding:7px 10px 7px 22px;font-weight:600;font-size:13px}
 #dtabs .dgrp{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);padding:8px 4px 0}
