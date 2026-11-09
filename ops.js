@@ -478,6 +478,13 @@ function runStrategy(ctx, strat, mode) {
 /* ==========================================================================
    Bill and KPI calculations (all from the half-hourly series)
    ========================================================================== */
+/* TNB bills the highest 30-minute AVERAGE demand. With 15-minute data, average each clock-aligned pair of steps before taking the maximum. */
+function bp(g, o, s0, s1, kB) {
+  let v = 0, at = -1;
+  for (let s = s0; s < s1; s += kB) { let a = 0, n = 0; for (let j = 0; j < kB && s + j < s1; j++) { a += g[o + s + j]; n++; } a /= n || 1; if (a > v) { v = a; at = o + s; } }
+  return { v, i: at };
+}
+const blockOf = ctx => Math.max(1, Math.round(30 / (ctx.D.stepMin || 30)));
 function billFor(ctx, kwhPk, kwhOff, md) {
   const T = ctx.tariff;
   const energyRM = (kwhPk * (T.ep + T.afa) + kwhOff * (T.eo + T.afa)) / 100;
@@ -493,8 +500,9 @@ function periodKpi(ctx, R, d0, d1) {
     for (let s = 0; s < spd; s++) {
       const i = d * spd + s, g = R.grid[i];
       gridTot += g * dt; pv += D.pv[i] * dt; curt += R.curt[i] * dt; load += (D.load[i] + R.ev[i]) * dt;
-      if (wd && s >= ctx.w0 && s < ctx.w1) { kPk += g * dt; if (g > md) { md = g; mdAt = i; } } else kOff += g * dt;
+      if (wd && s >= ctx.w0 && s < ctx.w1) kPk += g * dt; else kOff += g * dt;
     }
+    if (wd) { const q = bp(R.grid, d * spd, ctx.w0, ctx.w1, blockOf(ctx)); if (q.v > md) { md = q.v; mdAt = q.i; } }
   }
   const b = billFor(ctx, kPk, kOff, md);
   return Object.assign({ d0, d1, kwhPeak: kPk, kwhOff: kOff, kwh: gridTot, md, mdAt, pvKwh: pv, curtKwh: curt, solarUsed: pv - curt, loadKwh: load, co2: gridTot * ctx.ef, days: d1 - d0 + 1 }, b);
@@ -509,7 +517,7 @@ function monthsOf(D) {
 }
 function dailyMd(ctx, R) {                                      // billed-window peak per day (kW), 0 on non-billing days
   const D = ctx.D, spd = ctx.spd, a = new Float32Array(D.nD);
-  for (let d = 0; d < D.nD; d++) if (isWeekday(D.days[d].dow)) { let m = 0; for (let s = ctx.w0; s < ctx.w1; s++) m = Math.max(m, R.grid[d * spd + s]); a[d] = m; }
+  for (let d = 0; d < D.nD; d++) if (isWeekday(D.days[d].dow)) a[d] = bp(R.grid, d * spd, ctx.w0, ctx.w1, blockOf(ctx)).v;
   return a;
 }
 function dayEnergyRM(ctx, R, d) {                              // energy charge for one day (RM), not including maximum demand
@@ -730,7 +738,7 @@ const ROLES = {
   auditor: { name: 'Auditor', can: ['export', 'verify', 'read'], blurb: 'Read-only. Checks the audit trail and exports it.' }
 };
 const ST = {
-  open: false, role: 'analyst', tab: 'live', status: 'idle', msg: '', raw: null, D: null, ctx: null, R: null, twinCache: {},
+  open: false, fac: 'leader', role: 'analyst', tab: 'live', status: 'idle', msg: '', raw: null, D: null, ctx: null, R: null, twinCache: {},
   cfg: Object.assign({ bat: Object.assign({}, DEFAULTS.bat), tariff: Object.assign({}, DEFAULTS.tariff), ef: DEFAULTS.ef, margin: 0.25, demandMode: 'auto' }, HAS_DOM ? LS.get('sunops_cfg', {}) : {}),
   sel: { day: 0, month: 0, strat: 'cost', mode: 'live', scView: 'day', vis: { base: true, self: false, tou: true, cost: true, bal: false, zero: false }, showF: false },
   live: null, props: [], propSeq: 0, audit: HAS_DOM ? LS.get('sunops_audit', []) : [], bills: HAS_DOM ? LS.get('sunops_bills', {}) : {}, upload: null
@@ -766,13 +774,19 @@ const demandModeNow = () => ST.cfg.demandMode === 'auto' ? (ST.raw && ST.raw.net
 
 /* ---- loading + computing ---- */
 function setStatus(status, msg) { ST.status = status; ST.msg = msg || ''; if (HAS_DOM) renderStatusOnly(); }
-async function loadPreset() {
-  setStatus('loading', 'Loading the Leader Energy site data...');
+const FACS = {
+  leader: { name: "Leader Energy manufacturing site (organisers' synthetic data, 2025)", short: 'Leader site', file: 'leader_site.csv', step: '30-min', has3d: false },
+  lab: { name: 'Lab factory: small 3D prototype site (simulated 15-minute data)', short: 'Lab factory', file: 'lab_site.csv', step: '15-min', has3d: true, bat: { kwh: 200, kw: 100 } }
+};
+async function loadPreset(key) {
+  if (key) ST.fac = key; const f = FACS[ST.fac];
+  if (f.bat) { if (!ST._bat0) ST._bat0 = ST.cfg.bat; ST.cfg.bat = Object.assign({}, ST._bat0, f.bat); } else if (ST._bat0) { ST.cfg.bat = ST._bat0; ST._bat0 = null; }
+  setStatus('loading', 'Loading ' + f.short + ' data...');
   try {
-    const r = await fetch('leader_site.csv', { cache: 'no-cache' });
-    if (!r.ok) throw new Error('leader_site.csv not found on the server (HTTP ' + r.status + '). Add it next to index.html.');
+    const r = await fetch(f.file, { cache: 'no-cache' });
+    if (!r.ok) throw new Error(f.file + ' not found on the server (HTTP ' + r.status + '). Add it next to index.html.');
     const rows = csvToRows(await r.text()), map = detectColumns(rows);
-    await adoptSeries(rowsToSeries(rows, map), { name: "Leader Energy manufacturing site (organisers' synthetic data, 2025)", source: 'preset' });
+    await adoptSeries(rowsToSeries(rows, map), { name: f.name, source: 'preset' });
   } catch (e) { setStatus('error', String(e.message || e)); }
 }
 async function adoptSeries(series, info) {
@@ -870,7 +884,7 @@ function liveStep() {
   if (L.idx >= spd) { L.done = true; stopLive(); if (!L.quiet) audit('replay_finished', ST.D.days[L.d].date + ' ' + strat.short + ': billed-window peak ' + fmt0(windowPeak(X.out.grid, X)) + ' kW vs baseline ' + fmt0(windowPeak(L.B.out.grid, L.B)) + ' kW'); }
   return true;
 }
-const windowPeak = (g, X) => { let m = 0; if (!X.wd) return 0; for (let s = X.ctx.w0; s < X.ctx.w1; s++) m = Math.max(m, g[s]); return m; };
+const windowPeak = (g, X) => X.wd ? bp(g, 0, X.ctx.w0, X.ctx.w1, blockOf(X.ctx)).v : 0;
 function analyse(s) {
   const L = ST.live, X = L.X, f0 = X.f0, ctx = ST.ctx, pad = tmS(s);
   const ep = (name, flag, start) => { const e = L.dev[name]; if (flag) { e.n++; e.ok = 0; if (!e.on && e.n >= 2) { e.on = true; start(); } } else { e.ok++; e.n = 0; if (e.on && e.ok >= 2) { e.on = false; addAlert('ok', 'Back within tolerance', name === 'load' ? 'Demand is tracking the forecast again.' : name === 'pv' ? 'Solar is tracking the forecast again.' : 'Grid import is tracking the twin again.', s); } } };
@@ -918,15 +932,16 @@ const dayLabel = d => DOWS[ST.D.days[d].dow] + ' ' + ST.D.days[d].date;
 const monthOpts = sel => monthsOf(ST.D).map((m, i) => `<option value="${i}" ${i === sel ? 'selected' : ''}>${MONTHS[m.month]} ${m.key.slice(0, 4)}</option>`).join('');
 const stratOpts = (sel, keys) => (keys || STRAT_ORDER).map(k => `<option value="${k}" ${k === sel ? 'selected' : ''}>${esc(STRATS[k].short)}</option>`).join('');
 const dis = ok => ok ? '' : 'disabled';
-const TABS = [['live', 'Live replay'], ['scen', 'Scenarios'], ['bill', 'Monthly bill'], ['twin', 'Twin check'], ['data', 'Data health'], ['appr', 'Approvals & audit'], ['fac', 'Demo factory'], ['set', 'Settings & data']];
+const TABS = [['live', 'Play the day'], ['scen', 'Compare plans'], ['bill', 'Monthly bill vs TNB'], ['twin', 'Did the forecast hold?'], ['data', 'Data health'], ['appr', 'Approvals & audit'], ['fac', '3D factory'], ['set', 'Settings & data']];
 
 function shell() {
   const roleBtns = Object.keys(ROLES).map(k => `<button data-act="role" data-v="${k}" class="${ST.role === k ? 'on' : ''}" title="${esc(ROLES[k].blurb)}">${esc(ROLES[k].name)}</button>`).join('');
   return `<div class="sotop"><h1>&#9788; Operations console</h1><span class="tag">Planning simulation. Never controls equipment.</span><span class="sp"></span>
+    <span class="role"><span class="note" style="margin:0">Facility</span><span class="seg" role="group" aria-label="Facility">${Object.keys(FACS).map(k => `<button data-act="fac" data-v="${k}" class="${ST.fac === k ? 'on' : ''}" title="${esc(FACS[k].name)}">${esc(FACS[k].short)} (${FACS[k].step})</button>`).join('')}</span></span>
     <span class="role"><span class="note" style="margin:0">Viewing as</span><span class="seg" role="group" aria-label="Role">${roleBtns}</span></span>
     <button data-act="close" class="pri">Back to Sun Shine</button></div>
     <div class="note" style="margin:0 0 8px">${esc(ROLES[ST.role].blurb)} <i>Role switching is a demonstration; real enforcement needs sign-in roles in Azure.</i></div>
-    <div class="tabs" role="tablist">${TABS.map(t => `<button role="tab" data-act="tab" data-v="${t[0]}" class="${ST.tab === t[0] ? 'on' : ''}">${t[1]}</button>`).join('')}</div>
+    <div class="tabs" role="tablist">${TABS.filter(t => t[0] !== 'fac' || FACS[ST.fac].has3d).map(t => `<button role="tab" data-act="tab" data-v="${t[0]}" class="${ST.tab === t[0] ? 'on' : ''}">${t[1]}</button>`).join('')}</div>
     <div id="so_body"></div>`;
 }
 function loadingCard() {
@@ -1153,13 +1168,13 @@ function mountBill() {
     row('Off-peak energy', fmt0(b.kwhOff) + ' kWh', (T.eo + T.afa).toFixed(2) + ' sen', a.kwhOff * (T.eo + T.afa) / 100, b.kwhOff * (T.eo + T.afa) / 100) +
     row('Maximum demand', fmt0(b.md) + ' kW (baseline ' + fmt0(a.md) + ')', 'RM ' + T.md.toFixed(2) + '/kW', a.mdRM, b.mdRM) +
     row('Retail charge', '', 'RM ' + T.retail, a.retailRM, b.retailRM) +
-    `<tr><td><b>Estimated total</b></td><td></td><td></td><td><b>${fmtRM(a.totalRM)}</b></td><td><b>${fmtRM(b.totalRM)}</b></td></tr><tr><td>Difference</td><td></td><td></td><td></td><td><b>${sgn(b.totalRM - a.totalRM, fmtRM)} (${sgn((b.totalRM - a.totalRM) / a.totalRM * 100, x => x.toFixed(1))}%)</b></td></tr></table><div class="note">Not included: KWTBB levy (1.6%), taxes, power-factor charges, AFA changes. Peak demand is the highest ${ST.D.stepMin}-minute reading in the window.</div>`;
+    `<tr><td><b>Estimated total</b></td><td></td><td></td><td><b>${fmtRM(a.totalRM)}</b></td><td><b>${fmtRM(b.totalRM)}</b></td></tr><tr><td>Difference</td><td></td><td></td><td></td><td><b>${sgn(b.totalRM - a.totalRM, fmtRM)} (${sgn((b.totalRM - a.totalRM) / a.totalRM * 100, x => x.toFixed(1))}%)</b></td></tr></table><div class="note">Not included: KWTBB levy (1.6%), taxes, power-factor charges, AFA changes. Billed peak demand is the highest 30-minute average in the window, as TNB bills it.</div>`;
   const upd = () => { const v = ST.bills[m.key]; const el = $q('#bl_var'); if (!el) return; el.innerHTML = Number.isFinite(v) ? `Model baseline ${fmtRM(a.totalRM)} vs your bill ${fmtRM(v)}: ${sgn(a.totalRM - v, fmtRM)} (${sgn((a.totalRM - v) / v * 100, x => x.toFixed(1))}%). Differences of a few percent are normal because of the items not modelled. A large gap means the data or the tariff does not match the site.` : 'Enter a bill to see how close the model baseline is. It is saved in this browser only.'; }; upd();
   const inp = $q('#bl_real'); if (inp) inp.oninput = () => { const x = parseFloat(inp.value); if (Number.isFinite(x)) ST.bills[m.key] = x; else delete ST.bills[m.key]; LS.set('sunops_bills', ST.bills); upd(); };
   const n = m.d1 - m.d0 + 1, mk = r => { const q = dailyMd(ctx, r), d = new Float64Array(n).fill(NaN); for (let i = 0; i < n; i++) if (isWeekday(D.days[m.d0 + i].dow)) d[i] = q[m.d0 + i]; return d; };
   const ticks = []; for (let i = 0; i < n; i += 3) ticks.push({ i, label: String(i + 1) });
   mount($q('#bl_c1'), line({ n, h: 250, series: [{ name: 'Baseline', color: '#6b7280', data: mk(Rof('base')), dash: '5 4', w: 2 }, { name: STRATS[k].short, color: STRATS[k].color, data: mk(Rof(k)), w: 2.5 }], hlines: [{ v: a.md, label: 'baseline billed peak', color: '#6b7280' }, { v: b.md, label: 'billed peak', color: STRATS[k].color, dash: '2 3' }], xTicks: ticks, yLabel: 'kW', tipTitle: i => D.days[m.d0 + i].date }));
-  $q('#bl_c2').innerHTML = bars({ labels: ms.map(x => MONTHS[x.month]), series: [{ name: 'Baseline', color: '#9ca3af', data: ms.map(x => periodKpi(ctx, Rof('base'), x.d0, x.d1).totalRM) }, { name: STRATS[k].short, color: STRATS[k].color, data: ms.map(x => periodKpi(ctx, Rof(k), x.d0, x.d1).totalRM) }], h: 260, yFmt: x => 'RM ' + (x / 1000).toFixed(0) + 'k' }) + `<div class="legend"><label><i style="background:#9ca3af"></i>Baseline</label><label><i style="background:${STRATS[k].color}"></i>${esc(STRATS[k].short)}</label></div>`;
+  $q('#bl_c2').innerHTML = bars({ labels: ms.map(x => MONTHS[x.month]), series: ['base', 'cost', 'bal', 'zero'].map(q => ({ name: STRATS[q].short, color: q === 'base' ? '#9ca3af' : STRATS[q].color, data: ms.map(x => periodKpi(ctx, Rof(q), x.d0, x.d1).totalRM) })), h: 260, yFmt: x => 'RM ' + (x / 1000).toFixed(0) + 'k' }) + `<div class="legend">${['base', 'cost', 'bal', 'zero'].map(q => `<label><i style="background:${q === 'base' ? '#9ca3af' : STRATS[q].color}"></i>${esc(STRATS[q].short)}</label>`).join('')}</div>`;
 }
 
 /* ======================= TWIN CHECK ======================= */
@@ -1380,7 +1395,8 @@ function readCfg() {
 function dayIdx(date) { return ST.D.days.findIndex(x => x.date === date); }
 function onClick(e) {
   const t = e.target.closest('[data-act]'); if (!t) return; const act = t.dataset.act, v = t.dataset.v;
-  if (act === 'role') { if (ST.role !== v) { ST.role = v; audit('role_switch', 'Now viewing as ' + ROLES[v].name); } render(); }
+  if (act === 'role') { if (ST.role !== v) { ST.role = v; audit('role_switch', 'Now viewing as ' + ROLES[v].name); stopLive(); ST.tab = v === 'analyst' ? 'live' : 'appr'; } render(); }
+  else if (act === 'fac') { if (ST.fac !== v) { stopLive(); if (ST.tab === 'fac') ST.tab = 'live'; audit('facility_switch', FACS[v].name); render(); loadPreset(v); } }
   else if (act === 'close') closeConsole();
   else if (act === 'tab') { if (v !== 'live' && v !== 'fac') stopLive(); ST.tab = v; render(); }
   else if (act === 'fac_connect') { FAC.url = ($q('#fac_url').value || '').trim(); LS.set('sunops_hwurl', FAC.url); audit('setting', 'Hardware feed address ' + (FAC.url ? 'set' : 'cleared')); facApply(); }
