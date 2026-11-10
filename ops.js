@@ -592,6 +592,8 @@ const CSS = `
 #sunops .seg{display:inline-flex;border:1px solid var(--line,#E7E0CA);border-radius:10px;overflow:hidden;background:#fff}
 #sunops .seg button{border:0;border-radius:0;border-right:1px solid var(--line,#E7E0CA)}
 #sunops .seg button:last-child{border-right:0}
+#sunops .seg button.on[data-act="fac"]{background:#fff;color:#252B2A;font-weight:700;box-shadow:inset 0 0 0 2px #252B2A}
+#sunops .seg button.on[data-act="fac"]:hover{background:#fff;border-color:transparent}
 #sunops .tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
 #sunops .tabs button{border-radius:6px;font-weight:600}
 #sunops button.on:hover{background:#E08A00;border-color:#E08A00}
