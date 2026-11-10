@@ -733,18 +733,25 @@ const LS = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
 };
 const ROLES = {
-  analyst: { name: 'Analyst / Operator', can: ['run', 'settings', 'propose', 'read'], blurb: 'Runs the replay, changes settings and data, proposes plan changes.' },
+  owner: { name: 'Owner', can: ['run', 'settings', 'propose', 'approve', 'export', 'verify', 'read'], blurb: 'Can do everything.' },
+  analyst: { name: 'Analyst', can: ['run', 'settings', 'propose', 'read'], blurb: 'Runs the replay, changes settings and data, proposes plan changes. Cannot approve.' },
+  operator: { name: 'Operator', can: ['run', 'propose', 'read'], blurb: 'Runs the replay and proposes plan changes. Cannot change settings or approve.' },
   approver: { name: 'Approver', can: ['approve', 'export', 'read'], blurb: 'Approves or rejects proposed plans. Cannot change data or settings.' },
   auditor: { name: 'Auditor', can: ['export', 'verify', 'read'], blurb: 'Read-only. Checks the audit trail and exports it.' }
 };
 const ST = {
-  open: false, fac: 'leader', role: 'analyst', tab: 'live', status: 'idle', msg: '', raw: null, D: null, ctx: null, R: null, twinCache: {},
+  open: false, fac: 'leader', role: (typeof window !== 'undefined' && window.sunWho && ROLES[window.sunWho]) ? window.sunWho : 'owner', tab: 'live', status: 'idle', msg: '', raw: null, D: null, ctx: null, R: null, twinCache: {},
   cfg: Object.assign({ bat: Object.assign({}, DEFAULTS.bat), tariff: Object.assign({}, DEFAULTS.tariff), ef: DEFAULTS.ef, margin: 0.25, demandMode: 'auto' }, HAS_DOM ? LS.get('sunops_cfg', {}) : {}),
   sel: { day: 0, month: 0, strat: 'cost', mode: 'live', scView: 'day', vis: { base: true, self: false, tou: true, cost: true, bal: false, zero: false }, showF: false },
   live: null, props: [], propSeq: 0, audit: HAS_DOM ? LS.get('sunops_audit', []) : [], bills: HAS_DOM ? LS.get('sunops_bills', {}) : {}, upload: null
 };
 ST.cfg.bat = Object.assign({}, DEFAULTS.bat, ST.cfg.bat); ST.cfg.tariff = Object.assign({}, DEFAULTS.tariff, ST.cfg.tariff);
 const can = a => ROLES[ST.role].can.includes(a);
+if (typeof window !== 'undefined') window.sunSetRole = function (r) {
+  if (!ROLES[r] || ST.role === r) return;
+  ST.role = r; audit('role_switch', 'Now viewing as ' + ROLES[r].name); stopLive(); ST.tab = can('run') ? 'live' : 'appr';
+  if (ST.open && typeof render === 'function') render();
+};
 const saveCfg = () => LS.set('sunops_cfg', ST.cfg);
 
 /* ---- tamper-evident audit trail (browser-local demo; production would write to the server table) ---- */
@@ -935,12 +942,11 @@ const dis = ok => ok ? '' : 'disabled';
 const TABS = [['live', 'Play the day'], ['scen', 'Compare plans'], ['bill', 'Monthly bill vs TNB'], ['twin', 'Did the forecast hold?'], ['data', 'Data health'], ['appr', 'Approvals & audit'], ['fac', '3D factory'], ['set', 'Settings & data']];
 
 function shell() {
-  const roleBtns = Object.keys(ROLES).map(k => `<button data-act="role" data-v="${k}" class="${ST.role === k ? 'on' : ''}" title="${esc(ROLES[k].blurb)}">${esc(ROLES[k].name)}</button>`).join('');
   return `<div class="sotop"><h1>&#9788; Operations console</h1><span class="tag">Planning simulation. Never controls equipment.</span><span class="sp"></span>
     <span class="role"><span class="note" style="margin:0">Facility</span><span class="seg" role="group" aria-label="Facility">${Object.keys(FACS).map(k => `<button data-act="fac" data-v="${k}" class="${ST.fac === k ? 'on' : ''}" title="${esc(FACS[k].name)}">${esc(FACS[k].short)} (${FACS[k].step})</button>`).join('')}</span></span>
-    <span class="role"><span class="note" style="margin:0">Viewing as</span><span class="seg" role="group" aria-label="Role">${roleBtns}</span></span>
+    <span class="role"><span class="note" style="margin:0">Your role</span><b>${esc(ROLES[ST.role].name)}</b></span>
     <button data-act="close" class="pri">Back to Sun Shine</button></div>
-    <div class="note" style="margin:0 0 8px">${esc(ROLES[ST.role].blurb)} <i>Role switching is a demonstration; real enforcement needs sign-in roles in Azure.</i></div>
+    <div class="note" style="margin:0 0 8px">${esc(ROLES[ST.role].blurb)} <i>Your role is set at the top of the main page (or by your sign-in).</i></div>
     <div class="tabs" role="tablist">${TABS.filter(t => t[0] !== 'fac' || FACS[ST.fac].has3d).map(t => `<button role="tab" data-act="tab" data-v="${t[0]}" class="${ST.tab === t[0] ? 'on' : ''}">${t[1]}</button>`).join('')}</div>
     <div id="so_body"></div>`;
 }
@@ -1076,7 +1082,7 @@ function drawLive() {
   if (L.pending) {
     const p = L.pending.p;
     pend.innerHTML = `<div class="warn"><b>${esc(p.type)} waiting for approval</b> at ${tmS(p.slot)}.<br>${p.from == null ? '' : 'Cap ' + fmt0(p.from) + ' &rarr; '}<b>${fmt0(p.to)} kW</b>. ${esc(p.reason)}</div>` +
-      (can('approve') ? `<div class="bar"><button class="good" data-act="appr_yes">Approve</button><button class="badb" data-act="appr_no">Reject</button></div>` : `<div class="note">Waiting for an approver. <button data-act="role" data-v="approver">Switch to Approver</button></div>`);
+      (can('approve') ? `<div class="bar"><button class="good" data-act="appr_yes">Approve</button><button class="badb" data-act="appr_no">Reject</button></div>` : `<div class="note">Waiting for an Approver (or the Owner) to decide.</div>`);
   } else pend.innerHTML = `<div class="note">${L.require ? 'Sign-off is required. The next plan change will pause here until an approver decides.' : 'Plan changes are auto-approved in demo mode and logged. Tick "Require approver sign-off" to try the approval flow.'}</div>`;
   // why
   const why = $q('#lv_why');
@@ -1395,7 +1401,7 @@ function readCfg() {
 function dayIdx(date) { return ST.D.days.findIndex(x => x.date === date); }
 function onClick(e) {
   const t = e.target.closest('[data-act]'); if (!t) return; const act = t.dataset.act, v = t.dataset.v;
-  if (act === 'role') { if (ST.role !== v) { ST.role = v; audit('role_switch', 'Now viewing as ' + ROLES[v].name); stopLive(); ST.tab = v === 'analyst' ? 'live' : 'appr'; } render(); }
+  if (act === 'role') { if (ST.role !== v) { ST.role = v; audit('role_switch', 'Now viewing as ' + ROLES[v].name); stopLive(); ST.tab = can('run') ? 'live' : 'appr'; } render(); }
   else if (act === 'fac') { if (ST.fac !== v) { stopLive(); if (ST.tab === 'fac') ST.tab = 'live'; audit('facility_switch', FACS[v].name); render(); loadPreset(v); } }
   else if (act === 'close') closeConsole();
   else if (act === 'tab') { if (v !== 'live' && v !== 'fac') stopLive(); ST.tab = v; render(); }
