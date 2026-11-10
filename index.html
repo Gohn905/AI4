@@ -234,10 +234,14 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;--
 #dateCard.one{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:6px 12px}
 #dateCard.one>.bar{display:contents}
 #dateCard.one #yes,#dateCard.one #tod,#dateCard.one #tom,#dateCard.one .stratbar,#dateCard.one #info{display:none}
-#dateCard.one #ttl{order:1;font-size:19px;font-weight:800;letter-spacing:-.01em;cursor:pointer}#dateCard.one #badge{order:2}#dateCard.one #prev{order:3}#dateCard.one #next{order:4}#dateCard.one .sp{order:5;flex:1}#dateCard.one #vday{order:6}#dateCard.one #vweek{order:7}#dateCard.one #vmonth{order:8}
+#dateCard.one #ttl{order:3;font-size:19px;font-weight:800;letter-spacing:-.01em;cursor:pointer}#dateCard.one #badge{order:4}#dateCard.one #prev{order:1}#dateCard.one #next{order:2}#dateCard.one .sp{order:5;flex:1}#dateCard.one #vday{order:6}#dateCard.one #vweek{order:7}#dateCard.one #vmonth{order:8}
 #dateCard.one{background:transparent;border:0;box-shadow:none;padding:2px 2px}
 #dateCard.one #dt{position:absolute;left:0;top:100%;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
 .stratr{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+/* arrows stay put; group names left; forecast note under the chart */
+#dateCard.one #prev,#dateCard.one #next{flex:none}
+main[data-role=tech] #dtabs .dgrp{text-align:left;align-self:stretch;padding-left:14px}
+main.fcTab #out>[data-tour=ribbon]{order:9}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span></span><span class="sp"></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -288,8 +292,8 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;--
 <p class="note">This is a lab model. The panels are small solar panels used as light sensors, the battery level is simulated, and the laptop's USB stands in for grid power. The rules here are a simplified version of the optimiser's logic. The full day plan comes from the other tabs.</p>
 </div>
 <div class="card" id="protoPanel" data-role="tech" hidden>
-<h2 title="Reads the ESP32 over USB or Bluetooth and lets you control the relay, conveyor speed and LEDs. Press Connect ESP32 inside the model, then click a part. Needs Chrome or Edge. Close the Arduino Serial Monitor first. One connection at a time.">Live prototype: the small factory, in real time</h2>
-<iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1&amp;v=2026-11-09-k" allow="serial; bluetooth" title="Live 3D prototype" loading="lazy" style="width:100%;height:calc(100vh - 150px);min-height:460px;border:0;border-radius:0;margin:0;background:transparent;display:block"></iframe>
+<h2 title="Reads the ESP32 over USB or Bluetooth and lets you control the relay, conveyor speed and LEDs. Press Connect ESP32 inside the model, then click a part. Needs Chrome or Edge. Close the Arduino Serial Monitor first. One connection at a time.">Live prototype: the small factory, in real time</h2><div class="note" style="margin:-4px 0 6px">Cannot connect here? <a href="factory3d.html" target="_blank" rel="noopener">Open the factory in its own window</a>, then press Connect ESP32.</div>
+<iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1&amp;v=2026-11-09-k" allow="serial; bluetooth" title="Live 3D prototype" style="width:100%;height:calc(100vh - 150px);min-height:460px;border:0;border-radius:0;margin:0;background:transparent;display:block"></iframe>
 <div class="note" style="margin:8px 0 0">Press <b>Connect ESP32 (Wireless)</b> or <b>(USB)</b> inside the model, then click a part to see its readings and controls. Needs Chrome or Edge (Bluetooth also works on Android). USB: close the Arduino Serial Monitor first. Only one connection to the ESP32 at a time, so disconnect the Lab model tab&rsquo;s USB connection before using this one.</div>
 </div>
 <div id="facPanel" data-role="tech" hidden>
@@ -588,7 +592,7 @@ function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a
 const TABS={ov:['ribbon','headline','kpi','costbars','mini3d','flow','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','schedule','approve','changed'],ad:['live','reopt','learn','stress','sweep','assume','audit','changed'],fa:['changed'],lab:[],proto:[]};let dtab='ov';
 function fitProto(){const on=role=='tech'&&dtab=='proto',h=document.documentElement;h.classList.toggle('protoTab',on);if(!on)return;const f=$('proto3d');if(!f)return;const t=f.getBoundingClientRect().top+(window.scrollY||0);f.style.height=Math.max(460,window.innerHeight-t-6)+'px';}
 window.addEventListener('resize',()=>{try{fitProto()}catch(e){}});
-function applyTab(){if(!tabOk(dtab))dtab='ov';$('dateCard').classList.toggle('one',dtab!='ov');const t=role=='tech';$('app').classList.toggle('fit',t&&(dtab=='fc'||dtab=='proto'));Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&(dtab=='fa'||dtab=='lab'||dtab=='proto')});$('dateCard').hidden=t&&(dtab=='proto'||dtab=='fa');$('facPanel').hidden=!(t&&dtab=='fa');$('labPanel').hidden=!(t&&dtab=='lab');$('protoPanel').hidden=!(t&&dtab=='proto');fitProto();
+function applyTab(){if(!tabOk(dtab))dtab='ov';$('dateCard').classList.toggle('one',dtab!='ov');const t=role=='tech';$('app').classList.toggle('fit',t&&(dtab=='fc'||dtab=='proto'));$('app').classList.toggle('fcTab',t&&dtab=='fc');Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&(dtab=='fa'||dtab=='lab'||dtab=='proto')});$('dateCard').hidden=t&&(dtab=='proto'||dtab=='fa');$('facPanel').hidden=!(t&&dtab=='fa');$('labPanel').hidden=!(t&&dtab=='lab');$('protoPanel').hidden=!(t&&dtab=='proto');fitProto();
  navHl();fairLoad();applyPerms()}
 function navHl(){if(document.querySelectorAll)document.querySelectorAll('#dtabs button').forEach(b=>b.classList.toggle('on',b.dataset.dt==dtab&&(!b.dataset.ct||b.dataset.ct==chartTab)))}
 $('dtabs').onclick=e=>{const b=e.target.closest('button[data-dt]');if(!b)return;dtab=b.dataset.dt;if(b.dataset.ct){chartTab=b.dataset.ct;applyTab();const x=document.querySelector('#chTabs [data-ct="'+chartTab+'"]');if(x)x.click();navHl();uiSave()}else applyTab()};
