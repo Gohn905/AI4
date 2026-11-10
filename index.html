@@ -212,7 +212,13 @@ main .ai h2{text-transform:none}main h2{text-transform:uppercase;letter-spacing:
 main.fit #protoPanel{background:transparent;border:0;box-shadow:none;padding:0;margin:0}
 main.fit #protoPanel h2{margin:0 0 8px}
 html.protoTab main{padding-bottom:0}
-</style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><span class="sp"></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
+.top .rs select{border:1px solid rgba(37,43,42,.35);background:#fff;color:var(--ink);padding:8px 10px;border-radius:9px;font:inherit;font-weight:650}.top .rs select:disabled{opacity:.8}
+.rolehide{display:none!important}
+.vo{position:relative}.vo::before{content:"View only for your role";display:block;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--mut);margin:0 0 6px}
+.vo button,.vo input,.vo select,.vo textarea{opacity:.5;cursor:not-allowed}
+.noap [data-tour=approve] [data-ap=approve]{display:none}.noap [data-tour=approve]::after{content:"Only an Approver or the Owner can approve a plan. Once it is approved you can export it here.";display:block;font-size:13px;color:var(--mut);margin-top:6px}
+.alog{width:100%;border-collapse:collapse;font-size:13px}.alog th,.alog td{text-align:left;padding:4px 8px;border-top:1px solid var(--line)}.alog th{font-size:11px;font-weight:700;color:var(--mut)}
+</style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span></span><span class="sp"></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
 <div id="amsg" class="note" style="margin:0 0 6px"></div>
@@ -263,7 +269,7 @@ html.protoTab main{padding-bottom:0}
 </div>
 <div class="card" id="protoPanel" data-role="tech" hidden>
 <h2 title="Reads the ESP32 over USB or Bluetooth and lets you control the relay, conveyor speed and LEDs. Press Connect ESP32 inside the model, then click a part. Needs Chrome or Edge. Close the Arduino Serial Monitor first. One connection at a time.">Live prototype: the small factory, in real time</h2>
-<iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1&amp;v=2026-11-09-j" allow="serial; bluetooth" title="Live 3D prototype" loading="lazy" style="width:100%;height:calc(100vh - 150px);min-height:460px;border:0;border-radius:0;margin:0;background:transparent;display:block"></iframe>
+<iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1&amp;v=2026-11-09-k" allow="serial; bluetooth" title="Live 3D prototype" loading="lazy" style="width:100%;height:calc(100vh - 150px);min-height:460px;border:0;border-radius:0;margin:0;background:transparent;display:block"></iframe>
 <div class="note" style="margin:8px 0 0">Press <b>Connect ESP32 (Wireless)</b> or <b>(USB)</b> inside the model, then click a part to see its readings and controls. Needs Chrome or Edge (Bluetooth also works on Android). USB: close the Arduino Serial Monitor first. Only one connection to the ESP32 at a time, so disconnect the Lab model tab&rsquo;s USB connection before using this one.</div>
 </div>
 <div id="facPanel" data-role="tech" hidden>
@@ -344,8 +350,8 @@ html.protoTab main{padding-bottom:0}
 <div id="chatChips" class="chips"><button data-chip="Set up a factory in Penang">Set up a factory in Penang</button><button data-chip="Show this month with the cost-saving strategy">Show this month</button><button data-chip="What does the Balanced strategy do?">What is Balanced?</button></div>
 <p class="note" style="padding:0 12px;margin:4px 0">Messages go to an Azure AI model. Please do not paste names or account numbers. Meter CSV files stay in your browser. I propose, you confirm.</p>
 <div class="cin"><input type="file" id="chatFile" accept=".csv,.txt,text/csv,text/plain" hidden><button id="chatAttach" title="Attach a meter CSV, or a .txt file with the text of your bill">Attach</button><textarea id="chatIn" rows="2" placeholder="Describe your facility, or ask me to show something" aria-label="Message"></textarea><button class="on" id="chatSend">Send</button></div></div>
-<div id="roleGate" hidden role="dialog" aria-modal="true" aria-labelledby="rgTitle"><div class="rg"><h2 id="rgTitle">Who is using this?</h2><p class="note" style="margin-top:0">Pick one. You can change it at the top at any time. Both views use exactly the same numbers; the choice only shows or hides sections.</p>
-<div class="rgbtns"><button data-rp="owner"><b>Owner</b><span>Savings, billed peak and CO&#8322; in plain words, plus a one-page summary to print.</span></button><button data-rp="tech"><b>Technician</b><span>The hourly schedule, assumptions, stress test, battery size sweep and the audit log.</span></button></div></div></div>
+<div id="roleGate" hidden role="dialog" aria-modal="true" aria-labelledby="rgTitle"><div class="rg"><h2 id="rgTitle">Who is using this?</h2><p class="note" style="margin-top:0">Pick your role. Every role sees the same numbers; the role decides what you can open and what you can change. You can change it at the top at any time.</p>
+<div class="rgbtns"><button data-who="owner"><b>Owner</b><span>Everything: all sections, approvals, equipment and settings.</span></button><button data-who="analyst"><b>Analyst</b><span>Builds the plan: forecasts, simulations, stress test and facility settings. Cannot approve.</span></button><button data-who="operator"><b>Operator</b><span>Runs the plant: live monitor, the 3D prototype and the approved schedule.</span></button><button data-who="approver"><b>Approver</b><span>Reviews the options and approves the plan. Cannot change settings.</span></button><button data-who="auditor"><b>Auditor</b><span>Read-only view of everything, with the audit log and activity record.</span></button></div></div></div>
 <div id="calcDrawer" role="dialog" aria-label="How we calculated this" hidden><div class="chead"><b>How we calculated this</b><span class="sp"></span><button id="calcX" aria-label="Close">Close</button></div><div class="dbody">
 <ol>
 <li><b>Weather.</b> Hourly temperature, cloud and sunshine for your site from Open-Meteo: a forecast for today and the next 2 days, recorded weather for past days.</li>
@@ -562,16 +568,52 @@ function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a
 const TABS={ov:['ribbon','headline','kpi','costbars','mini3d','flow','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','schedule','approve','changed'],ad:['live','reopt','learn','stress','sweep','assume','audit','changed'],fa:['changed'],lab:[],proto:[]};let dtab='ov';
 function fitProto(){const on=role=='tech'&&dtab=='proto',h=document.documentElement;h.classList.toggle('protoTab',on);if(!on)return;const f=$('proto3d');if(!f)return;const t=f.getBoundingClientRect().top+(window.scrollY||0);f.style.height=Math.max(460,window.innerHeight-t-6)+'px';}
 window.addEventListener('resize',()=>{try{fitProto()}catch(e){}});
-function applyTab(){const t=role=='tech';$('app').classList.toggle('fit',t&&(dtab=='fc'||dtab=='proto'));Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&(dtab=='fa'||dtab=='lab'||dtab=='proto')});$('dateCard').hidden=t&&(dtab=='proto'||dtab=='fa');$('facPanel').hidden=!(t&&dtab=='fa');$('labPanel').hidden=!(t&&dtab=='lab');$('protoPanel').hidden=!(t&&dtab=='proto');fitProto();
- navHl();fairLoad()}
+function applyTab(){if(!tabOk(dtab))dtab='ov';const t=role=='tech';$('app').classList.toggle('fit',t&&(dtab=='fc'||dtab=='proto'));Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&(dtab=='fa'||dtab=='lab'||dtab=='proto')});$('dateCard').hidden=t&&(dtab=='proto'||dtab=='fa');$('facPanel').hidden=!(t&&dtab=='fa');$('labPanel').hidden=!(t&&dtab=='lab');$('protoPanel').hidden=!(t&&dtab=='proto');fitProto();
+ navHl();fairLoad();applyPerms()}
 function navHl(){if(document.querySelectorAll)document.querySelectorAll('#dtabs button').forEach(b=>b.classList.toggle('on',b.dataset.dt==dtab&&(!b.dataset.ct||b.dataset.ct==chartTab)))}
 $('dtabs').onclick=e=>{const b=e.target.closest('button[data-dt]');if(!b)return;dtab=b.dataset.dt;if(b.dataset.ct){chartTab=b.dataset.ct;applyTab();const x=document.querySelector('#chTabs [data-ct="'+chartTab+'"]');if(x)x.click();navHl();uiSave()}else applyTab()};
 // ================= roles =================
 let role=null;   // the link always opens on Brief; add #detailed to the link to open the Detailed view
 let techCur=null;
+
+// ================= people and permissions =================
+// Role = what a person is responsible for. With a work sign-in the role comes from the account; otherwise the picker is a demo switch.
+const WHO={owner:{n:'Owner'},analyst:{n:'Analyst'},operator:{n:'Operator'},approver:{n:'Approver'},auditor:{n:'Auditor'}};
+const OPER=['live','reopt','learn','stress','sweep','approve','audit'];   // cards that change or run something (the rest are only for looking)
+const PERM={
+ owner:{see:null,act:null,tabs:null,approve:1,hw:1,edit:1},
+ analyst:{see:['ribbon','headline','kpi','costbars','mini3d','flow','changed','chart','strategies','compare','fair','actions','schedule','approve','live','reopt','learn','stress','sweep','assume'],act:['reopt','learn','stress','sweep','approve'],tabs:['ov','fc','op','pl','ad','proto','fa'],edit:1},
+ operator:{see:['ribbon','headline','kpi','costbars','mini3d','flow','changed','chart','strategies','compare','fair','actions','schedule','approve','live','assume'],act:['live','approve'],tabs:['ov','fc','op','pl','ad','proto'],hw:1},
+ approver:{see:['ribbon','headline','kpi','costbars','mini3d','flow','changed','chart','strategies','compare','fair','actions','schedule','approve','stress','assume','audit'],act:['approve','audit'],tabs:['ov','fc','op','pl','ad','proto','fa'],approve:1},
+ auditor:{see:null,act:['audit'],tabs:['ov','fc','op','pl','ad','proto','fa']}
+};
+let who='owner';
+const PROTO='factory3d.html?embed=1&proto=1&v=2026-11-09-k';
+const canSee=k=>{const P=PERM[who];return !P.see||P.see.includes(k)};
+const canAct=k=>{const P=PERM[who];return !P.act||P.act.includes(k)};
+function tabOk(t){const P=PERM[who];return !P.tabs||P.tabs.includes(t)}
+function whoName(){return user?(user.userDetails||'signed-in user'):'this browser (not signed in)'}
+function actLogLoad(){try{return JSON.parse(localStorage.getItem('actlog')||'[]')}catch(e){return[]}}
+function actLogHtml(){const l=actLogLoad().slice(-30).reverse();if(!l.length)return'<span class="note">Nothing recorded yet.</span>';
+ return`<table class="alog"><tr><th>Time</th><th>Person</th><th>Role</th><th>What happened</th></tr>${l.map(x=>`<tr><td>${esc(new Date(x.t).toLocaleString('en-GB'))}</td><td>${esc(x.by)}</td><td>${esc(WHO[x.role]?WHO[x.role].n:x.role)}</td><td>${esc(x.act)}</td></tr>`).join('')}</table>`}
+function actLog(act){const l=actLogLoad();l.push({t:new Date().toISOString(),by:whoName(),role:who,act});while(l.length>200)l.shift();try{localStorage.setItem('actlog',JSON.stringify(l))}catch(e){}const o=$('actLogOut');if(o)o.innerHTML=actLogHtml()}
+function applyPerms(){const P=PERM[who]||PERM.owner;
+ $('app').classList.toggle('noap',!P.approve);
+ Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;if(!k)return;if(!canSee(k))el.hidden=true;const lock=OPER.includes(k)&&!canAct(k);if(el.inert!==lock)el.inert=lock;el.classList.toggle('vo',lock)});
+ const fp=$('facPanel'),lp=$('labPanel');fp.inert=!P.edit;fp.classList.toggle('vo',!P.edit);lp.inert=!P.hw;lp.classList.toggle('vo',!P.hw);
+ const f=$('proto3d');if(f){const u=PROTO+(P.hw?'':'&ro=1');if(f.getAttribute('src')!==u)f.setAttribute('src',u)}
+ let grp=null,any=false;const flush=()=>{if(grp)grp.classList.toggle('rolehide',!any)};
+ Array.from($('dtabs').children).forEach(b=>{if(b.classList.contains('dgrp')){flush();grp=b;any=false}else{const ok=tabOk(b.dataset.dt);b.classList.toggle('rolehide',!ok);if(ok)any=true}});flush()}
+function setWho(w,quiet){if(!PERM[w])return;const prev=who;who=w;try{sessionStorage.setItem('who',w)}catch(e){}
+ $('whoSel').value=w;$('viewSw').classList.toggle('rolehide',w!='owner');window.sunWho=w;if(window.sunSetRole)window.sunSetRole(w);
+ if(w!='owner'&&role!='tech')applyRole('tech');if(!tabOk(dtab))dtab='ov';applyTab();if(!quiet&&prev!==w)actLog('Switched role to '+WHO[w].n)}
+function applyAuthRole(){const ur=((user&&user.userRoles)||[]).map(x=>String(x).toLowerCase()),r=['owner','approver','auditor','operator','analyst'].find(x=>ur.includes(x));
+ if(r){setWho(r,true);$('whoSel').disabled=true;$('whoSel').title='Your role comes from your sign-in'}}
+$('whoSel').onchange=e=>setWho(e.target.value);
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#out [data-tour] button');if(!b)return;const k=b.closest('[data-tour]').dataset.tour,nm={sweep:'Ran the battery size sweep',reopt:'Ran the re-optimisation simulation',learn:'Ran forecast-error learning',stress:'Used the stress test',live:'Used the live monitor'}[k];if(nm)actLog(nm)});
 function applyRole(r){const prev=role;role=r;if(prev&&prev!==r){if(r=='owner'&&cur!==TODAY){techCur=cur;cur=TODAY;render()}else if(r=='tech'&&techCur){cur=techCur;techCur=null;render()}}$('pgTitle').textContent=r=='tech'?'Energy optimisation workspace':'Your energy, at a glance.';$('app').setAttribute('data-role',r);applyTab();if(document.querySelectorAll)document.querySelectorAll('[data-rp]').forEach(b=>b.classList.toggle('on',b.dataset.rp==r))}
 function setRole(r){applyRole(r);try{localStorage.setItem('role',r)}catch(e){}$('roleGate').hidden=true;maybeTour()}
-$('roleGate').onclick=$('roleSwitch').onclick=e=>{const b=e.target.closest('[data-rp]');if(b)setRole(b.dataset.rp)};
+$('roleGate').onclick=$('roleSwitch').onclick=e=>{const b=e.target.closest('[data-rp]');if(b)setRole(b.dataset.rp);const w=e.target.closest('[data-who]');if(w){setWho(w.dataset.who);$('roleGate').hidden=true;maybeTour()}};
 
 // ================= headline, summary, flow =================
 function tplSummary(f){const sv=f.base_cost-f.plan_cost,pct=f.base_cost>0?100*sv/f.base_cost:0;
@@ -834,7 +876,7 @@ async function lrnDemo(){const q=sameReq('cost');if(!q)return;const msg=$('lrnMs
    ['Real cost over '+s.days+' days, raw plan',money(s.total_cost_raw_rm),'','plan made from the raw forecast'],['Real cost, plan from learned forecast',money(s.total_cost_learned_rm),'good','plan made from the corrected forecast'],['Difference',money(s.total_saving_rm),s.total_saving_rm>0.5?'good':'',s.total_saving_pct==null?'':N1(s.total_saving_pct)+'%']]);
  out.innerHTML=`<div class="ribbon"><b>SIMULATED.</b> ${s.bias_injected?'A repeatable error was injected (afternoon solar 25% below forecast, evening load 8% above). Random cloud and load noise were added and cannot be learned.':'No repeatable error was injected: this is the control. Learning has nothing to find, so expect no gain, and a little extra noise.'} Each day is corrected using earlier days only. ${esc(j.data_kind)}</div>${tiles}${lrnChart(j.days)}<p class="note">Real cost = the cost of living through the simulated day with a plan made from each forecast, battery following the plan, same grid-limit guard. This shows the mechanism works and does not peek at the future; it is not a measurement of your site.</p>`}
 if(typeof document!='undefined'&&document.addEventListener)document.addEventListener('change',e=>{if(e.target&&e.target.id=='lrnFile')lrnTeach(e.target)});
-function auditCard(){return `<div class="card" data-role="tech" data-tour="audit"><h2>Audit log</h2><p class="note" style="margin-top:0">Recent forecast, optimise, explanation and assistant calls, with who asked and how long they took. What people type is never logged. Needs sign-in.</p><button class="on" data-au="1">Load recent activity</button><div id="auOut" class="scroll" style="margin-top:8px"></div></div>`}
+function auditCard(){return `<div class="card" data-role="tech" data-tour="audit"><h2>Audit log</h2><p class="note" style="margin-top:0">Recent forecast, optimise, explanation and assistant calls, with who asked and how long they took. What people type is never logged. Needs sign-in.</p><button class="on" data-au="1">Load recent activity</button><div id="auOut" class="scroll" style="margin-top:8px"></div><h3 class="sec" style="margin-top:14px">Activity on this device</h3><p class="note" style="margin-top:0">Role changes, approvals, exports, simulation runs and facility changes. It is kept in this browser until logging to storage is switched on for the site.</p><div id="actLogOut" class="scroll">${actLogHtml()}</div></div>`}
 async function auditRun(){const o=$('auOut');o.textContent='Loading...';
  try{const j=await api('/api/audit');if(!j.enabled){o.innerHTML='<span class="note">Logging to storage is not switched on for this site, so there is nothing to show.</span>';return}
   if(!j.items.length){o.innerHTML='<span class="note">No calls logged in the last two days.</span>';return}
@@ -978,7 +1020,7 @@ async function warm(my){if(my!=tok||view=='month')return;const mon=addD(cur,-((p
   await new Promise(r=>setTimeout(r,120))}}
 
 const STEPS=[
- {s:'#roleSwitch',t:'Brief or Detailed',x:'Brief shows savings, billed peak, CO2, next steps and a printable summary. Detailed has tabs for the hourly chart, strategy comparison, schedule and approval, and the stress test, battery sweep, assumptions and audit log. Both use the same numbers.'},
+ {s:'#roleSwitch',t:'Your role',x:'Each role sees and can use only what it needs: Analyst builds the plan, Operator runs the plant, Approver signs off, Auditor checks the record. The Owner can use everything and can switch between Brief and Detailed. All roles use the same numbers.'},
  {s:'#bView',t:'Day, week or month',x:'Brief always starts from today. Day, Week and Month change the period it covers.'},
  {s:'#dateCard',t:'Pick a day',x:'Use Yesterday, Today and Tomorrow, or the arrows and the date box. Day, Week and Month change the view. In Week and Month, tap a day to open it. Dashed boxes are forecasts.'},
  {s:'#tabs',t:'Choose a strategy',x:'Baseline is solar only. The three optimiser strategies plan the battery and the flexible equipment, with different limits on extra CO2. The ? button explains what the optimiser decides.'},
@@ -1031,14 +1073,14 @@ function schedule(p,rec){const r=p.r,b=p.b;
   units:{battery_setpoint_kw:'positive = battery discharges to the site, negative = battery charges',flexible_load_kw:'flexible load planned in this 30-minute step',planned_grid_import_kw:'grid import, including battery charging',expected_solar_kw:'solar forecast',site_demand_kw:'site demand after load shifting'},
   approved_by:rec.by,approved_at:rec.at,step_minutes:60/S,integrity:hk(hours),hours}}
 const csvOf=s=>['date,time_start,battery_setpoint_kw,flexible_load_kw,planned_grid_import_kw,expected_solar_kw,site_demand_kw'].concat(s.hours.map(h=>[s.date,h.time_start,h.battery_setpoint_kw,h.flexible_load_kw,h.planned_grid_import_kw,h.expected_solar_kw,h.site_demand_kw].join(','))).join('\n')+'\n';
-function approveNow(){const p=lastPlan;if(!p||p.sel=='base'||p.date<TODAY)return;
- const s=schedule(p,{by:user?(user.userDetails||'signed-in user'):'local user (not signed in)',at:new Date().toISOString()}),log=apLoad().filter(x=>x.key!=apKey());
- log.push({key:apKey(),s});while(log.length>40)log.shift();try{localStorage.setItem('approvals',JSON.stringify(log))}catch(e){}apShow()}
+function approveNow(){const p=lastPlan;if(!p||p.sel=='base'||p.date<TODAY||!PERM[who].approve)return;
+ const s=schedule(p,{by:(user?(user.userDetails||'signed-in user'):'local user (not signed in)')+', '+WHO[who].n,at:new Date().toISOString()}),log=apLoad().filter(x=>x.key!=apKey());
+ log.push({key:apKey(),s});while(log.length>40)log.shift();try{localStorage.setItem('approvals',JSON.stringify(log))}catch(e){}actLog('Approved the plan for '+p.date+' ('+NAMES[p.sel].replace('Optimiser: ','')+')');apShow()}
 function apShow(){const o=$('apOut');if(!o||!lastPlan)return;const rec=apLoad().find(x=>x.key==apKey());if(!rec)return;const s=rec.s,now=schedule(lastPlan,{by:'',at:''});
  const changed=now.integrity!==s.integrity;
  o.innerHTML=`<b class="good">Approved</b> by ${esc(s.approved_by)} at ${esc(new Date(s.approved_at).toLocaleString('en-GB'))}. Reference ${s.integrity}.`+(changed?`<div class="err" style="margin-top:4px">The forecast has changed since you approved this plan. Review it and approve again to export the new schedule.</div>`:'')+`<div class="bar" style="margin-top:6px"><button data-ap="csv">Download CSV</button><button data-ap="json">Download JSON</button><button data-ap="copy">Copy JSON</button></div>`}
 function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
-function apClick(k){if(k=='approve'){approveNow();return}const rec=apLoad().find(x=>x.key==apKey());if(!rec)return;const s=rec.s,base=`schedule_${s.date}_${s.strategy.replace(/\W+/g,'-').toLowerCase()}`;
+function apClick(k){if(k=='approve'){approveNow();return}actLog('Exported the approved schedule ('+k+')');const rec=apLoad().find(x=>x.key==apKey());if(!rec)return;const s=rec.s,base=`schedule_${s.date}_${s.strategy.replace(/\W+/g,'-').toLowerCase()}`;
  if(k=='csv')dl(base+'.csv',csvOf(s),'text/csv');else if(k=='json')dl(base+'.json',JSON.stringify(s,null,1),'application/json');
  else if(k=='copy'){try{navigator.clipboard.writeText(JSON.stringify(s,null,1));say('Schedule copied to the clipboard.')}catch(e){say('Copy is not available in this browser.')}}}
 
@@ -1186,7 +1228,7 @@ async function whoami(){try{const j=await (await fetch('/.auth/me')).json();user
  if(user){const who=String(user.userId||user.userDetails||'');let prev=null;try{prev=localStorage.getItem('owner')}catch(e){}
   if(prev&&prev!==who){wipeLocal();F=Object.assign({},DEF);M=null;PC={};PLC=Object.assign({},PLD);cache.clear();try{sessionStorage.removeItem('acct')}catch(e){}meterMsg();fill();render()}
   try{localStorage.setItem('owner',who)}catch(e){}}
- authUi();if(user){try{const j=await api('/api/profile');sites=j.sites||[];fillSites();
+ authUi();applyAuthRole();if(user){try{const j=await api('/api/profile');sites=j.sites||[];fillSites();
   let first=true;try{first=!sessionStorage.getItem('acct');sessionStorage.setItem('acct','1')}catch(e){}
   if(sites.length&&(!saved||(first&&!sites.some(x=>x.name==F.name))))loadSite(sites[0].name)}catch(e){say(e.message)}}}
 function readForm(){$('f_volt').value=$('f_tar').value.slice(0,2);$('f_struct').value=$('f_tar').value[2];
@@ -1212,7 +1254,10 @@ const CASES={
 $('f_case').onchange=e=>{const c=CASES[e.target.value];if(!c)return;const nf=Object.assign({},F,c);
  FIELDS.forEach(k=>$('f_'+k).value=nf[k]);$('f_tar').value=nf.volt+nf.struct;
  applyLocal(['<b>Typical case loaded:</b> '+esc(c.name)+'. Replace these numbers with your own bill.']);e.target.value=''};
-applyRole(/^#detailed$/i.test(location.hash)?'tech':'owner');$('roleGate').hidden=true;
+try{const w=sessionStorage.getItem('who');if(PERM[w])who=w}catch(e){}
+$('whoSel').value=who;$('viewSw').classList.toggle('rolehide',who!='owner');window.sunWho=who;
+applyRole(who!='owner'||/^#detailed$/i.test(location.hash)?'tech':'owner');$('roleGate').hidden=true;
+$('facPanel').addEventListener('change',e=>{const t=e.target;if(t&&t.id)actLog('Changed facility setting: '+t.id.replace(/^f_/,''))});
 // ---- storage health: say so when the browser cannot keep the person's data ----
 let storeBad='';
 function storeShow(){const w=$('storeWarn');if(w){w.hidden=!storeBad;w.textContent=storeBad}}
