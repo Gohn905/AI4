@@ -212,13 +212,13 @@ main .ai h2{text-transform:none}main h2{text-transform:uppercase;letter-spacing:
 main.fit #protoPanel{background:transparent;border:0;box-shadow:none;padding:0;margin:0}
 main.fit #protoPanel h2{margin:0 0 8px}
 html.protoTab main{padding-bottom:0}
-.top .rs select{border:1px solid rgba(37,43,42,.35);background:#fff;color:var(--ink);padding:8px 10px;border-radius:9px;font:inherit;font-weight:650}.top .rs select:disabled{opacity:.8}
+.brole{margin:0 -4px}.brand select{-webkit-appearance:none;appearance:none;background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23252B2A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 4px center;border:0;color:inherit;font:inherit;font-weight:800;padding:4px 22px 4px 6px;margin-left:-5px;field-sizing:content;border-radius:9px;cursor:pointer}.brand select:hover,.brand select:focus-visible{background-color:rgba(255,255,255,.4)}.brand select option{background:#fff;color:#252B2A;font-weight:600}.brand select:disabled{background-image:none;padding-right:6px;cursor:default;opacity:1}.brand select:disabled:hover{background-color:transparent}
 .rolehide{display:none!important}
 .vo{position:relative}.vo::before{content:"View only for your role";display:block;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--mut);margin:0 0 6px}
 .vo button,.vo input,.vo select,.vo textarea{opacity:.5;cursor:not-allowed}
 .noap [data-tour=approve] [data-ap=approve]{display:none}.noap [data-tour=approve]::after{content:"Only an Approver or the Owner can approve a plan. Once it is approved you can export it here.";display:block;font-size:13px;color:var(--mut);margin-top:6px}
 .alog{width:100%;border-collapse:collapse;font-size:13px}.alog th,.alog td{text-align:left;padding:4px 8px;border-top:1px solid var(--line)}.alog th{font-size:11px;font-weight:700;color:var(--mut)}
-</style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span></span><span class="sp"></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
+</style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span></span><span class="sp"></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
 <div id="amsg" class="note" style="margin:0 0 6px"></div>
@@ -605,11 +605,13 @@ function applyPerms(){const P=PERM[who]||PERM.owner;
  let grp=null,any=false;const flush=()=>{if(grp)grp.classList.toggle('rolehide',!any)};
  Array.from($('dtabs').children).forEach(b=>{if(b.classList.contains('dgrp')){flush();grp=b;any=false}else{const ok=tabOk(b.dataset.dt);b.classList.toggle('rolehide',!ok);if(ok)any=true}});flush()}
 function setWho(w,quiet){if(!PERM[w])return;const prev=who;who=w;try{sessionStorage.setItem('who',w)}catch(e){}
- $('whoSel').value=w;$('viewSw').classList.toggle('rolehide',w!='owner');window.sunWho=w;if(window.sunSetRole)window.sunSetRole(w);
+ $('whoSel').value=w;sizeWho();$('viewSw').classList.toggle('rolehide',w!='owner');window.sunWho=w;if(window.sunSetRole)window.sunSetRole(w);
  if(w!='owner'&&role!='tech')applyRole('tech');if(!tabOk(dtab))dtab='ov';applyTab();if(!quiet&&prev!==w)actLog('Switched role to '+WHO[w].n)}
 function applyAuthRole(){const ur=((user&&user.userRoles)||[]).map(x=>String(x).toLowerCase()),r=['owner','approver','auditor','operator','analyst'].find(x=>ur.includes(x));
- if(r){setWho(r,true);$('whoSel').disabled=true;$('whoSel').title='Your role comes from your sign-in'}}
-$('whoSel').onchange=e=>setWho(e.target.value);
+ if(r){setWho(r,true);$('whoSel').disabled=true;$('whoSel').title='Your role comes from your sign-in';sizeWho()}}
+function sizeWho(){const e=$('whoSel');if(!e)return;try{const c=document.createElement('canvas').getContext('2d'),cs=getComputedStyle(e);c.font=cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;e.style.width=Math.ceil(c.measureText(e.options[e.selectedIndex].text).width)+(e.disabled?14:34)+'px'}catch(x){}}
+$('whoSel').onchange=e=>{setWho(e.target.value);sizeWho()};
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(sizeWho);
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#out [data-tour] button');if(!b)return;const k=b.closest('[data-tour]').dataset.tour,nm={sweep:'Ran the battery size sweep',reopt:'Ran the re-optimisation simulation',learn:'Ran forecast-error learning',stress:'Used the stress test',live:'Used the live monitor'}[k];if(nm)actLog(nm)});
 function applyRole(r){const prev=role;role=r;if(prev&&prev!==r){if(r=='owner'&&cur!==TODAY){techCur=cur;cur=TODAY;render()}else if(r=='tech'&&techCur){cur=techCur;techCur=null;render()}}$('pgTitle').textContent=r=='tech'?'Energy optimisation workspace':'Your energy, at a glance.';$('app').setAttribute('data-role',r);applyTab();if(document.querySelectorAll)document.querySelectorAll('[data-rp]').forEach(b=>b.classList.toggle('on',b.dataset.rp==r))}
 function setRole(r){applyRole(r);try{localStorage.setItem('role',r)}catch(e){}$('roleGate').hidden=true;maybeTour()}
@@ -1255,7 +1257,7 @@ $('f_case').onchange=e=>{const c=CASES[e.target.value];if(!c)return;const nf=Obj
  FIELDS.forEach(k=>$('f_'+k).value=nf[k]);$('f_tar').value=nf.volt+nf.struct;
  applyLocal(['<b>Typical case loaded:</b> '+esc(c.name)+'. Replace these numbers with your own bill.']);e.target.value=''};
 try{const w=sessionStorage.getItem('who');if(PERM[w])who=w}catch(e){}
-$('whoSel').value=who;$('viewSw').classList.toggle('rolehide',who!='owner');window.sunWho=who;
+$('whoSel').value=who;sizeWho();$('viewSw').classList.toggle('rolehide',who!='owner');window.sunWho=who;
 applyRole(who!='owner'||/^#detailed$/i.test(location.hash)?'tech':'owner');$('roleGate').hidden=true;
 $('facPanel').addEventListener('change',e=>{const t=e.target;if(t&&t.id)actLog('Changed facility setting: '+t.id.replace(/^f_/,''))});
 // ---- storage health: say so when the browser cannot keep the person's data ----
