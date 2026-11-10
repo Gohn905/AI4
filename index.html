@@ -218,6 +218,18 @@ html.protoTab main{padding-bottom:0}
 .vo button,.vo input,.vo select,.vo textarea{opacity:.5;cursor:not-allowed}
 .noap [data-tour=approve] [data-ap=approve]{display:none}.noap [data-tour=approve]::after{content:"Only an Approver or the Owner can approve a plan. Once it is approved you can export it here.";display:block;font-size:13px;color:var(--mut);margin-top:6px}
 .alog{width:100%;border-collapse:collapse;font-size:13px}.alog th,.alog td{text-align:left;padding:4px 8px;border-top:1px solid var(--line)}.alog th{font-size:11px;font-weight:700;color:var(--mut)}
+/* page background: a soft rising sun. Pure CSS (one fixed layer, no images, no animation), very faint so charts and numbers stay clear */
+body{background:#FFF8F1}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;--s:clamp(300px,44vw,580px);--cx:calc(100% - var(--s)*.2);--cy:calc(var(--s)*.0);
+ background:
+  radial-gradient(circle var(--s) at var(--cx) var(--cy),
+   rgba(255,176,80,.30) 0,rgba(255,192,112,.15) calc(var(--s)*.44),transparent calc(var(--s)*.44 + 1px),
+   transparent calc(var(--s)*.56 - 1px),rgba(245,158,11,.18) calc(var(--s)*.56),rgba(245,158,11,.18) calc(var(--s)*.56 + 2px),transparent calc(var(--s)*.56 + 3px),
+   transparent calc(var(--s)*.70 - 1px),rgba(245,158,11,.12) calc(var(--s)*.70),rgba(245,158,11,.12) calc(var(--s)*.70 + 2px),transparent calc(var(--s)*.70 + 3px),
+   transparent calc(var(--s)*.84 - 1px),rgba(245,158,11,.07) calc(var(--s)*.84),rgba(245,158,11,.07) calc(var(--s)*.84 + 2px),transparent calc(var(--s)*.84 + 3px),
+   transparent 100%),
+  linear-gradient(180deg,#FFFDF9 0%,#FFF6EC 55%,#FFECDB 100%)}
+@media print{body::before{display:none}}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span></span><span class="sp"></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
