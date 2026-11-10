@@ -208,6 +208,10 @@ main[data-role=tech] .chside{display:none}main[data-role=tech] .plangrid{grid-te
 .mini3dcard{padding:0;overflow:hidden;display:flex}.mini3dcard .mini3d{flex:1;min-height:210px;border-radius:0;border:0}#out>[data-tour=mini3d]{grid-column:span 5}.mini3d{position:relative;min-height:170px;border:1px solid var(--line,#e5dcc0);border-radius:12px;overflow:hidden;background:#fffaf0;cursor:pointer}.mini3d iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none;background:transparent}.mini3d:hover,.mini3d:focus-visible{border-color:var(--amb,#f59e0b);box-shadow:0 0 0 3px rgba(245,158,11,.25);outline:0}.mini3dlbl{position:absolute;left:0;right:0;bottom:0;padding:6px 8px;font-size:12px;font-weight:700;text-align:center;background:rgba(255,250,240,.92);color:var(--ink,#222)}@media(max-width:760px){.mini3d{min-height:200px}}
 main.fit #protoPanel{padding:6px}html.protoTab{scrollbar-width:none}html.protoTab::-webkit-scrollbar{display:none}
 main .ai h2{text-transform:none}main h2{text-transform:uppercase;letter-spacing:.12em;font-size:12px;line-height:1.4;color:var(--amb-d);font-weight:800;margin:0 0 10px}
+
+main.fit #protoPanel{background:transparent;border:0;box-shadow:none;padding:0;margin:0}
+main.fit #protoPanel h2{margin:0 0 8px}
+html.protoTab main{padding-bottom:0}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine</div><span id="roleSwitch" class="rs" role="group" aria-label="View"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><span class="sp"></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -556,7 +560,7 @@ function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a
 
 // ================= pages: Brief (owner view) and Detailed (tabs) =================
 const TABS={ov:['ribbon','headline','kpi','costbars','mini3d','flow','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','schedule','approve','changed'],ad:['live','reopt','learn','stress','sweep','assume','audit','changed'],fa:['changed'],lab:[],proto:[]};let dtab='ov';
-function fitProto(){const on=role=='tech'&&dtab=='proto',h=document.documentElement;h.classList.toggle('protoTab',on);if(!on)return;const f=$('proto3d');if(!f)return;const t=f.getBoundingClientRect().top+(window.scrollY||0);f.style.height=Math.max(460,window.innerHeight-t-14)+'px';}
+function fitProto(){const on=role=='tech'&&dtab=='proto',h=document.documentElement;h.classList.toggle('protoTab',on);if(!on)return;const f=$('proto3d');if(!f)return;const t=f.getBoundingClientRect().top+(window.scrollY||0);f.style.height=Math.max(460,window.innerHeight-t-6)+'px';}
 window.addEventListener('resize',()=>{try{fitProto()}catch(e){}});
 function applyTab(){const t=role=='tech';$('app').classList.toggle('fit',t&&(dtab=='fc'||dtab=='proto'));Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&(dtab=='fa'||dtab=='lab'||dtab=='proto')});$('dateCard').hidden=t&&(dtab=='proto'||dtab=='fa');$('facPanel').hidden=!(t&&dtab=='fa');$('labPanel').hidden=!(t&&dtab=='lab');$('protoPanel').hidden=!(t&&dtab=='proto');fitProto();
  navHl();fairLoad()}
@@ -1375,6 +1379,5 @@ window.addEventListener('beforeunload',()=>{if(L.mode=='serial')write('C,0,0,0,2
 window.__lab=L;
 })();
 </script>
-<div id="ver" style="text-align:center;font-size:11px;color:#8a8a8a;padding:10px 0 18px">Version 2026-11-07-lab3d &middot; opens on Brief</div>
 <script src="ops.js" defer></script>
 </body></html>
