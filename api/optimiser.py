@@ -5,8 +5,8 @@ the hours that count for maximum demand. Returns the cheapest schedule.
 Linear program solved with HiGHS (scipy).
 Extra inputs: eff (battery round-trip efficiency, default 0.90), grid_kwh_cap (optional cap on the day's total grid energy,
 soft: going over it is allowed but very costly, so the problem is never infeasible), and co2_allow (0 to 1): the share of the
-extra grid energy that the cheapest plan would add on top of the solar-only baseline that this plan may add.
-co2_allow 1 = no cap (cheapest plan), 0.5 = half of it, 0 = no extra grid energy (and so no extra CO2) at all. Diesel on/off decisions (binary) live
+grid energy that the cheapest plan buys above the least grid energy the equipment can reach (found by minimising grid energy first).
+co2_allow 1 = no cap (cheapest plan), 0.5 = halfway, 0 = the least grid energy possible (so the least CO2), cheapest bill among those plans. Diesel on/off decisions (binary) live
 in mems_milp.py and can be added here later as a MILP.
 """
 import math
@@ -179,12 +179,17 @@ def optimise(d):
         # The allowance is always measured against the cheapest plan for the WHOLE day. A re-plan locks the hours already gone
         # ("fixed") but must keep the same allowance: measuring it against what is left of the day halves it a second time, and the
         # re-plan then costs more than just carrying on with the old plan even when nothing in the forecast was wrong.
-        free = optimise({**{k: v for k, v in d.items() if k not in ("fixed", "soc_now_kwh")}, "co2_allow": 1})   # the cheapest plan, no cap
-        base = float(np.maximum(load + np.array(ev_baseline(d)) - pv, 0).sum()) * dt   # solar-only baseline grid energy incl. EVs charging immediately, kWh
-        extra = float(sum(free["grid"])) * dt - base
-        if extra <= 0.5:                                        # nothing extra to hold back
+        dfull = {k: v for k, v in d.items() if k not in ("fixed", "soc_now_kwh")}
+        free = optimise({**dfull, "co2_allow": 1})                                   # the cheapest plan, no cap
+        lowest = optimise({**dfull, "co2_allow": 1, "carbon_adder": 10.0, "grid_kwh_cap": 0, "rates": [0.0] * N, "md_rate_day": 0})   # prices ignored: the least grid energy this site can reach
+        g_free, g_min = float(sum(free["grid"])) * dt, float(sum(lowest["grid"])) * dt
+        # The only carbon source is energy bought from the grid, so the scale for the allowance runs from the LEAST grid energy the
+        # equipment can reach (0) to what the cheapest plan buys (1). Measuring it against a solar-only baseline instead let every
+        # strategy buy MORE than the cheapest plan and leave solar unused: the cheapest plan already buys less than solar-only.
+        extra = g_free - g_min
+        if extra <= 0.5:                                        # the cheapest plan is already the lowest-carbon plan
             return free if "fixed" not in d else optimise({**d, "co2_allow": 1})
-        return optimise({**d, "co2_allow": 1, "grid_kwh_cap": base + allow * extra})
+        return optimise({**d, "co2_allow": 1, "grid_kwh_cap": g_min + allow * extra + 0.5})
     per = N // 24                             # steps per hour
     md_hours = sorted({h * per + j for h in (int(x) for x in d.get("md_hours", []) if 0 <= int(x) < 24) for j in range(per)})
     P = cap / 2.0
