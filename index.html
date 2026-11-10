@@ -234,12 +234,12 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;--
 #dateCard.one{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:6px 12px}
 #dateCard.one>.bar{display:contents}
 #dateCard.one #yes,#dateCard.one #tod,#dateCard.one #tom,#dateCard.one .stratbar,#dateCard.one #info{display:none}
-#dateCard.one #ttl{order:3;font-size:19px;font-weight:800;letter-spacing:-.01em;cursor:pointer}#dateCard.one #badge{order:4}#dateCard.one #prev{order:1}#dateCard.one #next{order:2}#dateCard.one .sp{order:5;flex:1}#dateCard.one #vday{order:6}#dateCard.one #vweek{order:7}#dateCard.one #vmonth{order:8}
+#dateCard.one #ttl{order:3;font-size:19px;font-weight:800;letter-spacing:-.01em;cursor:pointer}#dateCard.one #calBtn{order:4}#dateCard.one #badge{order:5}#dateCard.one #prev{order:7}#dateCard.one #next{order:8}#dateCard.one .sp{order:6;flex:1}#dateCard.one #vday{order:6}#dateCard.one #vweek{order:7}#dateCard.one #vmonth{order:8}
 #dateCard.one{background:transparent;border:0;box-shadow:none;padding:2px 2px}
-#dateCard.one #dt{position:absolute;left:0;top:100%;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
+#dateCard.one #dt{position:absolute;left:50%;top:100%;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
 .stratr{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 /* arrows stay put; group names left; forecast note under the chart */
-#dateCard.one #prev,#dateCard.one #next{flex:none}
+#dateCard.one #prev,#dateCard.one #next{flex:none}#dateCard.one #vday,#dateCard.one #vweek,#dateCard.one #vmonth{display:none}#calBtn{display:none;white-space:nowrap;align-items:center;gap:6px;padding:5px 10px;font-weight:700}#dateCard.one #calBtn{display:inline-flex}@media(min-width:900px){#dateCard.one #calBtn{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}}#dateCard.one #prev,#dateCard.one #next{min-width:40px}
 main[data-role=tech] #dtabs .dgrp{text-align:left;align-self:stretch;padding-left:14px}
 main.fcTab #out>[data-tour=ribbon]{order:9}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span></span><span class="sp"></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
@@ -260,7 +260,7 @@ main.fcTab #out>[data-tour=ribbon]{order:9}
 <button id="yes">Yesterday</button><button id="tod">Today</button><button id="tom">Tomorrow</button><span class="sp"></span>
 <button id="vday">Day</button><button id="vweek">Week</button><button id="vmonth">Month</button></div>
 <div class="bar"><button id="prev" aria-label="Previous">&#9664;</button><input type="date" id="dt"><button id="next" aria-label="Next">&#9654;</button>
-<b id="ttl"></b> <span id="badge"></span>
+<b id="ttl"></b><button id="calBtn" type="button" aria-label="Pick a date" title="Pick a date"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Pick a date</span></button> <span id="badge"></span>
 <div class="stratbar"><b>Strategy</b><button id="qbtn" aria-expanded="false" title="What does the optimiser decide?">?</button><span id="tabs" class="bar" style="margin:0"></span></div></div>
 <div class="note" id="info" data-role="tech" style="margin-top:0"></div>
 </div>
@@ -1174,7 +1174,7 @@ $('chatFile').onchange=async()=>{const f=$('chatFile').files[0];if(!f)return;con
  else cAdd('msg b','I can read a meter CSV, or a .txt file with the text of your bill. PDFs and photos are not supported yet.')};
 function step(n){if(view=='day')cur=addD(cur,n);else if(view=='week')cur=addD(cur,7*n);else{const d=parse(cur);d.setDate(1);d.setMonth(d.getMonth()+n);cur=iso(d)}render()}
 const go=x=>{view='day';cur=x;render()};
-$('ttl').title='Click to pick another date';$('ttl').addEventListener('click',()=>{if($('dateCard').classList.contains('one')){const d=$('dt');try{d.showPicker()}catch(e){d.focus()}}});
+$('calBtn').addEventListener('click',()=>{const d=$('dt');try{d.showPicker()}catch(e){d.focus()}});$('ttl').title='Click to pick another date';$('ttl').addEventListener('click',()=>{if($('dateCard').classList.contains('one')){const d=$('dt');try{d.showPicker()}catch(e){d.focus()}}});
 $('yes').onclick=()=>go(addD(TODAY,-1));$('tod').onclick=()=>go(TODAY);$('tom').onclick=()=>go(addD(TODAY,1));
 $('vday').onclick=()=>{view='day';render()};$('vweek').onclick=()=>{view='week';render()};$('vmonth').onclick=()=>{view='month';render()};
 $('bView').onclick=e=>{const b=e.target.closest('button');if(b){view=b.id.slice(1);render()}};
