@@ -441,7 +441,7 @@ MVG:{n:'MV General',ep:29.83,eo:29.83,md:89.27,cap:29.43,net:59.84,ad:0,t:'MV Ge
 MVT:{n:'MV Time-of-Use',ep:31.32,eo:27.23,md:97.06,cap:30.19,net:66.87,ad:0,t:'MV ToU: peak 31.32, off-peak 27.23 sen/kWh. Maximum demand RM97.06/kW/month (30.19 + 66.87), billed on peak-period demand only. Retail RM200/month.'},
 HVG:{n:'HV General',ep:43.03,eo:43.03,md:31.21,cap:16.68,net:14.53,ad:0,t:'HV General: 43.03 sen/kWh. Maximum demand RM31.21/kW/month (16.68 + 14.53). Retail RM250/month.'},
 HVT:{n:'HV Time-of-Use',ep:44.52,eo:40.43,md:44.82,cap:21.76,net:23.06,ad:0,t:'HV ToU: peak 44.52, off-peak 40.43 sen/kWh. Maximum demand RM44.82/kW/month (21.76 + 23.06), peak-period demand only. Retail RM250/month.'}};
-const MODES=[{k:'cost',n:'Cost-saving',fx:1,wr:0,ca:1,rs:0},{k:'bal',n:'Balanced',fx:.5,wr:.02,ca:.5,rs:.2},{k:'zero',n:'Lowest-carbon',fx:1,wr:.02,ca:0,rs:.3}];
+const MODES=[{k:'cost',n:'Cost-saving',fx:1,wr:0,ca:1,rs:0},{k:'bal',n:'Balanced',fx:.5,wr:.02,ca:.5,rs:.2},{k:'zero',n:'Lowest-carbon',fx:1,wr:.02,ca:0,rs:0}];
 const NAMES={base:'Baseline',cost:'Optimiser: Cost-saving',bal:'Optimiser: Balanced',prod:'Optimiser: Production-first',zero:'Optimiser: Lowest-carbon'};
 const DEF={name:'APU',loc:'3.0553,101.7003',prof:'campus',follow:'bal',volt:'MV',struct:'T',afa:0,peak:4000,kwp:3000,bat:5000,flex:10,lim:4200,evn:8,evkw:50,eve:700,ef:0.6,eff:90};
 const FIELDS=['name','loc','prof','follow','volt','struct','afa','peak','kwp','bat','flex','lim','evn','evkw','eve','ef','eff'],NUMS=['afa','peak','kwp','bat','flex','evn','evkw','eve','ef','eff'];
@@ -587,7 +587,7 @@ function pcCard(r,past,K){
 function draw(r,b0,win,now){const W=760,H=290,L=54,B=30,T=10,bw=(W-L-8)/NS,hb=bw*S,ax=niceAxis(0,Math.max(...r.ld,...b0.ld,...r.sol,...r.g.map((g,h)=>g+r.b[h]),1)*1.03),mx=ax.hi,y=v=>H-B-(v/mx)*(H-B-T);
  let s='<defs><pattern id="mv" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--shift)" opacity=".30"/><rect width="2.5" height="6" fill="var(--shift)"/></pattern></defs>';
  s+=yGrid(ax,y,L,W-8)+yTitle(T,H-B,'kW');
- if(win)s+=`<rect x="${L+win[0]*hb}" y="${T}" width="${(win[1]-win[0])*hb}" height="${H-B-T}" fill="var(--grid)" opacity=".15"/><rect x="${L+win[0]*hb}" y="${H-B+3}" width="${(win[1]-win[0])*hb}" height="3" fill="var(--grid)" opacity=".5"/>`;
+ if(win)s+=`<rect x="${L+win[0]*hb}" y="${H-B+3}" width="${(win[1]-win[0])*hb}" height="3" fill="var(--grid)" opacity=".5"/>`;
  N.forEach(h=>{if(now!=null&&h==now)s+='<g opacity="0.5">';const x=L+h*bw+1,w=bw-2;let base=0;
   [[r.g[h],'--grid'],[r.b[h],'--bat'],[r.d[h],'--sun']].forEach(([v,c])=>{if(v>0.5){s+=`<rect x="${x}" y="${y(base+v)}" width="${w}" height="${y(base)-y(base+v)}" fill="var(${c})"/>`;base+=v}});
   const un=r.sol[h]-r.d[h];if(un>0.5)s+=`<rect x="${x}" y="${y(base+un)}" width="${w}" height="${y(base)-y(base+un)}" fill="none" stroke="var(--solar)" stroke-dasharray="3 2"/>`;
@@ -598,7 +598,7 @@ function draw(r,b0,win,now){const W=760,H=290,L=54,B=30,T=10,bw=(W-L-8)/NS,hb=bw
  s+=xAxis(t=>L+t*hb,H-B,0,24,3);
  if(now!=null&&typeof devMarks=='function')try{s+=devMarks(y,L,bw,H,B,T)}catch(e){}
  if(win&&r.peak>0)s+=`<line x1="${L+win[0]*hb}" x2="${L+win[1]*hb}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${L+win[1]*hb-4}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)" stroke="#fff" stroke-width="3" paint-order="stroke">billed peak ${Math.round(r.peak)} kW</text>`;
- s+=`<text x="${L}" y="${H-2}" font-size="10" fill="var(--mute)">Shaded band = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;
+ s+=`<text x="${L}" y="${H-2}" font-size="10" fill="var(--mute)">Blue strip under the time axis = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;
  const id='d'+(++drN);drReg[id]={r,L,bw,now};{const ks=Object.keys(drReg);if(ks.length>12)delete drReg[ks[0]]}
  return `<div class="drw${now!=null?' ov':''}"><svg data-dr="${id}" viewBox="0 0 760 290" role="img" aria-label="Supply split by source, every 30 minutes. Move over the chart to read the values."><g>${s}</g><rect class="drhl" x="0" y="${T}" width="${bw}" height="${H-B-T}" fill="#000" opacity=".07" display="none" pointer-events="none"/></svg><div class="drtip ph">${DRPH}</div></div><div class="legend"><span><i style="background:var(--solar)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border:1px dashed var(--solar)"></i>Unused solar</span><span><i style="background:repeating-linear-gradient(45deg,var(--shift) 0 2px,transparent 2px 5px);border:1px solid var(--shift)"></i>Work moved into this hour</span><span><i style="background:none;border:1px dashed var(--shift)"></i>Work moved out of this hour</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span>${now!=null?'<span><b>Solid</b> = recorded, <b>faded</b> = predicted</span>':''}</div>`}
 
@@ -1672,7 +1672,7 @@ window.addEventListener('message',e=>{const f=document.getElementById('proto3d')
 /* markers on the Energy usage chart: expected demand band and red triangles where the reading left it */
 function devMarks(y,L,bw,H,B,T){const r=DEV.res;if(!r||!DEV.j||cur!=TODAY)return'';const sr=DEV.j.series,R=DRL(),fl=dFloor();let s='',up='',dn='';
  for(let t=0;t<NS;t++){const f=sr.forecast_load[t],th=Math.max(R.load*f,fl),x=L+t*bw+bw/2;up+=(t?'L':'M')+x.toFixed(1)+' '+y(f+th).toFixed(1);dn='L'+x.toFixed(1)+' '+y(Math.max(0,f-th)).toFixed(1)+dn}
- s+='<path d="'+up+dn+'Z" fill="#12304A" opacity=".07" pointer-events="none"/>';
+ 
  const col={pv:'#D97706',load:'#B42318',grid:'#B42318'};
  r.eps.forEach(e=>{for(let t=e.a;t<=e.b;t++){const x=L+t*bw+bw/2,yy=H-B-3;s+='<path d="M'+(x-4).toFixed(1)+' '+yy+'L'+(x+4).toFixed(1)+' '+yy+'L'+x.toFixed(1)+' '+(yy-8)+'Z" fill="'+col[e.key]+'" stroke="#fff" stroke-width="1"><title>'+esc(dName(e.key)+' off from '+tm(e.a))+'</title></path>'}});
  s+='<text x="'+(L+6)+'" y="'+(H-B-14)+'" font-size="10" fill="#12304A" stroke="#fff" stroke-width="3" paint-order="stroke">Dashed line and band: expected demand (\u00b1'+N0(R.load*100)+'%). Triangles: reading left tolerance.</text>';return s}
