@@ -566,22 +566,29 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const DOWS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const CSS = `
-#sunops{position:fixed;inset:0;z-index:65;overflow:auto;background:var(--bg,#FFF7D6);color:var(--ink,#252B2A);font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif;padding-top:env(safe-area-inset-top,0)}
+#sunops{position:fixed;inset:0;z-index:65;overflow:auto;--s:clamp(300px,44vw,580px);--cx:calc(100% - var(--s)*.2);--cy:0px;background:radial-gradient(circle var(--s) at var(--cx) var(--cy),rgba(255,176,80,.30) 0,rgba(255,192,112,.15) calc(var(--s)*.44),transparent calc(var(--s)*.44 + 1px),transparent calc(var(--s)*.56 - 1px),rgba(245,158,11,.18) calc(var(--s)*.56),rgba(245,158,11,.18) calc(var(--s)*.56 + 2px),transparent calc(var(--s)*.56 + 3px),transparent calc(var(--s)*.70 - 1px),rgba(245,158,11,.12) calc(var(--s)*.70),rgba(245,158,11,.12) calc(var(--s)*.70 + 2px),transparent calc(var(--s)*.70 + 3px),transparent calc(var(--s)*.84 - 1px),rgba(245,158,11,.07) calc(var(--s)*.84),rgba(245,158,11,.07) calc(var(--s)*.84 + 2px),transparent calc(var(--s)*.84 + 3px),transparent 100%) fixed,linear-gradient(180deg,#FFFDF9 0%,#FFF6EC 55%,#FFECDB 100%) fixed;color:var(--ink,#252B2A);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;padding-top:env(safe-area-inset-top,0)}
 #sunops[hidden]{display:none!important}
 #sunops *{box-sizing:border-box}
 #sunops .wrap{max-width:1280px;margin:0 auto;padding:14px 16px 60px}
-#sunops .sotop{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px}
-#sunops h1{font-size:22px;margin:0;letter-spacing:-.02em}
-#sunops h2{font-size:17px;margin:0 0 6px}
+#sunops .sotop{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 0;margin:-14px 0 14px;background:var(--amb,#F59E0B);box-shadow:0 0 0 100vmax var(--amb,#F59E0B),0 2px 10px rgba(146,64,14,.18);clip-path:inset(0 -100vmax)}
+#sunops h1{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:800;margin:0 14px 0 0;color:var(--acc,#252B2A);white-space:nowrap}
+#sunops .sunmark{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#FFF7D6;color:var(--ink,#252B2A);font-size:19px;box-shadow:0 0 0 3px rgba(255,255,255,.4)}
+#sunops .sotop .tag{background:rgba(255,255,255,.55)}
+#sunops .sotop .note{color:var(--ink,#252B2A)}
+#sunops .sotop button{border:0;background:transparent;padding:10px 15px;border-radius:9px;font-weight:650}
+#sunops .sotop button:hover{background:rgba(255,255,255,.4)}
+#sunops .sotop button.on,#sunops .sotop button.pri{background:#fff;box-shadow:0 1px 3px rgba(37,43,42,.2)}
+#sunops .sotop .seg{background:transparent;border:0;gap:6px}#sunops .sotop .seg button{border-right:0;border-radius:9px;padding:6px 12px}
+#sunops h2{color:var(--acc,#252B2A);font-size:19px;letter-spacing:-.015em;margin:0 0 4px}
 #sunops h3{font-size:14px;margin:12px 0 4px}
 #sunops .sp{flex:1}
-#sunops .card{background:#fff;border:1px solid var(--line,#E7E0CA);border-radius:12px;padding:14px;margin-bottom:12px}
-#sunops .card.soft{background:var(--card,#F3FAEE);border-color:var(--card-line,#D3E5C6)}
+#sunops .card{background:var(--card,#F3FAEE);border:1px solid var(--card-line,#D3E5C6);border-radius:10px;padding:14px;margin-bottom:12px}
+#sunops .card.soft{background:#fff;border-color:var(--line,#E7E0CA)}
 #sunops .note{color:var(--mut,#5B6360);font-size:13px;margin:4px 0}
 #sunops .warn{background:#FFF3CD;border:1px solid #F0D98A;border-radius:10px;padding:8px 12px;font-size:13px;margin:8px 0}
 #sunops .bad{background:#FDE8E8;border:1px solid #F3B4B4;border-radius:10px;padding:8px 12px;font-size:13px;margin:8px 0}
 #sunops .goodbox{background:#E8F6EC;border:1px solid #B7DFC3;border-radius:10px;padding:8px 12px;font-size:13px;margin:8px 0}
-#sunops button,#sunops select,#sunops input{font:inherit;color:inherit;background:#fff;border:1px solid var(--line,#E7E0CA);border-radius:8px;padding:6px 10px}
+#sunops button,#sunops select,#sunops input{font:inherit;color:inherit;background:#fff;border:1px solid var(--line,#E7E0CA);border-radius:6px;padding:6px 10px}
 #sunops button{cursor:pointer}
 #sunops button:hover:not(:disabled){border-color:var(--amb,#F59E0B)}
 #sunops button:disabled{opacity:.45;cursor:not-allowed}
@@ -593,7 +600,8 @@ const CSS = `
 #sunops .seg button{border:0;border-radius:0;border-right:1px solid var(--line,#E7E0CA)}
 #sunops .seg button:last-child{border-right:0}
 #sunops .tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
-#sunops .tabs button{border-radius:999px}
+#sunops .tabs button{border-radius:6px;font-weight:600}
+#sunops button.on:hover{background:#E08A00;border-color:#E08A00}
 #sunops .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0}
 #sunops .grid{display:grid;gap:12px}
 #sunops .g2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
@@ -601,14 +609,15 @@ const CSS = `
 #sunops .live{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px}
 @media(max-width:980px){#sunops .live{grid-template-columns:1fr}}
 #sunops .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px}
-#sunops .kpi{background:#fff;border:1px solid var(--line,#E7E0CA);border-radius:10px;padding:8px 10px}
+#sunops .kpi{background:transparent;border:1px solid var(--line,#E7E0CA);border-radius:8px;padding:8px 10px}
 #sunops .kpi b{display:block;font-size:20px;line-height:1.2}
 #sunops .kpi span{font-size:12px;color:var(--mut,#5B6360)}
 #sunops .kpi.hl{background:#E8F6EC;border-color:#B7DFC3}
 #sunops table{border-collapse:collapse;width:100%;font-size:13px}
 #sunops th,#sunops td{padding:5px 8px;border-bottom:1px solid var(--line,#E7E0CA);text-align:right;white-space:nowrap}
 #sunops th:first-child,#sunops td:first-child{text-align:left}
-#sunops th{font-size:12px;color:var(--mut,#5B6360);font-weight:600;position:sticky;top:0;background:#fff}
+#sunops th{font-size:12px;color:var(--mut,#5B6360);font-weight:500;position:sticky;top:0;background:var(--card,#F3FAEE)}
+#sunops .card.soft th{background:#fff}
 #sunops .tw{overflow-x:auto;max-height:420px}
 #sunops .chart{position:relative}
 #sunops .chart svg{width:100%;height:auto;display:block}
@@ -627,7 +636,7 @@ const CSS = `
 #sunops .form label{display:block;font-size:12px;color:var(--mut,#5B6360);margin-bottom:2px}
 #sunops .form input,#sunops .form select{width:100%}
 #sunops .role{display:inline-flex;gap:6px;align-items:center}
-#sunops .tag{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:999px;background:#EEE9D6}
+#sunops .tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--line,#E7E0CA)}
 #sunops .spin{display:inline-block;width:14px;height:14px;border:2px solid #ddd;border-top-color:#F59E0B;border-radius:50%;animation:so-spin 1s linear infinite;vertical-align:-2px}
 @keyframes so-spin{to{transform:rotate(360deg)}}
 #sunops input[type=range]{padding:0;width:min(420px,100%)}
@@ -942,7 +951,7 @@ const dis = ok => ok ? '' : 'disabled';
 const TABS = [['live', 'Play the day'], ['scen', 'Compare plans'], ['bill', 'Monthly bill vs TNB'], ['twin', 'Did the forecast hold?'], ['data', 'Data health'], ['appr', 'Approvals & audit'], ['fac', '3D factory'], ['set', 'Settings & data']];
 
 function shell() {
-  return `<div class="sotop"><h1>&#9788; Operations console</h1><span class="tag">Planning simulation. Never controls equipment.</span><span class="sp"></span>
+  return `<div class="sotop"><h1><span class="sunmark">&#9788;</span>Sun Shine - Operations</h1><span class="tag">Planning simulation. Never controls equipment.</span><span class="sp"></span>
     <span class="role"><span class="note" style="margin:0">Facility</span><span class="seg" role="group" aria-label="Facility">${Object.keys(FACS).map(k => `<button data-act="fac" data-v="${k}" class="${ST.fac === k ? 'on' : ''}" title="${esc(FACS[k].name)}">${esc(FACS[k].short)} (${FACS[k].step})</button>`).join('')}</span></span>
     <span class="role"><span class="note" style="margin:0">Your role</span><b>${esc(ROLES[ST.role].name)}</b></span>
     <button data-act="close" class="pri">Back to Sun Shine</button></div>
