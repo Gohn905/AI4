@@ -63,7 +63,7 @@ body.embed main{height:100vh;display:flex;flex-direction:column;max-width:none}
 .lab.r .ln{justify-content:flex-end}
 .ln b{font-weight:500}.ln .w{color:var(--mut)}
 .lab.warn .w,.lab.bad .w{color:var(--c);font-weight:500}
-.lab.on .ln b{font-weight:700}
+.lab.on .ln b{font-weight:700}.lab.on.r{text-align:left}.lab.on.r .ln{justify-content:flex-start}.lab.on.r .lr{padding:0 0 0 14px}.lab.on.r .ns{margin:3px 0 0 14px}.lab.on{background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.14);border-radius:10px;padding:7px 10px;box-shadow:0 2px 10px rgba(0,0,0,.12);max-width:290px!important}
 .lr{color:var(--mut);padding-left:14px}.lab.r .lr{padding-left:0;padding-right:14px}
 .lr em{font-style:normal;color:var(--fg);font-variant-numeric:tabular-nums}
 .ns{margin:3px 0 0 14px;font-size:11.5px;line-height:1.4;color:var(--mut)}.lab.r .ns{margin:3px 14px 0 0}
@@ -120,7 +120,7 @@ const PR1=mkPR(-98,'line1');
 const PRL=210,PRA=22,PRB=232;
 function placePR(P){P.forEach(m=>{if(m.position.x>PRB)m.position.x-=PRL;const s=Math.max(0.02,Math.min(1,Math.min(m.position.x-PRA,PRB-m.position.x)/20));m.scale.set(s,s,s);m.position.y=56+7.5*s;});}
 placePR(PR1);
-const EL=[['panel1','Solar panel 1'],['panel2','Solar panel 2'],['panel3','Solar panel 3'],['battery','Battery'],['line1','Conveyor belt'],['ev','EV charger']];
+const EL=[['panel3','Solar panel 1'],['panel2','Solar panel 2'],['panel1','Solar panel 3'],['battery','Battery'],['line1','Conveyor belt'],['ev','EV charger']];
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),plaus=v=>isFinite(v)&&v>=2.5&&v<=4.5;
 let S=null,sel=null,hl=null,labMode='none',labAt=0;
 /* same rules as the lab page */
@@ -285,7 +285,7 @@ hudRender();
 
 /* ===== Status labels for every part: text in two side columns + thin leader lines (nothing covers the model) ===== */
 const cw=document.querySelector('.cvwrap'),ovl=$('ovl'),hsvg=$('hsvg'),NS_='http://www.w3.org/2000/svg';
-const SHORT={panel1:'Panel 1',panel2:'Panel 2',panel3:'Panel 3',battery:'Battery',line1:'Conveyor',ev:'EV charger'};
+const SHORT={panel1:'Panel 3',panel2:'Panel 2',panel3:'Panel 1',battery:'Battery',line1:'Conveyor',ev:'EV charger'};
 let lastKey='',dirty=true,ANCH=null,lastW=0;
 const hv=new THREE.Vector3(),TG={};
 function anchors(){if(ANCH)return ANCH;ANCH={};EL.forEach(a=>{const b=new THREE.Box3();M.filter(m=>m.userData.el===a[0]&&!m.userData.prod).forEach(m=>{m.updateMatrixWorld(true);b.expandByObject(m);});if(!b.isEmpty())ANCH[a[0]]=b.getCenter(new THREE.Vector3());});return ANCH;}
@@ -305,7 +305,7 @@ function hudRender(){
    +rows.map(r=>'<div class="lr">'+r[0]+' <em>'+String(r[1]).replace(/<div class="bar[\s\S]*?<\/div>/,'')+'</em></div>').join('')
    +(on&&s.note?'<div class="ns">'+s.note+'</div>':'');
   const cls='lab '+s.k+(on?' on':'')+(t.right?' r':'');
-  if(t.b.className!==cls)t.b.className=cls;t.k=s.k;
+  if(t.b.className!==cls){t.b.className=cls;t.h=0;t.w=0;dirty=true;}t.k=s.k;
   if(h!==t.html){t.html=h;t.b.innerHTML=h;t.h=0;t.w=0;dirty=true;}});
  $('ovsum').textContent=Object.keys(cnt).length===1&&cnt.Good?'Everything looks good':Object.keys(cnt).map(k=>cnt[k]+' '+k.toLowerCase()).join(' · ');
  $('card').hidden=!(sel&&cw.clientWidth<560);
@@ -321,17 +321,18 @@ function place(){
  EL.forEach(a=>{const id=a[0],t=TG[id];hv.copy(A[id]).project(cam);const vis=hv.z<=1&&(!sel||id===sel);t.b.style.display=vis?'':'none';t.g.style.display=vis?'':'none';
   if(vis){if(!t.h){t.h=t.b.offsetHeight||40;t.w=t.b.offsetWidth||colW;}L.push({id,t,x:(hv.x+1)/2*W,y:(1-hv.y)/2*H});}});
  L.sort((a,b)=>a.x-b.x);const half=Math.ceil(L.length/2);
- (L.length===1?(L[0].x<W/2?[[],L]:[L,[]]):[L.slice(0,half),L.slice(half)]).forEach((col,ci)=>{
+ (L.length===1?(L[0].x<W/2?[L,[]]:[[],L]):[L.slice(0,half),L.slice(half)]).forEach((col,ci)=>{
   const right=ci===1,top0=34,gap=12;col.sort((a,b)=>a.y-b.y);
-  col.forEach(o=>{o.ty=clamp(o.y-10,top0,Math.max(top0,H-o.t.h-8));});
+  col.forEach(o=>{o.ty=sel?top0:clamp(top0+(o.y-10-top0)*0.5,top0,Math.max(top0,H-o.t.h-8));});
   for(let i=1;i<col.length;i++){const m=col[i-1].ty+col[i-1].t.h+gap;if(col[i].ty<m)col[i].ty=m;}
   for(let i=col.length-1;i>=0;i--){const mx=(i===col.length-1?H-8:col[i+1].ty-gap)-col[i].t.h;if(col[i].ty>mx)col[i].ty=Math.max(top0,mx);}
   col.forEach(o=>{const t=o.t,x=right?W-10-t.w:10,ly=o.ty+10,ex=right?x-8:x+t.w+8;
    if(t.right!==right){t.right=right;t.b.classList.toggle('r',right);}
    t.b.style.transform='translate('+x.toFixed(1)+'px,'+o.ty.toFixed(1)+'px)';
-   const dx=ex-o.x,dy=ly-o.y;let d='M'+o.x.toFixed(1)+' '+o.y.toFixed(1);
-   if(Math.abs(dx)>Math.abs(dy)+6)d+=' L'+(o.x+Math.sign(dx)*Math.abs(dy)).toFixed(1)+' '+ly.toFixed(1);
-   d+=' L'+ex.toFixed(1)+' '+ly.toFixed(1);t.p.setAttribute('d',d);
+   /* selected box below-left/right of nothing: join its bottom edge when the part is lower than the box, so the line slants straight up into it */
+   const bot=sel===o.id&&o.y>o.ty+t.h+6,ex2=bot?clamp(o.x,x+14,x+t.w-14):ex,ly2=bot?o.ty+t.h:ly,dx=ex2-o.x,dy=ly2-o.y;let d='M'+o.x.toFixed(1)+' '+o.y.toFixed(1);
+   if(!bot&&Math.abs(dx)>Math.abs(dy)+6)d+=' L'+(o.x+Math.sign(dx)*Math.abs(dy)).toFixed(1)+' '+ly2.toFixed(1);
+   d+=' L'+ex2.toFixed(1)+' '+ly2.toFixed(1);t.p.setAttribute('d',d);
    t.r.setAttribute('cx',o.x.toFixed(1));t.r.setAttribute('cy',o.y.toFixed(1));t.c.setAttribute('cx',o.x.toFixed(1));t.c.setAttribute('cy',o.y.toFixed(1));
    t.g.setAttribute('class',t.k+(sel===o.id?' on':''));});
  });
