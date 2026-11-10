@@ -26,7 +26,7 @@ td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}td:fi
 
 .ribbon{border-left:6px solid var(--blue);background:rgba(37,99,235,.09);padding:9px 12px;border-radius:6px;font-size:14px;margin-bottom:12px}.ribbon b{letter-spacing:.04em}.ribbon.past{border-left-color:var(--mut);background:rgba(102,114,128,.10)}
 .card.fcast{border-style:dashed;border-color:var(--blue)}.c.fc{border-style:dashed}.pckpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:2px 0 12px}.pcT{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px}.pcT b{display:block;font-size:20px;color:var(--acc);line-height:1.15}.pcT span:not(.ico){font-size:12px;color:var(--mut);display:block}
-.drw{position:relative}.drw svg{touch-action:pan-y;cursor:crosshair;display:block;width:100%}.drw{display:block}.drtip{position:absolute;top:8px;right:10px;width:210px;z-index:2;pointer-events:none;background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.55;box-shadow:var(--shadow);white-space:normal}.drtip{box-sizing:border-box}.drtip.lft{right:auto;left:62px}.drtip.ph{display:none}@media(max-width:700px){.drtip{width:180px;font-size:11px}}.drtip i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}.drs{color:var(--mute);font-weight:600}
+.drw{position:relative}.drw svg{touch-action:pan-y;cursor:crosshair}.drw{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:10px;align-items:start}.drtip{pointer-events:none;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.55;box-shadow:var(--shadow);white-space:normal}.drtip{min-height:10.5em;box-sizing:border-box}.drtip.ph{color:var(--mute)}@media(max-width:700px){.drw{grid-template-columns:minmax(0,1fr)}}.drtip i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}.drs{color:var(--mute);font-weight:600}
 .pcw{position:relative}.pcw svg{touch-action:pan-y;cursor:crosshair}.pctip{position:absolute;pointer-events:none;transform:translate(-50%,calc(-100% - 16px));background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;box-shadow:var(--shadow);white-space:nowrap;line-height:1.4}
 @media(max-width:640px){.pckpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .stats{display:flex;flex-wrap:wrap;gap:18px;margin-top:8px;font-size:14px}.stats span{color:var(--mut);font-size:12px;display:block}
@@ -38,7 +38,7 @@ h3.sec{font-size:14px;margin:14px 0 6px;color:var(--ink)}details.adv{margin-top:
 .chead{display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}#chatLog{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
 .msg{max-width:90%;padding:8px 10px;border-radius:10px;font-size:14px;white-space:pre-wrap}.msg.u{align-self:flex-end;background:var(--amb);color:var(--ink)}.msg.b{align-self:flex-start;background:var(--bg);border:1px solid var(--line)}.msg.n{align-self:center;font-size:12px;color:var(--mut)}
 .prop{border:1px dashed var(--sun);border-radius:10px;padding:8px 10px;font-size:13px}.prop ul{margin:4px 0 8px;padding-left:18px}.chips{display:flex;flex-wrap:wrap;gap:6px;padding:6px 12px}.chips button{font-size:12px;padding:4px 8px;border-radius:99px}
-.cin{display:flex;gap:6px;padding:8px 10px;border-top:1px solid var(--line);align-items:flex-end}.cin textarea{flex:1;resize:none;min-height:34px;max-height:110px;font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+.cin{display:flex;gap:6px;padding:8px 10px;border-top:1px solid var(--line);align-items:flex-end}.cin textarea{flex:1;resize:none;font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:6px;padding:6px 8px}
 main[data-role=owner] [data-role=tech],main[data-role=tech] [data-role=owner]{display:none!important}
 .rs{display:inline-flex;align-items:center;gap:4px}.rs button.on{font-weight:600}
 #roleGate{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}.rg{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;max-width:560px;width:100%}
@@ -59,7 +59,7 @@ table.sch td,table.sch th{padding:4px 8px}table.sch tr.bw td{background:rgba(181
 /* ===== Sun Shine look (from the supplied mockup) ===== */
 body{font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
 main{max-width:1480px;padding:26px clamp(16px,3vw,42px) 54px}
-.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px clamp(16px,4vw,56px);background:var(--amb);border-bottom:1px solid rgba(37,43,42,.14);box-shadow:0 2px 10px rgba(146,64,14,.18)}
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px clamp(16px,4vw,56px);background:var(--amb);border-bottom:1px solid rgba(37,43,42,.14);box-shadow:0 2px 10px rgba(146,64,14,.18)}
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;color:var(--acc);white-space:nowrap;margin-right:14px}
 .sunmark{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#FFF7D6;color:var(--ink);font-size:19px;box-shadow:0 0 0 3px rgba(255,255,255,.4)}
 .top .rs{gap:6px}.top .rs button,.top>button{border:0;background:transparent;color:var(--ink);padding:10px 15px;border-radius:9px;font-weight:650}
@@ -191,9 +191,9 @@ input[type=range]{accent-color:#F59E0B}
 #labPanel .labset{margin:10px 0 0;font-size:13px}
 .plangrid{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:16px;align-items:start}.plmain{min-width:0}.chside #chTabs{display:flex;flex-direction:column;gap:6px}.chside #chTabs button{width:100%;text-align:left;margin:0}.plrail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}.plrail .note{grid-column:1/-1}.plrail .strategy{padding:8px 10px;height:auto}.plrail .strategy.selected{padding:7px 9px}.plrail .strategy h3{margin:0 0 4px}@media(max-width:760px){.plangrid{grid-template-columns:1fr}.chside{order:-1}.chside #chTabs{flex-direction:row;flex-wrap:wrap}.chside #chTabs button{width:auto}.plrail{grid-template-columns:1fr}}
 main[data-role=tech] .pagehead{margin-bottom:6px;align-items:center}main[data-role=tech] .pagehead .eyebrow,main[data-role=tech] .pagehead>div>.note{display:none}main[data-role=tech] .pagehead h1{font-size:20px;margin:0}main[data-role=tech] #dateCard{padding:8px 12px;margin-bottom:8px}main[data-role=tech] #dtabs{position:sticky;top:0;z-index:6;background:var(--bg);padding:6px 0;margin:0 0 8px!important}
-main.fit .ribbon{padding:4px 10px;font-size:12px;margin-bottom:6px}main.fit .ribbon span[data-role=tech],main.fit [data-tour=changed],main.fit #info,main.fit .plrail .note,main.fit #protoPanel .cardhead .muted,main.fit #protoPanel>.note{display:none}main.fit .card{margin-bottom:8px;padding:10px 14px}main.fit .plmain svg{max-height:calc(100vh - 340px);min-height:200px}main.fit #ct_use .drw{display:block}main.fit #ct_use .drw svg{width:100%;height:auto}main.fit .plrail{margin-top:6px}main.fit .plrail svg{height:40px!important}main.fit .plrail .strategy{padding:5px 8px}main.fit #protoPanel{padding:8px 12px}
+main.fit .ribbon{padding:4px 10px;font-size:12px;margin-bottom:6px}main.fit .ribbon span[data-role=tech],main.fit [data-tour=changed],main.fit #info,main.fit .plrail .note,main.fit #protoPanel .cardhead .muted,main.fit #protoPanel>.note{display:none}main.fit .card{margin-bottom:8px;padding:10px 14px}main.fit .plmain svg{max-height:calc(100vh - 340px);min-height:200px}main.fit #ct_use .drw{grid-template-columns:minmax(0,min(100%,calc(max(200px,100vh - 450px)*2.6207))) minmax(210px,300px);justify-content:start}main.fit #ct_use .drw svg{width:100%;height:auto}main.fit .plrail{margin-top:6px}main.fit .plrail svg{height:40px!important}main.fit .plrail .strategy{padding:5px 8px}main.fit #protoPanel{padding:8px 12px}
 main[data-role=tech] .pagehead{display:none}
-.top #auth{background:transparent;border:0;padding:6px 10px;color:var(--ink);display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}.top #auth a{color:var(--ink);font-weight:650;text-decoration:none;padding:8px 12px;border-radius:9px}.top #auth a:hover{background:rgba(255,255,255,.4)}.top #auth select{background:#fff;border:1.5px solid rgba(37,43,42,.4);color:var(--ink);font-weight:650;border-radius:9px;padding:8px 10px;max-width:220px}.top #auth select:hover,.top #auth select:focus{background:#fff}.top #auth option{background:#fff;color:var(--ink)}
+.top #auth{background:transparent;border:0;padding:6px 10px;color:var(--ink);display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}.top #auth a{color:var(--ink);font-weight:650;text-decoration:none;padding:8px 12px;border-radius:9px}.top #auth a:hover{background:rgba(255,255,255,.4)}.top #auth select{background:transparent;border:1.5px solid rgba(37,43,42,.4);color:var(--ink);font-weight:650;border-radius:9px;padding:8px 10px;max-width:220px}.top #auth select:hover,.top #auth select:focus{background:rgba(255,255,255,.4)}.top #auth option{background:#fff;color:var(--ink)}
 .top .rs button.on,.top .rs button.on:hover{background:rgba(37,43,42,.16);box-shadow:inset 0 0 0 1.5px rgba(37,43,42,.55)}
 
 /* one vertical list: main tabs + chart tabs */
@@ -244,13 +244,42 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;--
 #dateCard.one #prev,#dateCard.one #next{flex:none}#dateCard.one #vday,#dateCard.one #vweek,#dateCard.one #vmonth{display:none}#calBtn{display:inline-flex;white-space:nowrap;align-items:center;gap:6px;padding:5px 10px;font-weight:700}#dateCard.one #dt{left:auto;right:0}#dateCard.one #calBtn{flex:none;min-width:40px;justify-content:center;padding:5px 8px}#dateCard.one #prev,#dateCard.one #next{min-width:40px}
 main[data-role=tech] #dtabs .dgrp{text-align:left;align-self:stretch;padding-left:14px}
 main.fcTab #out>[data-tour=ribbon]{order:9}main.adTab #out>[data-tour=sweep]{order:-1}#amsg:empty{display:none}main[data-role=tech]{padding-top:11px}main[data-role=tech] #dateCard.one{min-height:41px;margin-top:0;padding:0 2px}
-/* date card, Detailed tabs: written date + Today badge at the left, arrows + calendar at the far right next to the tab rail */
-#dateCard.one #ttl{display:block;order:1}#dateCard.one #badge{display:inline-block;order:2}#dateCard.one .sp{display:block;order:3;flex:1}#dateCard.one #prev{order:4}#dateCard.one #calBtn{order:5}#dateCard.one #next{order:6}
-.facbtns{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}.facbtns>span[hidden]{display:none}#acctBtns{display:inline-flex;flex-wrap:wrap;gap:8px}.facbtns .note{margin:0}
-</style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span></span><span class="sp"></span><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
+
+/* deviation strip + panel */
+.devstrip{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 14px;border-radius:12px;border:1px solid;cursor:pointer;font-size:14.5px;line-height:1.35}
+.devstrip[hidden]{display:none}
+.devstrip .dsdot{width:12px;height:12px;border-radius:50%;flex:none;background:currentColor}
+.devstrip .dstxt{flex:1;font-weight:600}.devstrip .dsp{font-weight:500;opacity:.85;margin-left:6px;white-space:nowrap}
+.devstrip .dsgo{white-space:nowrap;font-weight:700}
+.devstrip.ok{background:#ECFDF3;border-color:#A6E3BD;color:#05603A}
+.devstrip.warn{background:#FFFAEB;border-color:#FEC84B;color:#93370D}
+.devstrip.bad{background:#FEF3F2;border-color:#F3B4B4;color:#B42318}
+.devstrip.idle{background:#F4F4F1;border-color:#DAD8D0;color:#5B6360}
+.devstrip:focus-visible{outline:3px solid #12304A;outline-offset:2px}
+.devpanel{position:fixed;inset:0;z-index:9000;background:rgba(18,48,74,.45);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:4vh 12px}
+.devpanel[hidden]{display:none}
+.dpbox{background:#fff;border-radius:14px;max-width:820px;width:100%;padding:18px 20px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.dpbox h2{margin:0;font-size:20px}.dpbox h3{margin:18px 0 6px;font-size:16px}
+.dpt{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.dpkind{padding:8px 10px;border-radius:8px;font-size:13px;background:#FFF3D6;border:1px solid #FEC84B}.dpkind.meas{background:#ECFDF3;border-color:#A6E3BD}
+.dpkind select{margin-left:6px}
+.dpep{border:1px solid #DAD8D0;border-left-width:5px;border-radius:8px;padding:8px 10px;margin:8px 0}
+.dpep.high{border-left-color:#B42318;background:#FEF3F2}.dpep.warn{border-left-color:#F59E0B;background:#FFFAEB}.dpep.info{border-left-color:#2563eb}
+.dph{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.dpsev{font-size:11px;font-weight:700;text-transform:uppercase;padding:1px 8px;border-radius:99px;background:#12304A;color:#fff}
+.dpend{font-size:12px;color:#5B6360}
+.dpg{display:grid;grid-template-columns:130px 1fr;gap:3px 10px;margin-top:6px;font-size:13.5px}.dpg>span{color:#5B6360}
+.dpok{color:#05603A;font-weight:600}
+.dpv{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:10px;margin:6px 0;border:1px solid}
+.dpv b{font-size:17px}.dpv span{font-size:13px}
+.dpv.ok{background:#ECFDF3;border-color:#A6E3BD;color:#05603A}.dpv.bad{background:#FEF3F2;border-color:#F3B4B4;color:#B42318}.dpv.wait{background:#F4F4F1;border-color:#DAD8D0;color:#5B6360}
+.dpk{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0}
+.dpk>div{border:1px solid #DAD8D0;border-radius:8px;padding:8px}.dpk>div.x{border-color:#F3B4B4;background:#FEF3F2}
+.dpk b{display:block;font-size:20px}.dpk span{font-size:12px;color:#5B6360}
+@media print{.devstrip,.devpanel{display:none!important}}
+</style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span></span><span class="sp"></span><button id="calcBtn">How we calculated this</button><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
-<div id="amsg" class="note" role="status" aria-live="polite" style="margin:0 0 6px"></div>
+<div id="amsg" class="note" style="margin:0 0 6px"></div>
 <div class="pagehead"><div><div class="eyebrow" title="Facility energy intelligence">Facility energy intelligence</div><h1 id="pgTitle" title="Pick a day, week or month and a strategy. See what the plan saves compared with the baseline.">Your energy, at a glance.</h1><div class="note" data-role="tech" style="margin:0">Pick a day, week or month and a strategy. See what the plan saves compared with the baseline.</div><div class="bsub" id="bSub" data-role="owner"></div></div><div class="seg" id="bView" data-role="owner" role="group" aria-label="Period"><button id="bday">Day</button><button id="bweek">Week</button><button id="bmonth">Month</button></div></div>
 
 
@@ -281,6 +310,7 @@ main.fcTab #out>[data-tour=ribbon]{order:9}main.adTab #out>[data-tour=sweep]{ord
 <p class="note"><b>Goal:</b> lowest bill (energy charge plus maximum demand charge). The baseline is solar only. <b>Cost-saving</b> minimises the bill. <b>Balanced</b> keeps 20% of the battery in reserve for outages and forecast error, moves half as much equipment, adds a small battery wear cost, and allows only half of the extra CO&#8322; that Cost-saving would add. <b>Lowest-carbon</b> allows no extra CO&#8322; at all: the battery only stores energy that would otherwise be wasted, so it never adds grid energy, and the EV chargers still move to cheaper hours. It also keeps 30% of the battery in reserve, because it cannot top the battery up from the grid if solar under-delivers. The CO&#8322; limit matters because charging the battery from the grid loses energy: with a 90% battery, about 11 kWh is lost for every 100 kWh discharged.</p>
 <p class="note"><b>Not included yet:</b> diesel or gas, individual machines with start and stop rules, real meter history (the demand forecast is trained on synthetic history), export income, forecast uncertainty, the retail charge, the 1.6% KWTBB levy and tax.</p></div>
 
+<div id="devStrip" class="devstrip idle" hidden></div>
 <div id="out"><div class="card note">Loading&hellip;</div></div>
 <div class="card" id="labPanel" data-role="tech" hidden>
 <div class="cardhead"><div><h2>Lab model: a small factory with an ESP32</h2><div class="muted small">Three small solar panels act as light sensors. This page decides what the factory does.</div></div><span class="badge" id="labSrc">Not connected</span></div>
@@ -298,7 +328,7 @@ main.fcTab #out>[data-tour=ribbon]{order:9}main.adTab #out>[data-tour=sweep]{ord
 </div>
 <div class="card" id="protoPanel" data-role="tech" hidden>
 <h2 title="Reads the ESP32 over USB or Bluetooth and lets you control the relay, conveyor speed and LEDs. Press Connect ESP32 inside the model, then click a part. Needs Chrome or Edge. Close the Arduino Serial Monitor first. One connection at a time.">Live prototype: the small factory, in real time</h2><div class="note" style="margin:-4px 0 6px">Cannot connect here? <a href="factory3d.html" target="_blank" rel="noopener">Open the factory in its own window</a>, then press Connect ESP32.</div>
-<iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1&amp;v=2026-11-11-a" allow="serial; bluetooth" title="Live 3D prototype" style="width:100%;height:calc(100vh - 150px);min-height:460px;border:0;border-radius:0;margin:0;background:transparent;display:block"></iframe>
+<iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1&amp;v=2026-11-10-a" allow="serial; bluetooth" title="Live 3D prototype" style="width:100%;height:calc(100vh - 150px);min-height:460px;border:0;border-radius:0;margin:0;background:transparent;display:block"></iframe>
 <div class="note" style="margin:8px 0 0">Press <b>Connect ESP32 (Wireless)</b> or <b>(USB)</b> inside the model, then click a part to see its readings and controls. Needs Chrome or Edge (Bluetooth also works on Android). USB: close the Arduino Serial Monitor first. Only one connection to the ESP32 at a time, so disconnect the Lab model tab&rsquo;s USB connection before using this one.</div>
 </div>
 <div id="facPanel" data-role="tech" hidden>
@@ -365,9 +395,9 @@ main.fcTab #out>[data-tour=ribbon]{order:9}main.adTab #out>[data-tour=sweep]{ord
 <div><label>Battery round-trip efficiency, %</label><input id="f_eff" type="number" min="50" max="100"></div>
 <div><label>Meter file values</label><select id="m_unit"><option value="auto">Detect automatically</option><option value="kw">kW (power)</option><option value="kwh">kWh per interval (energy)</option></select></div>
 </div>
-</details>
+<button id="calcClear" style="margin-top:8px">Clear saved calculations</button></details>
 <p class="note" id="signhint">Your facility is kept in this browser. Sign in (top right) to keep it in your account too.</p>
-<div class="facbtns"><button class="on" id="fsave" hidden>Save to my account</button><span id="acctBtns" hidden><button id="sdel">Delete selected saved facility</button> <button id="sall">Delete all my saved data</button></span><button id="calcClear">Clear saved calculations</button><span id="fmsg" class="note" role="status" aria-live="polite"></span></div></details>
+<button class="on" id="fsave" hidden>Save to my account</button> <span id="acctBtns" hidden><button id="sdel">Delete selected saved facility</button> <button id="sall">Delete all my saved data</button></span> <span id="fmsg" class="note"></span></details>
 <div class="card" id="rates"></div>
 </div></div></div>
 </main>
@@ -376,8 +406,9 @@ main.fcTab #out>[data-tour=ribbon]{order:9}main.adTab #out>[data-tour=sweep]{ord
 <div class="chead"><img class="shiny" src="shiny.png" alt="" onerror="this.style.display='none'"><b>Shiny</b><span class="sp"></span><button id="chatX" aria-label="Close Shiny">Close</button></div>
 <div id="chatLog" aria-live="polite"></div>
 <div class="note" id="chatTyping" hidden style="padding:0 12px">Shiny is thinking&hellip;</div>
-<div id="chatChips" class="chips"><button data-calc="1" title="A plain explanation of every step, from weather to savings">How we calculated this</button><button data-chip="Set up a factory in Penang">Set up a factory in Penang</button><button data-chip="Show this month with the cost-saving strategy">Show this month</button><button data-chip="What does the Balanced strategy do?">What is Balanced?</button></div>
-<div class="cin"><input type="file" id="chatFile" accept=".csv,.txt,text/csv,text/plain" hidden><button id="chatAttach" title="Attach a meter CSV, or a .txt file with the text of your bill">Attach</button><textarea id="chatIn" rows="1" placeholder="Describe your site or ask&hellip;" aria-label="Message"></textarea><button class="on" id="chatSend">Send</button></div></div>
+<div id="chatChips" class="chips"><button data-chip="Set up a factory in Penang">Set up a factory in Penang</button><button data-chip="Show this month with the cost-saving strategy">Show this month</button><button data-chip="What does the Balanced strategy do?">What is Balanced?</button></div>
+<p class="note" style="padding:0 12px;margin:4px 0">Messages go to an Azure AI model. Please do not paste names or account numbers. Meter CSV files stay in your browser. I propose, you confirm.</p>
+<div class="cin"><input type="file" id="chatFile" accept=".csv,.txt,text/csv,text/plain" hidden><button id="chatAttach" title="Attach a meter CSV, or a .txt file with the text of your bill">Attach</button><textarea id="chatIn" rows="2" placeholder="Describe your facility, or ask me to show something" aria-label="Message"></textarea><button class="on" id="chatSend">Send</button></div></div>
 <div id="roleGate" hidden role="dialog" aria-modal="true" aria-labelledby="rgTitle"><div class="rg"><h2 id="rgTitle">Who is using this?</h2><p class="note" style="margin-top:0">Pick your role. Every role sees the same numbers; the role decides what you can open and what you can change. You can change it at the top at any time.</p>
 <div class="rgbtns"><button data-who="owner"><b>Owner</b><span>Everything: all sections, approvals, equipment and settings.</span></button><button data-who="analyst"><b>Analyst</b><span>Builds the plan: forecasts, simulations, stress test and facility settings. Cannot approve.</span></button><button data-who="operator"><b>Operator</b><span>Runs the plant: live monitor, the 3D prototype and the approved schedule.</span></button><button data-who="approver"><b>Approver</b><span>Reviews the options and approves the plan. Cannot change settings.</span></button><button data-who="auditor"><b>Auditor</b><span>Read-only view of everything, with the audit log and activity record.</span></button></div></div></div>
 <div id="calcDrawer" role="dialog" aria-label="How we calculated this" hidden><div class="chead"><b>How we calculated this</b><span class="sp"></span><button id="calcX" aria-label="Close">Close</button></div><div class="dbody">
@@ -475,7 +506,7 @@ function monoPath(P){const n=P.length;if(n<2)return'';const dx=[],m=[],t=[];for(
  let d='M'+P[0][0].toFixed(1)+' '+P[0][1].toFixed(1);for(let i=0;i<n-1;i++){const x0=P[i][0],x1=P[i+1][0],h3=dx[i]/3;d+=`C${(x0+h3).toFixed(1)} ${(P[i][1]+t[i]*h3).toFixed(1)} ${(x1-h3).toFixed(1)} ${(P[i+1][1]-t[i+1]*h3).toFixed(1)} ${x1.toFixed(1)} ${P[i+1][1].toFixed(1)}`}return d}
 function pcPos(i){const s=pcS,v=s.vals[i],x=s.xf((i+.5)/S),y=s.y(v),pc=Math.max(14,Math.min(86,x/s.W*100));
  return{x,y,left:pc,top:y/s.H*100,html:`Time: ${tm(i)} to ${tm(i+1)}<br>Power: ${(Math.abs(v)<100?N1:N0)(v).replace('-','\u2212')} kW`}}
-const DRPH='Move over the chart, or tap a bar, to read that half-hour.';
+const DRPH='Move over the chart, or tap a bar, to read that half-hour here.';
 function drMove(e){const svg=e.target&&e.target.closest?e.target.closest('.drw svg'):null;
  document.querySelectorAll('.drw').forEach(w=>{if(!svg||!w.contains(svg)){const t=w.querySelector('.drtip'),h=w.querySelector('.drhl');if(t){t.innerHTML=DRPH;t.classList.add('ph')}if(h)h.setAttribute('display','none')}});
  if(!svg)return;const g=drReg[svg.dataset.dr];if(!g)return;const tip=svg.parentNode.querySelector('.drtip'),hl=svg.querySelector('.drhl');
@@ -486,7 +517,7 @@ function drMove(e){const svg=e.target&&e.target.closest?e.target.closest('.drw s
  tip.innerHTML=`<b>${tm(i)} to ${tm(i+1)}</b>${st}<br>${sq('--solar')}Solar generated <b>${N0(r.sol[i])} kW</b><br>${sq('--sun')}Solar used on site <b>${N0(r.d[i])} kW</b>`+(un>0.5?` <span class="drs">(${N0(un)} kW unused)</span>`:'')
   +`<br>${sq('--grid')}Grid import <b>${N0(r.g[i])} kW</b>`+`<br>${sq('--bat')}Battery <b>${dis?'discharging '+N0(r.b[i])+' kW':chg?'charging '+N0(r.ch[i])+' kW':'idle'}</b><br>${sq('--mute')}Site demand <b>${N0(r.ld[i])} kW</b>`;
  hl.setAttribute('x',(g.L+i*g.bw+1).toFixed(1));hl.setAttribute('width',(g.bw-2).toFixed(1));hl.removeAttribute('display');
- tip.classList.toggle('lft',i>=NS/2);tip.classList.remove('ph')}
+ tip.classList.remove('ph')}
 function pcShow(i){const s=pcS;if(!s)return;const p=pcPos(i),set=(id,o)=>{const e=$(id);for(const k in o)e.setAttribute(k,o[k])};
  set('pcLine',{x1:p.x.toFixed(1),x2:p.x.toFixed(1)});set('pcDot',{cx:p.x.toFixed(1),cy:p.y.toFixed(1)});set('pcHalo',{cx:p.x.toFixed(1),cy:p.y.toFixed(1)});
  const t=$('pcTip');t.innerHTML=p.html;t.style.left=p.left+'%';t.style.top=p.top+'%'}
@@ -559,6 +590,7 @@ function draw(r,b0,win,now){const W=760,H=290,L=54,B=30,T=10,bw=(W-L-8)/NS,hb=bw
   if(dl<-0.5){const t0=base+Math.max(un,0);s+=`<rect x="${x}" y="${y(t0-dl)}" width="${w}" height="${y(t0)-y(t0-dl)}" fill="none" stroke="var(--shift)" stroke-width="1.5" stroke-dasharray="3 2"/>`}});
  if(now!=null){s+='</g>';const nx=L+now*bw;drNow={L,bw};s+=`<line id="nowLn" x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="var(--ink)" stroke-width="1.5"/><text x="${L+6}" y="${T+10}" font-size="11" font-weight="700" fill="var(--ink)" stroke="#fff" stroke-width="3" paint-order="stroke">${recLbl()}</text><text x="${W-12}" y="${T+10}" text-anchor="end" font-size="11" font-weight="700" fill="var(--ink)" stroke="#fff" stroke-width="3" paint-order="stroke">Forecast</text>`}
  s+=xAxis(t=>L+t*hb,H-B,0,24,3);
+ if(now!=null&&typeof devMarks=='function')try{s+=devMarks(y,L,bw,H,B,T)}catch(e){}
  if(win&&r.peak>0)s+=`<line x1="${L+win[0]*hb}" x2="${L+win[1]*hb}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${L+win[1]*hb-4}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)" stroke="#fff" stroke-width="3" paint-order="stroke">billed peak ${Math.round(r.peak)} kW</text>`;
  s+=`<text x="${L}" y="${H-2}" font-size="10" fill="var(--mute)">Shaded band = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;
  const id='d'+(++drN);drReg[id]={r,L,bw,now};{const ks=Object.keys(drReg);if(ks.length>12)delete drReg[ks[0]]}
@@ -594,12 +626,10 @@ function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a
  return `<p class="note"><b>CO&#8322; trade-off:</b> Cost-saving earns ${money(dS)} more per day than Balanced, at the price of ${Math.round(dC)} kg more CO&#8322; (about ${money(dS/dC)} per kg).</p>`}
 
 // ================= pages: Brief (owner view) and Detailed (tabs) =================
-const TABS={ov:['ribbon','headline','kpi','costbars','mini3d','flow','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','schedule','approve','changed'],ad:['live','reopt','learn','stress','sweep','assume','audit','changed'],fa:['changed'],lab:[],proto:[]};let dtab='ov';
+const TABS={ov:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','devlog','schedule','approve','changed'],ad:['live','reopt','learn','stress','sweep','assume','devlog','audit','changed'],fa:['changed'],lab:[],proto:[]};let dtab='ov';
 function fitProto(){const on=role=='tech'&&dtab=='proto',h=document.documentElement;h.classList.toggle('protoTab',on);if(!on)return;const f=$('proto3d');if(!f)return;const t=f.getBoundingClientRect().top+(window.scrollY||0);f.style.height=Math.max(460,window.innerHeight-t-6)+'px';}
 window.addEventListener('resize',()=>{try{fitProto()}catch(e){}});
-var sayT=0,lastTab='';
-function sayClear(){clearTimeout(sayT);var a=$('fmsg'),b=$('amsg');if(a)a.textContent='';if(b)b.textContent=''}
-function applyTab(){if(!tabOk(dtab))dtab='ov';if(dtab!==lastTab){lastTab=dtab;sayClear()}$('dateCard').classList.toggle('one',dtab!='ov');const t=role=='tech';$('app').classList.toggle('fit',t&&(dtab=='fc'||dtab=='proto'));$('app').classList.toggle('fcTab',t&&dtab=='fc');$('app').classList.toggle('adTab',t&&dtab=='ad');Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&(dtab=='fa'||dtab=='lab'||dtab=='proto')});$('dateCard').hidden=t&&(dtab=='proto'||dtab=='fa');$('facPanel').hidden=!(t&&dtab=='fa');$('labPanel').hidden=!(t&&dtab=='lab');$('protoPanel').hidden=!(t&&dtab=='proto');fitProto();
+function applyTab(){if(!tabOk(dtab))dtab='ov';$('dateCard').classList.toggle('one',dtab!='ov');const t=role=='tech';$('app').classList.toggle('fit',t&&(dtab=='fc'||dtab=='proto'));$('app').classList.toggle('fcTab',t&&dtab=='fc');$('app').classList.toggle('adTab',t&&dtab=='ad');Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&(dtab=='fa'||dtab=='lab'||dtab=='proto')});$('dateCard').hidden=t&&(dtab=='proto'||dtab=='fa');$('facPanel').hidden=!(t&&dtab=='fa');$('labPanel').hidden=!(t&&dtab=='lab');$('protoPanel').hidden=!(t&&dtab=='proto');fitProto();
  navHl();fairLoad();applyPerms()}
 function navHl(){if(document.querySelectorAll)document.querySelectorAll('#dtabs button').forEach(b=>b.classList.toggle('on',b.dataset.dt==dtab&&(!b.dataset.ct||b.dataset.ct==chartTab)))}
 $('dtabs').onclick=e=>{const b=e.target.closest('button[data-dt]');if(!b)return;dtab=b.dataset.dt;if(b.dataset.ct){chartTab=b.dataset.ct;applyTab();const x=document.querySelector('#chTabs [data-ct="'+chartTab+'"]');if(x)x.click();navHl();uiSave()}else applyTab()};
@@ -613,13 +643,13 @@ const WHO={owner:{n:'Owner'},analyst:{n:'Analyst'},operator:{n:'Operator'},appro
 const OPER=['live','reopt','learn','stress','sweep','approve','audit'];   // cards that change or run something (the rest are only for looking)
 const PERM={
  owner:{see:null,act:null,tabs:null,approve:1,hw:1,edit:1},
- analyst:{see:['ribbon','headline','kpi','costbars','mini3d','flow','changed','chart','strategies','compare','fair','actions','schedule','approve','live','reopt','learn','stress','sweep','assume'],act:['reopt','learn','stress','sweep','approve'],tabs:['ov','fc','op','pl','ad','proto','fa'],edit:1},
- operator:{see:['ribbon','headline','kpi','costbars','mini3d','flow','changed','chart','strategies','compare','fair','actions','schedule','approve','live','assume'],act:['live','approve'],tabs:['ov','fc','op','pl','ad','proto'],hw:1},
- approver:{see:['ribbon','headline','kpi','costbars','mini3d','flow','changed','chart','strategies','compare','fair','actions','schedule','approve','stress','assume','audit'],act:['approve','audit'],tabs:['ov','fc','op','pl','ad','proto','fa'],approve:1},
+ analyst:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','live','reopt','learn','stress','sweep','assume'],act:['reopt','learn','stress','sweep','approve'],tabs:['ov','fc','op','pl','ad','proto','fa'],edit:1},
+ operator:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','live','assume'],act:['live','approve'],tabs:['ov','fc','op','pl','ad','proto'],hw:1},
+ approver:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','stress','assume','audit'],act:['approve','audit'],tabs:['ov','fc','op','pl','ad','proto','fa'],approve:1},
  auditor:{see:null,act:['audit'],tabs:['ov','fc','op','pl','ad','proto','fa']}
 };
 let who='owner';
-const PROTO='factory3d.html?embed=1&proto=1&v=2026-11-11-a';
+const PROTO='factory3d.html?embed=1&proto=1&v=2026-11-10-a';
 const canSee=k=>{const P=PERM[who];return !P.see||P.see.includes(k)};
 const canAct=k=>{const P=PERM[who];return !P.act||P.act.includes(k)};
 function tabOk(t){const P=PERM[who];return !P.tabs||P.tabs.includes(t)}
@@ -634,7 +664,7 @@ function applyPerms(){const P=PERM[who]||PERM.owner;
  const fp=$('facPanel'),lp=$('labPanel');fp.inert=!P.edit;fp.classList.toggle('vo',!P.edit);lp.inert=!P.hw;lp.classList.toggle('vo',!P.hw);
  const f=$('proto3d');if(f){const u=PROTO+(P.hw?'':'&ro=1');if(f.getAttribute('src')!==u)f.setAttribute('src',u)}
  let grp=null,any=false;const flush=()=>{if(grp)grp.classList.toggle('rolehide',!any)};
- Array.from($('dtabs').children).forEach(b=>{if(b.classList.contains('dgrp')){flush();grp=b;any=false}else{const ok=tabOk(b.dataset.dt);b.classList.toggle('rolehide',!ok);if(ok)any=true}});flush()}
+ Array.from($('dtabs').children).forEach(b=>{if(b.classList.contains('dgrp')){flush();grp=b;any=false}else{const ok=tabOk(b.dataset.dt);b.classList.toggle('rolehide',!ok);if(ok)any=true}});flush();if(window.SunDev)SunDev.refresh()}
 function setWho(w,quiet){if(!PERM[w])return;const prev=who;who=w;try{sessionStorage.setItem('who',w)}catch(e){}
  $('whoSel').value=w;sizeWho();$('viewSw').classList.toggle('rolehide',w!='owner');window.sunWho=w;if(window.sunSetRole)window.sunSetRole(w);
  if(w!='owner'&&role!='tech')applyRole('tech');if(!tabOk(dtab))dtab='ov';applyTab();if(!quiet&&prev!==w)actLog('Switched role to '+WHO[w].n)}
@@ -677,7 +707,7 @@ function costCard(r,b,sv,past){const sb=sel=='base',w=b.cost>0?Math.min(100*r.co
  <div class="costbars"><div class="barlabel">Baseline</div><div class="barwrap"><div class="barfill base" style="width:100%"></div></div><div class="barvalue">${money(b.cost)}</div></div>
  <div class="costbars"><div class="barlabel">${sb?'Baseline':NAMES[sel].replace('Optimiser: ','')}</div><div class="barwrap"><div class="barfill opt" style="width:${w.toFixed(1)}%"></div></div><div class="barvalue">${money(r.cost)}</div></div>
  <div class="footnote">${past?'Estimate from recorded weather.':'Forecast estimate, not a measurement.'}<span data-role="tech"> Daily cost includes the monthly demand charge spread over 30 days. Check the tariff assumptions against your own bill.</span></div></div>`}
-function mini3dCard(){return `<div class="card mini3dcard" data-tour="mini3d" data-role="tech"><div class="mini3d" data-go="proto" role="button" tabindex="0" title="Open the Live prototype"><iframe src="factory3d.html?embed=1&amp;proto=1&amp;mini=1&amp;v=2026-11-11-a" tabindex="-1" loading="lazy" title="3D model of the demo factory"></iframe><span class="mini3dlbl">3D demo factory &middot; open Live prototype &rarr;</span></div></div>`}
+function mini3dCard(){return `<div class="card mini3dcard" data-tour="mini3d" data-role="tech"><div class="mini3d" data-go="proto" role="button" tabindex="0" title="Open the Live prototype"><iframe src="factory3d.html?embed=1&amp;proto=1&amp;mini=1&amp;v=2026-11-09-g" tabindex="-1" loading="lazy" title="3D model of the demo factory"></iframe><span class="mini3dlbl">3D demo factory &middot; open Live prototype &rarr;</span></div></div>`}
 function ownerSteps(r,b){const cap=+F.bat||0,L=[],it=(i,t,p)=>`<div class="action"><div class="action-icon">${i}</div><div><strong>${t}</strong><p>${p}</p></div></div>`;
  if(sel=='base')return it('&#9788;','Pick a strategy','Choose one above to see the plan.');
  const c=rg(r.ch,1),d=rg(r.b,1),f=rg(r.fl,1);
@@ -923,11 +953,11 @@ function cvRefresh(){const n=+$('cv_n').value,w=+$('cv_w').value,h=+$('cv_h').va
  cvKwp=n*w/1000;o.innerHTML=`${N0(n)} panels &times; ${N0(w)} W &divide; 1,000 = <b>${N1(cvKwp)} kWp</b>.`+(h>0?`<br>${N1(cvKwp)} kWp &times; ${N1(h)} kWh per kWp per day = <b>${N0(cvKwp*h)} kWh per day</b>.`:'')}
 function cvDefault(){if(cvTouched||!lastPlan||!(+F.kwp>0))return;const y=sum(lastPlan.r.sol)*DT/F.kwp;if(!(y>0))return;$('cv_h').value=y.toFixed(1);$('cv_note').textContent=`The model's own yield for the day shown is ${N1(y)} kWh per kWp per day. It is lower on cloudy days and higher on clear ones.`;cvRefresh()}
 ['cv_n','cv_w','cv_h'].forEach(id=>{$(id).oninput=()=>{if(id=='cv_h')cvTouched=true;cvRefresh()}});
-$('cv_use').onclick=()=>{if(!(cvKwp>0)){say('Enter the number of panels first.',1);return}$('f_kwp').value=Math.round(cvKwp*10)/10;applyLocal([`<b>Solar size</b> set from the helper: ${N0($('cv_n').value)} panels &times; ${N0($('cv_w').value)} W = ${N1(cvKwp)} kWp.`])};
+$('cv_use').onclick=()=>{if(!(cvKwp>0)){say('Enter the number of panels first.');return}$('f_kwp').value=Math.round(cvKwp*10)/10;applyLocal([`<b>Solar size</b> set from the helper: ${N0($('cv_n').value)} panels &times; ${N0($('cv_w').value)} W = ${N1(cvKwp)} kWp.`])};
 
 // ================= drawer, errors, handlers =================
 const errCard=m=>`<div class="card err" role="alert"><b>We could not load this.</b><p style="margin:6px 0">${esc(m)}.</p><p class="note">Check your connection and try again. If it keeps failing, the server may be restarting: wait a minute, or reload the page. Days you opened earlier are saved on this device.</p><button class="on" data-retry="1">Try again</button></div>`;
-$('calcX').onclick=()=>{$('calcDrawer').hidden=true};
+$('calcBtn').onclick=()=>{$('calcDrawer').hidden=!$('calcDrawer').hidden};$('calcX').onclick=()=>{$('calcDrawer').hidden=true};
 if(typeof window!='undefined'&&window.addEventListener){const fatal=m=>{const f=$('fatal');f.textContent='Something went wrong on this page ('+String(m).slice(0,120)+'). Please reload. Your settings are saved. (Click to hide.)';f.hidden=false;f.onclick=()=>{f.hidden=true}};
  window.addEventListener('error',e=>fatal(e.message||'error'));window.addEventListener('unhandledrejection',e=>fatal((e.reason&&e.reason.message)||'error'))}
 function kpis(items){return '<div class="kpis">'+items.map(k=>`<div class="k"><span>${k[0]}</span><b class="${k[2]||''}">${k[1]}</b><span>${k[3]||''}</span></div>`).join('')+'</div>'}
@@ -951,7 +981,7 @@ function dayHtml(R,rows){
  const off=R.base.offline||r.offline,offB=off?`<div class="ribbon warn"><b>OFFLINE.</b> The server could not be reached, so this screen shows results saved on this device at ${new Date(off).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}. They may be out of date. Try again in a minute.</div>`:'';
  const L=+F.lim,mxg=Math.max(...r.g),mxb=Math.max(...b.g),
   limB=(L>0&&mxg>L+1?`<div class="ribbon warn"><b>GRID LIMIT NOT MET.</b> Highest grid import is ${N0(mxg)} kW, above the ${N0(L)} kW limit.${sel=='base'?' Pick a strategy to see whether it can be held.':' The battery and chargers cannot hold it, so this is the closest plan.'}</div>`:'')+(L>0&&sel!='base'&&mxb>L+1&&mxg<=L+1?`<div class="ribbon"><b>GRID LIMIT.</b> Solar only, the site would draw up to ${N0(mxb)} kW, above the ${N0(L)} kW limit. This plan holds it at or under ${N0(L)} kW.</div>`:'')+(+F.evn>0&&fc.evun>0.5?`<div class="ribbon warn"><b>EV CHARGING.</b> ${N0(fc.evun)} kWh of the EV demand cannot be delivered on this day: the chargers are closed or there are too few hours or too little power.</div>`:'');
- return rib+offB+limB+headCard(r,b,c,sv,past)+`${kpiRow(r,b,c,sv)}${costCard(r,b,sv,past)}${mini3dCard()}${actCard(r,b)}${apCard()}
+ return rib+offB+limB+headCard(r,b,c,sv,past)+`${kpiRow(r,b,c,sv)}${costCard(r,b,sv,past)}${mini3dCard()}${actCard(r,b)}${window.SunDev?SunDev.card():''}${apCard()}
  ${flowCard(r,b)}
  <div class="card${past?'':' fcast'}" data-tour="chart" data-role="tech"><div class="plangrid"><div class="plmain"><div class="bar" style="margin-bottom:6px"><h2 id="chTitle" style="margin:0">${chT(past)}</h2>${stratChart()}</div>
  <div id="ct_use"${chartTab=='use'?'':' hidden'}>${draw(r,b,c.win)}${miniRail(R,b)}</div><div id="ct_wx"${chartTab=='wx'?'':' hidden'}>${fcCard(fc,past,fn)}</div><div id="ct_pc"${chartTab=='pc'?'':' hidden'}>${pcCard(r,past)}</div><div id="ct_pl"${chartTab=='pl'?'':' hidden'}>${panelCard(r)}</div>${cur==TODAY?`<div id="ct_rt"${chartTab=='rt'?'':' hidden'}>${rtShell()}</div>`:''}</div><div class="chside"><span id="chTabs">${cur==TODAY?`<button data-ct="rt" class="${chartTab=='rt'?'on':''}">Energy usage</button> `:''}<button data-ct="use" class="${chartTab=='use'?'on':''}" data-tp="${past?1:0}">Daily plan</button> <button data-ct="wx" class="${chartTab=='wx'?'on':''}">${past?'Recorded weather':'Predicted weather'}</button> <button data-ct="pc" class="${chartTab=='pc'?'on':''}">Power curve</button> <button data-ct="pl" class="${chartTab=='pl'?'on':''}">Panel layout</button></span></div></div></div>
@@ -1069,7 +1099,8 @@ const STEPS=[
  {s:'[data-tour=approve]',t:'Approve and export',x:'Approve a plan to record who accepted it, then download the schedule as CSV or JSON for your operators. Nothing is sent to equipment: you stay in control.'},
  {s:'[data-tour=stress]',t:'Stress test',x:'Holds the schedule fixed and shows what happens if demand or sunshine differs from the forecast.'},
  {s:'#setup',t:'Set up your facility',x:'Enter it once: tariff and maximum demand from your bill (or upload meter readings), plus solar and battery sizes. The solar size helper turns panels into kWp and kWh.'},
- {s:'#chatBtn',t:'Ask Shiny',x:'Type what you need in plain words: describe your facility, open a day or week, switch strategy, or attach a meter CSV. It proposes, and you confirm before anything changes. Press "How we calculated this" inside Shiny for a plain explanation of every step, from weather to savings.'},
+ {s:'#calcBtn',t:'How we calculated this',x:'A plain explanation of every step, from weather to savings, and what the model does not do yet.'},
+ {s:'#chatBtn',t:'Ask Shiny',x:'Type what you need in plain words: describe your facility, open a day or week, switch strategy, or attach a meter CSV. It proposes, and you confirm before anything changes.'},
  {s:'#auth',t:'Keep your work',x:'Sign in to save your facility to your account and open it on any device.'}];
 let tI=-1,autoTried=false;
 const tOK=i=>{const e=document.querySelector(STEPS[i].s);return !!(e&&e.getClientRects&&e.getClientRects().length)};
@@ -1098,31 +1129,32 @@ if(typeof window!='undefined'&&window.addEventListener){const rp=()=>{if(tI>=0)(
 const apKey=()=>lastPlan?lastPlan.date+'|'+lastPlan.sel+'|'+hk(rkey()):'';
 const apLoad=()=>{try{return JSON.parse(localStorage.getItem('approvals')||'[]')}catch(e){return[]}};
 function apCard(){const p=lastPlan;if(!p||p.sel=='base'||p.date<TODAY)return'';
- return `<div class="card" data-tour="approve" data-role="tech"><h2>Approve this plan</h2><p class="note" style="margin-top:0">You stay in control. Approving records who accepted the plan and prepares a schedule file for your operators or building system.</p><button class="on" data-ap="approve">Approve and prepare schedule</button><div id="apOut" style="margin-top:8px"></div></div>`}
+ return `<div class="card" data-tour="approve" data-role="tech"><h2>Approve this plan</h2><p class="note" style="margin-top:0">You stay in control. Approving records who accepted the plan and prepares a schedule file for your operators or building system.</p>${window.SunDev?SunDev.approveWarn():''}<button class="on" data-ap="approve">Approve and prepare schedule</button><div id="apOut" style="margin-top:8px"></div></div>`}
 function schedule(p,rec){const r=p.r,b=p.b;
  const hours=N.map(h=>({time_start:tm(h),battery_setpoint_kw:+(r.b[h]-r.ch[h]).toFixed(1),flexible_load_kw:+(+r.fl[h]).toFixed(1),planned_grid_import_kw:+r.g[h].toFixed(1),expected_solar_kw:+r.sol[h].toFixed(1),site_demand_kw:+r.ld[h].toFixed(1)}));
  return{schema:'facility-energy-planner/schedule/v1',advisory:'Forecast-based plan approved by a person. This is not a control signal: check it against live readings before acting.',facility:F.name,tariff:tf().n,date:p.date,strategy:NAMES[p.sel].replace('Optimiser: ',''),
   expected:{baseline_cost_rm:+b.cost.toFixed(2),plan_cost_rm:+r.cost.toFixed(2),saving_rm:+(b.cost-r.cost).toFixed(2),billed_peak_before_kw:+b.peak.toFixed(0),billed_peak_after_kw:+r.peak.toFixed(0)},
   units:{battery_setpoint_kw:'positive = battery discharges to the site, negative = battery charges',flexible_load_kw:'flexible load planned in this 30-minute step',planned_grid_import_kw:'grid import, including battery charging',expected_solar_kw:'solar forecast',site_demand_kw:'site demand after load shifting'},
-  approved_by:rec.by,approved_at:rec.at,step_minutes:60/S,integrity:hk(hours),hours}}
+  approved_by:rec.by,approved_at:rec.at,open_high_severity_deviations:rec.warn||0,step_minutes:60/S,integrity:hk(hours),hours}}
 const csvOf=s=>['date,time_start,battery_setpoint_kw,flexible_load_kw,planned_grid_import_kw,expected_solar_kw,site_demand_kw'].concat(s.hours.map(h=>[s.date,h.time_start,h.battery_setpoint_kw,h.flexible_load_kw,h.planned_grid_import_kw,h.expected_solar_kw,h.site_demand_kw].join(','))).join('\n')+'\n';
 function approveNow(){const p=lastPlan;if(!p||p.sel=='base'||p.date<TODAY||!PERM[who].approve)return;
- const s=schedule(p,{by:(user?(user.userDetails||'signed-in user'):'local user (not signed in)')+', '+WHO[who].n,at:new Date().toISOString()}),log=apLoad().filter(x=>x.key!=apKey());
- log.push({key:apKey(),s});while(log.length>40)log.shift();try{localStorage.setItem('approvals',JSON.stringify(log))}catch(e){}actLog('Approved the plan for '+p.date+' ('+NAMES[p.sel].replace('Optimiser: ','')+')');apShow()}
+ const dvw=window.SunDev?SunDev.openHigh():[];if(dvw.length&&!confirm('The digital twin or the live checks show '+dvw.length+' open high-severity deviation'+(dvw.length==1?'':'s')+', so this plan may not be trustworthy. Approve anyway?'))return;
+ const s=schedule(p,{by:(user?(user.userDetails||'signed-in user'):'local user (not signed in)')+', '+WHO[who].n,at:new Date().toISOString(),warn:dvw.length}),log=apLoad().filter(x=>x.key!=apKey());
+ log.push({key:apKey(),s});while(log.length>40)log.shift();try{localStorage.setItem('approvals',JSON.stringify(log))}catch(e){}actLog('Approved the plan for '+p.date+' ('+NAMES[p.sel].replace('Optimiser: ','')+')'+(dvw.length?' with '+dvw.length+' open high-severity deviation(s)':''));apShow()}
 function apShow(){const o=$('apOut');if(!o||!lastPlan)return;const rec=apLoad().find(x=>x.key==apKey());if(!rec)return;const s=rec.s,now=schedule(lastPlan,{by:'',at:''});
  const changed=now.integrity!==s.integrity;
  o.innerHTML=`<b class="good">Approved</b> by ${esc(s.approved_by)} at ${esc(new Date(s.approved_at).toLocaleString('en-GB'))}. Reference ${s.integrity}.`+(changed?`<div class="err" style="margin-top:4px">The forecast has changed since you approved this plan. Review it and approve again to export the new schedule.</div>`:'')+`<div class="bar" style="margin-top:6px"><button data-ap="csv">Download CSV</button><button data-ap="json">Download JSON</button><button data-ap="copy">Copy JSON</button></div>`}
 function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 function apClick(k){if(k=='approve'){approveNow();return}actLog('Exported the approved schedule ('+k+')');const rec=apLoad().find(x=>x.key==apKey());if(!rec)return;const s=rec.s,base=`schedule_${s.date}_${s.strategy.replace(/\W+/g,'-').toLowerCase()}`;
  if(k=='csv')dl(base+'.csv',csvOf(s),'text/csv');else if(k=='json')dl(base+'.json',JSON.stringify(s,null,1),'application/json');
- else if(k=='copy'){try{navigator.clipboard.writeText(JSON.stringify(s,null,1));say('Schedule copied to the clipboard.')}catch(e){say('Copy is not available in this browser.',1)}}}
+ else if(k=='copy'){try{navigator.clipboard.writeText(JSON.stringify(s,null,1));say('Schedule copied to the clipboard.')}catch(e){say('Copy is not available in this browser.')}}}
 
 // ---------------- assistant ----------------
 const chat={hist:[],busy:false,props:new Map(),n:0,greeted:false};
 const redactText=t=>String(t).replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g,'[email]').replace(/\d[\d\s-]{7,}\d/g,'[number]').slice(0,3000);
-const cAdd=(cls,html)=>{if(cls=='msg u'){const pv=$('chatPriv');if(pv)pv.remove()}$('chatLog').insertAdjacentHTML('beforeend',cls=='msg b'?`<div class="brow"><img class="shiny" src="shiny.png" alt="" onerror="this.style.display='none'"><div class="${cls}">${html}</div></div>`:`<div class="${cls}">${html}</div>`);const L=$('chatLog');L.scrollTop=L.scrollHeight};
+const cAdd=(cls,html)=>{$('chatLog').insertAdjacentHTML('beforeend',cls=='msg b'?`<div class="brow"><img class="shiny" src="shiny.png" alt="" onerror="this.style.display='none'"><div class="${cls}">${html}</div></div>`:`<div class="${cls}">${html}</div>`);const L=$('chatLog');L.scrollTop=L.scrollHeight};
 function chatOpen(on){$('chatPanel').hidden=!on;$('chatBtn').setAttribute('aria-expanded',String(on));
- if(on){if(!chat.greeted){chat.greeted=true;cAdd('msg b','Hi, I\'m Shiny! Tell me about your facility, for example: "a factory in Penang on the MV time-of-use tariff, 750 kWp solar and a 1000 kWh battery". I can also open a day, week or month, switch strategy, or read a meter CSV you attach.');cAdd('note',' Messages go to an Azure AI model. Please do not paste names or account numbers. Meter CSV files stay in your browser. I propose, you confirm.');$('chatLog').lastElementChild.id='chatPriv'}if($('chatIn').focus)$('chatIn').focus()}}
+ if(on){if(!chat.greeted){chat.greeted=true;cAdd('msg b','Hi, I\'m Shiny! Tell me about your facility, for example: "a factory in Penang on the MV time-of-use tariff, 750 kWp solar and a 1000 kWh battery". I can also open a day, week or month, switch strategy, or read a meter CSV you attach.')}if($('chatIn').focus)$('chatIn').focus()}}
 const ctxNow=()=>({today:TODAY,page:role=='tech'?'detailed':'brief',tab:role=='tech'?({ov:'overview',fc:'forecast',op:'optimisation',pl:'plan',ad:'advanced',fa:'facility'})[dtab]:'',view,date:cur,strategy:sel,names:Object.fromEntries(['base','cost','bal','zero'].map(k=>[k,NAMES[k].replace('Optimiser: ','')])),meter_loaded:!!M,facility:{name:F.name,location:F.loc=='5.41,100.33'?'penang':'kl',load_type:F.prof,tariff:F.volt+F.struct,max_demand_kw:+F.peak,afa_sen_kwh:+F.afa,solar_kwp:+F.kwp,battery_kwh:+F.bat,battery_efficiency_percent:+F.eff,flex_percent:+F.flex,grid_limit_kw:F.lim===''?null:+F.lim,emission_factor:+F.ef,strategy_followed:F.follow}});
 function localIntent(t){const s=t.toLowerCase(),nav={},fac={},num=x=>+String(x).replace(/,/g,'');let m;
  if(/\bmonth\b/.test(s))nav.view='month';else if(/\bweek\b/.test(s))nav.view='week';
@@ -1165,13 +1197,12 @@ async function chatAsk(msg,doc){chat.busy=true;$('chatTyping').hidden=false;$('c
  try{const j=await api('/api/assist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,document:doc,history:chat.hist.slice(-6),context:ctxNow()})});handleAssist(j,msg)}
  catch(e){const l=localIntent(msg);if(l)handleAssist(l,msg,true);else cAdd('msg b','Shiny is not available right now'+(role=='tech'?' ('+esc(e.message)+')':'')+'. The boxes on the right still work.')}
  chat.busy=false;$('chatTyping').hidden=true;$('chatSend').disabled=false}
-async function chatSubmit(over){if(chat.busy)return;const raw=(over!=null?over:$('chatIn').value).trim();if(!raw)return;$('chatIn').value='';$('chatIn').style.height='';
+async function chatSubmit(over){if(chat.busy)return;const raw=(over!=null?over:$('chatIn').value).trim();if(!raw)return;$('chatIn').value='';
  let msg=raw.slice(0,500),doc='';if(raw.length>500){msg='Here is text from my bill.';doc=redactText(raw)}
  cAdd('msg u',esc(raw.length>300?raw.slice(0,300)+'...':raw));await chatAsk(msg,doc)}
 $('chatBtn').onclick=()=>chatOpen($('chatPanel').hidden);$('chatX').onclick=()=>chatOpen(false);$('chatSend').onclick=()=>chatSubmit();
-$('chatIn').oninput=()=>{const t=$('chatIn');t.style.height='auto';t.style.height=Math.min(t.scrollHeight,110)+'px'};
 $('chatIn').onkeydown=e=>{if(e.key=='Enter'&&!e.shiftKey){e.preventDefault();chatSubmit()}};
-$('chatChips').onclick=e=>{if(e.target.closest('[data-calc]')){$('calcDrawer').hidden=false;return}const b=e.target.closest('[data-chip]');if(b)chatSubmit(b.dataset.chip)};
+$('chatChips').onclick=e=>{const b=e.target.closest('[data-chip]');if(b)chatSubmit(b.dataset.chip)};
 $('chatLog').onclick=e=>{const b=e.target.closest('[data-cp]');if(b)cpClick(b.dataset.cp)};
 $('chatAttach').onclick=()=>$('chatFile').click();
 $('chatFile').onchange=async()=>{const f=$('chatFile').files[0];if(!f)return;const text=await f.text();$('chatFile').value='';
@@ -1247,7 +1278,7 @@ meterMsg();
 
 function fill(){plFill();$('f_tar').value=F.volt+F.struct;FIELDS.forEach(k=>$('f_'+k).value=F[k]);fillSites();$('fsum').textContent=`My facility: ${F.name}, ${F.volt} ${F.struct=='T'?'ToU':'General'}, ${F.peak} kW peak, ${F.kwp} kWp solar, ${F.bat} kWh battery (tap to edit)`;ratesCard()}
 let user=null,sites=[];
-const say=(t,err)=>{clearTimeout(sayT);$('fmsg').textContent=t;$('amsg').textContent=t;if(t)sayT=setTimeout(sayClear,err?10000:5000)},persist=()=>{try{localStorage.setItem('facility',JSON.stringify(F));storeOk()}catch(e){storeFail('Your browser refused to save your facility settings (storage is full or blocked), so they will be forgotten when you close or reload this page. Sign in and press Save to account to keep them.')}};
+const say=t=>{$('fmsg').textContent=t;$('amsg').textContent=t},persist=()=>{try{localStorage.setItem('facility',JSON.stringify(F));storeOk()}catch(e){storeFail('Your browser refused to save your facility settings (storage is full or blocked), so they will be forgotten when you close or reload this page. Sign in and press Save to account to keep them.')}};
 function fillSites(){const s=$('sites');if(!s)return;const on=sites.some(x=>x.name==F.name);s.innerHTML=(on?'':`<option value="" selected>This device: ${esc(F.name)} (not on your account)</option>`)+sites.map(x=>`<option value="${esc(x.name)}"${x.name==F.name?' selected':''}>${esc(x.name)}</option>`).join('')}
 function authUi(){const a=$('auth');
  if(user){a.innerHTML=`Signed in as <b>${esc(user.userDetails||'user')}</b> <select id="sites" aria-label="My saved facilities"></select> <a href="/.auth/logout?post_logout_redirect_uri=/">Sign out</a>`;
@@ -1265,7 +1296,7 @@ async function whoami(){try{const j=await (await fetch('/.auth/me')).json();user
   try{localStorage.setItem('owner',who)}catch(e){}}
  authUi();applyAuthRole();if(user){try{const j=await api('/api/profile');sites=j.sites||[];fillSites();
   let first=true;try{first=!sessionStorage.getItem('acct');sessionStorage.setItem('acct','1')}catch(e){}
-  if(sites.length&&(!saved||(first&&!sites.some(x=>x.name==F.name))))loadSite(sites[0].name)}catch(e){say(e.message,1)}}}
+  if(sites.length&&(!saved||(first&&!sites.some(x=>x.name==F.name))))loadSite(sites[0].name)}catch(e){say(e.message)}}}
 function readForm(){$('f_volt').value=$('f_tar').value.slice(0,2);$('f_struct').value=$('f_tar').value[2];
  const n=Object.assign({},F);FIELDS.forEach(k=>n[k]=$('f_'+k).value.trim());
  const bad=NUMS.find(k=>n[k]===''||!isFinite(+n[k])||(k!='afa'&&+n[k]<0));
@@ -1279,9 +1310,9 @@ $('fsave').onclick=async()=>{const n=readForm();if(!n||!user)return;
  catch(e){say('Could not save to your account: '+e.message)}};
 $('calcClear').onclick=()=>{PC={};try{localStorage.removeItem('calc')}catch(e){}cache.clear();say('Saved calculations cleared.');render()};
 $('sdel').onclick=async()=>{const n=$('sites')&&$('sites').value;if(!n||!confirm('Delete saved facility "'+n+'"?'))return;
- try{const j=await api('/api/profile?site='+encodeURIComponent(n),{method:'DELETE'});sites=j.sites||[];fillSites();say('Deleted '+n+'.')}catch(e){say(e.message,1)}};
+ try{const j=await api('/api/profile?site='+encodeURIComponent(n),{method:'DELETE'});sites=j.sites||[];fillSites();say('Deleted '+n+'.')}catch(e){say(e.message)}};
 $('sall').onclick=async()=>{if(!confirm('Delete ALL your saved facilities from the account?'))return;
- try{const j=await api('/api/profile?all=1',{method:'DELETE'});sites=j.sites||[];fillSites();say('All saved data deleted.')}catch(e){say(e.message,1)}};
+ try{const j=await api('/api/profile?all=1',{method:'DELETE'});sites=j.sites||[];fillSites();say('All saved data deleted.')}catch(e){say(e.message)}};
 const CASES={
  lv:{name:'LV demo site',loc:'3.0553,101.7003',prof:'campus',volt:'LV',struct:'T',peak:150,kwp:100,bat:200,flex:10,lim:'',evn:0,evkw:50,eve:0},
  mv:{name:'MV demo campus',loc:'3.0553,101.7003',prof:'campus',volt:'MV',struct:'T',peak:4000,kwp:3000,bat:5000,flex:10,lim:4200,evn:8,evkw:50,eve:700},
@@ -1295,8 +1326,7 @@ applyRole(who!='owner'||/^#detailed$/i.test(location.hash)?'tech':'owner');$('ro
 $('facPanel').addEventListener('change',e=>{const t=e.target;if(t&&t.id)actLog('Changed facility setting: '+t.id.replace(/^f_/,''))});
 // ---- storage health: say so when the browser cannot keep the person's data ----
 let storeBad='';
-var storeSeen='';
-function storeShow(){const w=$('storeWarn');if(!w)return;const show=!!storeBad&&storeBad!==storeSeen;w.hidden=!show;if(show){w.textContent=storeBad+' ';const b=document.createElement('button');b.textContent='Dismiss';b.onclick=()=>{storeSeen=storeBad;w.hidden=true};w.appendChild(b)}}
+function storeShow(){const w=$('storeWarn');if(w){w.hidden=!storeBad;w.textContent=storeBad}}
 function storeFail(m){storeBad=m;storeShow()}
 function storeOk(){if(storeBad&&storeBad.indexOf('refused')>=0){storeBad='';storeShow()}}
 function storeCheck(){try{localStorage.setItem('__t','1');if(localStorage.getItem('__t')!=='1')throw 0;localStorage.removeItem('__t')}
@@ -1460,5 +1490,154 @@ window.addEventListener('beforeunload',()=>{if(L.mode=='serial')write('C,0,0,0,2
 window.__lab=L;
 })();
 </script>
+<script id="devmod">
+/* ============ Deviation watch and digital-twin validation ============
+   One rule set (window.SunDevRules). The Operations console reads the same object, so both places raise the same alerts.
+   Percent tolerances are shared. The size floor is 5% of the day's peak (the console's 100 kW floor is about 5% of its demo site).
+   Data: today's readings up to now (/api/replan: measured file if one was loaded, otherwise the simulated replay).
+   Twin = the day-ahead plan on the forecast. Measured grid = what the readings imply. */
+window.SunDevRules={load:.20,pv:.25,grid:.15,floorFrac:.07,floorMin:5,floorMax:100,run:2,driftWin:6,driftFrac:.5,peakTol:.10,energyTol:.10,share:.80};
+const DEV={j:null,q:null,twinG:null,res:null,at:0,busy:false,sc:'none',err:'',proto:null,protoAt:0,key:'',logged:{}};
+const DRL=()=>window.SunDevRules;
+const dFloor=()=>{const R=DRL();return Math.max(R.floorMin,Math.min(R.floorMax,R.floorFrac*(DEV.lp||0)))};/* same formula as the console: 7% of peak demand, between 5 and 100 kW */
+function dFlags(act,exp,th,K){const fl=dFloor(),o=[];for(let t=0;t<K;t++)o.push(Math.abs(act[t]-exp[t])>=Math.max(th*exp[t],fl));return o}
+function dRuns(f){const o=[];let s=-1;for(let t=0;t<=f.length;t++){const on=t<f.length&&f[t];if(on&&s<0)s=t;else if(!on&&s>=0){if(t-s>=DRL().run)o.push([s,t-1]);s=-1}}return o}
+function dAnalyse(j,twinG,billed){
+ const sr=j.series,K=j.now_step,R=DRL(),eps=[];DEV.lp=Math.max(0,...sr.forecast_load);
+ const mk=(key,act,exp,th)=>{dRuns(dFlags(act,exp,th,K)).forEach(([a,b])=>{let sa=0,se=0;for(let t=a;t<=b;t++){sa+=act[t];se+=exp[t]}const pct=se>0?(sa-se)/se*100:0;eps.push({key,a,b,on:b>=K-1,dir:pct>=0?1:-1,pct,kw:(sa-se)/(b-a+1)})})};
+ mk('pv',sr.actual_pv,sr.forecast_pv,R.pv);mk('load',sr.actual_load,sr.forecast_load,R.load);
+ /* slow drift: the average over the last driftWin readings is more than driftFrac of the way to the limit, even though no single reading is */
+ const mkDrift=(key,act,exp,th)=>{const w=R.driftWin,fl=dFloor(),f=[];for(let t=0;t<K;t++){if(t<w-1){f.push(false);continue}let sa=0,se=0;for(let u=t-w+1;u<=t;u++){sa+=act[u];se+=exp[u]}f.push(se>0&&Math.abs(sa-se)/se>=th*R.driftFrac&&Math.abs(sa-se)/w>=fl)}
+  dRuns(f).forEach(([a,b])=>{const a0=Math.max(0,a-w+1);if(eps.some(e=>e.key==key&&!e.drift&&e.a<=b&&e.b>=a0))return;let sa=0,se=0;for(let t=a0;t<=b;t++){sa+=act[t];se+=exp[t]}const pct=se>0?(sa-se)/se*100:0;eps.push({key,drift:true,a:a0,b,on:b>=K-1,dir:pct>=0?1:-1,pct,kw:(sa-se)/(b-a0+1)})})};
+ mkDrift('pv',sr.actual_pv,sr.forecast_pv,R.pv);mkDrift('load',sr.actual_load,sr.forecast_load,R.load);
+ let tw=null,sA=0,sF=0,lA=0,lF=0;
+ for(let t=0;t<K;t++){sA+=sr.actual_pv[t];sF+=sr.forecast_pv[t];lA+=sr.actual_load[t];lF+=sr.forecast_load[t]}
+ if(twinG&&twinG.length>=K&&sr.old_grid&&sr.old_grid.length>=K){
+  mk('grid',sr.old_grid,twinG,R.grid);
+  const ac=sr.old_grid,pr=twinG,fl=dFloor();let ab=0,inT=0,Ea=0,Ep=0;
+  for(let t=0;t<K;t++){const e=Math.abs(ac[t]-pr[t]);ab+=e;Ea+=ac[t];Ep+=pr[t];if(e<Math.max(R.grid*Math.max(pr[t],0),fl))inT++}
+  const win=(billed||[]).filter(t=>t<K),idx=win.length?win:Array.from({length:K},(_,i)=>i);
+  const pkT=Math.max(...idx.map(t=>pr[t])),pkA=Math.max(...idx.map(t=>ac[t]));
+  tw={K,ready:K>=4,mae:ab/K,maePct:Ep>0?ab/Ep*100:0,pkT,pkA,pkErr:pkT>0?(pkA-pkT)/pkT:0,pkLabel:win.length?'Billed peak so far':'Highest import so far',eT:Ep*DT,eA:Ea*DT,eErr:Ep>0?(Ea-Ep)/Ep:0,share:inT/K};
+  tw.ok=tw.ready&&Math.abs(tw.pkErr)<=R.peakTol&&Math.abs(tw.eErr)<=R.energyTol&&tw.share>=R.share}
+ return{K,eps,tw,pvRatio:sF>0?sA/sF:null,ldRatio:lF>0?lA/lF:null,sim:j.simulated!==false}}
+const dName=k=>k=='pv'?'Solar':k=='load'?'Demand':'Grid import';
+function dInfo(e,j,q){
+ const up=e.dir>0,bil=q.p.b.c.mdH&&q.p.b.c.mdH.length>0,hurts=e.key=='pv'?!up:true&&up,ab=Math.abs(e.pct);
+ const hurt=(e.key=='pv'&&!up)||(e.key!='pv'&&up);
+ const title=dName(e.key)+(e.drift?' drifting ':' ')+N0(ab)+'% '+(up?'above':'below')+' '+(e.key=='grid'?'the twin':'forecast')+' since '+tm(e.a);
+ const why=(e.drift?'Small but steady, so it adds up over hours. ':'')+(hurt?(bil?'The billed peak may rise.':'Today\u2019s cost may rise.'):'Cost should come out lower than planned, but the plan is re-checked.');
+ const c=j.correction||{},sv=j.expected&&j.expected.saving_rm;
+ const did=e.key=='grid'?'Compared with the twin. The plan is re-checked from now.':'Forecast corrected for the rest of the day'+(c.pv_ratio!=null&&c.load_ratio!=null?' (solar \u00d7'+c.pv_ratio.toFixed(2)+', demand \u00d7'+c.load_ratio.toFixed(2)+')':'')+' and the plan re-optimised from now.'+(sv>=0.5?' Expected saving from re-planning: '+money(sv)+'.':'');
+ const todo=e.key=='pv'?(up?'Check the solar forecast input: output is better than expected.':'Check the panels for shade or dirt, then confirm the new plan.'):e.key=='load'?(up?'Look for equipment running that was not planned, then confirm the new plan.':'Check whether production has stopped.'):(up?'Check the battery has charge for the peak window.':'Grid import is below the twin: check the battery is not discharging early.');
+ const sev=e.drift?(hurt?'warn':'info'):hurt&&(e.key=='grid'||ab>=2*DRL()[e.key])?'high':hurt?'warn':'info';
+ return{title,why,did,todo,sev,hurt,size:(e.kw>=0?'+':'\u2212')+N0(Math.abs(e.kw))+' kW on average',span:tm(e.a)+(e.on?' to now':' to '+tm(e.b+1))}}
+/* feed the shared deviation log (devlog.js): same store the Operations console writes to */
+function devToLog(r,j,q){const D=window.SunDev;if(!D)return;
+ const fac=(typeof F!=='undefined'&&F.name)||'site',kmap={pv:'pv',load:'load',grid:'twin'};
+ r.eps.forEach(e=>{const i=dInfo(e,j,q),k=kmap[e.key];
+  D.add({kind:k,fac,day:cur,start:tm(e.a),slot:e.a,dir:e.key=='grid'?'':(e.dir>0?'above':'below'),sev:i.sev=='high'?'high':'warn',title:i.title.replace(/ since \d\d:\d\d$/,''),
+   detail:N0(Math.abs(e.kw))+' kW ('+N0(Math.abs(e.pct))+'%) from '+tm(e.a)+(e.on?' to now':' to '+tm(e.b+1)),source:r.sim?'Main page (simulated readings)':'Main page (measured readings)',sim:r.sim})});
+ ['pv','load','grid'].forEach(key=>{const l=r.eps.filter(e=>e.key==key);if(!l.some(e=>e.on))D.recover({kind:kmap[key],fac,day:cur,start:l.length?tm(Math.max(...l.map(e=>e.b))+1):tm(r.K)})})}
+async function devFetch(force){
+ if(DEV.busy||cur!=TODAY||view!='day'||!lastPlan)return;
+ const key=cur+'|'+lastPlan.sel+'|'+DEV.sc;
+ if(!force&&key==DEV.key&&Date.now()-DEV.at<60000)return;
+ const q=sameReq();if(!q)return;DEV.busy=true;DEV.err='';devUpdate();
+ try{
+  let j;
+  if(typeof lvLast!=='undefined'&&lvLast&&lvLast.simulated===false)j=lvLast;
+  else{const lp=lrnGet(),k=rtStep();
+   j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,lp?{learned:lp}:{},{replay:{now_step:k,scenario:ROSC[DEV.sc][1]}}))})}
+  const R=await getRun(cur,q.m.k);
+  DEV.j=j;DEV.q=q;DEV.twinG=R&&R.g;DEV.res=dAnalyse(j,DEV.twinG,q.p.b.c.mdH);DEV.at=Date.now();DEV.key=key;
+  devToLog(DEV.res,j,q)
+ }catch(e){DEV.err=(e&&e.message)||'not available';DEV.res=null}
+ DEV.busy=false;devUpdate();if($('rtOut')&&chartTab=='rt'&&typeof rtLast!=='undefined'&&rtLast&&rtLast.j)try{$('rtOut').innerHTML=rtDraw(rtLast.j,rtLast.q)}catch(x){}}
+function devProtoLine(){const p=DEV.proto;if(!p||Date.now()-DEV.protoAt>10000)return'';
+ return p.verdict=='bad'?'ESP32 twin: needs recalibration':p.verdict=='ok'?'ESP32 twin: validated':'ESP32 twin: collecting data'}
+function devStripState(){
+ const p=DEV.proto&&Date.now()-DEV.protoAt<10000?DEV.proto:null;
+ if(cur!=TODAY)return{c:'idle',t:'Deviation checks use today\u2019s readings.',b:'Open today',act:'today'};
+ if(DEV.err&&!DEV.res)return{c:'idle',t:'Deviation check not available right now.',b:'Details'};
+ if(!DEV.res)return{c:'idle',t:'Checking today\u2019s readings\u2026',b:''};
+ const r=DEV.res,act=r.eps.filter(e=>e.on).map(e=>({e,i:dInfo(e,DEV.j,DEV.q)})).sort((a,b)=>(b.i.sev=='high')-(a.i.sev=='high')||(a.e.key=='grid')-(b.e.key=='grid')||Math.abs(b.e.pct)-Math.abs(a.e.pct));
+ const twBad=r.tw&&r.tw.ready&&!r.tw.ok,pBad=p&&p.verdict=='bad',sim=r.sim?' (simulated)':'';
+ if(act.length){const top=act[0],more=act.length>1?' +'+(act.length-1)+' more':'';
+  return{c:top.i.sev=='high'||twBad?'bad':'warn',t:top.i.title+'. '+top.i.why+more+(sim?' ':'')+sim.trim(),b:'Details'}}
+ if(twBad)return{c:'bad',t:'Digital twin needs recalibration: peak '+(r.tw.pkErr>=0?'+':'\u2212')+N0(Math.abs(r.tw.pkErr)*100)+'%, energy '+(r.tw.eErr>=0?'+':'\u2212')+N0(Math.abs(r.tw.eErr)*100)+'% against the plan.'+sim,b:'Details'};
+ if(pBad)return{c:'warn',t:'ESP32 prototype is off what the twin expects. Open Details.',b:'Details'};
+ const pr=r.pvRatio==null?'':'Solar '+N0(r.pvRatio*100)+'% and demand '+N0((r.ldRatio||0)*100)+'% of forecast so far. ';
+ return{c:'ok',t:'Tracking forecast. '+pr+(r.tw&&r.tw.ready?'Twin validated.':'')+sim,b:'Details'}}
+function devUpdate(){
+ const el=document.getElementById('devStrip');if(!el)return;
+ const show=view=='day'&&(role=='owner'||dtab=='ov')&&!(role=='tech'&&(dtab=='fa'||dtab=='lab'||dtab=='proto'));
+ el.hidden=!show;if(show){const s=devStripState(),pl=devProtoLine();
+  el.className='devstrip '+s.c;
+  el.innerHTML='<span class="dsdot"></span><span class="dstxt">'+esc(s.t)+(pl?' <span class="dsp">'+esc(pl)+'</span>':'')+'</span>'+(s.b?'<span class="dsgo">'+esc(s.b)+' &rsaquo;</span>':'');
+  el.setAttribute('role','button');el.tabIndex=0;el.dataset.act=s.act||'open';
+  if(!DEV.busy)devFetch(false)}
+ if(document.getElementById('devPanel')&&!document.getElementById('devPanel').hidden)devPanelRender()}
+/* ---- details panel ---- */
+function devChart(){const r=DEV.res,sr=DEV.j.series,K=r.K,tg=DEV.twinG,R=DRL();if(!tg||!sr.old_grid)return'';
+ const W=700,H=210,L=48,B=26,T=10,x=t=>L+(W-L-8)*(t+.5)/NS,mx=niceAxis(0,Math.max(...tg,...sr.old_grid.slice(0,K),1)*1.08),y=v=>H-B-(v/mx.hi)*(H-B-T),fl=dFloor();
+ let up='',dn='';for(let t=0;t<K;t++){const th=Math.max(R.grid*tg[t],fl);up+=(t?'L':'M')+x(t).toFixed(1)+' '+y(tg[t]+th).toFixed(1);dn='L'+x(t).toFixed(1)+' '+y(Math.max(0,tg[t]-th)).toFixed(1)+dn}
+ const pa=(a,n)=>a.slice(0,n).map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join('');
+ let s=yGrid(mx,y,L,W-8)+yTitle(T,H-B,'kW')+xAxis(t=>L+(W-L-8)*t/24,H-B,0,24,3);
+ s+='<path d="'+up+dn+'Z" fill="#2563eb" opacity=".13"/><path d="'+pa(tg,NS)+'" fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="6 4"/><path d="'+pa(sr.old_grid,K)+'" fill="none" stroke="#252B2A" stroke-width="2.5"/>';
+ r.eps.filter(e=>e.key=='grid').forEach(e=>{for(let t=e.a;t<=e.b;t++)s+='<circle cx="'+x(t).toFixed(1)+'" cy="'+y(sr.old_grid[t]).toFixed(1)+'" r="4" fill="#B42318" stroke="#fff" stroke-width="1.5"/>'});
+ const nx=(L+(W-L-8)*K/NS).toFixed(1);s+='<line x1="'+nx+'" x2="'+nx+'" y1="'+T+'" y2="'+(H-B)+'" stroke="#252B2A" stroke-dasharray="3 3"/><text x="'+(+nx+4)+'" y="'+(T+10)+'" font-size="11" fill="#252B2A">now</text>';
+ return'<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto" role="img" aria-label="Grid import: digital twin expected path with tolerance band, and what the readings imply">'+s+'</svg><div class="legend"><span><i style="background:#2563eb"></i>Twin expected, with \u00b1'+N0(R.grid*100)+'% band</span><span><i style="background:#252B2A"></i>Measured (implied by the readings)</span><span><i style="background:#B42318"></i>Outside the band</span></div>'}
+function devPanelRender(){
+ const el=document.getElementById('devPanelBody');if(!el)return;const R=DRL();
+ if(cur!=TODAY){el.innerHTML='<p>Deviation checks run on today\u2019s readings. Open today to see them.</p>';return}
+ if(!DEV.res){el.innerHTML='<p>'+(DEV.err?'The check could not run: '+esc(DEV.err):'Checking today\u2019s readings\u2026')+'</p>';return}
+ const r=DEV.res,j=DEV.j,q=DEV.q,pc=v=>(v>=0?'+':'\u2212')+N0(Math.abs(v)*100)+'%',sc=Object.entries(ROSC).map(([k,v])=>'<option value="'+k+'"'+(k==DEV.sc?' selected':'')+'>'+esc(v[0])+'</option>').join('');
+ const eps=r.eps.slice().sort((a,b)=>b.a-a.a).map(e=>({e,i:dInfo(e,j,q)}));
+ let h='<div class="dpkind '+(r.sim?'sim':'meas')+'"><b>'+(r.sim?'SIMULATED':'MEASURED')+'</b> '+esc(r.sim?'No meter is connected. Readings up to '+tm(r.K)+' are the forecast with the scenario below applied.':'Readings up to '+tm(r.K)+' come from the file you loaded.')+(r.sim?' <label>Demo scenario <select id="devSc">'+sc+'</select></label>':'')+'</div>';
+ h+='<h3>What is off now</h3>';
+ h+=devLogLine();
+ h+=eps.length?eps.map(({e,i})=>'<div class="dpep '+i.sev+'"><div class="dph"><span class="dpsev">'+(i.sev=='high'?'High':i.sev=='warn'?'Watch':'Info')+'</span><b>'+esc(i.title)+'</b>'+(e.on?'':'<span class="dpend">ended</span>')+'</div><div class="dpg"><span>When</span><div>'+esc(i.span)+'</div><span>Size</span><div>'+esc(N0(Math.abs(e.pct))+'% '+(e.dir>0?'above':'below')+', '+i.size)+'</div><span>Why it matters</span><div>'+esc(i.why)+'</div><span>What the system did</span><div>'+esc(i.did)+'</div><span>What to do</span><div>'+esc(i.todo)+'</div></div></div>').join(''):'<p class="dpok">Nothing is off. Solar, demand and grid import are inside tolerance.</p>';
+ h+='<p class="note">Rule: a reading counts as off when it is more than '+N0(R.load*100)+'% (demand), '+N0(R.pv*100)+'% (solar) or '+N0(R.grid*100)+'% (grid import) from what was expected, by at least the size floor ('+N0(dFloor())+' kW, 7% of peak demand), for '+R.run+' readings in a row. Slow drift also counts: the average over '+R.driftWin/2+' hours more than half way to those limits. The Operations console uses the same limits.</p>';
+ h+='<h3>Does the digital twin match reality?</h3>';
+ const t=r.tw;
+ if(!t||!t.ready)h+='<p>Not enough readings yet. The check needs at least 2 hours of today.</p>';
+ else h+='<div class="dpv '+(t.ok?'ok':'bad')+'"><b>'+(t.ok?'Twin validated':'Needs recalibration')+'</b><span>'+esc('Pass needs: '+t.pkLabel.toLowerCase()+' within \u00b1'+N0(R.peakTol*100)+'%, energy within \u00b1'+N0(R.energyTol*100)+'%, and at least '+N0(R.share*100)+'% of readings within \u00b1'+N0(R.grid*100)+'%.')+'</span></div>'+devChart()+'<div class="dpk"><div><b>'+N1(t.maePct)+'%</b><span>Average error ('+N0(t.mae)+' kW)</span></div><div class="'+(Math.abs(t.pkErr)<=R.peakTol?'':'x')+'"><b>'+pc(t.pkErr)+'</b><span>'+esc(t.pkLabel)+': '+N0(t.pkT)+' twin, '+N0(t.pkA)+' measured kW</span></div><div class="'+(Math.abs(t.eErr)<=R.energyTol?'':'x')+'"><b>'+pc(t.eErr)+'</b><span>Energy: '+N0(t.eT)+' twin, '+N0(t.eA)+' measured kWh</span></div><div class="'+(t.share>=R.share?'':'x')+'"><b>'+N0(t.share*100)+'%</b><span>Of readings within tolerance</span></div></div><p class="note">The twin is the day-ahead plan on the forecast. \u201cMeasured\u201d is the grid import the readings imply, because no grid meter is connected. With a real grid meter it becomes a direct measurement.</p>';
+ const p=DEV.proto&&Date.now()-DEV.protoAt<10000?DEV.proto:null;
+ h+='<h3>Demo factory (ESP32) against its twin</h3>';
+ h+=p&&p.items&&p.items.length?'<div class="dpv '+(p.verdict=='bad'?'bad':p.verdict=='ok'?'ok':'wait')+'"><b>'+(p.verdict=='bad'?'Needs recalibration':p.verdict=='ok'?'Twin validated':'Collecting data')+'</b><span>Last '+p.n+' seconds of readings against what the 3D model expects.</span></div><div class="scroll"><table><tr><th>Part</th><th>Twin expects</th><th>ESP32 measured</th><th>Match</th><th>Tolerance</th><th></th></tr>'+p.items.map(i=>'<tr><td>'+esc(i.name)+'</td><td>'+esc(i.exp)+'</td><td>'+esc(i.meas)+'</td><td>'+(i.pct==null?'&ndash;':N0(i.pct)+'% of expected')+'</td><td>'+esc(i.tol)+'</td><td>'+(i.ok===true?'<b class="good">Pass</b>':i.ok===false?'<b style="color:#B42318">Fail</b>':'<span class="note">'+esc(i.why||'not checked')+'</span>')+'</td></tr>').join('')+'</table></div>':'<p class="note">Connect the ESP32 on the 3D tab (Live prototype). Its panels, battery, conveyor and EV charger LED are then compared with what the model expects, and the 3D chips show the match.</p>';
+ el.innerHTML=h}
+function devLogLine(){const D=window.SunDev;if(!D)return'';const a=D.list().filter(x=>x.status!='closed'&&x.day==cur);
+ return'<p class="note" style="margin:0 0 6px">'+(a.length?'<b>'+a.length+' open in the deviation log</b> for today. ':'Nothing open in the deviation log for today. ')+'Operators acknowledge, analysts investigate and resolve, approvers see open items before approving. <button type="button" data-devgo="1">Go to the log</button></p>'}
+function devOpen(){let p=document.getElementById('devPanel');
+ if(!p){p=document.createElement('div');p.id='devPanel';p.className='devpanel';p.setAttribute('role','dialog');p.setAttribute('aria-modal','true');p.setAttribute('aria-label','Deviations and digital twin check');p.innerHTML='<div class="dpbox"><div class="dpt"><h2>Deviations and digital twin check</h2><button type="button" data-dpx="1" aria-label="Close">Close</button></div><div id="devPanelBody"></div></div>';document.body.appendChild(p)}
+ p.hidden=false;devPanelRender();if(!DEV.busy)devFetch(true)}
+function devClose(){const p=document.getElementById('devPanel');if(p)p.hidden=true}
+document.addEventListener('click',e=>{const t=e.target;if(!t.closest)return;
+ if(t.closest('[data-dpx]')||t.id=='devPanel'){devClose();return}
+ if(t.closest('[data-devgo]')){devClose();const c=document.getElementById('dvCard');if(c&&!c.hidden&&c.offsetParent)c.scrollIntoView({behavior:'smooth',block:'center'});else alert('The full log is on the Detailed view, Overview tab.');return}
+ const s=t.closest('#devStrip');if(s){if(s.dataset.act=='today'){const b=document.getElementById('tod');if(b)b.click()}else devOpen()}});
+document.addEventListener('keydown',e=>{if(e.key=='Escape')devClose();const s=e.target&&e.target.id=='devStrip';if(s&&(e.key=='Enter'||e.key==' ')){e.preventDefault();devOpen()}});
+document.addEventListener('change',e=>{if(e.target&&e.target.id=='devSc'){DEV.sc=e.target.value;DEV.res=null;devPanelRender();devFetch(true)}});
+/* ESP32 twin failures go into the shared log: a part must be off for 5 seconds in a row, and back for 10 seconds, to avoid flicker */
+function devHw(p){const D=window.SunDev;if(!D||!p||!p.items)return;const H=DEV.hw||(DEV.hw={}),n=new Date(),hm=p2(n.getHours())+':'+p2(n.getMinutes()),day=typeof TODAY!=='undefined'?TODAY:cur,fac=(typeof F!=='undefined'&&F.name)||'site';
+ p.items.forEach(i=>{const h=H[i.id]||(H[i.id]={bad:0,good:0,on:false});
+  if(i.ok===false){h.bad++;h.good=0;if(!h.on&&h.bad>=5){h.on=true;D.add({kind:'hw',fac,day,start:hm,slot:i.id+'@'+hm,dir:i.id,sev:'warn',title:i.name+' is off what the twin expects',detail:'Measured: '+i.meas+'. The twin expects: '+i.exp+'.',source:'3D prototype (ESP32 readings)',sim:false})}}
+  else if(i.ok===true){h.good++;h.bad=0;if(h.on&&h.good>=10)h.on=false}});
+ const any=Object.values(H).some(h=>h.on);if(DEV.hwAny&&!any)D.recover({kind:'hw',fac,day,start:hm});DEV.hwAny=any}
+window.addEventListener('message',e=>{const f=document.getElementById('proto3d'),d=e.data;if(!d||d.type!='sunshine-twin'||!f||e.source!==f.contentWindow)return;DEV.proto=d.twin;DEV.protoAt=Date.now();try{devHw(d.twin)}catch(x){}devUpdate()});
+/* markers on the Energy usage chart: expected demand band and red triangles where the reading left it */
+function devMarks(y,L,bw,H,B,T){const r=DEV.res;if(!r||!DEV.j||cur!=TODAY)return'';const sr=DEV.j.series,R=DRL(),fl=dFloor();let s='',up='',dn='';
+ for(let t=0;t<NS;t++){const f=sr.forecast_load[t],th=Math.max(R.load*f,fl),x=L+t*bw+bw/2;up+=(t?'L':'M')+x.toFixed(1)+' '+y(f+th).toFixed(1);dn='L'+x.toFixed(1)+' '+y(Math.max(0,f-th)).toFixed(1)+dn}
+ s+='<path d="'+up+dn+'Z" fill="#7C3AED" opacity=".10" pointer-events="none"/><path d="'+sr.forecast_load.map((f,t)=>(t?'L':'M')+(L+t*bw+bw/2).toFixed(1)+' '+y(f).toFixed(1)).join('')+'" fill="none" stroke="#7C3AED" stroke-width="1.2" stroke-dasharray="4 3" opacity=".8" pointer-events="none"/>';
+ const col={pv:'#D97706',load:'#B42318',grid:'#B42318'};
+ r.eps.forEach(e=>{for(let t=e.a;t<=e.b;t++){const x=L+t*bw+bw/2,yy=H-B-3;s+='<path d="M'+(x-4).toFixed(1)+' '+yy+'L'+(x+4).toFixed(1)+' '+yy+'L'+x.toFixed(1)+' '+(yy-8)+'Z" fill="'+col[e.key]+'" stroke="#fff" stroke-width="1"><title>'+esc(dName(e.key)+' off from '+tm(e.a))+'</title></path>'}});
+ s+='<text x="'+(L+6)+'" y="'+(H-B-14)+'" font-size="10" fill="#6D28D9" stroke="#fff" stroke-width="3" paint-order="stroke">Dashed line and band: expected demand (\u00b1'+N0(R.load*100)+'%). Triangles: reading left tolerance.</text>';return s}
+window.addEventListener('sundev',()=>{try{devUpdate()}catch(e){}});
+/* hooks */
+{const _at=applyTab;applyTab=function(){const r=_at.apply(this,arguments);try{devUpdate()}catch(e){}return r}}
+setInterval(()=>{if(!document.hidden)try{devFetch(false);devUpdate()}catch(e){}},30000);
+</script>
+<script src="devlog.js" defer></script>
 <script src="ops.js" defer></script>
 </body></html>
