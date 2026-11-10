@@ -566,19 +566,12 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const DOWS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const CSS = `
-#sunops{position:fixed;inset:0;z-index:65;overflow:auto;--s:clamp(300px,44vw,580px);--cx:calc(100% - var(--s)*.2);--cy:0px;background:radial-gradient(circle var(--s) at var(--cx) var(--cy),rgba(255,176,80,.30) 0,rgba(255,192,112,.15) calc(var(--s)*.44),transparent calc(var(--s)*.44 + 1px),transparent calc(var(--s)*.56 - 1px),rgba(245,158,11,.18) calc(var(--s)*.56),rgba(245,158,11,.18) calc(var(--s)*.56 + 2px),transparent calc(var(--s)*.56 + 3px),transparent calc(var(--s)*.70 - 1px),rgba(245,158,11,.12) calc(var(--s)*.70),rgba(245,158,11,.12) calc(var(--s)*.70 + 2px),transparent calc(var(--s)*.70 + 3px),transparent calc(var(--s)*.84 - 1px),rgba(245,158,11,.07) calc(var(--s)*.84),rgba(245,158,11,.07) calc(var(--s)*.84 + 2px),transparent calc(var(--s)*.84 + 3px),transparent 100%) fixed,linear-gradient(180deg,#FFFDF9 0%,#FFF6EC 55%,#FFECDB 100%) fixed;color:var(--ink,#252B2A);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;padding-top:env(safe-area-inset-top,0)}
+#sunops{position:fixed;inset:0;top:var(--sotop,0px);z-index:65;overflow:auto;--s:clamp(300px,44vw,580px);--cx:calc(100% - var(--s)*.2);--cy:0px;background:radial-gradient(circle var(--s) at var(--cx) var(--cy),rgba(255,176,80,.30) 0,rgba(255,192,112,.15) calc(var(--s)*.44),transparent calc(var(--s)*.44 + 1px),transparent calc(var(--s)*.56 - 1px),rgba(245,158,11,.18) calc(var(--s)*.56),rgba(245,158,11,.18) calc(var(--s)*.56 + 2px),transparent calc(var(--s)*.56 + 3px),transparent calc(var(--s)*.70 - 1px),rgba(245,158,11,.12) calc(var(--s)*.70),rgba(245,158,11,.12) calc(var(--s)*.70 + 2px),transparent calc(var(--s)*.70 + 3px),transparent calc(var(--s)*.84 - 1px),rgba(245,158,11,.07) calc(var(--s)*.84),rgba(245,158,11,.07) calc(var(--s)*.84 + 2px),transparent calc(var(--s)*.84 + 3px),transparent 100%) fixed,linear-gradient(180deg,#FFFDF9 0%,#FFF6EC 55%,#FFECDB 100%) fixed;color:var(--ink,#252B2A);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;padding-top:env(safe-area-inset-top,0)}
 #sunops[hidden]{display:none!important}
 #sunops *{box-sizing:border-box}
 #sunops .wrap{max-width:1280px;margin:0 auto;padding:14px 16px 60px}
-#sunops .sotop{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 0;margin:-14px 0 14px;background:var(--amb,#F59E0B);box-shadow:0 0 0 100vmax var(--amb,#F59E0B),0 2px 10px rgba(146,64,14,.18);clip-path:inset(0 -100vmax)}
-#sunops h1{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:800;margin:0 14px 0 0;color:var(--acc,#252B2A);white-space:nowrap}
-#sunops .sunmark{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#FFF7D6;color:var(--ink,#252B2A);font-size:19px;box-shadow:0 0 0 3px rgba(255,255,255,.4)}
-#sunops .sotop .tag{background:rgba(255,255,255,.55)}
-#sunops .sotop .note{color:var(--ink,#252B2A)}
-#sunops .sotop button{border:0;background:transparent;padding:10px 15px;border-radius:9px;font-weight:650}
-#sunops .sotop button:hover{background:rgba(255,255,255,.4)}
-#sunops .sotop button.on,#sunops .sotop button.pri{background:#fff;box-shadow:0 1px 3px rgba(37,43,42,.2)}
-#sunops .sotop .seg{background:transparent;border:0;gap:6px}#sunops .sotop .seg button{border-right:0;border-radius:9px;padding:6px 12px}
+#sunops .sotop{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 10px}
+#sunops h1{font-size:19px;font-weight:800;letter-spacing:-.015em;margin:0 6px 0 0;color:var(--acc,#252B2A)}
 #sunops h2{color:var(--acc,#252B2A);font-size:19px;letter-spacing:-.015em;margin:0 0 4px}
 #sunops h3{font-size:14px;margin:12px 0 4px}
 #sunops .sp{flex:1}
@@ -641,7 +634,6 @@ const CSS = `
 @keyframes so-spin{to{transform:rotate(360deg)}}
 #sunops input[type=range]{padding:0;width:min(420px,100%)}
 #sunops .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
-#sunOpsBtn{margin-left:6px}
 #sunopsEntry{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;border:1px solid #F0D98A;background:#FFF9E3}
 #sunopsEntry b{font-size:15px}#sunopsEntry .sp{flex:1}
 #sunopsEntry button.pri{background:var(--amb,#F59E0B);border-color:var(--amb,#F59E0B);font-weight:700}
@@ -951,11 +943,9 @@ const dis = ok => ok ? '' : 'disabled';
 const TABS = [['live', 'Play the day'], ['scen', 'Compare plans'], ['bill', 'Monthly bill vs TNB'], ['twin', 'Did the forecast hold?'], ['data', 'Data health'], ['appr', 'Approvals & audit'], ['fac', '3D factory'], ['set', 'Settings & data']];
 
 function shell() {
-  return `<div class="sotop"><h1><span class="sunmark">&#9788;</span>Sun Shine - Operations</h1><span class="tag">Planning simulation. Never controls equipment.</span><span class="sp"></span>
-    <span class="role"><span class="note" style="margin:0">Facility</span><span class="seg" role="group" aria-label="Facility">${Object.keys(FACS).map(k => `<button data-act="fac" data-v="${k}" class="${ST.fac === k ? 'on' : ''}" title="${esc(FACS[k].name)}">${esc(FACS[k].short)} (${FACS[k].step})</button>`).join('')}</span></span>
-    <span class="role"><span class="note" style="margin:0">Your role</span><b>${esc(ROLES[ST.role].name)}</b></span>
-    <button data-act="close" class="pri">Back to Sun Shine</button></div>
-    <div class="note" style="margin:0 0 8px">${esc(ROLES[ST.role].blurb)} <i>Your role is set at the top of the main page (or by your sign-in).</i></div>
+  return `<div class="sotop"><h1>Operations</h1><span class="tag">Planning simulation. Never controls equipment.</span><span class="sp"></span>
+    <span class="role"><span class="note" style="margin:0">Facility</span><span class="seg" role="group" aria-label="Facility">${Object.keys(FACS).map(k => `<button data-act="fac" data-v="${k}" class="${ST.fac === k ? 'on' : ''}" title="${esc(FACS[k].name)}">${esc(FACS[k].short)} (${FACS[k].step})</button>`).join('')}</span></span></div>
+    <div class="note" style="margin:0 0 8px">${esc(ROLES[ST.role].blurb)}</div>
     <div class="tabs" role="tablist">${TABS.filter(t => t[0] !== 'fac' || FACS[ST.fac].has3d).map(t => `<button role="tab" data-act="tab" data-v="${t[0]}" class="${ST.tab === t[0] ? 'on' : ''}">${t[1]}</button>`).join('')}</div>
     <div id="so_body"></div>`;
 }
@@ -1452,12 +1442,20 @@ function onChange(e) {
 }
 function onInput(e) { if (e.target.id === 'lv_seek' && ST.live && can('run')) { stopLive(); liveSeek(parseInt(e.target.value, 10)); drawLive(); renderLiveButtons(); } }
 
+const headEl = () => document.querySelector('header.top');
+function fitTop() { const r = $root(), h = headEl(); if (r && h) r.style.setProperty('--sotop', Math.max(0, Math.round(h.getBoundingClientRect().bottom)) + 'px'); }
+let savedOn = null;
+function markBtn(open) {
+  const btn = document.getElementById('sunOpsBtn'), rp = document.querySelectorAll('[data-rp]');
+  if (open) { savedOn = Array.from(rp).filter(b => b.classList.contains('on')); rp.forEach(b => b.classList.remove('on')); if (btn) btn.classList.add('on'); }
+  else { if (btn) btn.classList.remove('on'); if (savedOn) savedOn.forEach(b => b.classList.add('on')); savedOn = null; }
+}
 function openConsole() {
-  const r = ensureRoot(); ST.open = true; r.hidden = false; document.body.style.overflow = 'hidden';
+  const r = ensureRoot(); const was = ST.open; ST.open = true; r.hidden = false; document.body.style.overflow = 'hidden'; fitTop(); if (!was) markBtn(true);
   if (!ST.raw && ST.status !== 'loading') loadPreset();
   render();
 }
-function closeConsole() { stopLive(); facStop(); ST.open = false; const r = $root(); if (r) r.hidden = true; document.body.style.overflow = ''; if (location.hash === '#ops') history.replaceState(null, '', location.pathname + location.search); }
+function closeConsole() { const was = ST.open; stopLive(); facStop(); ST.open = false; if (was) markBtn(false); const r = $root(); if (r) r.hidden = true; document.body.style.overflow = ''; if (location.hash === '#ops') history.replaceState(null, '', location.pathname + location.search); }
 function ensureRoot() {
   let r = $root(); if (r) return r;
   r = document.createElement('div'); r.id = 'sunops'; r.hidden = true; r.setAttribute('role', 'dialog'); r.setAttribute('aria-label', 'Operations console'); r.innerHTML = '<div class="wrap"></div>';
@@ -1475,9 +1473,11 @@ function entryCard() {
 }
 function boot() {
   const st = document.createElement('style'); st.id = 'sunops-css'; st.textContent = CSS; document.head.appendChild(st);
-  const b = document.createElement('button'); b.id = 'sunOpsBtn'; b.type = 'button'; b.textContent = 'Operations'; b.title = 'Live replay, scenarios, monthly bill, digital twin, approvals'; b.addEventListener('click', openConsole);
-  const head = document.querySelector('header.top'), anchor = document.getElementById('roleSwitch');
-  if (head && anchor) anchor.insertAdjacentElement('afterend', b); else { b.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:50;background:#F59E0B;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer'; document.body.appendChild(b); }
+  const b = document.createElement('button'); b.id = 'sunOpsBtn'; b.type = 'button'; b.textContent = 'Operations'; b.title = 'Live replay, scenarios, monthly bill, digital twin, approvals'; b.addEventListener('click', () => { if (!ST.open) openConsole(); });
+  const grp = document.getElementById('roleSwitch');
+  if (grp) { grp.appendChild(b); grp.addEventListener('click', e => { if (ST.open && e.target.closest('[data-rp]')) closeConsole(); }, true); }
+  else { b.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:50;background:#F59E0B;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer'; document.body.appendChild(b); }
+  window.addEventListener('resize', () => { if (ST.open) fitTop(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && ST.open) closeConsole(); });
   entryCard();
   if (location.hash === '#ops') openConsole();
