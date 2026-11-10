@@ -776,6 +776,9 @@ function verifyAudit() {
 }
 
 /* ---- time labels ---- */
+// LIVE15: alert floors scale with the site (the 100 kW floor was tuned for the big site and hid every deviation on the small lab factory)
+const devFloor = () => { const c = ST.ctx; if (c._fl == null) { let m = 0; const a = ST.D.load; for (let i = 0; i < a.length; i++) if (a[i] > m) m = a[i]; c._fl = Math.max(5, Math.min(100, 0.07 * m)); } return c._fl; };
+const fmtDur = sec => sec >= 90 ? (Math.round(sec / 6) / 10) + ' min' : Math.round(sec) + ' s';
 const tmS = s => { const m = Math.round(s * ST.ctx.dt * 60); return p2(Math.floor(m / 60)) + ':' + p2(m % 60); };
 const stratOf = k => STRATS[k];
 const isOpt = k => STRATS[k].rule === 'opt';
@@ -851,19 +854,27 @@ function liveStart(d, keep) {
   const hr = s => s * ctx.dt;
   if (inject === 'cloud' || inject === 'both') for (let s = 0; s < spd; s++) if (hr(s) >= 12 && hr(s) < 15) P[s] *= 0.4;
   if (inject === 'surge' || inject === 'both') for (let s = 0; s < spd; s++) if (hr(s) >= 15 && hr(s) < 19) L[s] *= 1.25;
+  const injs = (keep && keep.injs) || (ST.live && ST.live.injs) || [];   // LIVE15: disturbances typed in while the replay runs
+  injs.forEach(j => { const e = Math.min(spd, j.from + Math.ceil((j.k === 'cloud' ? 3 : 4) / ctx.dt)); for (let s = j.from; s < e; s++) { if (j.k === 'cloud') P[s] *= 0.4; else L[s] *= 1.25; } });
   const f0 = forecastDay(ctx, d);
   const B = runDay(ctx, d, 0, 0, STRATS.base, 'plan', { L, P, E });
   const T = runDay(ctx, d, Rr.soc0[d], Rr.m0[d], strat, 'plan', { L: Float64Array.from(f0.L), P: Float64Array.from(f0.P), E });
   const X = newDay(ctx, d, Rr.soc0[d], Rr.m0[d], strat, mode, { L, P, E });
   const prevReq = ST.live ? ST.live.require : false, prevSpeed = ST.live ? ST.live.speed : 800;
-  ST.live = { d, X, B, T, idx: 0, prepared: -1, playing: false, timer: null, speed: prevSpeed, alerts: [], pending: null, inject, require: prevReq, quiet: false,
+  ST.live = { d, X, B, T, idx: 0, prepared: -1, playing: false, timer: null, speed: prevSpeed, alerts: [], pending: null, inject, injs, hist: [], require: prevReq, quiet: false,
     dev: { load: { n: 0, ok: 0, on: false }, pv: { n: 0, ok: 0, on: false }, twin: { n: 0, ok: 0, on: false } }, flags: { empty: false, over: 0 }, done: false };
   if (HAS_DOM) drawLive();
 }
-function addAlert(level, title, text, slot) {
+function addAlert(level, title, text, slot, kind) {   // DEVLOG: kind = load | pv | twin | empty | cap
   const L = ST.live; L.alerts.push({ slot, level, title, text });
   if (!L.quiet && level !== 'ok') audit('alert', tmS(slot) + ' ' + title + ' - ' + text, 'system');
+  if (!L.quiet && kind && typeof window !== 'undefined' && window.SunDev) {   // DEVLOG: also write it to the shared deviation log on the main page
+    const ev = { kind, fac: ST.fac, day: ST.D.days[L.d].date, start: tmS(Math.max(0, slot)), slot: Math.max(0, slot) };
+    if (level === 'ok') window.SunDev.recover(ev);
+    else window.SunDev.add(Object.assign(ev, { sev: level === 'hi' ? 'high' : 'warn', title, detail: text, dir: /above/.test(title) ? 'above' : /below/.test(title) ? 'below' : '', source: 'Operations console' }));
+  }
 }
+SunOps.audit = (a, d, b) => audit(a, d, b);   // DEVLOG: lets the main page write into the same tamper-evident chain
 function addProposal(p, status, by) {
   if (ST.live.quiet) return;
   const rec = Object.assign({ id: ++ST.propSeq, date: ST.D.days[ST.live.d].date, strat: ST.sel.strat, status, by: by || (status === 'auto' ? 'auto (demo mode)' : ''), at: new Date().toISOString() }, p);
@@ -887,6 +898,7 @@ function liveStep() {
       resolveProposal(X, true); addProposal(p, 'auto');
     }
   }
+  L.hist[s] = { cap: X.capApplied, rP: X.ratioP || 1, rL: X.ratioL || 1, soc: X.soc };   // LIVE15
   const capBefore = X.capApplied;
   execSlot(X, s);
   analyse(s);
@@ -896,22 +908,33 @@ function liveStep() {
 }
 const windowPeak = (g, X) => X.wd ? bp(g, 0, X.ctx.w0, X.ctx.w1, blockOf(X.ctx)).v : 0;
 function analyse(s) {
+  const DEVR = (typeof window !== 'undefined' && window.SunDevRules) || { load: 0.2, pv: 0.25, grid: 0.15, run: 2 };
   const L = ST.live, X = L.X, f0 = X.f0, ctx = ST.ctx, pad = tmS(s);
-  const ep = (name, flag, start) => { const e = L.dev[name]; if (flag) { e.n++; e.ok = 0; if (!e.on && e.n >= 2) { e.on = true; start(); } } else { e.ok++; e.n = 0; if (e.on && e.ok >= 2) { e.on = false; addAlert('ok', 'Back within tolerance', name === 'load' ? 'Demand is tracking the forecast again.' : name === 'pv' ? 'Solar is tracking the forecast again.' : 'Grid import is tracking the twin again.', s); } } };
-  const dL = X.L[s] - f0.L[s], thL = Math.max(0.2 * f0.L[s], 100);
-  ep('load', Math.abs(dL) >= thL, () => addAlert('warn', 'Demand ' + (dL > 0 ? 'above' : 'below') + ' forecast', fmt0(Math.abs(dL)) + ' kW (' + fmt0(Math.abs(dL) / Math.max(f0.L[s], 1) * 100) + '%) for two intervals. Forecast corrected for the rest of the day; plan re-checked.', s - 1));
-  const dP = X.P[s] - f0.P[s], thP = Math.max(0.25 * f0.P[s], 100);
-  ep('pv', Math.abs(dP) >= thP, () => addAlert('warn', 'Solar ' + (dP > 0 ? 'above' : 'below') + ' forecast', fmt0(Math.abs(dP)) + ' kW (' + fmt0(Math.abs(dP) / Math.max(f0.P[s], 1) * 100) + '%) for two intervals. Forecast corrected for the rest of the day; plan re-checked.', s - 1));
-  const pr = L.T.out.grid[s], ac = X.out.grid[s], thT = Math.max(0.15 * Math.max(pr, 50), 100);
-  ep('twin', Math.abs(ac - pr) >= thT, () => addAlert('hi', 'Digital twin out of tolerance', 'Measured grid import is ' + fmt0(Math.abs(ac - pr)) + ' kW ' + (ac > pr ? 'above' : 'below') + ' what the twin expected. The plan is based on a forecast that is not holding today.', s - 1));
-  if (X.strat.bat && X.inWin(s) && X.soc <= X.socMin + 0.02 && X.out.net[s] > X.capApplied + 50 && !L.flags.empty) { L.flags.empty = true; addAlert('hi', 'Battery empty in the peak window', 'Demand is above the cap and no charge is left. The billed peak for this month may rise.', s); }
-  if (X.strat.bat && X.inWin(s) && Number.isFinite(X.capApplied) && ac > X.capApplied + 25 && ac > L.flags.over + 50) { L.flags.over = ac; addAlert('hi', 'Grid import above the cap', fmt0(ac) + ' kW against a cap of ' + fmt0(X.capApplied) + ' kW. This sets a new running peak.', s); }
+  const ep = (name, flag, start) => { const e = L.dev[name]; if (flag) { e.n++; e.ok = 0; if (!e.on && e.n >= DEVR.run) { e.on = true; start(); } } else { e.ok++; e.n = 0; if (e.on && e.ok >= 2) { e.on = false; addAlert('ok', 'Back within tolerance', name === 'load' ? 'Demand is tracking the forecast again.' : name === 'pv' ? 'Solar is tracking the forecast again.' : 'Grid import is tracking the twin again.', s, name); } } };
+  const dL = X.L[s] - f0.L[s], thL = Math.max(DEVR.load * f0.L[s], devFloor());
+  ep('load', Math.abs(dL) >= thL, () => addAlert('warn', 'Demand ' + (dL > 0 ? 'above' : 'below') + ' forecast', fmt0(Math.abs(dL)) + ' kW (' + fmt0(Math.abs(dL) / Math.max(f0.L[s], 1) * 100) + '%) for two intervals. Forecast corrected for the rest of the day; plan re-checked.', s - 1, 'load'));
+  const dP = X.P[s] - f0.P[s], thP = Math.max(DEVR.pv * f0.P[s], devFloor());
+  ep('pv', Math.abs(dP) >= thP, () => addAlert('warn', 'Solar ' + (dP > 0 ? 'above' : 'below') + ' forecast', fmt0(Math.abs(dP)) + ' kW (' + fmt0(Math.abs(dP) / Math.max(f0.P[s], 1) * 100) + '%) for two intervals. Forecast corrected for the rest of the day; plan re-checked.', s - 1, 'pv'));
+  const pr = L.T.out.grid[s], ac = X.out.grid[s], thT = Math.max(DEVR.grid * Math.max(pr, 50), devFloor());
+  ep('twin', Math.abs(ac - pr) >= thT, () => addAlert('hi', 'Digital twin out of tolerance', 'Measured grid import is ' + fmt0(Math.abs(ac - pr)) + ' kW ' + (ac > pr ? 'above' : 'below') + ' what the twin expected. The plan is based on a forecast that is not holding today.', s - 1, 'twin'));
+  if (X.strat.bat && X.inWin(s) && X.soc <= X.socMin + 0.02 && X.out.net[s] > X.capApplied + 50 && !L.flags.empty) { L.flags.empty = true; addAlert('hi', 'Battery empty in the peak window', 'Demand is above the cap and no charge is left. The billed peak for this month may rise.', s, 'empty'); }
+  if (X.strat.bat && X.inWin(s) && Number.isFinite(X.capApplied) && ac > X.capApplied + 25 && ac > L.flags.over + 50) { L.flags.over = ac; addAlert('hi', 'Grid import above the cap', fmt0(ac) + ' kW against a cap of ' + fmt0(X.capApplied) + ' kW. This sets a new running peak.', s, 'cap'); }
 }
 function liveSeek(k) {
   const d = ST.live.d, inj = ST.live.inject, req = ST.live.require, sp = ST.live.speed;
   liveStart(d, { inject: inj }); ST.live.require = false; ST.live.quiet = true; ST.live.speed = sp;
   while (ST.live.idx < k && liveStep()) { }
   ST.live.quiet = false; ST.live.require = req; ST.propSeq = ST.propSeq;
+}
+function liveNow(kind) {   // LIVE15: inject a cloud front / demand surge starting at the current reading
+  const L = ST.live; if (!L || L.done || !can('run')) return;
+  const at = L.idx, was = L.playing; stopLive();
+  const from = kind === 'cloud' ? Math.max(at, Math.round(9 / ST.ctx.dt)) : at;   // a cloud only matters in daylight: if it is still night, it arrives at 09:00
+  L.injs = (L.injs || []).filter(j => j.k !== kind).concat([{ k: kind, from }]);
+  audit('inject_now', ST.D.days[L.d].date + ' ' + tmS(from) + ' ' + (kind === 'cloud' ? 'cloud front (solar x0.4 for 3 h)' : 'demand surge (+25% for 4 h)') + ' injected into the replay');
+  liveSeek(at);
+  if (HAS_DOM) { drawLive(); renderLiveButtons(); }
+  if (was) { livePlay(); renderLiveButtons(); }
 }
 function livePlay() {
   const L = ST.live; if (!L || L.done || L.playing) return; L.playing = true;
@@ -1016,17 +1039,21 @@ function bodyLive() {
     <div class="grid g2"><div class="card"><h2>Battery charge</h2><div id="lv_c2"></div></div><div class="card"><h2>EV charging: as requested vs planned</h2><div id="lv_c3"></div></div></div>
   </div><div>
     <div class="card" id="lv_pend_card"><h2>Approval</h2><div id="lv_pend"></div></div>
+    <div class="card"><h2>How the plan changed as data arrived</h2><div class="feed" id="lv_hist"></div></div>
     <div class="card"><h2>Deviations and alerts</h2><div class="feed" id="lv_feed"></div></div>
     <div class="card"><h2>What the planner is doing</h2><div id="lv_why" class="note"></div></div>
   </div></div>${caveat()}`;
 }
 function renderLiveButtons() {
   const el = $q('#lv_btns'); if (!el || !ST.live) return; const L = ST.live, a = can('run'), spd = ST.ctx.spd;
-  el.innerHTML = `<button class="pri" data-act="lv_play" ${dis(a && !L.playing && !L.done && !L.pending)}>&#9654; Play</button><button data-act="lv_pause" ${dis(a && L.playing)}>&#10073;&#10073; Pause</button><button data-act="lv_step" ${dis(a && !L.playing && !L.done && !L.pending)}>Step</button><button data-act="lv_restart" ${dis(a)}>Restart</button>
-    <label class="note">Speed <select id="lv_speed" ${dis(a)}><option value="1500" ${L.speed === 1500 ? 'selected' : ''}>Slow</option><option value="800" ${L.speed === 800 ? 'selected' : ''}>Normal</option><option value="250" ${L.speed === 250 ? 'selected' : ''}>Fast</option><option value="0" ${L.speed === 0 ? 'selected' : ''}>Instant</option></select></label>
+  el.innerHTML = `<button class="pri" data-act="lv_play" ${dis(a && !L.playing && !L.done && !L.pending)}>&#9654; Play</button><button data-act="lv_pause" ${dis(a && L.playing)}>&#10073;&#10073; Pause</button><button data-act="lv_step" ${dis(a && !L.playing && !L.done && !L.pending)}>Step</button><button data-act="lv_restart" ${dis(a)}>Restart</button><button data-act="lv_now" data-v="cloud" ${dis(a && !L.done)} title="Solar drops to 40% for 3 hours, starting at the next reading (or at 09:00 if it is still night)">&#9729; Cloud front from now</button><button data-act="lv_now" data-v="surge" ${dis(a && !L.done)} title="Demand rises 25% for 4 hours, starting at the next reading">&#9889; Demand surge from now</button>
+    <label class="note">Speed <select id="lv_speed" ${dis(a)}><option value="1500" ${L.speed === 1500 ? 'selected' : ''}>Slow (${fmtDur(1500 * spd / 1000)} a day)</option><option value="800" ${L.speed === 800 ? 'selected' : ''}>Normal (${fmtDur(800 * spd / 1000)} a day)</option><option value="250" ${L.speed === 250 ? 'selected' : ''}>Fast (${fmtDur(250 * spd / 1000)} a day)</option><option value="0" ${L.speed === 0 ? 'selected' : ''}>Instant</option></select></label>
     <input type="range" id="lv_seek" min="0" max="${spd}" value="${L.idx}" ${dis(a)} aria-label="Scrub through the day"><span class="note" style="margin:0">${tmS(Math.min(L.idx, spd))} of 24:00</span>`;
 }
-function mountLive() { renderLiveButtons(); drawLive(); }
+function mountLive() {
+  renderLiveButtons(); drawLive();
+  if (ST.autoplay) { ST.autoplay = false; if (can('run') && ST.live && !ST.live.playing && !ST.live.done) { livePlay(); renderLiveButtons(); } }
+}
 function drawLive() {
   factorySend();
   if (!ST.open || ST.tab !== 'live' || !ST.live) return;
@@ -1078,6 +1105,15 @@ function drawLive() {
   // feed
   const feed = $q('#lv_feed');
   feed.innerHTML = L.alerts.length ? L.alerts.slice().reverse().map(a => `<div class="alert ${a.level}"><b>${esc(tmS(Math.max(0, a.slot)))} ${esc(a.title)}</b><small>${esc(a.text)}</small></div>`).join('') : `<div class="note">Nothing yet. Alerts appear when demand or solar drift from the forecast for two readings in a row, or measured grid import leaves the twin's expected path.</div>`;
+  // LIVE15: the latest reading, and every time the plan moved because of the data
+  const hist = $q('#lv_hist');
+  if (hist) {
+    const rows = []; let last = null;
+    for (let k = 0; k < idx; k++) { const h = L.hist[k]; if (!h || !Number.isFinite(h.cap)) continue; if (last == null || Math.abs(h.cap - last) >= 1) { rows.push({ k, from: last, to: h.cap, h }); last = h.cap; } }
+    const j = idx - 1;
+    const head = j >= 0 ? `<div class="note" style="margin:0 0 6px"><b>Latest reading ${tmS(j)}-${tmS(j + 1)} (reading ${idx} of ${spd}):</b> demand ${fmt0(X.L[j] + X.out.ev[j])} kW, solar ${fmt0(X.P[j])} kW, grid import ${fmt0(X.out.grid[j])} kW.</div>` : '<div class="note" style="margin:0 0 6px">No reading yet. Press Play and the planner will read one interval at a time.</div>';
+    hist.innerHTML = head + (rows.length ? rows.slice().reverse().map(r => `<div class="alert ${r.from == null ? 'ok' : 'info'}"><b>${tmS(r.k)} ${r.from == null ? 'Day-ahead plan' : 'Plan changed'}: cap ${r.from == null ? '' : fmt0(r.from) + ' \u2192 '}${fmt0(r.to)} kW</b><small>${r.from == null ? 'Set before the first reading.' : 'Re-planned on the latest readings: solar ' + r.h.rP.toFixed(2) + '\u00d7 forecast, demand ' + r.h.rL.toFixed(2) + '\u00d7, battery ' + fmt0(r.h.soc * 100) + '%.'}</small></div>`).join('') : '<div class="note">The plan has not needed to change yet. It is re-checked at every reading.</div>');
+  }
   // approval box
   const pend = $q('#lv_pend');
   if (L.pending) {
@@ -1089,7 +1125,7 @@ function drawLive() {
   const why = $q('#lv_why');
   why.innerHTML = L.pending ? 'Waiting for an approver. Nothing is applied until the plan is approved.' : X.strat.bat ? (wd && idx < ctx.w1 ? `Holding grid import under <b>${Number.isFinite(X.capApplied) ? fmt0(X.capApplied) : '-'} kW</b> between 14:00 and 22:00, keeping about <b>${fmt0(X.Sreq * 100)}%</b> charge ready for it${X.strat.topup ? ', topping up from the grid just before the window only if solar has not filled the battery' : ''}. The cap is the lowest level the battery can hold given the corrected forecast, and never below this month's peak so far (${fmt0(X.Mrun)} kW), because shaving below it saves nothing.` : (wd ? 'The peak window has passed. The battery now keeps what tomorrow\'s window needs and serves load above that.' : 'No maximum demand is billed today. The battery keeps what the next weekday needs.')) : '';
   const sl = $q('#lv_seek'); if (sl) { sl.value = idx; if (sl.nextElementSibling) sl.nextElementSibling.textContent = tmS(Math.min(idx, spd)) + ' of 24:00'; }
-  const inj = $q('#lv_inj_note'); if (inj) inj.innerHTML = L.inject !== 'none' ? `<div class="warn"><b>SIMULATED DISTURBANCE.</b> The "recorded" solar or demand for this day has been altered to test the response. It is not real data.</div>` : '';
+  const inj = $q('#lv_inj_note'); if (inj) inj.innerHTML = (L.inject !== 'none' || (L.injs && L.injs.length)) ? `<div class="warn"><b>SIMULATED DISTURBANCE.</b> The "recorded" solar or demand for this day has been altered to test the response${L.injs && L.injs.length ? ' (' + L.injs.map(j => (j.k === 'cloud' ? 'cloud front' : 'demand surge') + ' from ' + tmS(j.from)).join(', ') + ')' : ''}. It is not real data.</div>` : '';
   if (L.done) { const gk = windowPeak(X.out.grid, X), bk = windowPeak(L.B.out.grid, L.B); feed.insertAdjacentHTML('afterbegin', `<div class="alert ok"><b>Day complete</b><small>Billed-window peak ${fmt0(gk)} kW vs ${fmt0(bk)} kW baseline. Energy cost saved ${fmtRM(costB - costX)}. Each kW of peak removed is worth RM ${T.md}/month if this day sets the month's peak.</small></div>`); }
 }
 
@@ -1414,7 +1450,8 @@ function onClick(e) {
   else if (act === 'lv_play') { if (!can('run')) return; livePlay(); renderLiveButtons(); }
   else if (act === 'lv_pause') { stopLive(); renderLiveButtons(); }
   else if (act === 'lv_step') { if (!can('run')) return; stopLive(); liveStep(); drawLive(); renderLiveButtons(); }
-  else if (act === 'lv_restart') { liveStart(ST.live.d); renderLiveButtons(); }
+  else if (act === 'lv_restart') { ST.live.injs = []; liveStart(ST.live.d); renderLiveButtons(); }
+  else if (act === 'lv_now') { liveNow(v); }
   else if (act === 'appr_yes' || act === 'appr_no') { const r = ST.live && ST.live.pendingRec; if (r) decide(r.id, act === 'appr_yes'); renderLiveButtons(); }
   else if (act === 'appr_id') { const [id, y] = v.split(':'); decide(parseInt(id, 10), y === '1'); }
   else if (act === 'aud_verify') { const r = verifyAudit(); audit('audit_verify', r.ok ? 'Chain intact, ' + r.n + ' entries' : 'Tampering detected at entry ' + r.bad); render(); }
@@ -1457,6 +1494,13 @@ function openConsole() {
   if (!ST.raw && ST.status !== 'loading') loadPreset();
   render();
 }
+function openLive(fac, autoplay) {   // LIVE15: one click from the main page to a running 15-minute replay
+  ST.tab = 'live'; ST.autoplay = !!autoplay;
+  if (fac && ST.fac !== fac) {
+    stopLive(); ST.fac = fac; ST.live = null; audit('facility_switch', FACS[fac].name);
+    if (ST.raw) { openConsole(); loadPreset(fac); } else openConsole();
+  } else openConsole();
+}
 function closeConsole() { const was = ST.open; stopLive(); facStop(); ST.open = false; if (was) markBtn(false); const r = $root(); if (r) r.hidden = true; document.body.style.overflow = ''; if (location.hash === '#ops') history.replaceState(null, '', location.pathname + location.search); }
 function ensureRoot() {
   let r = $root(); if (r) return r;
@@ -1469,15 +1513,16 @@ function entryCard() {
   if (LS.get('sunops_entry_off', false)) return;
   const app = document.getElementById('app'), ph = app && app.querySelector('.pagehead'); if (!ph || document.getElementById('sunopsEntry')) return;
   const c = document.createElement('div'); c.id = 'sunopsEntry'; c.className = 'card';
-  c.innerHTML = '<b>New: Operations console</b><span class="note" style="margin:0">Live replay, all strategies on one chart, monthly bill, digital-twin check, approvals and audit trail, and the 3D demo factory.</span><span class="sp"></span><button class="pri" data-e="ops">Open the console</button><button data-e="fac">See the demo factory</button><button data-e="x" aria-label="Dismiss this card">Dismiss</button>';
-  c.addEventListener('click', e => { const t = e.target.closest('[data-e]'); if (!t) return; const k = t.dataset.e; if (k === 'x') { LS.set('sunops_entry_off', true); c.remove(); } else { ST.tab = k === 'fac' ? 'fac' : 'live'; openConsole(); } });
+  c.innerHTML = '<b>New: Operations console</b><span class="note" style="margin:0">Live replay, all strategies on one chart, monthly bill, digital-twin check, approvals and audit trail, and the 3D demo factory.</span><span class="sp"></span><button class="pri" data-e="ops">Open the console</button><button data-e="live">Run live replay (15-min)</button><button data-e="fac">See the demo factory</button><button data-e="x" aria-label="Dismiss this card">Dismiss</button>';
+  c.addEventListener('click', e => { const t = e.target.closest('[data-e]'); if (!t) return; const k = t.dataset.e; if (k === 'x') { LS.set('sunops_entry_off', true); c.remove(); } else if (k === 'live') openLive('lab', true); else { ST.tab = k === 'fac' ? 'fac' : 'live'; openConsole(); } });
   app.insertBefore(c, ph);
 }
 function boot() {
   const st = document.createElement('style'); st.id = 'sunops-css'; st.textContent = CSS; document.head.appendChild(st);
   const b = document.createElement('button'); b.id = 'sunOpsBtn'; b.type = 'button'; b.textContent = 'Operations'; b.title = 'Live replay, scenarios, monthly bill, digital twin, approvals'; b.addEventListener('click', () => { if (!ST.open) openConsole(); });
+  const bl = document.createElement('button'); bl.id = 'sunLiveBtn'; bl.type = 'button'; bl.textContent = 'Live replay'; bl.title = 'Replay a day one 15-minute reading at a time and watch the plan change'; bl.addEventListener('click', () => openLive('lab', true));   // LIVE15
   const grp = document.getElementById('roleSwitch');
-  if (grp) { grp.appendChild(b); grp.addEventListener('click', e => { if (ST.open && e.target.closest('[data-rp]')) closeConsole(); }, true); }
+  if (grp) { grp.appendChild(b); grp.appendChild(bl); grp.addEventListener('click', e => { if (ST.open && e.target.closest('[data-rp]')) closeConsole(); }, true); }
   else { b.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:50;background:#F59E0B;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer'; document.body.appendChild(b); }
   window.addEventListener('resize', () => { if (ST.open) fitTop(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && ST.open) closeConsole(); });
@@ -1485,7 +1530,7 @@ function boot() {
   if (location.hash === '#ops') openConsole();
   window.addEventListener('hashchange', () => { if (location.hash === '#ops' && !ST.open) openConsole(); });
 }
-SunOps.open = () => HAS_DOM && openConsole(); SunOps.state = ST;
+SunOps.open = () => HAS_DOM && openConsole(); SunOps.openLive = (f, a) => HAS_DOM && openLive(f, a); SunOps.state = ST;
 if (HAS_DOM) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot(); }
 root.SunOps = SunOps;
 })(typeof window !== 'undefined' ? window : globalThis);
