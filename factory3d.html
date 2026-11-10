@@ -21,6 +21,7 @@ label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--mut)}
 .card .h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
 .card table{border-collapse:collapse;width:100%}.card td{padding:3px 0;border-top:1px solid var(--line)}.card td:last-child{text-align:right;font-variant-numeric:tabular-nums}
 .bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:3px}.bar i{display:block;height:100%;background:var(--c)}
+.tw{font-size:11px;font-weight:700;margin-left:2px;color:#1e7a46}.tw.bad{color:#b45309}
 .note{color:var(--mut);font-size:13px;margin-top:6px}
 #sun{width:150px}
 .embed h1,.embed p.t{display:none}.embed main{padding:0}body.embed{background:transparent}
@@ -82,7 +83,7 @@ body.embed main{height:100vh;display:flex;flex-direction:column;max-width:none}
 <details id="logbox" hidden><summary>Serial log (for troubleshooting)</summary><pre id="log" style="max-height:170px;overflow:auto;font-size:12px;background:var(--btn);border:1px solid var(--line);border-radius:8px;padding:8px;white-space:pre-wrap"></pre></details></div></div>
 <div class="r cnx" id="cnx"><span class="badge off" id="src">Simulated here</span><button id="conn">Connect ESP32 (USB)</button><button id="connb">Connect ESP32 (Wireless)</button></div>
 <div class="r vtog"><label><input type="checkbox" id="troof" checked> Roof</label><label><input type="checkbox" id="tpan" checked> Office front panel</label></div>
-<div class="note verbox">Page version 2026-11-09-g</div>
+<div class="note verbox">Page version 2026-11-10-b</div>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -164,7 +165,7 @@ function statLab(id){
 }
 
 /* ===== Prototype mode: reads your sketch's Serial text over Web Serial (Chrome or Edge, 115200 baud) ===== */
-const VER='2026-11-09-a';let CHG_POS=true;try{const q=localStorage.getItem('chgpos');if(q!==null)CHG_POS=q==='1';}catch(e){}
+const VER='2026-11-10-b';let CHG_POS=true;try{const q=localStorage.getItem('chgpos');if(q!==null)CHG_POS=q==='1';}catch(e){}
 function flipSign(){CHG_POS=!CHG_POS;try{localStorage.setItem('chgpos',CHG_POS?'1':'0');}catch(e){}renderUI();}
 const EV_MIN_V=1.8;/* what counts as high solar for the EV load */
 const P={panels:[{v:NaN,low:null},{v:NaN,low:null},{v:NaN,low:null}],relay:{on:null,auto:null},conv:{run:null,auto:null,pct:null},led:null,ledc:null,ledo:{g:null,r:null},ina:{st:'unknown',bus:NaN,shunt:NaN,load:NaN,ma:NaN,mw:NaN},at:0};
@@ -212,7 +213,7 @@ function statP(id){
  return{t:hi?'Allowed to charge':'Paused (low solar)',k:hi?'ok':'warn',rows:[['Best panel voltage',best.toFixed(2)+' V'],['Needed to allow EV charging','at least '+EV_MIN_V.toFixed(1)+' V'],['LED control',P.ledc===null?'unknown (upload the new sketch)':P.ledc?'Automatic (follows solar)':'Manual'],['Green LED',gOn?'On':'Off'],['Red LED',rOn?'On':'Off']],note:'The sketch has no EV charger output yet, so this is the rule the page applies: the shiftable EV load may run only while a panel is high. The relay on GPIO 5 is shown under Battery as the charger switch.'};
 }
 function protoSummary(){if(!pFresh())return'<b>Waiting for the ESP32</b><div class="note">Pick a part once data arrives. If nothing appears, close the Arduino Serial Monitor first.</div>';
- const n=P.panels.filter(p=>!p.low).length;return'<b>'+n+' of 3 panels have light</b><div class="note">Conveyor: '+(P.conv.run?'running':'stopped')+'. Battery charger relay: '+(P.relay.on?'on':'off')+'. Click a part to see its readings.</div>';}
+ const n=P.panels.filter(p=>!p.low).length;return'<b>'+n+' of 3 panels have light</b><div class="note">Conveyor: '+(P.conv.run?'running':'stopped')+'. Battery charger relay: '+(P.relay.on?'on':'off')+'. Twin check: '+(TW.cur.verdict==='ok'?'validated':TW.cur.verdict==='bad'?'needs recalibration':'collecting data')+'. Click a part to see its readings.</div>';}
 function applyProto(dt,now){const ok=pFresh();
  PAN.forEach((m,i)=>{const v=ok&&isFinite(P.panels[i].v)?clamp(P.panels[i].v/3.0,0,1):0.5;m.material.color.setHex(0x1a2a4a).lerp(new THREE.Color(0x2f6fd6),v);});
  LED[0].material.color.setHex(ok&&(P.ledo.g!==null?P.ledo.g:P.led==='GREEN')?0x2ecc71:0x1d4d33);LED[1].material.color.setHex(ok&&(P.ledo.r!==null?P.ledo.r:P.led==='RED')?0xe74c3c:0x5a1f1f);
@@ -269,8 +270,8 @@ function serStatus(){
  h+=' [page '+VER+', screen refreshed '+(++SER.paints)+' times]';s.textContent=h;$('log').textContent=LOG.join('\n');
 }
 function renderUI(){
- const ch=$('chips');if(!ch.children.length)EL.forEach(a=>{const b=document.createElement('button');b.dataset.id=a[0];b.innerHTML='<span class="dot off"></span><span>'+a[1]+'</span>';b.onclick=()=>select(a[0]);ch.appendChild(b);});
- [...ch.children].forEach(b=>{const s=stat(b.dataset.id);b.querySelector('.dot').className='dot '+s.k;b.classList.toggle('on',b.dataset.id===sel);});
+ const ch=$('chips');if(!ch.children.length)EL.forEach(a=>{const b=document.createElement('button');b.dataset.id=a[0];b.innerHTML='<span class="dot off"></span><span>'+a[1]+'</span><span class="tw"></span>';b.onclick=()=>select(a[0]);ch.appendChild(b);});
+ [...ch.children].forEach(b=>{const s=stat(b.dataset.id),tw=twById(b.dataset.id);b.querySelector('.dot').className='dot '+((tw&&tw.ok===false&&s.k==='ok')?'warn':s.k);const tt=b.querySelector('.tw');if(tt){tt.textContent=tw&&tw.pct!=null?Math.round(tw.pct)+'% of expected':'';tt.className='tw'+(tw&&tw.ok===false?' bad':'');}b.classList.toggle('on',b.dataset.id===sel);});
  const card=$('card');serStatus();$('conn').hidden=EMB&&!PQ;$('connb').hidden=(EMB&&!PQ)||mode==='proto';$('conn').textContent=mode==='proto'?'Disconnect':'Connect ESP32 (USB)';
  if(mode==='proto'&&!sel){card.innerHTML=protoSummary();}
  else if(!sel){const ok=S&&!stale()&&S.state!=='WAIT';
@@ -407,5 +408,34 @@ function frame(now){const dt=Math.min(0.1,(now-last)/1000);last=now;
  requestAnimationFrame(frame);}
 size();requestAnimationFrame(frame);
 /* Refresh the readout on a timer too, so it never depends on the animation loop (which browsers pause or throttle inside iframes). */
+/* ===== Digital twin check (prototype mode) =====
+   Once a second the page compares what the ESP32 reports with what the 3D model expects, over the last 60 s.
+   Tolerances: panels within 25% of each other (same percent as the planner's solar rule), conveyor run share within 10 points of 2 s on / 5 s off,
+   battery and EV LED direction agreeing at least 80% of the time. The result is sent to the main page ("sunshine-twin"). */
+const TW={pv:.25,runShare:2/7,runTol:.10,share:.80,win:60,minN:12,S:[],cur:{verdict:'wait',items:[],n:0}};
+function twSample(){if(mode!=='proto'||!pFresh())return;
+ const v=P.panels.map(p=>p.v),fin=v.map(x=>isFinite(x)?x:0),m=CHG_POS?P.ina.ma:-P.ina.ma,a=P.ina,bv=isFinite(a.load)?a.load:a.bus;
+ TW.S.push({v,best:Math.max(0,...fin),run:P.conv.run,auto:P.conv.auto,relay:P.relay.on,m,ina:a.st==='ok',bpct:isFinite(bv)?clamp((bv-3.3)/0.9*100,0,100):NaN,g:P.ledo.g!==null?P.ledo.g:P.led==='GREEN',ledOK:P.ledo.g!==null||P.led!==null,ledAuto:P.ledc!==false});
+ while(TW.S.length>TW.win)TW.S.shift();}
+function twEval(){const out={verdict:'wait',items:[],n:TW.S.length,at:Date.now()};
+ if(mode!=='proto'||!pFresh()||TW.S.length<TW.minN)return out;const S_=TW.S,it=out.items;
+ const nm=id=>(EL.find(a=>a[0]===id)||[0,id])[1];/* names follow the model's own labels */
+ for(let i=0;i<3;i++){const u=S_.filter(x=>x.v.every(isFinite)&&Math.max(...x.v)>=0.5);
+  if(u.length<TW.minN){it.push({id:'panel'+(i+1),name:nm('panel'+(i+1)),exp:'same light as the middle panel',meas:'dark or no data',pct:null,ok:null,tol:'within '+Math.round(TW.pv*100)+'%',why:'dark: not checked'});continue}
+  let a=0,e=0;u.forEach(x=>{a+=x.v[i];e+=x.v.slice().sort((p,q)=>p-q)[1]});a/=u.length;e/=u.length;const pct=e>0?a/e*100:null;
+  it.push({id:'panel'+(i+1),name:nm('panel'+(i+1)),exp:e.toFixed(2)+' V',meas:a.toFixed(2)+' V',pct,ok:pct!=null&&Math.abs(pct-100)<=TW.pv*100,tol:'within '+Math.round(TW.pv*100)+'%'});}
+ const bu=S_.filter(x=>x.ina&&x.relay!==null&&isFinite(x.bpct));
+ if(bu.length<TW.minN)it.push({id:'battery',name:'Battery',exp:'charging when the relay is on',meas:'no sensor data',pct:null,ok:null,tol:'at least '+Math.round(TW.share*100)+'% agree',why:'no INA219 or relay data'});
+ else{let ag=0;bu.forEach(x=>{const exp=x.relay&&x.bpct<98,got=x.m>20;if(exp===got||(!exp&&!got))ag++;});const sh=ag/bu.length;
+  it.push({id:'battery',name:'Battery',exp:'charging only while the relay is on and not full',meas:Math.round(sh*100)+'% of readings agree',pct:sh*100,ok:sh>=TW.share,tol:'at least '+Math.round(TW.share*100)+'% agree'});}
+ const cu=S_.filter(x=>x.auto===true&&x.run!==null);
+ if(cu.length<14)it.push({id:'line1',name:'Conveyor belt',exp:'running '+Math.round(TW.runShare*100)+'% of the time (2 s on, 5 s off)',meas:'manual or too few readings',pct:null,ok:null,tol:'within '+Math.round(TW.runTol*100)+' points',why:'manual mode: not checked'});
+ else{const sh=cu.filter(x=>x.run).length/cu.length;it.push({id:'line1',name:'Conveyor belt',exp:Math.round(TW.runShare*100)+'% running',meas:Math.round(sh*100)+'% running',pct:sh/TW.runShare*100,ok:Math.abs(sh-TW.runShare)<=TW.runTol,tol:'within '+Math.round(TW.runTol*100)+' points'});}
+ const eu=S_.filter(x=>x.ledOK&&x.ledAuto&&(x.best>=EV_MIN_V||x.best<1.5));
+ if(eu.length<TW.minN)it.push({id:'ev',name:'EV charger',exp:'green LED when best panel is at least '+EV_MIN_V.toFixed(1)+' V',meas:'manual or no LED data',pct:null,ok:null,tol:'at least '+Math.round(TW.share*100)+'% agree',why:'manual or no LED data'});
+ else{const ag=eu.filter(x=>x.g===(x.best>=EV_MIN_V)).length,sh=ag/eu.length;it.push({id:'ev',name:'EV charger',exp:'green LED when best panel is at least '+EV_MIN_V.toFixed(1)+' V',meas:Math.round(sh*100)+'% of readings agree',pct:sh*100,ok:sh>=TW.share,tol:'at least '+Math.round(TW.share*100)+'% agree'});}
+ out.verdict=it.some(x=>x.ok===false)?'bad':it.some(x=>x.ok===true)?'ok':'wait';return out;}
+const twById=id=>mode==='proto'?TW.cur.items.find(x=>x.id===id):null;
+setInterval(()=>{try{twSample();TW.cur=twEval();if(EMB&&window.parent!==window){const to=location.origin==='null'?'*':location.origin;window.parent.postMessage({type:'sunshine-twin',twin:TW.cur},to);}}catch(e){}},1000);
 setInterval(()=>{try{renderUI();}catch(e){}},250);
 </script></body></html>
