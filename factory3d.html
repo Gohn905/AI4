@@ -576,7 +576,7 @@ function stBanner(){
    else parts.push('Conveyor: <em>'+(P.conv.run?'running':'stopped')+'</em> (ESP32 report), never stopped by energy logic');}
   else parts.push('Conveyor: <em>protected</em>, never stopped by energy logic');
  $('stPol').innerHTML=parts.join(' · ');}
-setInterval(()=>{try{stBanner();}catch(e){}},250);
+setInterval(()=>{try{stBanner();{const el=$('stbar');if(el&&!MINI){const calm=SOL.cur==='NORMAL'&&!(S&&S.mode==='feed')&&!el.querySelector('.wn');el.style.display=calm?'none':'';}}}catch(e){}},250);
 
 /* ===== Digital twin check (prototype mode) =====
    Once a second the page compares what the ESP32 reports with what the 3D model expects, over the last 60 s.
