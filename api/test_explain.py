@@ -73,4 +73,22 @@ class E:  # a 429 answer with Retry-After
     headers = {"Retry-After": "30"}
 res.append(ok("Retry-After is honoured but capped at 4 s", aoai.retry_wait(E()) == 4.0))
 
+# --- Live replay review ---
+RP = {"kind": "replay", "strategy": "Balanced", "start": "08:00", "end": "11:00", "plan_cost": 17779, "kept_cost": 19118, "new_cost": 18859,
+      "plan_peak": 1814, "new_peak": 1814, "solar_pct": 60, "demand_pct": 100, "steps": 12, "solar_off": 5, "demand_off": 0, "grid_off": 4,
+      "twin_pct": 67, "ev_held": 2, "soc_min": 50, "reserve": 20, "learned": False}
+import explain as _e
+r = _e.explain(RP, lambda p: "x")            # a model answer with no numbers is accepted as text
+res.append(ok("replay review: model text accepted when it has no foreign numbers", r["source"] == "ai"))
+r = _e.explain(RP, lambda p: "In this simulation the day moved +RM 1,339 from RM 17,779. Re-planning recovered RM 259. Check the panels.")
+res.append(ok("replay review: numbers from the run are accepted", r["source"] == "ai"))
+r = _e.explain(RP, lambda p: "Re-planning saved RM 999 today.")
+res.append(ok("replay review: an invented number falls back to the template", r["source"] == "template" and "RM 1,339" in r["text"]))
+res.append(ok("replay review: rules pick at most 3 ideas, most important first", r["improve"] == ["panels", "learn", "ev"]))
+r = _e.explain({**RP, "solar_pct": 100, "solar_off": 0, "ev_held": 0, "twin_pct": 100}, lambda p: (_ for _ in ()).throw(_e.Unavailable("off")))
+res.append(ok("replay review: a quiet day keeps the plan, template when the model is off", r["improve"] == ["none"] and r["source"] == "template"))
+for bad in ({**RP, "start": "8am"}, {**RP, "strategy": "Max"}, {**RP, "steps": 0}, {**RP, "solar_pct": "lots"}):
+    try: _e.explain(bad, lambda p: "x"); res.append(ok("replay review: bad input rejected", False))
+    except ValueError: res.append(ok("replay review: bad input rejected", True))
+
 print(f"\n{sum(res)}/{len(res)} passed"); raise SystemExit(0 if all(res) else 1)
