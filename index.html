@@ -387,6 +387,21 @@ main.fit .plrail .mr .mrsv{height:38px!important}
 .pbt{position:relative;height:11px;background:#F3EFE2;border-radius:3px}
 .pbt s{position:absolute;left:0;top:0;bottom:0;border-radius:3px;text-decoration:none;opacity:.9}
 .pbt u{position:absolute;top:-3px;bottom:-3px;width:0;border-left:1.5px dashed #252B2A;text-decoration:none}
+
+/* Month view: Monthly bill vs TNB (drawn by ops.js) */
+#mbill .mbhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:8px}#mbill .mbhead h2{margin:0}#mbill .mbhead .note{margin:0}
+#mbill .ovtag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;padding:1px 6px;border-radius:4px}
+#mbill .mbk{grid-template-columns:repeat(5,minmax(0,1fr))}
+#mbill .mbreal input{display:block;width:100%;max-width:170px;font-size:18px;font-weight:700;padding:4px 8px;margin:2px 0}
+#mbill .mbg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:10px;align-items:start}
+#mbill .mbh3{font-size:14px;margin:12px 0 4px}
+#mbill table td,#mbill table th{text-align:right;white-space:nowrap}#mbill table td:first-child,#mbill table th:first-child{text-align:left}
+#mbill tr.mbtot td{font-weight:800;border-top:2px solid var(--ink)}
+#mbill .chart{position:relative}#mbill .chart svg{width:100%;height:auto;display:block}
+#mbill .tip{position:absolute;pointer-events:none;background:rgba(37,43,42,.95);color:#fff;border-radius:8px;padding:6px 9px;font-size:12px;line-height:1.35;display:none;z-index:3;min-width:130px}
+#mbill .legend label{display:inline-flex;gap:5px;align-items:center;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 9px;background:#fff}
+#mbill .legend i{width:12px;height:4px;border-radius:2px;display:inline-block}
+@media(max-width:900px){#mbill .mbg{grid-template-columns:minmax(0,1fr)}#mbill .mbk{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="liveTabBtn" data-rp="live" title="Play today forward and watch the optimiser re-plan, all on one page">Live replay</button></span><span class="sp"></span><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -1412,7 +1427,7 @@ function periodHtml(dates,items){
  dates.forEach((d,i)=>{const x=items[i],tg=rel(d)[0],has=x&&x.r;
   const body=has?`<b class="good">${money(x.b.cost-x.r.cost)}</b><small>${d>=TODAY?'forecast':''}</small>`:'<small>no data</small>';
   cells+=`<button class="c${d>=TODAY?' fc':''}${d==cur?' sel':''}${has?'':' na'}" data-d="${d}"><small>${view=='week'?parse(d).toLocaleDateString('en-GB',{weekday:'short'})+' ':''}${parse(d).getDate()}${isWk(d)?'':' (wknd)'}</small>${body}${has?mkr(d):''}</button>`});
- return `<div class="card"><h2>Strategy vs baseline</h2>${head}<p class="note">${notes}${lbNote}Demand charge is prorated by the days shown, using the highest peak in the period. Dashed days are forecasts, solid days use recorded weather. Tap a day to open it with the full comparison.</p></div>
+ return `${view=='month'&&window.SunOps&&SunOps.monthBill?'<div class="card" id="mbill"></div>':''}<div class="card"><h2>Strategy vs baseline</h2>${head}<p class="note">${notes}${lbNote}Demand charge is prorated by the days shown, using the highest peak in the period. Dashed days are forecasts, solid days use recorded weather. Tap a day to open it with the full comparison.</p></div>
  ${view=='week'?weekChart(dates,items):''}<div class="card"><div class="cal" style="${view=='week'?'grid-template-columns:repeat(auto-fit,minmax(100px,1fr))':''}">${cells}</div></div>`}
 
 function span(){if(view=='day')return [cur];const d=parse(cur);
@@ -1467,7 +1482,7 @@ async function render(){
   const items=dates.map(()=>null),idx=dates.map((x,i)=>i).filter(i=>okDate(dates[i]));
   let done=0;const run=async i=>{try{items[i]={b:await getRun(dates[i],'base'),r:await getRun(dates[i],dates[i]<TODAY?F.follow:sel)}}catch(e){items[i]=null}done++;const p=$('prog');if(p)p.textContent=`Loading day ${done} of ${idx.length}. A new day takes a few seconds, then it is saved on this device.`};
   if(idx.length){await run(idx[0]);for(let k=1;k<idx.length;k+=6){await Promise.all(idx.slice(k,k+6).map(run));if(my!=tok)return}}
-  if(my!=tok)return;$('out').innerHTML=periodHtml(dates,items);applyTab();changeCard();setTimeout(()=>warm(my),1500)
+  if(my!=tok)return;$('out').innerHTML=periodHtml(dates,items);applyTab();changeCard();if(view=='month'&&$('mbill'))try{SunOps.monthBill($('mbill'),{calMonth:parse(cur).getMonth(),strat:sel})}catch(e){$('mbill').hidden=true}setTimeout(()=>warm(my),1500)
  }catch(e){if(my==tok)$('out').innerHTML=errCard(e.message)}}
 
 
@@ -2062,5 +2077,5 @@ window.addEventListener('sundev',()=>{try{devUpdate()}catch(e){}});
 setInterval(()=>{if(!document.hidden)try{devFetch(false);devUpdate()}catch(e){}},30000);
 </script>
 <script src="devlog.js?v=2026-11-12-k" defer></script>
-<script src="ops.js?v=2026-11-12-k" defer></script>
+<script src="ops.js?v=2026-11-12-mb" defer></script>
 </body></html>
