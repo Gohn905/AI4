@@ -796,7 +796,7 @@ const Rof = k => ST.R[k + '_' + (isOpt(k) ? ST.sel.mode : 'plan')];
 const demandModeNow = () => ST.cfg.demandMode === 'auto' ? (ST.raw && ST.raw.netHint.suggested ? 'net' : 'gross') : ST.cfg.demandMode;
 
 /* ---- loading + computing ---- */
-function setStatus(status, msg) { ST.status = status; ST.msg = msg || ''; if (HAS_DOM) renderStatusOnly(); }
+function setStatus(status, msg) { ST.status = status; ST.msg = msg || ''; if (HAS_DOM) { renderStatusOnly(); mbStatus(); } }
 const FACS = {
   leader: { name: "Leader Energy manufacturing site (organisers' synthetic data, 2025)", short: 'Leader site', file: 'leader_site.csv', step: '30-min', has3d: false },
   lab: { name: 'Lab factory: small 3D prototype site (simulated 15-minute data)', short: 'Lab factory', file: 'lab_site.csv', step: '15-min', has3d: true, bat: { kwh: 200, kw: 100 } }
@@ -977,9 +977,9 @@ const dayLabel = d => DOWS[ST.D.days[d].dow] + ' ' + ST.D.days[d].date;
 const monthOpts = sel => monthsOf(ST.D).map((m, i) => `<option value="${i}" ${i === sel ? 'selected' : ''}>${MONTHS[m.month]} ${m.key.slice(0, 4)}</option>`).join('');
 const stratOpts = (sel, keys) => (keys || STRAT_ORDER).map(k => `<option value="${k}" ${k === sel ? 'selected' : ''}>${esc(STRATS[k].short)}</option>`).join('');
 const dis = ok => ok ? '' : 'disabled';
-const TABS = [['ovw', 'Overview'], ['live', 'Play the day'], ['scen', 'Compare plans'], ['bill', 'Monthly bill vs TNB'], ['twin', 'Did the forecast hold?'], ['data', 'Data health'], ['appr', 'Approvals & audit'], ['fac', '3D factory'], ['set', 'Settings & data']];
+const TABS = [['ovw', 'Overview'], ['live', 'Play the day'], ['scen', 'Compare plans'], ['twin', 'Did the forecast hold?'], ['data', 'Data health'], ['appr', 'Approvals & audit'], ['fac', '3D factory'], ['set', 'Settings & data']];
 
-const TABGROUPS = [['', ['ovw', 'live', 'scen', 'bill', 'twin', 'data', 'appr', 'fac', 'set']]];
+const TABGROUPS = [['', ['ovw', 'live', 'scen', 'twin', 'data', 'appr', 'fac', 'set']]];
 function shell() {
   return `<div class="sotop"><h1>Operations</h1><span class="tag" title="This console replays a facility dataset. It is separate from the ESP32 prototype on the Live prototype tab.">Planning simulation on a historical dataset. Not live, not the ESP32. Never controls equipment.</span><span class="sp"></span>
     <span class="role"><span class="note" style="margin:0">Facility</span><span class="seg" role="group" aria-label="Facility">${Object.keys(FACS).map(k => `<button data-act="fac" data-v="${k}" class="${ST.fac === k ? 'on' : ''}" title="${esc(FACS[k].name)}">${esc(FACS[k].short)} (${FACS[k].step})</button>`).join('')}</span></span></div>
@@ -1419,6 +1419,63 @@ function mountBill() {
   $q('#bl_c2').innerHTML = bars({ labels: ms.map(x => MONTHS[x.month]), series: ['base', 'cost', 'bal', 'zero'].map(q => ({ name: STRATS[q].short, color: q === 'base' ? '#9ca3af' : STRATS[q].color, data: ms.map(x => periodKpi(ctx, Rof(q), x.d0, x.d1).totalRM) })), h: 260, yFmt: x => 'RM ' + (x / 1000).toFixed(0) + 'k' }) + `<div class="legend">${['base', 'cost', 'bal', 'zero'].map(q => `<label><i style="background:${q === 'base' ? '#9ca3af' : STRATS[q].color}"></i>${esc(STRATS[q].short)}</label>`).join('')}</div>`;
 }
 
+
+/* ======================= MONTHLY BILL vs TNB (shown on the main page: Detailed and Brief, Month view) =======================
+   Moved out of the console tab so it is easy to find (judge feedback: monthly summary to compare with the TNB bill).
+   Same numbers and the same saved bills (localStorage sunops_bills) as before. */
+const MB = { el: null, mon: null, strat: 'cost' };
+function mbStatus() {
+  if (!MB.el || !MB.el.isConnected) return;
+  if (ST.status === 'ready') { if (MB.pick) { MB.pick(); MB.pick = null; } mbRender(); }
+  else if (ST.status === 'error') MB.el.innerHTML = '<h2>Monthly bill vs TNB</h2><p class="note">' + esc(ST.msg) + '</p>';
+  else { const t = MB.el.querySelector('.mbload'); if (t) t.textContent = ST.msg || 'Loading...'; }
+}
+function mbRender() {
+  const el = MB.el; if (!el || !ST.D || !ST.R) return;
+  const ctx = ST.ctx, D = ST.D, ms = monthsOf(D), T = ctx.tariff, k = ['cost', 'bal', 'zero'].includes(MB.strat) ? MB.strat : 'cost';
+  let mi = MB.mon == null ? ST.sel.month : MB.mon; if (!(mi >= 0 && mi < ms.length)) mi = 0; MB.mon = mi;
+  const m = ms[mi], a = periodKpi(ctx, Rof('base'), m.d0, m.d1), b = periodKpi(ctx, Rof(k), m.d0, m.d1), real = ST.bills[m.key], col = ({ cost: '#F59E0B', bal: '#2563EB', zero: '#16803D' })[k], nm = STRATS[k].short;
+  const sv = a.totalRM - b.totalRM, gap = Number.isFinite(real) && real > 0 ? (a.totalRM - real) / real * 100 : NaN;
+  const tile = (l, v, s, c) => `<div class="k"><span>${l}</span><b class="${c || ''}">${v}</b><span>${s || ''}</span></div>`;
+  const row = (n, q, rate, x, y) => `<tr><td>${n}</td><td>${q}</td><td>${rate}</td><td>${fmtRM(x)}</td><td>${fmtRM(y)}</td></tr>`;
+  const n = m.d1 - m.d0 + 1, mk = r => { const q = dailyMd(ctx, r), d = new Float64Array(n).fill(NaN); for (let i = 0; i < n; i++) if (isWeekday(D.days[m.d0 + i].dow)) d[i] = q[m.d0 + i]; return d; };
+  const ticks = []; for (let i = 0; i < n; i += 3) ticks.push({ i, label: String(i + 1) });
+  const pk = line({ n, h: 220, series: [{ name: STRATS.base.short, color: '#6b7280', data: mk(Rof('base')), dash: '5 4', w: 2 }, { name: nm, color: col, data: mk(Rof(k)), w: 2.5 }], hlines: [{ v: a.md, label: 'baseline billed peak', color: '#6b7280' }, { v: b.md, label: 'billed peak', color: col, dash: '2 3' }], xTicks: ticks, yLabel: 'kW', tipTitle: i => D.days[m.d0 + i].date, aria: 'Billed-window peak each weekday' });
+  const all = ms.map(x => ({ a: periodKpi(ctx, Rof('base'), x.d0, x.d1).totalRM, b: periodKpi(ctx, Rof(k), x.d0, x.d1).totalRM, r: ST.bills[x.key] })), hasAct = all.some(x => Number.isFinite(x.r));
+  const mon = x => MONTHS[x.month] + ' ' + x.key.slice(0, 4);
+  el.innerHTML = `<div class="mbhead"><h2>Monthly bill vs TNB</h2><span class="ovtag" style="color:${TAGC.E[1]};background:${TAGC.E[2]}">${TAGC.E[0]}</span><span class="note">${esc(FACS[ST.fac].short)} data</span><span class="sp"></span>
+    <label class="note">Month <select data-mb="m">${ms.map((x, i) => `<option value="${i}"${i === mi ? ' selected' : ''}>${mon(x)}</option>`).join('')}</select></label>
+    <label class="note">Strategy <select data-mb="s">${['cost', 'bal', 'zero'].map(q => `<option value="${q}"${q === k ? ' selected' : ''}>${esc(STRATS[q].short)}</option>`).join('')}</select></label></div>
+  <div class="kpis mbk">${tile(STRATS.base.short + ' bill', fmtRM(a.totalRM), 'estimate')}${tile(esc(nm) + ' bill', fmtRM(b.totalRM), 'estimate')}${tile('Saving', fmtRM(sv), a.totalRM > 0 ? fmt1(Math.abs(sv / a.totalRM * 100)) + '% ' + (sv >= 0 ? 'lower' : 'higher') : '', sv > 0 ? 'good' : '')}${tile('Billed peak', fmt0(b.md) + ' kW', 'baseline ' + fmt0(a.md) + ' kW')}
+   <div class="k mbreal"><span>Your TNB bill</span><input type="number" data-mb="r" min="0" step="1" value="${Number.isFinite(real) ? real : ''}" placeholder="RM"><span>${Number.isFinite(gap) ? 'model is ' + Math.abs(gap).toFixed(1) + '% ' + (gap < 0 ? 'lower' : 'higher') : 'type it in'}</span></div></div>
+  <div class="scroll" style="margin-top:10px"><table><tr><th>Item</th><th>Quantity</th><th>Rate</th><th>${esc(STRATS.base.short)}</th><th>${esc(nm)}</th></tr>` +
+    row('Peak energy (weekdays 14:00-22:00)', fmt0(b.kwhPeak) + ' kWh', (T.ep + T.afa).toFixed(2) + ' sen', a.kwhPeak * (T.ep + T.afa) / 100, b.kwhPeak * (T.ep + T.afa) / 100) +
+    row('Off-peak energy', fmt0(b.kwhOff) + ' kWh', (T.eo + T.afa).toFixed(2) + ' sen', a.kwhOff * (T.eo + T.afa) / 100, b.kwhOff * (T.eo + T.afa) / 100) +
+    row('Maximum demand', fmt0(b.md) + ' kW', 'RM ' + T.md.toFixed(2) + '/kW', a.mdRM, b.mdRM) +
+    row('Retail charge', '', 'RM ' + T.retail, a.retailRM, b.retailRM) +
+    `<tr class="mbtot"><td>Estimated total</td><td></td><td></td><td>${fmtRM(a.totalRM)}</td><td>${fmtRM(b.totalRM)}</td></tr>${Number.isFinite(real) ? `<tr><td>Your TNB bill</td><td></td><td></td><td>${fmtRM(real)}</td><td></td></tr>` : ''}</table></div>
+  <div class="mbg"><div><h3 class="mbh3">Billed-window peak each weekday</h3>${pk.html}</div>
+   <div><h3 class="mbh3">Bill every month</h3>${bars({ labels: ms.map(x => MONTHS[x.month]), series: [{ name: STRATS.base.short, color: '#9ca3af', data: all.map(x => x.a) }, { name: nm, color: col, data: all.map(x => x.b) }].concat(hasAct ? [{ name: 'Your TNB bill', color: '#252B2A', data: all.map(x => Number.isFinite(x.r) ? x.r : NaN) }] : []), h: 250, yFmt: x => 'RM ' + (x / 1000).toFixed(0) + 'k', aria: 'Estimated bill every month' })}
+    <div class="legend"><label class="fix"><i style="background:#9ca3af"></i>${esc(STRATS.base.short)}</label><label class="fix"><i style="background:${col}"></i>${esc(nm)}</label>${hasAct ? '<label class="fix"><i style="background:#252B2A"></i>Your TNB bill</label>' : ''}</div></div></div>
+  <p class="note" style="margin:6px 0 0">Not included: KWTBB levy (1.6%), taxes, power-factor charges, AFA changes. Your bill is saved in this browser only.</p>`;
+  mount(el.querySelector('.mbg .chart'), pk);
+  el.onchange = e => {
+    const t = e.target, w = t && t.dataset && t.dataset.mb; if (!w) return;
+    if (w === 'm') MB.mon = parseInt(t.value, 10);
+    else if (w === 's') MB.strat = t.value;
+    else if (w === 'r') { const x = parseFloat(t.value); if (Number.isFinite(x) && x >= 0) ST.bills[m.key] = x; else delete ST.bills[m.key]; LS.set('sunops_bills', ST.bills); audit('setting', 'Actual TNB bill for ' + m.key + ': ' + (Number.isFinite(x) ? 'RM ' + x : 'cleared')); }
+    mbRender();
+  };
+}
+SunOps.monthBill = function (el, o) {
+  if (!HAS_DOM || !el) return; o = o || {}; MB.el = el;
+  if (o.strat) MB.strat = o.strat === 'prod' ? 'bal' : o.strat;
+  const pick = () => { if (o.calMonth == null || !ST.D) return; const i = monthsOf(ST.D).findIndex(x => x.month === o.calMonth); if (i >= 0) MB.mon = i; };
+  if (ST.status === 'ready' && ST.D) { pick(); mbRender(); return; }
+  el.innerHTML = '<h2>Monthly bill vs TNB</h2><p class="note"><span class="mbload">' + esc(ST.msg || 'Loading the year of data...') + '</span></p>';
+  MB.pick = pick; if (!ST.raw && ST.status !== 'loading') loadPreset();
+};
+
 /* ======================= TWIN CHECK ======================= */
 function twinAll(k) {
   const key = k + '|' + ST.cfg.margin; if (ST.twinCache[key]) return ST.twinCache[key];
@@ -1714,13 +1771,13 @@ function entryCard() {
   if (LS.get('sunops_entry_off', false)) return;
   const app = document.getElementById('app'), ph = app && app.querySelector('.pagehead'); if (!ph || document.getElementById('sunopsEntry')) return;
   const c = document.createElement('div'); c.id = 'sunopsEntry'; c.className = 'card';
-  c.innerHTML = '<b>New: Operations console</b><span class="note" style="margin:0">Live replay, all strategies on one chart, monthly bill, digital-twin check, approvals and audit trail, and the 3D demo factory.</span><span class="sp"></span><button class="pri" data-e="ops">Open the console</button><button data-e="live">Run live replay (15-min)</button><button data-e="fac">See the demo factory</button><button data-e="x" aria-label="Dismiss this card">Dismiss</button>';
+  c.innerHTML = '<b>New: Operations console</b><span class="note" style="margin:0">Live replay, all strategies on one chart, digital-twin check, approvals and audit trail, and the 3D demo factory.</span><span class="sp"></span><button class="pri" data-e="ops">Open the console</button><button data-e="live">Run live replay (15-min)</button><button data-e="fac">See the demo factory</button><button data-e="x" aria-label="Dismiss this card">Dismiss</button>';
   c.addEventListener('click', e => { const t = e.target.closest('[data-e]'); if (!t) return; const k = t.dataset.e; if (k === 'x') { LS.set('sunops_entry_off', true); c.remove(); } else if (k === 'live') openLive('lab', true); else { ST.tab = k === 'fac' ? 'fac' : 'live'; openConsole(); } });
   app.insertBefore(c, ph);
 }
 function boot() {
   const st = document.createElement('style'); st.id = 'sunops-css'; st.textContent = CSS; document.head.appendChild(st);
-  const b = document.createElement('button'); b.id = 'sunOpsBtn'; b.type = 'button'; b.textContent = 'Operations'; b.title = 'Live replay, scenarios, monthly bill, digital twin, approvals'; b.addEventListener('click', () => { if (!ST.open) openConsole(); });
+  const b = document.createElement('button'); b.id = 'sunOpsBtn'; b.type = 'button'; b.textContent = 'Operations'; b.title = 'Live replay, scenarios, digital twin, approvals'; b.addEventListener('click', () => { if (!ST.open) openConsole(); });
   const bl = document.createElement('button'); bl.id = 'sunLiveBtn'; bl.type = 'button'; bl.textContent = 'Live replay'; bl.title = 'Open today\'s Live replay'; bl.addEventListener('click', () => { if (!(root.SunshineOpenLiveReplay && root.SunshineOpenLiveReplay())) openLive('lab', true); });   // Main Live replay, with Operations replay as fallback
   const grp = document.getElementById('roleSwitch');
   if (grp) { grp.appendChild(b); if (!document.getElementById('liveTabBtn')) grp.appendChild(bl);   /* the page has its own Live replay tab */ grp.addEventListener('click', e => { if (ST.open && e.target.closest('[data-rp]')) closeConsole(); }, true); }
