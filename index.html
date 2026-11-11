@@ -693,7 +693,7 @@ function fcCard(fc,past,fn){
  const W=760,Hh=220,L=54,B=28,T=10,x=h=>L+(W-L-8)*h/NS,hi=fc.pv_p90&&!past?fc.pv_p90:fc.pv,ax=niceAxis(0,Math.max(...fc.load,...hi,1)*1.03),mx=ax.hi,y=v=>Hh-B-(v/mx)*(Hh-B-T);
  const pa=a=>a.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join('');let g='';
  g+=yGrid(ax,y,L,W-8)+yTitle(T,Hh-B,'kW')+xAxis(t=>x(t*S),Hh-B,0,24,3);
- const band=false;
+ const band=fc.pv_p10&&fc.pv_p90&&!past;
  if(band){const up=fc.pv_p90.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)),dn=fc.pv_p10.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)).reverse();g+=`<path d="M${up.join('L')}L${dn.join('L')}Z" fill="var(--solar)" opacity=".25"/>`}
  g+=`<path d="${pa(fc.load)}" stroke="var(--mute)" stroke-dasharray="5 4" fill="none" stroke-width="2"/><path d="${pa(fc.pv)}" stroke="var(--solar)" fill="none" stroke-width="2.5"/>`;
  const dl=fc.meter=='actual'?'Demand (your meter reading)':fc.meter=='simulated'?'Demand (simulated: ridge regression on your meter data)':fc.meter=='typical'?'Demand (typical pattern from your meter data)':past?'Demand (modelled)':'Demand (forecast)',
