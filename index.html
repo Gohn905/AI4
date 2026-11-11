@@ -198,6 +198,9 @@ main[data-role=tech] .pagehead{display:none}
 
 /* one vertical list: main tabs + chart tabs */
 main[data-role=tech]{padding-right:calc(clamp(16px,3vw,42px) + 206px)}
+/* same content width on every Detailed tab: no page scrollbar steals 15px on the tabs that scroll */
+html:has(main[data-role=tech]){scrollbar-width:none}html:has(main[data-role=tech])::-webkit-scrollbar{display:none}
+
 main[data-role=tech] .mainCol>#dtabs{position:fixed;top:80px;width:190px;right:calc(max(0px,(100vw - 1480px)/2) + clamp(16px,3vw,42px));max-height:calc(100vh - 92px);display:flex;flex-direction:column;flex-wrap:nowrap;gap:4px;margin:0!important;padding:0 2px 0 0;overflow-y:auto;scrollbar-width:thin;z-index:6}
 main[data-role=tech] #dtabs button{width:100%;text-align:left;margin:0;flex:none}
 main[data-role=tech] #dtabs button.sub{padding:7px 10px 7px 22px;font-weight:600;font-size:13px}
@@ -352,7 +355,7 @@ main.fit .snw svg{max-height:calc(100vh - 430px);min-height:200px}main.fit .snc{
 <h3>Check before you start</h3><ul><li>The conveyor has its own stable supply. Test it with all three panels covered.</li><li>Cover <b>one</b> panel first and watch the three voltages. Only that panel should drop. If all three move together, &ldquo;one panel shaded&rdquo; cannot be shown by voltage.</li><li>Every ADC pin stays under 3.3 V at the panel&rsquo;s open-circuit voltage.</li><li>The charger relay is rated for the battery current and its wiring is confirmed. If unsure, show the recommendation only.</li></ul>
 <p id="pgRo" hidden style="margin:8px 0 0"><b>Your role is view-only here:</b> you can watch the readings but not connect or control the hardware.</p></div></details></div>
 <div class="pgrow"><b>Before you connect:</b> Chrome or Edge on a desktop &middot; close the Arduino Serial Monitor &middot; connect the ESP32 once (one page per COM port) &middot; light all three panels first.</div>
-<div class="pgrow pgtags"><span class="pgtag warn">EV LED = representative flexible-load indicator, not a real EV load</span><span class="pgtag warn">Battery % is an estimate; trust measured voltage, current and relay state</span></div><div class="note" style="margin:-4px 0 6px">Cannot connect here? <a href="factory3d.html" target="_blank" rel="noopener">Open the factory in its own window</a>, then press Connect ESP32.</div>
+<div class="note" style="margin:-4px 0 6px">Cannot connect here? <a href="factory3d.html" target="_blank" rel="noopener">Open the factory in its own window</a>, then press Connect ESP32.</div>
 <iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1&amp;v=2026-11-12-i" allow="serial; bluetooth" title="Live 3D prototype" style="width:100%;height:calc(100vh - 150px);min-height:460px;border:0;border-radius:0;margin:0;background:transparent;display:block"></iframe>
 <div class="note" style="margin:8px 0 0">Press <b>Connect ESP32 (Wireless)</b> or <b>(USB)</b> inside the model, then click a part to see its readings and controls. Needs Chrome or Edge (Bluetooth also works on Android). USB: close the Arduino Serial Monitor first. Only one connection to the ESP32 at a time, so disconnect the Lab model tab&rsquo;s USB connection before using this one.</div>
 </div>
@@ -1702,6 +1705,6 @@ window.addEventListener('sundev',()=>{try{devUpdate()}catch(e){}});
 {const _at=applyTab;applyTab=function(){const r=_at.apply(this,arguments);try{devUpdate()}catch(e){}return r}}
 setInterval(()=>{if(!document.hidden)try{devFetch(false);devUpdate()}catch(e){}},30000);
 </script>
-<script src="devlog.js" defer></script>
-<script src="ops.js" defer></script>
+<script src="devlog.js?v=2026-11-12-j" defer></script>
+<script src="ops.js?v=2026-11-12-j" defer></script>
 </body></html>
