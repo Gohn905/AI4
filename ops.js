@@ -968,7 +968,7 @@ const dis = ok => ok ? '' : 'disabled';
 const TABS = [['live', 'Play the day'], ['scen', 'Compare plans'], ['bill', 'Monthly bill vs TNB'], ['twin', 'Did the forecast hold?'], ['data', 'Data health'], ['appr', 'Approvals & audit'], ['fac', '3D factory'], ['set', 'Settings & data']];
 
 function shell() {
-  return `<div class="sotop"><h1>Operations</h1><span class="tag">Planning simulation. Never controls equipment.</span><span class="sp"></span>
+  return `<div class="sotop"><h1>Operations</h1><span class="tag" title="This console replays a facility dataset. It is separate from the ESP32 prototype on the Live prototype tab.">Planning simulation on a historical dataset. Not live, not the ESP32. Never controls equipment.</span><span class="sp"></span>
     <span class="role"><span class="note" style="margin:0">Facility</span><span class="seg" role="group" aria-label="Facility">${Object.keys(FACS).map(k => `<button data-act="fac" data-v="${k}" class="${ST.fac === k ? 'on' : ''}" title="${esc(FACS[k].name)}">${esc(FACS[k].short)} (${FACS[k].step})</button>`).join('')}</span></span></div>
     <div class="note" style="margin:0 0 8px">${esc(ROLES[ST.role].blurb)}</div>
     <div class="tabs" role="tablist">${TABS.filter(t => t[0] !== 'fac' || FACS[ST.fac].has3d).map(t => `<button role="tab" data-act="tab" data-v="${t[0]}" class="${ST.tab === t[0] ? 'on' : ''}">${t[1]}</button>`).join('')}</div>
