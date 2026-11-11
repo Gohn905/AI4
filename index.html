@@ -19,7 +19,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .k{border:1px solid var(--line);border-radius:8px;padding:10px}.k b{display:block;font-size:20px}.k span{font-size:12px;color:var(--mut)}.good{color:var(--good)}
 svg{width:100%;height:auto;display:block}.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--mute);margin-top:6px}.legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px}
 ul{margin:6px 0 0;padding-left:20px}.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.dh{font-size:12px;color:var(--mut);text-align:center}
-.c{min-height:74px;text-align:left;padding:6px;display:flex;flex-direction:column;gap:2px}.c.sel{border-color:var(--amb);box-shadow:0 0 0 1px var(--amb)}.c.na{opacity:.35;cursor:default}.c small{color:var(--mut)}.c b{font-size:14px}
+.c{min-height:74px;text-align:left;padding:6px;display:flex;flex-direction:column;gap:2px}.c.sel{border-color:var(--amb);box-shadow:0 0 0 1px var(--amb)}.c.na{opacity:.35;cursor:default}.c small{color:var(--mut)}.c b{font-size:14px}.c .mk{font-size:10px;font-weight:700;border-radius:4px;padding:0 5px;align-self:flex-start}.c .mk.a{background:#DCFCE7;color:#166534}.c .mk.s{background:#FEF3C7;color:#92400E}
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.form label{font-size:12px;color:var(--mut);display:block}.form input,.form select{width:100%}
 summary{cursor:pointer;font-weight:600}.err{color:var(--bad)}.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
 td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}td:first-child,th:first-child{text-align:left}th{font-weight:500;color:var(--mut)}tr.sel td{background:color-mix(in srgb,var(--sun) 16%,transparent)}
@@ -482,7 +482,7 @@ const nf=d=>n=>(+n).toLocaleString('en-MY',{minimumFractionDigits:d,maximumFract
 const money=n=>'RM '+(Math.abs(n)>=100?N0(n):N2(n));
 let saved=null;try{saved=JSON.parse(localStorage.getItem('facility'))}catch(e){}
 let lastPlan=null,chartTab='rt',rtDem=false,rtLast=null,pend=null,last=null,srcNote='',M=null,aiFacts=null;const aiCache=new Map();try{M=JSON.parse(localStorage.getItem('meter'))}catch(e){}
-if(M&&M.res!==S){try{const up=a=>a.flatMap(v=>[v,v]);for(const k in M.days)M.days[k]=up(M.days[k]);for(const k in (M.typ||{}))M.typ[k]=up(M.typ[k]);M.res=S}catch(e){M=null}}
+if(M&&M.res!==S){try{const up=a=>a.flatMap(v=>[v,v]);for(const k in M.days)M.days[k]=up(M.days[k]);for(const k in (M.typ||{}))M.typ[k]=up(M.typ[k]);for(const k in (M.pv||{}))M.pv[k]=up(M.pv[k]);for(const k in (M.tmp||{}))M.tmp[k]=up(M.tmp[k]);M.res=S}catch(e){M=null}}
 const LEG=o=>o&&o.evn===undefined?Object.assign({evn:0,eve:0},o):(o||{});
 let F=Object.assign({},DEF,LEG(saved)),view='day',cur=TODAY,sel='bal',cache=new Map(),tok=0;if(F.follow=='prod')F.follow='bal';
 const tf=()=>TF[F.volt+F.struct],tou=()=>F.struct=='T';
@@ -491,7 +491,41 @@ async function api(url,opt){const ctl=typeof AbortController!='undefined'?new Ab
  try{r=await fetch(url,Object.assign({},opt,ctl?{signal:ctl.signal}:{}))}catch(e){clearTimeout(t);throw new Error(e&&e.name=='AbortError'?'the server took too long to answer':'the server could not be reached')}
  clearTimeout(t);let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw new Error(j.error||(r.status==401?'please sign in':'Error '+r.status));return j}
 function memo(k,fn){if(cache.has(k))return cache.get(k);const p=fn();cache.set(k,p);p.then(v=>{if(v&&v.offline)cache.delete(k)},()=>{});p.catch(()=>cache.delete(k));return p}
-function meterLoad(date){if(!M)return null;if(M.days[date])return{v:M.days[date],k:'actual'};
+// ---- Look back: real readings when the date is in the meter file, otherwise a ridge regression fitted on that same file ----
+const dtype=d=>{const g=parse(d).getDay();return g==0?2:g==6?1:0},cdi=i=>i>=8*S&&i<20*S?0:1;
+const lbOn=()=>!!(M&&M.pv&&M.from&&Object.keys(M.pv).length),okDate=d=>(d>=MIN&&d<=MAX)||(lbOn()&&d>=M.from&&d<=MAX),
+ rangeTxt=()=>lbOn()?'Choose a day from '+M.from+' (the start of your meter file) to 2 days ahead.':'Choose a day from 31 days ago to 2 days ahead.';
+function solveLin(A,b){const n=b.length;for(let i=0;i<n;i++){let p=i;for(let r=i+1;r<n;r++)if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;[A[i],A[p]]=[A[p],A[i]];[b[i],b[p]]=[b[p],b[i]];const d=A[i][i]||1e-12;
+  for(let r=i+1;r<n;r++){const f=A[r][i]/d;if(f){for(let c=i;c<n;c++)A[r][c]-=f*A[i][c];b[r]-=f*b[i]}}}
+ const x=Array(n).fill(0);for(let i=n-1;i>=0;i--){let t=b[i];for(let c=i+1;c<n;c++)t-=A[i][c]*x[c];x[i]=t/(A[i][i]||1e-12)}return x}
+let LB=null;
+function lbFit(){if(!M||!M.days)return null;if(LB&&LB.stamp===M.stamp)return LB;
+ const ks=Object.keys(M.days);if(ks.length<14)return LB={stamp:M.stamp,none:true};
+ const tmo={};if(M.tmp){const acc={};for(const k in M.tmp){const m=+k.slice(5,7),a=acc[m]||(acc[m]={s:N.map(()=>0),n:0});M.tmp[k].forEach((v,i)=>a.s[i]+=v);a.n++}for(const m in acc)tmo[m]=acc[m].s.map(v=>v/acc[m].n)}
+ const tOf=(k,i)=>M.tmp&&M.tmp[k]?M.tmp[k][i]:(tmo[+k.slice(5,7)]?tmo[+k.slice(5,7)][i]:null),cd=t=>t==null?0:Math.max(t-27,0);
+ const P=3*NS+2,A=Array.from({length:P},()=>Array(P).fill(0)),b=Array(P).fill(0),cnt=[0,0,0];
+ ks.forEach(k=>{const d=dtype(k);cnt[d]++;M.days[k].forEach((y,i)=>{const a=d*NS+i,c=cd(tOf(k,i)),e=3*NS+cdi(i);A[a][a]+=1;b[a]+=y;if(c>0){A[a][e]+=c;A[e][a]+=c;A[e][e]+=c*c;b[e]+=c*y}})});
+ for(let i=0;i<P;i++)A[i][i]+=0.01;
+ const w=solveLin(A,b),res=Array.from({length:3*NS},()=>[]);
+ ks.forEach(k=>{const d=dtype(k);M.days[k].forEach((y,i)=>res[d*NS+i].push(y-(w[d*NS+i]+w[3*NS+cdi(i)]*cd(tOf(k,i)))))});
+ const q=(a,p)=>{if(!a.length)return 0;a.sort((x,y)=>x-y);return a[Math.min(a.length-1,Math.floor(p*a.length))]};
+ return LB={stamp:M.stamp,w,tmo,cnt,n:ks.length,q10:res.map(a=>q(a,.1)),q90:res.map(a=>q(a,.9))}}
+function lbPredict(date,temp,m){let d=dtype(date);if(!m.cnt[d])d=[[0,1,2],[1,2,0],[2,1,0]][d].find(x=>m.cnt[x]);
+ const t=temp&&temp.length==NS?temp:(m.tmo[+date.slice(5,7)]||null),r=a=>+a.toFixed(1),v=[],lo=[],hi=[];
+ N.forEach(i=>{const x=Math.max(0,m.w[d*NS+i]+m.w[3*NS+cdi(i)]*(t?Math.max(t[i]-27,0):0));v.push(r(x));lo.push(r(Math.max(0,x+m.q10[d*NS+i])));hi.push(r(x+m.q90[d*NS+i]))});
+ return{v,lo,hi,k:'simulated'}}
+let PVT=null;
+function pvTyp(date){if(!PVT||PVT.stamp!==M.stamp){PVT={stamp:M.stamp,m:{},all:null};const acc={},al={s:N.map(()=>0),n:0};
+  for(const k in M.pv){const m=+k.slice(5,7),a=acc[m]||(acc[m]={s:N.map(()=>0),n:0});M.pv[k].forEach((v,i)=>{a.s[i]+=v;al.s[i]+=v});a.n++;al.n++}
+  for(const m in acc)PVT.m[m]=acc[m].s.map(v=>v/acc[m].n);PVT.all=al.n?al.s.map(v=>v/al.n):null}
+ return PVT.m[+date.slice(5,7)]||PVT.all}
+function localFc(date){if(!lbOn()||date<M.from)return null;const act=M.pv[date],pv=act||pvTyp(date);if(!pv)return null;
+ const m=lbFit(),tmp=(M.tmp&&M.tmp[date])||(m&&m.tmo&&m.tmo[+date.slice(5,7)])||N.map(()=>27);
+ return{date,source:'meter file',local:true,steps:NS,pv:rd(pv),pv_p10:null,pv_p90:null,load:N.map(()=>0),ghi:N.map(()=>0),temp:tmp,cloud:N.map(()=>0),weather:{cached:false,stale:false,age_min:0},
+  model:{pv:act?'your meter file (recorded solar, pv_kw)':'typical solar for this month, taken from your meter file',demand:'',site:null,trained:null,data_note:''},metrics:{pv:null,load:null}}}
+const lbTag=d=>{const q=M?meterLoad(d):null;return q&&q.k=='simulated'?' <span class="tag" style="background:#FEF3C7;color:#92400E">Simulated demand</span>':q&&q.k=='actual'?' <span class="tag" style="background:#DCFCE7;color:#166534">Meter data</span>':''};
+function meterLoad(date,temp){if(!M)return null;if(M.days[date])return{v:M.days[date],k:'actual'};
+ {const m=lbFit();if(m&&!m.none)return lbPredict(date,temp,m)}
  const g=parse(date).getDay(),t=M.typ||{},v=g==6?(t.sat||t.sun||t.wk):g==0?(t.sun||t.sat||t.wk):(t.wk||t.sat||t.sun);return v?{v,k:'typical'}:null}
 const hk=o=>{const s=JSON.stringify(o);let h=7;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h.toString(36)};
 let PC=null,pcT=null;const pcm=()=>{if(!PC){try{PC=JSON.parse(localStorage.getItem('calc')||'{}')}catch(e){PC={}}}return PC};
@@ -502,11 +536,12 @@ function pcSave(){const m=pcm();let ks=Object.keys(m).sort((a,b)=>m[a].t-m[b].t)
 const rd=a=>a.map(v=>+(+v).toFixed(2));
 const fkey=()=>[F.loc,F.kwp,F.peak,F.prof,'res'+S],rkey=()=>[F.loc,F.kwp,F.peak,F.prof,F.volt,F.struct,F.afa,F.bat,F.flex,F.lim,F.evn,F.evkw,F.eve,F.ef,F.eff,'v4',M?M.stamp:0];
 const getFc=date=>memo('f|'+date+'|'+hk(fkey().concat(M?M.stamp:0,F.evn,F.evkw,F.eve)),async()=>{
- const rk='f|'+date+'|'+hk(fkey());let fc=pcGet(rk),off=0;
+ const rk='f|'+date+'|'+hk(fkey()),loc=!(date>=MIN&&date<=MAX);let fc=loc?localFc(date):pcGet(rk),off=0;
+ if(loc&&!fc)throw new Error('No data for '+date+'. Outside the weather window a date needs a meter file that has a solar (pv_kw) column.');
  if(!fc){try{const [lat,lon]=F.loc.split(',');fc=await api('/api/forecast?'+new URLSearchParams({lat,lon,kwp:F.kwp,peak:F.peak,prof:F.prof,day:diff(date,TODAY),res:S}));pcSet(rk,fc,date)}
   catch(e){const st=pcm()[rk];if(!st)throw e;fc=st.v;off=st.t}}
- const ml=meterLoad(date);
- const out=ml?Object.assign({},fc,{load:ml.v,meter:ml.k,model:Object.assign({},fc.model,{demand:'your meter data ('+ml.k+')',data_note:'Demand comes from your own meter file, which stays in this browser.'}),metrics:Object.assign({},fc.metrics,{load:null})}):fc;
+ const ml=meterLoad(date,fc.temp);
+ const out=ml?Object.assign({},fc,{load:ml.v,meter:ml.k,lb:ml.k=='simulated'?{lo:ml.lo,hi:ml.hi}:undefined,model:Object.assign({},fc.model,{demand:ml.k=='simulated'?'ridge regression fitted on your meter data (simulated)':'your meter data ('+ml.k+')',data_note:ml.k=='simulated'?'This date is not in your meter file, so demand is simulated: a ridge regression fitted on your own readings (hour, weekday/Saturday/Sunday, temperature). It is the expected pattern, not a measurement.':'Demand comes from your own meter file, which stays in this browser.'}),metrics:Object.assign({},fc.metrics,{load:null})}):fc;
  const ev=evBase(date),o2=Object.assign({},out,{evb:ev.p,evun:ev.unmet});return off?Object.assign({},o2,{offline:off}):o2});
 
 const evWin=d=>{const w=(parse(d).getDay()+6)%7;return w<5?[7.5,18]:w==5?[7.5,14]:null};
@@ -657,15 +692,16 @@ function fcCard(fc,past,fn){
  const pa=a=>a.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join('');let g='';
  g+=yGrid(ax,y,L,W-8)+yTitle(T,Hh-B,'kW')+xAxis(t=>x(t*S),Hh-B,0,24,3);
  const band=fc.pv_p10&&fc.pv_p90&&!past;
+ if(fc.lb){const up=fc.lb.hi.map((v,i)=>x(i).toFixed(1)+' '+y(Math.min(v,mx)).toFixed(1)),dn=fc.lb.lo.map((v,i)=>x(i).toFixed(1)+' '+y(Math.min(v,mx)).toFixed(1)).reverse();g+=`<path d="M${up.join('L')}L${dn.join('L')}Z" fill="var(--mute)" opacity=".18"/>`}
  if(band){const up=fc.pv_p90.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)),dn=fc.pv_p10.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)).reverse();g+=`<path d="M${up.join('L')}L${dn.join('L')}Z" fill="var(--solar)" opacity=".25"/>`}
  g+=`<path d="${pa(fc.load)}" stroke="var(--mute)" stroke-dasharray="5 4" fill="none" stroke-width="2"/><path d="${pa(fc.pv)}" stroke="var(--solar)" fill="none" stroke-width="2.5"/>`;
- const dl=fc.meter=='actual'?'Demand (your meter reading)':fc.meter=='typical'?'Demand (typical pattern from your meter data)':past?'Demand (modelled)':'Demand (forecast)',
+ const dl=fc.meter=='actual'?'Demand (your meter reading)':fc.meter=='simulated'?'Demand (simulated: ridge regression on your meter data)':fc.meter=='typical'?'Demand (typical pattern from your meter data)':past?'Demand (modelled)':'Demand (forecast)',
   E=sum(fc.pv)*DT,av=a=>sum(a)/a.length;
  const rng=band?` Likely range ${Math.round(sum(fc.pv_p10)*DT)} to ${Math.round(sum(fc.pv_p90)*DT)} kWh.`:'';
  return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Solar and demand ${past?'record':'forecast'}">${g}</svg>
- <div class="legend"><span><i style="background:var(--solar)"></i>Solar output, kW${past?'':' (expected)'}</span>${band?'<span><i style="background:var(--solar);opacity:.3"></i>Likely range (10% to 90%)</span>':''}<span><i style="background:none;border-top:2px dashed var(--mute);height:0;width:14px"></i>${dl}, kW</span></div>
- <div class="wxg">${(()=>{const cl=Math.round(av(fc.cloud)),gh=Math.round(Math.max(...fc.ghi)),cw=cl<20?'Mostly clear':cl<50?'Partly cloudy':cl<80?'Cloudy':'Overcast',gw=gh>=800?'Very strong':gh>=500?'Strong':gh>=250?'Moderate':'Weak';return [['t','&#127777;&#65039;','Highest temperature',Math.max(...fc.temp).toFixed(1)+' &deg;C','Daytime high'],['c','&#9729;&#65039;','Average cloud cover',cl+'%',cw],['s','&#9728;&#65039;','Strongest sunshine',gh+' W/m&sup2;',gw],['e','&#9889;','Solar energy '+(past?'':'expected'),N0(E)+' kWh',band?'Likely '+N0(sum(fc.pv_p10)*DT)+' to '+N0(sum(fc.pv_p90)*DT)+' kWh':'For the whole day']].map(([c,i,l,v,h])=>`<div class="wxt"><span class="ic ${c}">${i}</span><div><small>${l}</small><b>${v}</b><em>${h}</em></div></div>`).join('')})()}</div>
- <p class="note">${past?'Rebuilt from recorded weather, not from an inverter reading.':'Not measured: this is a prediction, so real values will differ.'}</p><p class="note">${esc(fn)}</p>`}
+ <div class="legend"><span><i style="background:var(--solar)"></i>Solar output, kW${past?'':' (expected)'}</span>${band?'<span><i style="background:var(--solar);opacity:.3"></i>Likely range (10% to 90%)</span>':''}<span><i style="background:none;border-top:2px dashed var(--mute);height:0;width:14px"></i>${dl}, kW</span>${fc.lb?'<span><i style="background:var(--mute);opacity:.25"></i>Demand range seen on similar days (10% to 90%)</span>':''}</div>
+ <div class="wxg">${fc.local?'':(()=>{const cl=Math.round(av(fc.cloud)),gh=Math.round(Math.max(...fc.ghi)),cw=cl<20?'Mostly clear':cl<50?'Partly cloudy':cl<80?'Cloudy':'Overcast',gw=gh>=800?'Very strong':gh>=500?'Strong':gh>=250?'Moderate':'Weak';return [['t','&#127777;&#65039;','Highest temperature',Math.max(...fc.temp).toFixed(1)+' &deg;C','Daytime high'],['c','&#9729;&#65039;','Average cloud cover',cl+'%',cw],['s','&#9728;&#65039;','Strongest sunshine',gh+' W/m&sup2;',gw],['e','&#9889;','Solar energy '+(past?'':'expected'),N0(E)+' kWh',band?'Likely '+N0(sum(fc.pv_p10)*DT)+' to '+N0(sum(fc.pv_p90)*DT)+' kWh':'For the whole day']].map(([c,i,l,v,h])=>`<div class="wxt"><span class="ic ${c}">${i}</span><div><small>${l}</small><b>${v}</b><em>${h}</em></div></div>`).join('')})()}</div>
+ <p class="note">${fc.local?(fc.model.pv.startsWith('your')?'Solar is the pv_kw column of your meter file (recorded).':'Solar is the typical output for this month, taken from your meter file. It is not a measurement for this date.'):past?'Rebuilt from recorded weather, not from an inverter reading.':'Not measured: this is a prediction, so real values will differ.'}</p><p class="note">${esc(fn)}</p>`}
 
 function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a.cost,dC=a.co2-z.co2;
  if(dS<1||dC<0.5)return'<p class="note">CO&#8322; trade-off: Cost-saving and Balanced give almost the same result on this day.</p>';
@@ -1063,7 +1099,7 @@ function dayHtml(R,rows){
  if(sp)fn+=` Solar error ${sp.shown_mae_pct??sp.model_mae_pct}% of kWp vs ${sp.naive_mae_pct}% for yesterday's output.`;
  if(ld)fn+=` Demand error ${ld.model_mae_pct}% of peak vs ${ld.naive_mae_pct}% for same-as-last-week${/SYNTHETIC/.test(m.data_note||'')?' (measured on SYNTHETIC history, not real accuracy)':''}.`;
  if(m.data_note)fn+=' '+m.data_note;if(fc.weather&&fc.weather.stale)fn+=' Weather is a saved copy because the weather service did not answer.';
- const past=cur<TODAY,rib=past?`<div class="ribbon past" data-tour="ribbon"><b>RECORDED WEATHER.</b> A past day, estimated from recorded weather.<span data-role="tech"> Demand is ${fc.meter=='actual'?'your real meter reading':'modelled, because no meter data covers this day'}. Savings are what each strategy would have achieved.</span></div>`:`<div class="ribbon" data-tour="ribbon"><b>${cur==TODAY?'FORECAST FOR TODAY.':'FORECAST.'}</b> A prediction, not a measurement.<span data-role="tech">${cur==TODAY?' Hours that have already passed are still forecast values.':' This day has not happened yet.'} Weather comes from a weather forecast; solar and demand are calculated from it.</span></div>`;
+ const past=cur<TODAY,rib=past?`<div class="ribbon past" data-tour="ribbon"><b>${fc.local?'LOOKING BACK.':'RECORDED WEATHER.'}</b> ${fc.local?'A past day rebuilt from your meter file.':'A past day, estimated from recorded weather.'}${fc.meter=='simulated'?' <b>SIMULATED DEMAND:</b> this date is not in your meter file, so demand is a ridge-regression estimate fitted on your own readings. It is the expected pattern, not a measurement.':fc.meter=='actual'?' Demand is your real meter reading.':''}<span data-role="tech"> Demand is ${fc.meter=='actual'?'your real meter reading':fc.meter=='simulated'?'simulated (ridge regression on your meter data)':'modelled, because no meter data covers this day'}. Savings are what each strategy would have achieved.</span></div>`:`<div class="ribbon" data-tour="ribbon"><b>${cur==TODAY?'FORECAST FOR TODAY.':'FORECAST.'}</b> A prediction, not a measurement.<span data-role="tech">${cur==TODAY?' Hours that have already passed are still forecast values.':' This day has not happened yet.'} Weather comes from a weather forecast; solar and demand are calculated from it.</span></div>`;
  const off=R.base.offline||r.offline,offB=off?`<div class="ribbon warn"><b>OFFLINE.</b> The server could not be reached, so this screen shows results saved on this device at ${new Date(off).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}. They may be out of date. Try again in a minute.</div>`:'';
  const L=+F.lim,mxg=Math.max(...r.g),mxb=Math.max(...b.g),
   limB=(L>0&&mxg>L+1?`<div class="ribbon warn"><b>GRID LIMIT NOT MET.</b> Highest grid import is ${N0(mxg)} kW, above the ${N0(L)} kW limit.${sel=='base'?' Pick a strategy to see whether it can be held.':' The battery and chargers cannot hold it, so this is the closest plan.'}</div>`:'')+(L>0&&sel!='base'&&mxb>L+1&&mxg<=L+1?`<div class="ribbon"><b>GRID LIMIT.</b> Solar only, the site would draw up to ${N0(mxb)} kW, above the ${N0(L)} kW limit. This plan holds it at or under ${N0(L)} kW.</div>`:'')+(+F.evn>0&&fc.evun>0.5?`<div class="ribbon warn"><b>EV CHARGING.</b> ${N0(fc.evun)} kWh of the EV demand cannot be delivered on this day: the chargers are closed or there are too few hours or too little power.</div>`:'');
@@ -1076,7 +1112,7 @@ function dayHtml(R,rows){
  ${(()=>{const cs=['cost','bal','zero'].map(k=>R[k]&&R[k].cost);if(cs.some(x=>x==null)||!cs.every(x=>Math.abs(x-cs[0])<0.01)||rows.every(x=>Math.abs(R[x.k].cost-b.cost)<0.01))return'';const su=sum((b.sol||[]).map((v,i)=>Math.max(0,v-b.ld[i])))*DT;return '<p class="note"><b>Why do the strategies match?</b> '+(su>0.5?'On this day solar is more than the site needs for part of the day (about '+N0(su)+' kWh of surplus). The surplus fills the battery for free, so cost and carbon do not compete. ':'On this day cost and carbon do not compete, so every strategy reaches the same plan. ')+'The strategies only differ when their goals conflict. Open the <b>Battery size sweep</b> (Advanced) to see whether a different battery size would use more of it.</p>'})()}${rows.length>1&&rows.every(x=>Math.abs(R[x.k].cost-b.cost)<0.01)?'<p class="note"><b>Why are all the strategies the same?</b> On this day no peak rate or maximum demand charge applies (for example a weekend on a time-of-use tariff), so moving energy or using the battery cannot lower the bill. Try a weekday.</p>':''}<div class="qrow"><div class="qt">${tradeoff(R)}</div><details class="qh"><summary title="Yearly saving, tariff check and carbon notes" aria-label="Notes on this table">?</summary><div class="qb"><p class="note">${ann}</p><p class="note">${tc}</p><p class="note">${carbon}</p></div></details></div></div>
  ${fairCard()}${liveCard()}${schedCard(r,c)}${reoptCard()}${learnCard()}${stressCard()}${sweepCard()}${assumeCard(fc,past)}${auditCard()}`}
 
-function rel(d){return d<TODAY?['Past (recorded weather)','']:d==TODAY?['Today (forecast)','t']:d==addD(TODAY,1)?['Tomorrow (forecast)','f']:['Forecast','f']}
+function rel(d){return d<TODAY?[lbOn()&&d<MIN?'Past (meter file)':'Past (recorded weather)','']:d==TODAY?['Today (forecast)','t']:d==addD(TODAY,1)?['Tomorrow (forecast)','f']:['Forecast','f']}
 function weekChart(dates,items){
  const v=dates.map((d,i)=>{const x=items[i];return x&&x.r?{d,k:sum(x.r.sol)*DT}:{d,k:null}});if(!v.some(x=>x.k!=null))return '';
  const ax=niceAxis(0,Math.max(...v.map(x=>x.k||0))),W=760,H=300,L=52,R=12,T=14,B=44,pw=W-L-R,ph=H-T-B,bw=Math.min(52,pw/v.length*.62),sl=pw/v.length,y=n=>T+ph-(n-ax.lo)/(ax.hi-ax.lo)*ph;
@@ -1086,20 +1122,23 @@ function weekChart(dates,items){
   return `<g data-d="${x.d}" style="cursor:pointer"><rect x="${cx-sl/2}" y="${T}" width="${sl}" height="${ph+B}" fill="transparent"/>${bar}<text x="${cx}" y="${H-B+20}" text-anchor="middle" font-size="12" fill="${x.d==cur?'#111827':'#6b7280'}" font-weight="${x.d==cur?700:400}">${lab}</text></g>`}).join('');
  return `<div class="card"><h2>Energy</h2><div class="muted small">Solar energy each day, kWh. Faded dashed bars are forecasts. Tap a bar to open that day.</div><div class="scroll"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:520px;height:auto" role="img" aria-label="Solar energy per day, kWh"><defs><linearGradient id="wkG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22c55e"/><stop offset="1" stop-color="#2b9bd0"/></linearGradient></defs><text x="${L-8}" y="10" text-anchor="end" font-size="12" fill="#374151">kWh</text>${g}${bars}</svg></div><div class="legend" style="justify-content:center"><span><i style="background:linear-gradient(#22c55e,#2b9bd0)"></i>Energy (kWh)</span></div></div>`}
 function periodHtml(dates,items){
- const ok=items.filter(x=>x&&x.r);if(!ok.length)return '<div class="card err">No data for these dates. Data is available from 31 days ago to 2 days ahead.</div>';
+ const ok=items.filter(x=>x&&x.r);if(!ok.length)return '<div class="card err">No data for these dates. '+rangeTxt()+'</div>';
  const n=ok.length,t=tf(),tot=(w,k)=>sum(ok.map(x=>x[w][k])),pkb=Math.max(...ok.map(x=>x.b.peak)),pk=Math.max(...ok.map(x=>x.r.peak));
  const base=tot('b','en')+t.md*pkb*n/30,opt=tot('r','en')+t.md*pk*n/30,pvT=tot('r','sol'),pvU=sum(ok.map(x=>sum(x.r.d))),pvA=sum(ok.map(x=>sum(x.r.sol)));
  last={view,key:dates[0],base:base,cost:opt,save:base-opt};
  const head=kpis([['Baseline cost',money(base),'',n+' days'],['With strategy',money(opt)],['You save',money(base-opt),'good',(base>0?(100*(base-opt)/base).toFixed(1):0)+'%'],
   ['Highest billed peak',Math.round(pk)+' kW','','baseline '+Math.round(pkb)+' kW'],['Solar used',pvA>0?Math.round(100*pvU/pvA)+'%':'-']]);
- const past=dates.some(d=>d<TODAY&&d>=MIN),live=dates.some(d=>d>=TODAY&&d<=MAX);
+ const past=dates.some(d=>d<TODAY&&okDate(d)),live=dates.some(d=>d>=TODAY&&d<=MAX);
  const notes=(past?`Past days are fixed to the strategy you follow (${NAMES[F.follow]}, set in My facility), so changing the tab does not rewrite history. `:'')+(live?`Today and forecast days use the ${NAMES[sel]} tab. `:'');
  let cells='';
  if(view=='month'){cells+=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<div class="dh">${x}</div>`).join('');cells+='<div></div>'.repeat((parse(dates[0]).getDay()+6)%7)}
+ const mkr=d=>{const q=M?meterLoad(d):null;return q&&q.k=='actual'?'<small class="mk a">meter</small>':q&&q.k=='simulated'?'<small class="mk s">sim</small>':''};
+ const nA=dates.filter(d=>M&&M.days[d]).length,nS=dates.filter((d,i)=>items[i]&&items[i].r&&M&&!M.days[d]&&meterLoad(d)&&meterLoad(d).k=='simulated').length,
+  lbNote=nA||nS?`<b>${nA}</b> day${nA==1?'':'s'} use your real meter readings (green "meter") and <b>${nS}</b> ${nS==1?'is':'are'} simulated (amber "sim"): a ridge regression fitted on your own meter file, so simulated days are the expected pattern, not measurements. `:'';
  dates.forEach((d,i)=>{const x=items[i],tg=rel(d)[0],has=x&&x.r;
   const body=has?`<b class="good">${money(x.b.cost-x.r.cost)}</b><small>${d>=TODAY?'forecast':''}</small>`:'<small>no data</small>';
-  cells+=`<button class="c${d>=TODAY?' fc':''}${d==cur?' sel':''}${has?'':' na'}" data-d="${d}"><small>${view=='week'?parse(d).toLocaleDateString('en-GB',{weekday:'short'})+' ':''}${parse(d).getDate()}${isWk(d)?'':' (wknd)'}</small>${body}</button>`});
- return `<div class="card"><h2>Strategy vs baseline</h2>${head}<p class="note">${notes}Demand charge is prorated by the days shown, using the highest peak in the period. Dashed days are forecasts, solid days use recorded weather. Tap a day to open it with the full comparison.</p></div>
+  cells+=`<button class="c${d>=TODAY?' fc':''}${d==cur?' sel':''}${has?'':' na'}" data-d="${d}"><small>${view=='week'?parse(d).toLocaleDateString('en-GB',{weekday:'short'})+' ':''}${parse(d).getDate()}${isWk(d)?'':' (wknd)'}</small>${body}${has?mkr(d):''}</button>`});
+ return `<div class="card"><h2>Strategy vs baseline</h2>${head}<p class="note">${notes}${lbNote}Demand charge is prorated by the days shown, using the highest peak in the period. Dashed days are forecasts, solid days use recorded weather. Tap a day to open it with the full comparison.</p></div>
  ${view=='week'?weekChart(dates,items):''}<div class="card"><div class="cal" style="${view=='week'?'grid-template-columns:repeat(auto-fit,minmax(100px,1fr))':''}">${cells}</div></div>`}
 
 function span(){if(view=='day')return [cur];const d=parse(cur);
@@ -1116,6 +1155,8 @@ function stratChart(){const k=['base',...MODES.map(m=>m.k)];return `<span class=
 function tabs(){const k=['base',...MODES.map(m=>m.k)];$('tabs').innerHTML=k.map(x=>`<button data-s="${x}" aria-pressed="${x==sel}" class="${x==sel?'on':''}">${NAMES[x].replace('Optimiser: ','')}</button>`).join('')}
 
 function dayInfo(){const ml=meterLoad(cur),past=cur<TODAY;
+ if(past&&!(cur>=MIN&&cur<=MAX)&&lbOn())return 'Looking back: '+(ml&&ml.k=='actual'?'demand is your real meter reading':'demand is SIMULATED (ridge regression fitted on your meter file, so it is the expected pattern, not a measurement)')+' and solar comes from your meter file'+(M.pv[cur]?' (recorded).':' (typical for this month, not recorded for this date).');
+ if(ml&&ml.k=='simulated')return (past?'Looking back: ':'Forecast: ')+'this date is not in your meter file, so demand is SIMULATED by a ridge regression fitted on your own readings (hour, weekday or weekend, temperature). It is the expected pattern, not a measurement.';
  if(past)return ml&&ml.k=='actual'?'Looking back: demand is your real meter reading and solar is rebuilt from recorded weather. The strategy tabs show what each strategy would have saved on this day.':'Looking back: solar is rebuilt from recorded weather. Demand is modelled from your peak demand because no meter data covers this day, so treat it as an estimate. The strategy tabs show what each strategy would have saved on this day.';
  return ml?'Forecast: weather from Open-Meteo. Demand is the typical pattern from your meter data for this day of the week.':'Forecast: weather from Open-Meteo. Demand comes from a calendar-and-temperature model trained on synthetic history, so it is not yet real-world accuracy.'}
 
@@ -1136,19 +1177,19 @@ async function render(){
  {const dayOnly=['fc','op','pl','fk','ad'];document.querySelectorAll('#dtabs button,#dtabs .dgrp').forEach(b=>{if(dayOnly.includes(b.dataset.dt))b.hidden=view!='day'});if(view!='day'&&dayOnly.includes(dtab)){dtab='ov';applyTab()}}
  const f=(x,o)=>parse(x).toLocaleDateString('en-GB',o);
  $('ttl').textContent=view=='day'?f(cur,{weekday:'long',day:'numeric',month:'long',year:'numeric'}):view=='week'?'Week of '+f(dates[0],{day:'numeric',month:'short'})+' to '+f(dates[6],{day:'numeric',month:'short'}):f(cur,{month:'long',year:'numeric'});
- const [bt,bc]=rel(cur);$('calBtn').title=$('calBtn').ariaLabel='Pick a date: '+$('ttl').textContent;$('badge').innerHTML=view=='day'?`<span class="tag ${bc}">${bt}</span>`:'';
+ const [bt,bc]=rel(cur);$('calBtn').title=$('calBtn').ariaLabel='Pick a date: '+$('ttl').textContent;$('badge').innerHTML=view=='day'?`<span class="tag ${bc}">${bt}</span>`+lbTag(cur):'';
  $('bSub').innerHTML=esc(view=='day'?$('ttl').textContent:view=='week'?(dates.includes(TODAY)?'This week \u00b7 ':'')+f(dates[0],{day:'numeric',month:'short'})+' to '+f(dates[6],{day:'numeric',month:'short'}):(cur.slice(0,7)==TODAY.slice(0,7)?'This month \u00b7 ':'')+f(cur,{month:'long',year:'numeric'}))+(view=='day'?` <span class="tag ${bc}">${bt}</span>`:'');
- $('info').textContent=view=='day'?dayInfo():'Days before today are estimates from recorded weather. Days after today are forecasts (up to 2 days ahead). Other days show no data.';
+ $('info').textContent=view=='day'?dayInfo():'Days before today are estimates from recorded weather. Days after today are forecasts (up to 2 days ahead). Other days show no data.'+(lbOn()?' Days in your meter file show real readings ("meter"). Other days from the start of the file are simulated ("sim") by a ridge regression fitted on your file.':'');
  $('out').innerHTML='<div class="card"><span class="spin"></span><span id="prog">Working it out&hellip; a day you have not opened before takes a few seconds, then it is saved on this device.</span><div class="note" id="slow"></div></div>';setTimeout(()=>{if(my==tok&&$('slow'))$('slow').textContent='Still working. The first request after a quiet period can take 10 to 20 seconds while the server wakes up.'},6000);
  try{
   if(view=='day'){
-   if(cur<MIN||cur>MAX){$('out').innerHTML='<div class="card err">No data for that date. Choose a day from 31 days ago to 2 days ahead.</div>';return}
+   if(!okDate(cur)){$('out').innerHTML='<div class="card err">No data for that date. '+rangeTxt()+'</div>';return}
    const rows=[{k:'base'},...MODES],res=await Promise.allSettled(rows.map(s=>getRun(cur,s.k)));if(my!=tok)return;
    if(res[0].status!='fulfilled')throw res[0].reason;
    const R={},ok=[];res.forEach((x,i)=>{if(x.status=='fulfilled'){R[rows[i].k]=x.value;ok.push(rows[i])}});
    const miss=res.filter(x=>x.status!='fulfilled').length;
    $('out').innerHTML=(miss?`<div class="ribbon warn"><b>PARTIAL.</b> The optimiser did not answer, so only the baseline is shown. <button data-retry="1">Try again</button></div>`:'')+dayHtml(R,ok);aiRestore();apShow();cvDefault();applyTab();changeCard();maybeTour();if(cur==TODAY&&(chartTab=='rt'||chartTab=='pc')){rtLoad();rtStart()}setTimeout(()=>warm(my),1500);return}
-  const items=dates.map(()=>null),idx=dates.map((x,i)=>i).filter(i=>dates[i]>=MIN&&dates[i]<=MAX);
+  const items=dates.map(()=>null),idx=dates.map((x,i)=>i).filter(i=>okDate(dates[i]));
   let done=0;const run=async i=>{try{items[i]={b:await getRun(dates[i],'base'),r:await getRun(dates[i],dates[i]<TODAY?F.follow:sel)}}catch(e){items[i]=null}done++;const p=$('prog');if(p)p.textContent=`Loading day ${done} of ${idx.length}. A new day takes a few seconds, then it is saved on this device.`};
   if(idx.length){await run(idx[0]);for(let k=1;k<idx.length;k+=6){await Promise.all(idx.slice(k,k+6).map(run));if(my!=tok)return}}
   if(my!=tok)return;$('out').innerHTML=periodHtml(dates,items);applyTab();changeCard();setTimeout(()=>warm(my),1500)
@@ -1165,7 +1206,7 @@ async function explainClick(){if(!aiFacts)return;const k=JSON.stringify(aiFacts)
  catch(e){$('aiTxt').innerHTML=esc(tplSummary(aiFacts))+'<br><small>The AI service did not answer, so this is the standard text, built from the same numbers. '+esc(aiWhy(e.message))+'<span data-role="tech"> ('+esc(e.message)+')</span></small>'}
  btn.disabled=false}
 async function warm(my){if(my!=tok||view=='month')return;const mon=addD(cur,-((parse(cur).getDay()+6)%7));
- for(let i=0;i<7;i++){const d=addD(mon,i);if(d<MIN||d>MAX)continue;
+ for(let i=0;i<7;i++){const d=addD(mon,i);if(!okDate(d))continue;
   for(const m of ['base',d<TODAY?F.follow:sel]){if(my!=tok)return;try{await getRun(d,m)}catch(e){}}
   await new Promise(r=>setTimeout(r,120))}}
 
@@ -1260,7 +1301,7 @@ function applyNav(n){const bits=[];let toSummary=false;
  if(n.tab&&TAB2DT[n.tab]){dtab=TAB2DT[n.tab];bits.push(n.tab+' tab')}
  else if(n.chart){dtab='fc'}
  if(n.open=='summary'){dtab='ov';toSummary=true;bits.push('the AI summary')}
- if(n.date&&n.date>=MIN&&n.date<=MAX){cur=n.date;view=n.view||'day';bits.push(n.date)}
+ if(n.date&&okDate(n.date)){cur=n.date;view=n.view||'day';bits.push(n.date)}
  if(n.view){view=n.view;bits.push(n.view+' view')}
  if(n.strategy){sel=n.strategy=='zero'?'bal':n.strategy;bits.push(NAMES[sel].replace('Optimiser: ',''))}
  if(n.chart){chartTab=n.chart;rtDem=false;bits.push(({rt:'energy usage chart',use:'daily plan chart',wx:'weather chart',pc:'power curve',pl:'panel layout'})[n.chart]||'chart')}
@@ -1339,24 +1380,29 @@ function tsParts(s){s=String(s).trim().replace(/"/g,'');let m=s.match(/^(\d{4})-
 function parseMeter(text,unit){const L=text.split(/\r?\n/).filter(x=>x.trim());if(L.length<2)return null;
  const dl=[',',';','\t'].map(d=>[d,L[0].split(d).length]).sort((a,b)=>b[1]-a[1])[0][0],H=L[0].toLowerCase().split(dl).map(x=>x.replace(/"/g,'').trim());
  let ti=H.findIndex(x=>/time|date/.test(x)),vi=H.findIndex((x,i)=>i!=ti&&/kw|power|demand|load|energy|value/.test(x));if(ti<0)ti=0;if(vi<0)vi=ti==0?1:0;
+ const pi=H.findIndex((x,i)=>i!=ti&&i!=vi&&/pv|solar/.test(x)&&!/irrad/.test(x)),ei=H.findIndex((x,i)=>i!=ti&&i!=vi&&/temp/.test(x));
  if(!unit||unit=='auto')unit=/kwh|energy/.test(H[vi]||'')?'kwh':'kw';
- const day={};let skipped=0,half=false;
+ const day={},dayP={},dayT={};let skipped=0,half=false;
  L.slice(1).forEach(r=>{const c=r.split(dl),t=tsParts(c[ti]),v=parseFloat(String(c[vi]).replace(/[", ]/g,''));
-  if(!t||!isFinite(v)){skipped++;return}const key=t[0]+'-'+p2(t[1])+'-'+p2(t[2]),a=day[key]||(day[key]=N.map(()=>({s:0,n:0})));if(t[3]<0||t[3]>23){skipped++;return}const bi=t[3]*S+(t[4]>=30?1:0);if(bi%S)half=true;a[bi].s+=Math.max(v,0);a[bi].n++;a.mx=Math.max(a.mx||0,Math.max(v,0))});
+  if(!t||!isFinite(v)){skipped++;return}const key=t[0]+'-'+p2(t[1])+'-'+p2(t[2]),a=day[key]||(day[key]=N.map(()=>({s:0,n:0})));if(t[3]<0||t[3]>23){skipped++;return}const bi=t[3]*S+(t[4]>=30?1:0);if(bi%S)half=true;a[bi].s+=Math.max(v,0);a[bi].n++;a.mx=Math.max(a.mx||0,Math.max(v,0));
+  [[pi,dayP,1],[ei,dayT,0]].forEach(([ix,D,nn])=>{if(ix<0)return;const z=parseFloat(String(c[ix]).replace(/[", ]/g,''));if(!isFinite(z))return;const q=D[key]||(D[key]=N.map(()=>({s:0,n:0})));q[bi].s+=nn?Math.max(z,0):z;q[bi].n++})});
  const days={};Object.keys(day).sort().forEach(k=>{const a=day[k];if(half){if(a.every(x=>x.n>0))days[k]=a.map(x=>+(unit=='kwh'?x.s*S:x.s/x.n).toFixed(1))}else if(a.every((x,i)=>i%S||x.n>0)){const hv=a.filter((x,i)=>!(i%S)).map(x=>+(unit=='kwh'?x.s:x.s/x.n).toFixed(1));days[k]=hv.flatMap(v=>Array(S).fill(v))}});
+ const gaps=[];Object.keys(days).forEach(k=>{if(days[k].filter(v=>v<=0).length>=2*S){gaps.push(k);delete days[k]}});
+ const mk=(D,k)=>{const a=D[k];if(!a)return null;if(half){return a.every(x=>x.n>0)?a.map(x=>+(x.s/x.n).toFixed(1)):null}return a.every((x,i)=>i%S||x.n>0)?a.flatMap((x,i)=>i%S?[]:Array(S).fill(+(x.s/x.n).toFixed(1))):null};
  const keys=Object.keys(days).slice(-366),out={};keys.forEach(k=>out[k]=days[k]);
  if(!keys.length)return{err:'No complete days were found in the file (a day needs a reading for every hour, or every 30 minutes).',skipped};
+ const pvD={},tpD={};keys.forEach(k=>{const a=mk(dayP,k),b=mk(dayT,k);if(a)pvD[k]=a;if(b)tpD[k]=b});
  const grp={wk:[],sat:[],sun:[]};keys.forEach(k=>{const g=parse(k).getDay();grp[g==6?'sat':g==0?'sun':'wk'].push(out[k])});
  const typ={};for(const t in grp)if(grp[t].length)typ[t]=N.map(h=>+(sum(grp[t].map(a=>a[h]))/grp[t].length).toFixed(1));
  const mx=Math.max(...(typ.wk||[0]),0),pk=Math.max(...keys.map(k=>unit=='kwh'?Math.max(...out[k]):(day[k].mx||0)));
- return{days:out,typ,from:keys[0],to:keys[keys.length-1],n:keys.length,max:Math.round(mx),pk:Math.round(pk),unit,skipped,res:S,half,stamp:Date.now()}}
-function meterMsg(){$('m_msg').textContent=M?`In use: ${M.n} complete days (${M.from} to ${M.to}), ${M.half?'30-minute':'hourly (repeated as 30-minute steps)'} readings. Highest reading ${M.pk||M.max} kW; typical weekday peak ${M.max} kW.`:'No meter data loaded.'}
+ return{days:out,typ,from:keys[0],to:keys[keys.length-1],n:keys.length,max:Math.round(mx),pk:Math.round(pk),unit,skipped,res:S,half,stamp:Date.now(),pv:Object.keys(pvD).length?pvD:null,tmp:Object.keys(tpD).length?tpD:null,gaps}}
+function meterMsg(){$('m_msg').textContent=M?`In use: ${M.n} complete days (${M.from} to ${M.to}), ${M.half?'30-minute':'hourly (repeated as 30-minute steps)'} readings. Highest reading ${M.pk||M.max} kW; typical weekday peak ${M.max} kW.${M.gaps&&M.gaps.length?' '+M.gaps.length+' day(s) with meter gaps (many zero readings) were left out and will be simulated.':''}${M.pv?' Solar (pv_kw) column found, so you can look back at any date from the start of the file.':' No solar column found, so only dates inside the weather window can be opened.'}`:'No meter data loaded.'}
 function importMeter(text,unit){let r;try{r=parseMeter(text,unit)}catch(e){r=null}
  if(!r||r.err)return{err:(r&&r.err)||'Could not read the file. It needs a header row, a timestamp column and a value column.'};
  M=r;try{localStorage.setItem('meter',JSON.stringify(M))}catch(e){storeFail('The meter file is too big for this browser to keep. It works for this visit, but you will need to load it again after reloading.')}
  cache.clear();meterMsg();if(r.skipped)$('m_msg').textContent+=` ${r.skipped} unreadable rows were skipped.`;
  $('f_peak').value=r.pk;
- applyLocal([`<b>Demand source:</b> your meter file, ${r.n} complete days (${r.from} to ${r.to}), read as ${r.unit=='kwh'?'kWh per interval':'kW'}. Dates inside the file now show your real demand.`,`<b>Maximum demand</b> was filled in from the file: the highest reading is ${r.pk} kW. Overwrite it with the figure from your bill if they differ.`]);return{r}}
+ applyLocal([`<b>Demand source:</b> your meter file, ${r.n} complete days (${r.from} to ${r.to}), read as ${r.unit=='kwh'?'kWh per interval':'kW'}. Dates inside the file now show your real demand; other dates are simulated (ridge regression fitted on your file).`,`<b>Maximum demand</b> was filled in from the file: the highest reading is ${r.pk} kW. Overwrite it with the figure from your bill if they differ.`]);return{r}}
 $('m_go').onclick=async()=>{const f=$('m_file').files[0];if(!f){$('m_msg').textContent='Choose a CSV file first.';return}
  const x=importMeter(await f.text(),$('m_unit').value);if(x.err)$('m_msg').textContent=x.err};
 $('m_clear').onclick=()=>{setPend(['<b>Demand source:</b> meter data removed. Demand is back to the modelled profile.']);M=null;try{localStorage.removeItem('meter')}catch(e){}cache.clear();meterMsg();render()};
