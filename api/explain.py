@@ -177,7 +177,7 @@ def _endpoint():
     return f"{u.scheme}://{u.netloc}" if u.netloc else ""
 
 
-def call_model(p, fix=None):
+def call_model(p, fix=None, system=None):
     ep, dep = _endpoint(), os.environ.get("AZURE_OPENAI_DEPLOYMENT", "")
     try:
         auth = aoai.auth_headers()
@@ -188,7 +188,7 @@ def call_model(p, fix=None):
     if not aoai.reserve():                      # one budget shared with the assistant (see aoai.py)
         raise Unavailable("AI model is busy")
     body = {"model": dep, "max_completion_tokens": 900,
-            "messages": [{"role": "system", "content": SYSTEM}, {"role": "user", "content": json.dumps(p)}]
+            "messages": [{"role": "system", "content": system or SYSTEM}, {"role": "user", "content": json.dumps(p)}]
             + ([{"role": "assistant", "content": fix["text"]}, {"role": "user", "content": fix["msg"]}] if fix else [])}
     eff = os.environ.get("AZURE_OPENAI_REASONING", "minimal")
     if eff:
@@ -226,6 +226,8 @@ def call_model(p, fix=None):
 
 
 def explain(raw, model=call_model):
+    if isinstance(raw, dict) and raw.get("kind") == "replay":
+        return explain_replay(raw, None if model is call_model else model)
     f = validate(raw)
     base = {"text": template(f), "source": "template", "note": ""}
     if f["strategy"] == "Baseline":
@@ -258,3 +260,108 @@ def explain(raw, model=call_model):
             base["note"] = "AI answer was rejected: it was too long or had a link"
         return base
     return {"text": text, "source": "ai", "note": ""}
+
+
+# ===================== Live replay review =====================
+# Same safety design: numbers in, fixed phrases out, the model only rewrites them, every number in its answer is checked.
+# The improvement ideas are chosen by RULES from the run's numbers (below); the model only puts them into plain words.
+HM = re.compile(r"^(?:[01]\d|2[0-3]):(?:00|15|30|45)$|^24:00$")
+REPLAY_SYSTEM = ("You review one simulated day of a factory energy plan for its operations team, in plain English. "
+                 "Write 4 short sentences, under 110 words, no lists, no markdown: first how far the day moved from the original plan, "
+                 "then what re-planning recovered, then the improvements given in the JSON field \"improve\", in that order. "
+                 "Use ONLY the numbers in the JSON, copied exactly as written (keep RM, kW, %, and HH:MM times). "
+                 "Never calculate, round, convert or invent a number. Do not add improvements that are not in \"improve\". "
+                 "Say it was a simulation once. Do not mention the JSON.")
+IMPROVE = {
+    "learn": "press Learn from this run so the forecast is corrected next time, because the solar error repeated",
+    "panels": "check the panels for shade or dirt, because solar stayed below forecast",
+    "demand": "look for equipment that ran outside the plan, because demand was above forecast",
+    "battery": "consider a bigger battery or a higher top-up before the peak window, because the battery reached its reserve",
+    "ev": "keep the EV charging window open long enough for held charging to finish, because EV charging was held for solar",
+    "twin": "recalibrate the digital twin, because it missed too many intervals",
+    "none": "keep the current plan, because the day stayed close to the forecast",
+}
+
+
+def validate_replay(f):
+    out = {"strategy": f.get("strategy")}
+    if out["strategy"] not in STRATS:
+        raise ValueError("strategy has an unknown value")
+    for k in ("start", "end"):
+        v = f.get(k)
+        if not (isinstance(v, str) and HM.match(v)):
+            raise ValueError(k + " must be HH:MM on the quarter hour")
+        out[k] = v
+    for k, lo, hi in (("plan_cost", 0, 1e9), ("kept_cost", 0, 1e9), ("new_cost", 0, 1e9), ("plan_peak", 0, 1e7), ("new_peak", 0, 1e7),
+                      ("solar_pct", 0, 1000), ("demand_pct", 0, 1000), ("steps", 1, 96), ("solar_off", 0, 96), ("demand_off", 0, 96),
+                      ("grid_off", 0, 96), ("twin_pct", 0, 100), ("ev_held", 0, 96), ("soc_min", 0, 100), ("reserve", 0, 100)):
+        out[k] = _num(f, k, lo, hi)
+    out["learned"] = bool(f.get("learned"))
+    return out
+
+
+def improve_keys(f):
+    k = []
+    if f["solar_off"] >= 2 and f["solar_pct"] < 85:
+        k.append("panels")
+        if f["solar_off"] >= 4 and not f["learned"]:
+            k.append("learn")
+    if f["demand_off"] >= 2 and f["demand_pct"] > 110:
+        k.append("demand")
+    if f["soc_min"] <= f["reserve"] + 5:
+        k.append("battery")
+    if f["ev_held"] >= 1:
+        k.append("ev")
+    if f["twin_pct"] < 80:
+        k.append("twin")
+    return k[:3] or ["none"]
+
+
+def replay_phrases(f):
+    d = f["kept_cost"] - f["plan_cost"]
+    p = {"strategy": f["strategy"], "run": f"{f['start']} to {f['end']}", "intervals_played": f"{f['steps']:.0f} intervals of 15 minutes",
+         "original_plan_cost": _money(f["plan_cost"]), "cost_if_old_plan_kept": _money(f["kept_cost"]),
+         "cost_after_replanning": _money(f["new_cost"]), "solar_vs_forecast": f"{f['solar_pct']:.0f}%", "demand_vs_forecast": f"{f['demand_pct']:.0f}%",
+         "billed_peak_planned": f"{f['plan_peak']:,.0f} kW", "billed_peak_now": f"{f['new_peak']:,.0f} kW",
+         "digital_twin_within_tolerance": f"{f['twin_pct']:.0f}% of intervals"}
+    p["day_moved_from_plan"] = (("+" if d >= 0 else "-") + _money(abs(d)))
+    r = f["kept_cost"] - f["new_cost"]
+    p["recovered_by_replanning"] = _money(max(r, 0))
+    if f["ev_held"]:
+        p["ev_intervals_held"] = f"{f['ev_held']:.0f} intervals"
+    p["improve"] = [IMPROVE[k] for k in improve_keys(f)]
+    return p
+
+
+def replay_template(f):
+    p = replay_phrases(f)
+    s = [f"In this simulated run ({p['run']}, {p['strategy']}), the day moved {p['day_moved_from_plan']} from the original plan of "
+         f"{p['original_plan_cost']}, with solar at {p['solar_vs_forecast']} and demand at {p['demand_vs_forecast']} of forecast.",
+         f"Re-planning every 15 minutes recovered {p['recovered_by_replanning']}, so the day now costs {p['cost_after_replanning']}.",
+         f"The billed peak was planned at {p['billed_peak_planned']} and is now {p['billed_peak_now']}."]
+    s.append("To improve: " + "; ".join(p["improve"]) + ".")
+    return " ".join(s)
+
+
+def explain_replay(raw, model=None):
+    f = validate_replay(raw)
+    p = replay_phrases(f)
+    base = {"text": replay_template(f), "source": "template", "note": "", "improve": improve_keys(f)}
+    try:
+        text = " ".join((model or call_replay)(p).split())
+    except Unavailable as e:
+        base["note"] = str(e)
+        return base
+    except Exception as e:
+        logging.warning("replay review failed: %s", e)
+        base["note"] = "AI model error"
+        return base
+    flat = {k: (" ".join(v) if isinstance(v, list) else v) for k, v in p.items()}
+    if not text or len(text) > 1100 or "http" in text.lower() or "```" in text or bad_numbers(text, flat):
+        base["note"] = "AI answer was rejected: it used numbers that are not in the run"
+        return base
+    return {"text": text, "source": "ai", "note": "", "improve": base["improve"]}
+
+
+def call_replay(p):
+    return call_model(p, system=REPLAY_SYSTEM)
