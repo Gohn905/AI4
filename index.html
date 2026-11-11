@@ -311,7 +311,21 @@ main.stTab #dateCard.one .sp{order:4}
 .hasstrat{display:flex!important;align-items:center;flex-wrap:wrap;gap:6px 14px}.hasstrat .stratr{font-size:14px;font-weight:400;text-transform:none;letter-spacing:normal}.hasstrat .stratr b{font-weight:700}.hasstrat .stratr button{font-size:14px;text-transform:none;letter-spacing:normal}
 /* Brief only: forecast line under the headline card */
 main[data-role=owner] #out>:not([data-tour]):not(#devStrip){order:-3}main[data-role=owner] #out>[data-tour=headline]{order:-2}main[data-role=owner] #out>[data-tour=ribbon]{order:-1}
-</style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span></span><span class="sp"></span><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
+
+/* ===== Live replay page: its own top tab, no side rail, everything on one page ===== */
+#liveTabBtn{white-space:nowrap}main.liveTab{padding-right:clamp(16px,3vw,42px)!important}main.liveTab .mainCol>#dtabs,main.liveTab #devStrip{display:none!important}
+.lvpage{padding:16px 18px}.lvhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:10px}.lvhead .note{flex-basis:100%}
+.lvctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:0 0 6px}.lvctl label{margin:0;display:inline-flex;align-items:center;gap:6px}
+.lvrun{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.lvrun .lvtime{margin:0 10px 0 0}
+.lvgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}.lvwide{grid-column:1/-1}
+.lvbox{background:#fff;border:1px solid var(--card-line);border-radius:12px;padding:10px 14px;min-width:0}.lvbox h3.sec{margin:0 0 4px!important;font-size:14px}.lvbox h3.sec .note{font-weight:500}
+.lvbox .legend{font-size:12px;gap:4px 12px;margin-top:2px}
+.lvtbl{min-width:0;font-size:13px}.lvtbl td,.lvtbl th{padding:4px 6px}.lvtbl th{font-size:12px}
+.lvpk{display:inline-block;padding:0 6px;border-radius:6px;background:#E6F1DC;font-variant-numeric:tabular-nums}.lvpk.p{background:#FDE7C2;color:#92400E;font-weight:700}
+.lvpage .kpis{grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}.lvpage .kpis .k{background:#fff;padding:8px 10px}.lvpage .kpis .k b{font-size:19px}
+@media(max-width:1100px){.lvpage .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:820px){.lvgrid{grid-template-columns:minmax(0,1fr)}.lvpage .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.lvtbl{font-size:12px}}
+</style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="liveTabBtn" data-rp="live" title="Play today forward and watch the optimiser re-plan, all on one page">Live replay</button></span><span class="sp"></span><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
 <div id="amsg" class="note" role="status" aria-live="polite" style="margin:0 0 6px"></div>
@@ -711,7 +725,8 @@ function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a
 
 // ================= pages: Brief (owner view) and Detailed (tabs) =================
 const TABS={ov:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','devlog','schedule','approve','changed'],fk:['devlog'],ad:['stress','sweep','assume','audit','changed'],live:['live'],fa:['changed'],lab:[],proto:[]};let dtab='ov';
-window.SunshineOpenLiveReplay=function(){if(!tabOk('live'))return false;view='day';cur=TODAY;dtab='live';if(role!='tech')setRole('tech');render();applyTab();uiSave();window.scrollTo(0,0);return true};
+let lvFrom='ov';
+window.SunshineOpenLiveReplay=function(){if(!tabOk('live'))return false;if(dtab!='live')lvFrom=dtab;const re=view!='day'||cur!=TODAY;view='day';cur=TODAY;dtab='live';if(!re&&role=='tech'){applyTab();uiSave();window.scrollTo(0,0);return true}if(role!='tech')setRole('tech');render();applyTab();uiSave();window.scrollTo(0,0);return true};
 function pgRole(){const e=$('pgRo');if(e)e.hidden=!!(PERM[who]&&PERM[who].hw)}
 function fitProto(){try{pgRole()}catch(e){}const on=role=='tech'&&dtab=='proto',h=document.documentElement;h.classList.toggle('protoTab',on);if(!on)return;const f=$('proto3d');if(!f)return;const t=f.getBoundingClientRect().top+(window.scrollY||0);f.style.height=Math.max(460,window.innerHeight-t-6)+'px';}
 window.addEventListener('resize',()=>{try{fitProto()}catch(e){}});
@@ -734,8 +749,9 @@ function stratPlace(){/* Digital twin tabs: Energy-usage-style strategy buttons 
  if(!h)return;h.classList.add('hasstrat');h.insertAdjacentHTML('beforeend',stratChart(true))}
 new MutationObserver(()=>{if(dtab=='fk'&&!document.querySelector('#fkPanel [data-mv]'))try{stratPlace()}catch(e){}}).observe($('fkPanel'),{childList:true});
 function stratSync(){const need=role=='tech'&&(['op','pl','fk','ad'].includes(dtab)||(dtab=='fc'&&(chartTab=='rt'||chartTab=='pc')));$('app').classList.toggle('stTab',need)}
-function applyTab(){if(!tabOk(dtab))dtab='ov';if(role+dtab!==lastTab){lastTab=role+dtab;sayClear()}$('dateCard').classList.toggle('one',dtab!='ov');stratSync();const t=role=='tech';$('app').classList.toggle('fit',t&&(dtab=='fc'||dtab=='proto'));$('app').classList.toggle('fcTab',t&&dtab=='fc');$('app').classList.toggle('adTab',t&&dtab=='ad');Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&(dtab=='fa'||dtab=='lab'||dtab=='proto'||dtab=='fk')});$('fkPanel').hidden=!(t&&dtab=='fk');if(t&&dtab=='fk'){try{fkRender();if(!DEV.busy)devFetch(true)}catch(e){}}$('dateCard').hidden=t&&(dtab=='proto'||dtab=='fa');$('facPanel').hidden=!(t&&dtab=='fa');$('labPanel').hidden=!(t&&dtab=='lab');$('protoPanel').hidden=!(t&&dtab=='proto');fitProto();
+function applyTab(){if(!tabOk(dtab))dtab='ov';if(role+dtab!==lastTab){lastTab=role+dtab;sayClear()}$('dateCard').classList.toggle('one',dtab!='ov');stratSync();const t=role=='tech';$('app').classList.toggle('fit',t&&(dtab=='fc'||dtab=='proto'));$('app').classList.toggle('fcTab',t&&dtab=='fc');$('app').classList.toggle('adTab',t&&dtab=='ad');Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&(dtab=='fa'||dtab=='lab'||dtab=='proto'||dtab=='fk')});$('fkPanel').hidden=!(t&&dtab=='fk');if(t&&dtab=='fk'){try{fkRender();if(!DEV.busy)devFetch(true)}catch(e){}}$('dateCard').hidden=t&&(dtab=='proto'||dtab=='fa'||dtab=='live');$('app').classList.toggle('liveTab',t&&dtab=='live');hdrSync();if(t&&dtab=='live')setTimeout(()=>{try{lvPreview()}catch(e){}},0);$('facPanel').hidden=!(t&&dtab=='fa');$('labPanel').hidden=!(t&&dtab=='lab');$('protoPanel').hidden=!(t&&dtab=='proto');fitProto();
  navHl();fairLoad();stratPlace();stripPlace();applyPerms()}
+function hdrSync(){if(window.SunOps&&SunOps.state&&SunOps.state.open)return;const lv=role=='tech'&&dtab=='live';document.querySelectorAll('.top [data-rp]').forEach(b=>b.classList.toggle('on',b.dataset.rp=='live'?lv:b.dataset.rp==role&&!lv))}
 function navHl(){if(document.querySelectorAll)document.querySelectorAll('#dtabs button').forEach(b=>b.classList.toggle('on',b.dataset.dt==dtab&&(!b.dataset.ct||b.dataset.ct==chartTab)))}
 $('dtabs').onclick=e=>{const b=e.target.closest('button[data-dt]');if(!b)return;dtab=b.dataset.dt;if(b.dataset.ct){chartTab=b.dataset.ct;applyTab();const x=document.querySelector('#chTabs [data-ct="'+chartTab+'"]');if(x)x.click();navHl();uiSave()}else applyTab()};
 // ================= roles =================
@@ -748,8 +764,8 @@ const WHO={owner:{n:'Owner'},analyst:{n:'Analyst'},operator:{n:'Operator'},appro
 const OPER=['live','reopt','learn','stress','sweep','approve','audit'];   // cards that change or run something (the rest are only for looking)
 const PERM={
  owner:{see:null,act:null,tabs:null,approve:1,hw:1,edit:1},
- analyst:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','live','reopt','learn','stress','sweep','assume'],act:['reopt','learn','stress','sweep','approve'],tabs:['ov','fc','op','pl','fk','ad','proto','fa'],edit:1},
- operator:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','live','assume'],act:['live','approve'],tabs:['ov','fc','op','pl','fk','ad','proto'],hw:1},
+ analyst:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','live','reopt','learn','stress','sweep','assume'],act:['reopt','learn','stress','sweep','approve'],tabs:['ov','fc','op','pl','fk','ad','live','proto','fa'],edit:1},
+ operator:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','live','assume'],act:['live','approve'],tabs:['ov','fc','op','pl','fk','ad','live','proto'],hw:1},
  approver:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','stress','assume','audit'],act:['approve','audit'],tabs:['ov','fc','op','pl','fk','ad','proto','fa'],approve:1},
  auditor:{see:null,act:['audit'],tabs:['ov','fc','op','pl','fk','ad','proto','fa']}
 };
@@ -764,7 +780,7 @@ function actLogHtml(){const l=actLogLoad().slice(-30).reverse();if(!l.length)ret
  return`<table class="alog"><tr><th>Time</th><th>Person</th><th>Role</th><th>What happened</th></tr>${l.map(x=>`<tr><td>${esc(new Date(x.t).toLocaleString('en-GB'))}</td><td>${esc(x.by)}</td><td>${esc(WHO[x.role]?WHO[x.role].n:x.role)}</td><td>${esc(x.act)}</td></tr>`).join('')}</table>`}
 function actLog(act){const l=actLogLoad();l.push({t:new Date().toISOString(),by:whoName(),role:who,act});while(l.length>200)l.shift();try{localStorage.setItem('actlog',JSON.stringify(l))}catch(e){}const o=$('actLogOut');if(o)o.innerHTML=actLogHtml()}
 function applyPerms(){const P=PERM[who]||PERM.owner;
- $('app').classList.toggle('noap',!P.approve);
+ $('app').classList.toggle('noap',!P.approve);if($('liveTabBtn'))$('liveTabBtn').classList.toggle('rolehide',!tabOk('live'));
  Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;if(!k)return;if(!canSee(k))el.hidden=true;const lock=OPER.includes(k)&&!canAct(k);if(el.inert!==lock)el.inert=lock;el.classList.toggle('vo',lock)});
  const fp=$('facPanel'),lp=$('labPanel');fp.inert=!P.edit;fp.classList.toggle('vo',!P.edit);lp.inert=!P.hw;lp.classList.toggle('vo',!P.hw);
  const f=$('proto3d');if(f){const u=PROTO+(P.hw?'':'&ro=1');if(f.getAttribute('src')!==u)f.setAttribute('src',u)}
@@ -779,9 +795,9 @@ function sizeWho(){const e=$('whoSel');if(!e)return;try{const c=document.createE
 $('whoSel').onchange=e=>{setWho(e.target.value);sizeWho()};
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(sizeWho);
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#out [data-tour] button');if(!b)return;const k=b.closest('[data-tour]').dataset.tour,nm={sweep:'Ran the battery size sweep',reopt:'Ran the re-optimisation simulation',learn:'Ran forecast-error learning',stress:'Used the stress test',live:'Used the Live replay'}[k];if(nm)actLog(nm)});
-function applyRole(r){const prev=role;role=r;if(prev&&prev!==r){if(r=='owner'&&cur!==TODAY){techCur=cur;cur=TODAY;render()}else if(r=='tech'&&techCur){cur=techCur;techCur=null;render()}}$('pgTitle').textContent=r=='tech'?'Energy optimisation workspace':'Your energy, at a glance.';$('app').setAttribute('data-role',r);applyTab();if(document.querySelectorAll)document.querySelectorAll('[data-rp]').forEach(b=>b.classList.toggle('on',b.dataset.rp==r))}
+function applyRole(r){const prev=role;role=r;if(prev&&prev!==r){if(r=='owner'&&cur!==TODAY){techCur=cur;cur=TODAY;render()}else if(r=='tech'&&techCur){cur=techCur;techCur=null;render()}}$('pgTitle').textContent=r=='tech'?'Energy optimisation workspace':'Your energy, at a glance.';$('app').setAttribute('data-role',r);applyTab();if(document.querySelectorAll)document.querySelectorAll('#roleGate [data-rp]').forEach(b=>b.classList.toggle('on',b.dataset.rp==r));hdrSync()}
 function setRole(r){applyRole(r);try{localStorage.setItem('role',r)}catch(e){}$('roleGate').hidden=true;maybeTour()}
-$('roleGate').onclick=$('roleSwitch').onclick=e=>{const b=e.target.closest('[data-rp]');if(b)setRole(b.dataset.rp);const w=e.target.closest('[data-who]');if(w){setWho(w.dataset.who);$('roleGate').hidden=true;maybeTour()}};
+$('roleGate').onclick=$('roleSwitch').onclick=e=>{const b=e.target.closest('[data-rp]');if(b){const r=b.dataset.rp;if(r=='live'){$('roleGate').hidden=true;window.SunshineOpenLiveReplay()}else{if(dtab=='live'){dtab=lvFrom&&lvFrom!='live'?lvFrom:'ov';uiSave()}setRole(r)}}const w=e.target.closest('[data-who]');if(w){setWho(w.dataset.who);$('roleGate').hidden=true;maybeTour()}};
 
 // ================= headline, summary, flow =================
 function tplSummary(f){const sv=f.base_cost-f.plan_cost,pct=f.base_cost>0?100*sv/f.base_cost:0;
@@ -946,20 +962,83 @@ function liveChart(title,fc,act,bel,k,col,th){const W=760,H=190,L=54,R=12,T=14,B
  <path d="${pth(fc,0,NS)}" fill="none" stroke="#BDB48F" stroke-width="1.5" stroke-dasharray="5 4"/><path d="${pth(bel,k,NS)}" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="2 3"/><path d="${pth(act,0,k)}" fill="none" stroke="${col}" stroke-width="2.5"/>
  <line x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="#252B2A" stroke-dasharray="3 3"/><text x="${(+nx+4)}" y="${T+10}" font-size="11" fill="#252B2A">now</text>${mk}</svg>`}
 const lvRep=j=>typeof lvSim!='undefined'&&lvSim&&lvSim.lastJ===j&&lvSim.src!='sc';
-function liveRender(j,q){const fe=j.forecast_error,ex=j.expected,o=ex.old_plan,n=ex.new_plan,pr=x=>x==null?'n/a':N0(x*100)+'%',now=tm(j.now_step),dq=j.data_quality,s=j.series,b=q.p.b.c.mdH.length>0,
-  st=(r,nm)=>r==null?`${nm} cannot be compared (forecast was zero so far).`:`${nm} is running at <b>${N0(r*100)}%</b> of forecast`;
- const tiles=kpis([['Solar vs forecast, last 2 hours',pr(j.correction.pv_ratio),'','since midnight '+pr(fe.pv.ratio)+', average error '+N0(fe.pv.mae_kw)+' kW'],['Load vs forecast, last 2 hours',pr(j.correction.load_ratio),'','since midnight '+pr(fe.load.ratio)+', average error '+N0(fe.load.mae_kw)+' kW'],['Spent so far',money(j.spent_so_far_rm),'',b?'peak so far '+N0(j.peak_so_far_kw)+' kW':'no demand charge today'],
-  ['Day cost if old plan continues',money(o.cost),'','estimate'],['Day cost if re-planned',money(n.cost),'good','estimate'],['Expected saving from re-planning',money(ex.saving_rm),ex.saving_rm>0.5?'good':'',ex.saving_pct==null?'':N1(ex.saving_pct)+'% of the old-plan day']]);
- const nx=j.next_steps.map(x=>`<tr><td>${tm(x.step)}</td><td>${sgn(x.battery_kw)}</td><td>${N0(x.ev_kw)}</td><td>${N0(x.grid_kw)}</td></tr>`).join('');
- const lim=+F.lim,over=n.limit_violation_steps>0&&lim>0?`<div class="ribbon warn"><b>GRID LIMIT.</b> Even the new plan is expected to exceed ${N0(lim)} kW for ${hrs(n.limit_violation_steps)} (highest ${N0(n.max_grid_kw)} kW).</div>`:'';
- $('lvOut').innerHTML=`<div class="ribbon${j.simulated?'':' past'}">${lvRep(j)?'<b>LIVE REPLAY.</b> Simulated clock, up to '+now+'. Before '+tm(lvSim.k0)+' the forecast stands in. After that, solar is '+(lvSim.src=='lamp'?'your prototype lamp (panel voltage &divide; '+LAMP_FULL.toFixed(1)+' V = share of forecast)':'the slider')+' and demand is the forecast times the demand slider. The rest of the day is a corrected forecast. Not metered; nothing is controlled.':`<b>${j.simulated?'SIMULATED REPLAY.':'MEASURED DATA.'}</b> Up to ${now}. ${j.simulated?'The day so far is the forecast with simulated deviations; it is not measured.':'The rest of the day is a corrected forecast, not a measurement.'}`}</div>${over}
+/* ---- Live page charts (all share one time axis: 00:00 to 24:00, a dashed "now" line, past solid, future faded) ---- */
+let LVW=760;
+function lvAx(H,T,B,lo,hi){const ax=niceAxis(lo,hi),y=v=>T+(ax.hi-v)/(ax.hi-ax.lo)*(H-T-B),xf=t=>54+(LVW-54-12)*t/24;return{ax,y,xf}}
+function lvFrame(H,T,B,g,k,unit){const {ax,y,xf}=g,nx=xf(k/S).toFixed(1);return{pre:yGrid(ax,y,54,LVW-12)+yTitle(T,H-B,unit)+xAxis(xf,H-B,0,24,4),
+ now:`<line x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="#252B2A" stroke-dasharray="3 3"/><text x="${(+nx+4)}" y="${T+10}" font-size="11" font-weight="700" fill="#252B2A" stroke="#fff" stroke-width="3" paint-order="stroke">now ${tm(k)}</text>`}}
+const lvPth=(a,y,xf,from,to)=>{let d='';for(let i=from;i<to;i++)d+=(d?'L':'M')+xf((i+.5)/S).toFixed(1)+' '+y(a[i]).toFixed(1);return d};
+function lvHline(g,v,col,txt,dash){const {y}=g,yy=y(v).toFixed(1);return `<line x1="54" x2="${LVW-12}" y1="${yy}" y2="${yy}" stroke="${col}" stroke-width="1.3"${dash?' stroke-dasharray="6 4"':''}/><text x="${LVW-14}" y="${(+yy-4).toFixed(1)}" text-anchor="end" font-size="10.5" font-weight="700" fill="${col}" stroke="#fff" stroke-width="3" paint-order="stroke">${txt}</text>`}
+const lvSvg=(H,lbl,body)=>`<svg viewBox="0 0 ${LVW} ${H}" role="img" aria-label="${esc(lbl)}">${body}</svg>`;
+const lvLeg=a=>'<div class="legend">'+a.map(([c,t,d])=>`<span><i style="background:${d?'none':c};${d?'border-top:2px dashed '+c+';height:0;border-radius:0;vertical-align:3px':''}"></i>${t}</span>`).join('')+'</div>';
+/* 1. Energy plan: where each kW comes from (solar, battery, grid), battery charging below zero, total demand as a line */
+function lvPlanChart(s,k,c,P,lim){LVW=1200;try{return lvPlanChart0(s,k,c,P,lim)}finally{LVW=760}}
+function lvPlanChart0(s,k,c,P,lim){const H=300,T=14,B=26,bw=(LVW-54-12)/NS,ld=s.new_ld,
+  up=N.map(t=>s.new_pv_used[t]+s.new_dis[t]+s.new_grid[t]),g=lvAx(H,T,B,-Math.max(...s.new_ch,0)*1.05,Math.max(...up,...ld,...P,1)*1.05),{y,xf}=g,f=lvFrame(H,T,B,g,k,'kW');
+ let b='';if(c.win)b+=`<rect x="${xf(c.win[0])}" y="${T}" width="${xf(c.win[1])-xf(c.win[0])}" height="${H-B-T}" fill="var(--grid)" opacity=".05"/>`;
+ N.forEach(t=>{const x=(54+t*bw+.6).toFixed(1),w=(bw-1.2).toFixed(1),op=t<k?1:.45;let base=0;
+  [[s.new_pv_used[t],'var(--sun)'],[s.new_dis[t],'var(--bat)'],[s.new_grid[t],'var(--grid)']].forEach(([v,col])=>{if(v>0.5){b+=`<rect x="${x}" y="${y(base+v).toFixed(1)}" width="${w}" height="${(y(base)-y(base+v)).toFixed(1)}" fill="${col}" opacity="${op}"/>`;base+=v}});
+  if(s.new_ch[t]>0.5)b+=`<rect x="${x}" y="${y(0).toFixed(1)}" width="${w}" height="${(y(-s.new_ch[t])-y(0)).toFixed(1)}" fill="#86C59B" opacity="${op}"/>`});
+ b+=`<path d="${lvPth(ld,y,xf,0,NS)}" fill="none" stroke="#252B2A" stroke-width="1.8"/><path d="${lvPth(P,y,xf,0,NS)}" fill="none" stroke="var(--solar)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+ if(lim>0&&lim<g.ax.hi)b+=lvHline(g,lim,'#B42318','grid limit '+N0(lim)+' kW',1);
+ return lvSvg(H,'Energy plan',f.pre+b+f.now)+lvLeg([['var(--sun)','Solar used'],['var(--bat)','Battery discharge'],['#86C59B','Battery charging (below 0)'],['var(--grid)','Grid import'],['#252B2A','Site demand incl. EV'],['var(--solar)','Solar available',1]])}
+/* 2. Grid import: plan kept vs plan re-optimised now (shows what the optimiser changes), with grid limit and billed peak */
+function lvGridChart(s,k,c,lim,pk){const H=200,T=14,B=26,g=lvAx(H,T,B,0,Math.max(...s.new_grid,...s.old_grid,lim||0,1)*1.08),{y,xf}=g,f=lvFrame(H,T,B,g,k,'kW');
+ let b='';if(c.win)b+=`<rect x="${xf(c.win[0])}" y="${H-B+3}" width="${xf(c.win[1])-xf(c.win[0])}" height="3" fill="var(--grid)" opacity=".5"/>`;
+ b+=`<path d="${lvPth(s.old_grid,y,xf,k,NS)}" fill="none" stroke="#9A9066" stroke-width="2" stroke-dasharray="5 4"/><path d="${lvPth(s.new_grid,y,xf,0,k+1)}" fill="none" stroke="var(--grid)" stroke-width="2.5"/><path d="${lvPth(s.new_grid,y,xf,k,NS)}" fill="none" stroke="var(--grid)" stroke-width="2" opacity=".75"/>`;
+ if(lim>0)b+=lvHline(g,lim,'#B42318','grid limit',1);if(pk>0)b+=lvHline(g,pk,'var(--grid)','billed peak '+N0(pk)+' kW',1);
+ return lvSvg(H,'Grid import',f.pre+b+f.now)+lvLeg([['var(--grid)','Re-optimised plan'],['#9A9066','Old plan, kept',1]])}
+/* 3. Battery charge, % of the battery (computed from the planned charge and discharge, 50% at 00:00) */
+function lvSocChart(soc,k,rs){const H=200,T=14,B=26,g=lvAx(H,T,B,0,100),{y,xf}=g,f=lvFrame(H,T,B,g,k,'%');
+ const p=(a,b)=>{let d='';for(let i=a;i<=b;i++)d+=(d?'L':'M')+xf(i/S).toFixed(1)+' '+y(soc[i]).toFixed(1);return d};
+ let b=`<path d="${p(0,NS)}L${xf(24)} ${y(0)}L${xf(0)} ${y(0)}Z" fill="var(--bat)" opacity=".08"/><path d="${p(0,k)}" fill="none" stroke="var(--bat)" stroke-width="2.5"/><path d="${p(k,NS)}" fill="none" stroke="var(--bat)" stroke-width="2" stroke-dasharray="5 4"/>`;
+ if(rs>0)b+=lvHline(g,rs*100,'#92400E','reserve '+N0(rs*100)+'%',1);
+ return lvSvg(H,'Battery charge',f.pre+b+f.now)+lvLeg([['var(--bat)','So far'],['var(--bat)','Planned',1]])}
+/* the optimiser's numbers for the whole day: old plan kept vs re-optimised now (same corrected forecast, same state) */
+function lvEngineTable(j,ms){const o=j.expected.old_plan,n=j.expected.new_plan,lim=+F.lim||0,
+  row=(nm,a,b,fm,lowBetter=true)=>{const d=b-a,z=fm(Math.abs(d))===fm(0),ch=!z&&lowBetter!==null,good=ch&&(lowBetter?d<0:d>0),bad=ch&&!good;return `<tr><td>${nm}</td><td>${fm(a)}</td><td><b>${fm(b)}</b></td><td class="${good?'good':bad?'bad':''}">${z?'&mdash;':(d>0?'+':'−')+fm(Math.abs(d))}</td></tr>`},
+  rm=v=>money(v),kw=v=>N0(v)+' kW',kwh=v=>N0(v)+' kWh',pc=v=>v==null?'n/a':N1(v)+'%',h=v=>hrs(v);
+ return `<table class="sch lvtbl"><tr><th>For the whole day</th><th>Old plan, kept</th><th>Re-optimised now</th><th>Change</th></tr>
+ ${row('Day cost',o.cost,n.cost,rm)}${row('Energy charge',o.energy_cost,n.energy_cost,rm)}${row('Maximum demand charge',o.demand_cost,n.demand_cost,rm)}
+ ${row('Grid energy',o.grid_kwh,n.grid_kwh,kwh)}${row('Billed peak',o.billed_peak_kw,n.billed_peak_kw,kw)}${row('Highest import',o.max_grid_kw,n.max_grid_kw,kw)}
+ ${row('Solar used on site',o.solar_self_consumption_pct||0,n.solar_self_consumption_pct||0,pc,false)}${lim>0?row('Time over grid limit',o.limit_violation_steps,n.limit_violation_steps,h):''}${row('Battery throughput',o.battery_throughput_kwh,n.battery_throughput_kwh,kwh,null)}</table>
+ <p class="note" style="margin:4px 0 0">Linear program (HiGHS), re-solved at <b>${tm(j.now_step)}</b>${ms?' in '+N0(ms)+' ms':''}. Steps before now are locked to what happened.</p>`}
+/* the next 4 hours the optimiser recommends */
+function lvNextTable(j,q,soc){const s=j.series,c=q.p.b.c,lo=Math.min(...c.rates);
+ return `<table class="sch lvtbl"><tr><th>Time</th><th>Price</th><th>Solar</th><th>Demand</th><th>Battery</th><th>Charge</th><th>EV</th><th>Grid</th></tr>${j.next_steps.map(x=>{const t=x.step,pk=c.rates[t]>lo+1e-9;
+  return `<tr><td>${tm(t)}</td><td><span class="lvpk ${pk?'p':''}">${N1(c.rates[t]*100)} sen</span></td><td>${N0(s.belief_pv[t])}</td><td>${N0(s.belief_load[t])}</td><td class="${x.battery_kw>0.5?'good':''}">${Math.abs(x.battery_kw)<0.5?'idle':sgn(x.battery_kw)}</td><td>${N0(soc[t+1])}%</td><td>${N0(x.ev_kw)}</td><td>${N0(x.grid_kw)}</td></tr>`}).join('')}</table>
+ <p class="note" style="margin:4px 0 0">kW. Battery <b>+</b> = discharge, <b>&minus;</b> = charging. Orange price = peak tariff. Solar and demand are the corrected forecast.</p>`}
+function liveRender(j,q,ms){const fe=j.forecast_error,ex=j.expected,o=ex.old_plan,n=ex.new_plan,pr=x=>x==null?'n/a':N0(x*100)+'%',now=tm(j.now_step),dq=j.data_quality,s=j.series,b=q.p.b.c.mdH.length>0,K=j.now_step,c=q.p.b.c,
+  cap=+q.req.batt_kwh||0,eta=Math.sqrt(+q.req.eff||.9),lim=+F.lim||0;
+ const soc=[50];{let x=.5*cap;for(let t=0;t<NS;t++){x=Math.max(0,Math.min(cap,x+eta*DT*s.new_ch[t]-DT/eta*s.new_dis[t]));soc.push(cap>0?100*x/cap:0)}}
+ const P=N.map(t=>t<K?s.actual_pv[t]:s.belief_pv[t]);
+ const tiles=kpis([['Solar vs forecast, last 2 h',pr(j.correction.pv_ratio),'','since midnight '+pr(fe.pv.ratio)],['Demand vs forecast, last 2 h',pr(j.correction.load_ratio),'','since midnight '+pr(fe.load.ratio)],['Spent so far',money(j.spent_so_far_rm),'',b?'peak so far '+N0(j.peak_so_far_kw)+' kW':'no demand charge today'],
+  ['Day cost, old plan',money(o.cost),'','estimate'],['Day cost, re-planned',money(n.cost),'good','estimate'],['Saving from re-planning',money(ex.saving_rm),ex.saving_rm>0.5?'good':'',ex.saving_pct==null?'':N1(ex.saving_pct)+'% of the old-plan day']]);
+ const over=n.limit_violation_steps>0&&lim>0?`<div class="ribbon warn"><b>GRID LIMIT.</b> Even the new plan is expected to exceed ${N0(lim)} kW for ${hrs(n.limit_violation_steps)} (highest ${N0(n.max_grid_kw)} kW).</div>`:'';
+ const R=window.SunDevRules||{pv:.25,load:.2};try{if(typeof DEV!='undefined')DEV.lp=Math.max(0,...s.forecast_load)}catch(e){}
+ const rib=j.preview?'<b>PREVIEW.</b> Nothing has played yet: this is the plan from the forecast, with the clock at '+now+'. Press <b>Start</b> to play the day.':lvRep(j)?'<b>LIVE REPLAY.</b> Simulated clock, up to '+now+'. Before '+tm(lvSim.k0)+' the forecast stands in. After that, solar is '+(lvSim.src=='lamp'?'your prototype lamp (panel voltage &divide; '+LAMP_FULL.toFixed(1)+' V = share of forecast)':'the slider')+' and demand is the forecast times the demand slider. The rest of the day is a corrected forecast. Not metered; nothing is controlled.':`<b>${j.simulated?'SIMULATED REPLAY.':'MEASURED DATA.'}</b> Up to ${now}. ${j.simulated?'The day so far is the forecast with simulated deviations; it is not measured.':'The rest of the day is a corrected forecast, not a measurement.'}`;
+ $('lvOut').innerHTML=`<div class="ribbon${j.simulated?'':' past'}">${rib}</div>${over}
  ${dq.warn?`<div class="ribbon warn"><b>CHECK YOUR DATA.</b> Your grid readings differ from what the other readings imply by ${N0(dq.grid_gap_kw)} kW on average (${N0(dq.grid_gap_pct_of_load)}% of load). Check units, timezone and whether load includes EV charging.</div>`:''}
- ${j.learned&&j.learned.applied?`<p class="note" style="margin:6px 0"><b>Learning applied.</b> The forecast was first corrected with what was learned over ${j.learned.days} day${j.learned.days==1?'':'s'}. Average error since midnight: solar ${N0(j.forecast_error.pv.mae_kw)} kW (raw forecast ${N0(j.forecast_error_raw.pv.mae_kw)} kW), load ${N0(j.forecast_error.load.mae_kw)} kW (raw ${N0(j.forecast_error_raw.load.mae_kw)} kW).</p>`:''}<p style="margin:6px 0">Over the last 2 hours: ${st(j.correction.pv_ratio,'solar')} and ${st(j.correction.load_ratio,'load').toLowerCase()}. The rest of the day is corrected by these recent ratios, fading back to the forecast over about ${N0(j.correction.fade_hours)} hours.</p>${tiles}
- ${(()=>{try{if(typeof DEV!='undefined')DEV.lp=Math.max(0,...s.forecast_load)}catch(e){}const R=window.SunDevRules||{pv:.25,load:.2};return liveChart('Solar: forecast (dashed grey), '+(lvRep(j)?'live reading':'measured')+' so far (solid), corrected for the rest of the day (dotted)',s.forecast_pv,s.actual_pv,s.belief_pv,j.now_step,'#F59E0B',R.pv)+liveChart('Site load (without EV): forecast, '+(lvRep(j)?'live reading':'measured')+' so far, corrected',s.forecast_load,s.actual_load,s.belief_load,j.now_step,'#5B6360',R.load)+'<p class="note" style="margin:2px 0 0">Shaded band = the expected range (\u00b1'+N0(R.pv*100)+'% solar, \u00b1'+N0(R.load*100)+'% demand: the same rule as the deviation strip). <b style="color:#B42318">Red dots</b> = off the forecast for 2 steps in a row.</p>'})()}
- <h3 class="sec">Recommended next 4 hours (battery + discharge, &minus; charging)</h3><div class="scroll"><table class="sch"><tr><th>Time</th><th>Battery, kW</th><th>EV charging, kW</th><th>Grid import, kW</th></tr>${nx}</table></div>
- <p class="note">Battery data: ${esc(dq.battery_source)}. EV data: ${esc(dq.ev_source)}. Battery charge: ${esc(dq.soc_source)}. The old and new plans are compared on the same corrected forecast, from the same state, with the same grid-limit guard, so the saving is an estimate, not a measurement. ${esc(j.data_kind)}</p>`}
-async function liveRun(body,msg){const q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return;const m=$('lvMsg');m.textContent=msg||'Calculating...';$('lvOut').innerHTML='';const lp=lrnGet();
- try{const j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,lp?{learned:lp}:{},body))});m.textContent='';lvLast=j;if($('lvOut'))liveRender(j,q)}catch(e){m.textContent='';$('lvOut').innerHTML=`<span class="err">${esc(e.message)}</span>`}}
+ ${j.learned&&j.learned.applied?`<p class="note" style="margin:6px 0"><b>Learning applied.</b> The forecast was first corrected with what was learned over ${j.learned.days} day${j.learned.days==1?'':'s'}. Average error since midnight: solar ${N0(fe.pv.mae_kw)} kW (raw ${N0(j.forecast_error_raw.pv.mae_kw)} kW), load ${N0(fe.load.mae_kw)} kW (raw ${N0(j.forecast_error_raw.load.mae_kw)} kW).</p>`:''}
+ ${tiles}
+ <div class="lvgrid">
+ <div class="lvbox lvwide"><h3 class="sec">Energy plan: where each kW comes from <span class="note">(${esc(q.m.n)}, re-optimised at ${now})</span></h3>${lvPlanChart(s,K,c,P,lim)}</div>
+ <div class="lvbox"><h3 class="sec">Optimisation engine, live</h3>${lvEngineTable(j,ms)}</div>
+ <div class="lvbox"><h3 class="sec">Recommended next 4 hours</h3>${lvNextTable(j,q,soc)}</div>
+ <div class="lvbox">${liveChart('Solar: forecast vs reading vs corrected',s.forecast_pv,s.actual_pv,s.belief_pv,K,'#F59E0B',R.pv)}${lvLeg([['#BDB48F','Forecast',1],['#F59E0B',lvRep(j)?'Live reading':'Measured'],['#F59E0B','Corrected rest of day',1]])}</div>
+ <div class="lvbox">${liveChart('Site demand (without EV): forecast vs reading vs corrected',s.forecast_load,s.actual_load,s.belief_load,K,'#5B6360',R.load)}${lvLeg([['#BDB48F','Forecast',1],['#5B6360',lvRep(j)?'Live reading':'Measured'],['#5B6360','Corrected rest of day',1]])}</div>
+ <div class="lvbox"><h3 class="sec">Grid import: old plan vs re-optimised</h3>${lvGridChart(s,K,c,lim,n.billed_peak_kw)}</div>
+ <div class="lvbox"><h3 class="sec">Battery charge</h3>${lvSocChart(soc,K,q.m.rs||0)}</div>
+ </div>
+ <p class="note">Shaded band on solar and demand = the expected range (&plusmn;${N0(R.pv*100)}% solar, &plusmn;${N0(R.load*100)}% demand, the same rule as the deviation strip). <b style="color:#B42318">Red dots</b> = off the forecast for 2 steps in a row. Battery data: ${esc(dq.battery_source)}. EV data: ${esc(dq.ev_source)}. Battery charge: ${esc(dq.soc_source)}. Old and new plans are compared on the same corrected forecast, from the same state, with the same grid-limit guard, so the saving is an estimate, not a measurement.</p>`}
+let lvPrevTok=0;
+async function lvPreview(){const o=$('lvOut');if(!o||o.innerHTML.trim()||(lvSim&&lvSim.last>=0)||cur!=TODAY)return;const q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return;const tag=++lvPrevTok,k=Math.max(1,Math.min(NS-1,Math.floor(lvStart0()*S/60)));
+ o.innerHTML='<p class="note">Loading the plan...</p>';const t0=performance.now();
+ try{const lp=lrnGet(),j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,lp?{learned:lp}:{},{replay:{now_step:k,scenario:ROSC.none[1]}}))});
+  if(tag!=lvPrevTok||!$('lvOut')||(lvSim&&lvSim.last>=0))return;j.preview=true;liveRender(j,q,performance.now()-t0)}
+ catch(e){if(tag==lvPrevTok&&$('lvOut')&&!(lvSim&&lvSim.last>=0))$('lvOut').innerHTML=''}}
+async function liveRun(body,msg){const q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return;const m=$('lvMsg');m.textContent=msg||'Calculating...';$('lvOut').innerHTML='';const lp=lrnGet(),t0=performance.now();lvPrevTok++;
+ try{const j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,lp?{learned:lp}:{},body))});m.textContent='';lvLast=j;if($('lvOut'))liveRender(j,q,performance.now()-t0)}catch(e){m.textContent='';$('lvOut').innerHTML=`<span class="err">${esc(e.message)}</span>`}}
 // ================= Real time chart: the Energy usage chart with recorded data before now and predicted data after now =================
 let rtTok=0,rtTimer=0,rtLastK=-1,recSim=true;const recLbl=()=>'Recorded';
 function rtStop(){clearInterval(rtTimer);rtTimer=0}
@@ -1005,21 +1084,21 @@ window.addEventListener('message',e=>{const d=e.data;if(!d||d.type!='sunshine-pr
  if(d.off||!d.P||!d.P.panels){LAMP.off=true;return}LAMP.off=false;LAMP.v=d.P.panels.map(p=>p.v==null?NaN:+p.v);LAMP.at=Date.now()-(+d.age||0)});
 const lampFresh=()=>!LAMP.off&&Date.now()-LAMP.at<3500;
 function lampRatio(){if(!lampFresh())return null;const v=LAMP.v.filter(x=>isFinite(x));if(!v.length)return null;return Math.max(0,Math.min(1.2,v.reduce((a,b)=>a+b,0)/v.length/LAMP_FULL))}
-function liveCard(){const td=cur==TODAY;return `<div class="card" data-role="tech" data-tour="live"><h2>Live replay</h2>
-<p class="note" style="margin-top:0"><b>SIMULATION. Recommendation only: no equipment is controlled.</b> A day plays forward on a simulated clock in 30-minute steps. After every step the system measures how far reality is from the forecast, corrects the rest of the day, re-plans, and the graphs update. Solar can come from <b>your prototype</b>: spin the lamp over the panels (panel voltage &divide; ${LAMP_FULL.toFixed(1)} V = share of the forecast).</p>
-${td?`<div class="bar"><select id="lvMd">${MODES.filter(m=>m.k!='prod').map(m=>`<option value="${m.k}"${m.k==(sel=='bal'?'bal':'cost')?' selected':''}>${m.n}</option>`).join('')}</select>
+function liveCard(){const td=cur==TODAY;return `<div class="card lvpage" data-role="tech" data-tour="live"><div class="lvhead"><h2 style="margin:0">Live replay</h2><span class="badge amber">SIMULATION &middot; recommendation only</span><span class="note" style="margin:0">A day plays forward in 30-minute steps. After every step the optimiser measures the forecast error, corrects the rest of the day and re-plans. No equipment is controlled.</span></div>
+${td?`<div class="lvctl"><label class="note">Strategy <select id="lvMd">${MODES.filter(m=>m.k!='prod').map(m=>`<option value="${m.k}"${m.k==(sel=='bal'?'bal':sel=='zero'?'zero':'cost')?' selected':''}>${m.n}</option>`).join('')}</select></label>
 <label class="note">Solar from <select id="lvSrc"><option value="lamp" selected>Prototype lamp</option><option value="slider">Slider (no board)</option><option value="sc">Scenario (no board)</option></select></label>
-<span id="lvScW" hidden><select id="lvSc">${Object.entries(ROSC).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join('')}</select></span></div>
-<div class="bar"><label class="note">Start at <select id="lvStart"><option value="12">06:00</option><option value="14">07:00</option><option value="16" selected>08:00</option><option value="20">10:00</option><option value="now">the real time now</option></select></label>
-<label class="note">Run until <select id="lvUntil"><option value="24">12:00</option><option value="30">15:00</option><option value="36" selected>18:00</option><option value="47">end of day</option></select></label>
-<label class="note">A 30-minute step every <select id="lvSpd"><option value="s5">5 s</option><option value="s10" selected>10 s</option><option value="s20">20 s</option><option value="s40">40 s</option><option value="man">I press Next step</option></select></label></div>
+<span id="lvScW" hidden><select id="lvSc">${Object.entries(ROSC).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join('')}</select></span>
+<label class="note">Start <select id="lvStart"><option value="12">06:00</option><option value="14">07:00</option><option value="16" selected>08:00</option><option value="20">10:00</option><option value="now">now</option></select></label>
+<label class="note">Until <select id="lvUntil"><option value="24">12:00</option><option value="30">15:00</option><option value="36" selected>18:00</option><option value="47">end of day</option></select></label>
+<label class="note">Step every <select id="lvSpd"><option value="s5">5 s</option><option value="s10" selected>10 s</option><option value="s20">20 s</option><option value="s40">40 s</option><option value="man">I press Next</option></select></label></div>
 <div class="lpbox" id="lpBox"><div id="lpLamp"><div id="lpSt"></div><div id="lpV" class="note"></div></div>
 <label class="note" id="lpSl" hidden>Solar as share of forecast <input type="range" id="lvSl" min="0" max="120" value="100"> <b id="lvSlV">100%</b></label>
 <label class="note" id="lpLd">Demand as share of forecast <input type="range" id="lvLd" min="60" max="140" value="100"> <b id="lvLdV">100%</b></label></div>
-<div class="bar"><button class="on" id="lvGo" data-lvs="go">&#9654; Start</button> <button data-lvs="next">Next step</button> <button data-lvs="reset">Reset</button> <span class="note">${lrnStat()} <button data-lrc="1">Forget what was learned</button></span></div>
-<div id="lvTime" class="lvtime"><span class="lvt">08:00</span> <span class="badge amber">SIMULATED CLOCK</span> <span class="note">ready</span></div><div class="barwrap" style="margin:4px 0 8px"><div class="barfill" id="lvProg" style="width:33.3%;background:var(--amb)"></div></div>
+<div class="lvrun"><div id="lvTime" class="lvtime"><span class="lvt">08:00</span> <span class="badge amber">SIMULATED CLOCK</span> <span class="note">ready</span></div>
+<button class="on" id="lvGo" data-lvs="go">&#9654; Start</button><button data-lvs="next">Next step</button><button data-lvs="reset">Reset</button><span class="sp"></span><span class="note" style="margin:0">${lrnStat()} <button data-lrc="1">Forget what was learned</button></span></div>
+<div class="barwrap" style="margin:4px 0 8px"><div class="barfill" id="lvProg" style="width:33.3%;background:var(--amb)"></div></div>
 <span id="lvMsg" class="note"></span><div id="lvOut" style="margin-top:8px"></div>
-<h3 class="sec">Decisions so far</h3><ul id="lvLog" class="lvlog"></ul><div id="lvEnd"></div>
+<div class="lvbox" style="margin-top:12px"><h3 class="sec" style="margin-top:0">Decisions so far</h3><ul id="lvLog" class="lvlog"><li class="note" style="border:0;background:none;padding:0">Press <b>Start</b>: each step's decision appears here.</li></ul><div id="lvEnd"></div></div>
 <details style="margin-top:10px"><summary class="note"><b>Other ways to give it data</b>: a measured CSV file, or one simulated replay at a fixed time</summary>
 <div class="bar"><label class="note">Measured data (CSV): <input type="file" id="lvFile" accept=".csv,text/csv"></label> <button data-lvt="1">Download CSV template</button></div>
 <p class="note">Columns: <code>load_kw</code> (site load, <b>without</b> EV charging) and <code>solar_kw</code> are required; optional <code>battery_kw</code> (discharge +, charging &minus;), <code>ev_kw</code>, <code>grid_kw</code>, <code>soc_kwh</code>. One row per 30 minutes from 00:00 today.</p>
@@ -1043,7 +1122,7 @@ function lvDraw(){const s=lvSim,el=$('lvTime');if(!el)return;
  $('lvGo').innerHTML=s&&s.timer?'&#9208; Pause':s&&s.done?'&#8635; Run again':s&&s.last>=0?'&#9654; Resume':'&#9654; Start'}
 function lvInit(){lvStop();const t0=lvStart0();lvSim={t:t0,spd:3,src:$('lvSrc').value,sc:$('lvSc').value,last:-1,busy:false,log:[],timer:0,done:false,k0:Math.max(1,Math.min(NS-1,Math.floor(t0*S/60))),end:+$('lvUntil').value,
   pvr:[],ldr:[],acc:{ps:0,pn:0,ls:0,ln:0},lastP:null,lastL:null,gaps:0,gap:false};
- $('lvLog').innerHTML='';$('lvEnd').innerHTML='';$('lvOut').innerHTML='';$('lvMsg').textContent=''}
+ $('lvLog').innerHTML='';$('lvEnd').innerHTML='';$('lvMsg').textContent=''}
 function lvGo(){const s=lvSim;
  if(s&&s.timer){lvStop();lvDraw();return}
  if(!s||s.done)lvInit();
@@ -1052,7 +1131,7 @@ function lvGo(){const s=lvSim;
 function lvNext(){if(!lvSim||lvSim.done)lvInit();const s=lvSim;if(s.timer||s.busy)return;
  const k=s.last<0?s.k0:s.last+1;if(k>s.end){s.done=true;lvEnd();lvDraw();return}
  s.t=k*60/S;$('lvMsg').textContent='';lvStep(k);lvDraw()}
-function lvReset(){lvStop();lvSim=null;$('lvLog').innerHTML='';$('lvEnd').innerHTML='';$('lvOut').innerHTML='';$('lvMsg').textContent='';lvDraw()}
+function lvReset(){lvStop();lvSim=null;$('lvLog').innerHTML='';$('lvEnd').innerHTML='';$('lvOut').innerHTML='';$('lvMsg').textContent='';lvDraw();lvPreview()}
 function lvTick(){const s=lvSim;if(!s||!s.timer)return;if(!$('lvTime')){lvStop();return}
  if(s.busy){lvDraw();return}                      // the clock waits while the server plans, so the time shown is the time of the data
  if(s.last>=s.end){s.done=true;lvStop();lvEnd();lvDraw();return}
@@ -1077,9 +1156,9 @@ async function lvStep(k){const s=lvSim,q=sameReq($('lvMd')?$('lvMd').value:null)
  try{let body;
   if(s.src=='sc')body={replay:{now_step:k,scenario:ROSC[s.sc][1]}};
   else{if(!lvFinish(k)){lvStop();return}const fc=q.p.b.fc;body={now:{load:N.slice(0,k).map(t=>fc.load[t]*s.ldr[t]),pv:N.slice(0,k).map(t=>fc.pv[t]*s.pvr[t])}}}
-  const j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,lp?{learned:lp}:{},body))});
+  const t0=performance.now();lvPrevTok++;const j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,lp?{learned:lp}:{},body))});
   if(lvSim!==s||!$('lvOut'))return;
-  s.last=k;s.lastJ=j;lvLast=j;liveRender(j,q);lvLogAdd(j);if(s.last>=s.end&&!s.timer){s.done=true;lvEnd()}}
+  s.last=k;s.lastJ=j;lvLast=j;liveRender(j,q,performance.now()-t0);lvLogAdd(j);if(s.last>=s.end&&!s.timer){s.done=true;lvEnd()}}
  catch(e){if(lvSim===s){lvStop();if($('lvMsg'))$('lvMsg').textContent='Paused: '+e.message+' Press Resume to continue.'}}
  finally{s.busy=false;lvDraw()}}
 function lvLogAdd(j){const s=lvSim,c=j.correction,ex=j.expected,pv=c.pv_ratio,ld=c.load_ratio,dp=pv==null?0:Math.abs(pv-1),dl=ld==null?0:Math.abs(ld-1),off=dp>.15||dl>.1;let t;
@@ -1099,7 +1178,7 @@ async function lvLearn(){const s=lvSim,p=lastPlan;if(!s||!p)return;const m=$('lv
   lrnSet(j.profile,'sim-'+TODAY+'-'+(lrnDates().filter(x=>String(x).indexOf('sim-')==0).length+1));
   m.innerHTML='<b>Learned.</b> '+lrnStat()+' Press <b>Run again</b> to see the corrected forecast.';if($('lrnStat'))$('lrnStat').innerHTML=lrnStat()}
  catch(e){m.innerHTML='<span class="err">'+esc(e.message)+'</span>'}}
-document.addEventListener('change',e=>{if(e.target&&e.target.id=='lvStart'&&!(lvSim&&lvSim.timer))lvDraw()});
+document.addEventListener('change',e=>{const id=e.target&&e.target.id;if(id=='lvStart'&&!(lvSim&&lvSim.timer))lvDraw();if((id=='lvStart'||id=='lvMd')&&!(lvSim&&lvSim.last>=0)&&$('lvOut')){$('lvOut').innerHTML='';lvPreview()}});
 function liveFile(inp){const f=inp.files&&inp.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{let o;try{o=liveParse(String(rd.result))}catch(e){$('lvOut').innerHTML=`<span class="err">${esc(e.message)}</span>`;return}liveRun({now:o},'Calculating from '+o.load.length+' rows...')};rd.onerror=()=>{$('lvOut').innerHTML='<span class="err">The file could not be read.</span>'};rd.readAsText(f)}
 if(typeof document!='undefined'&&document.addEventListener)document.addEventListener('change',e=>{if(e.target&&e.target.id=='lvFile')liveFile(e.target)});
 // ================= learning from forecast error (one correction ratio per half-hour, kept on this device) =================
@@ -1356,7 +1435,7 @@ const redactText=t=>String(t).replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g,'[email]').r
 const cAdd=(cls,html)=>{if(cls=='msg u'){const pv=$('chatPriv');if(pv)pv.remove()}$('chatLog').insertAdjacentHTML('beforeend',cls=='msg b'?`<div class="brow"><img class="shiny" src="shiny.png" alt="" onerror="this.style.display='none'"><div class="${cls}">${html}</div></div>`:`<div class="${cls}">${html}</div>`);const L=$('chatLog');L.scrollTop=L.scrollHeight};
 function chatOpen(on){$('chatPanel').hidden=!on;$('chatBtn').setAttribute('aria-expanded',String(on));
  if(on){if(!chat.greeted){chat.greeted=true;cAdd('msg b','Hi, I\'m Shiny! Tell me about your facility, for example: "a factory in Penang on the MV time-of-use tariff, 750 kWp solar and a 1000 kWh battery". I can also open a day, week or month, switch strategy, or read a meter CSV you attach.');cAdd('note',' Messages go to an Azure AI model. Please do not paste names or account numbers. Meter CSV files stay in your browser. I propose, you confirm.');$('chatLog').lastElementChild.id='chatPriv'}if($('chatIn').focus)$('chatIn').focus()}}
-const ctxNow=()=>({today:TODAY,page:role=='tech'?'detailed':'brief',tab:role=='tech'?({ov:'overview',fc:'forecast',op:'optimisation',pl:'plan',ad:'advanced',fa:'facility'})[dtab]:'',view,date:cur,strategy:sel,names:Object.fromEntries(['base','cost','bal','zero'].map(k=>[k,NAMES[k].replace('Optimiser: ','')])),meter_loaded:!!M,facility:{name:F.name,location:F.loc=='5.41,100.33'?'penang':'kl',load_type:F.prof,tariff:F.volt+F.struct,max_demand_kw:+F.peak,afa_sen_kwh:+F.afa,solar_kwp:+F.kwp,battery_kwh:+F.bat,battery_efficiency_percent:+F.eff,flex_percent:+F.flex,grid_limit_kw:F.lim===''?null:+F.lim,emission_factor:+F.ef,strategy_followed:F.follow}});
+const ctxNow=()=>({today:TODAY,page:role=='tech'?'detailed':'brief',tab:role=='tech'?({ov:'overview',fc:'forecast',op:'optimisation',pl:'plan',ad:'advanced',fa:'facility',live:'live replay'})[dtab]:'',view,date:cur,strategy:sel,names:Object.fromEntries(['base','cost','bal','zero'].map(k=>[k,NAMES[k].replace('Optimiser: ','')])),meter_loaded:!!M,facility:{name:F.name,location:F.loc=='5.41,100.33'?'penang':'kl',load_type:F.prof,tariff:F.volt+F.struct,max_demand_kw:+F.peak,afa_sen_kwh:+F.afa,solar_kwp:+F.kwp,battery_kwh:+F.bat,battery_efficiency_percent:+F.eff,flex_percent:+F.flex,grid_limit_kw:F.lim===''?null:+F.lim,emission_factor:+F.ef,strategy_followed:F.follow}});
 function localIntent(t){const s=t.toLowerCase(),nav={},fac={},num=x=>+String(x).replace(/,/g,'');let m;
  if(/\bmonth\b/.test(s))nav.view='month';else if(/\bweek\b/.test(s))nav.view='week';
  const d=/\btomorrow\b/.test(s)?1:/\byesterday\b/.test(s)?-1:/\btoday\b/.test(s)?0:null;if(d!==null){nav.date=addD(TODAY,d);nav.view=nav.view||'day'}
