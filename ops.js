@@ -1533,7 +1533,7 @@ function entryCard() {
 function boot() {
   const st = document.createElement('style'); st.id = 'sunops-css'; st.textContent = CSS; document.head.appendChild(st);
   const b = document.createElement('button'); b.id = 'sunOpsBtn'; b.type = 'button'; b.textContent = 'Operations'; b.title = 'Live replay, scenarios, monthly bill, digital twin, approvals'; b.addEventListener('click', () => { if (!ST.open) openConsole(); });
-  const bl = document.createElement('button'); bl.id = 'sunLiveBtn'; bl.type = 'button'; bl.textContent = 'Live replay'; bl.title = 'Replay a day one 15-minute reading at a time and watch the plan change'; bl.addEventListener('click', () => openLive('lab', true));   // LIVE15
+  const bl = document.createElement('button'); bl.id = 'sunLiveBtn'; bl.type = 'button'; bl.textContent = 'Live replay'; bl.title = 'Open today\'s Live replay'; bl.addEventListener('click', () => { if (!(root.SunshineOpenLiveReplay && root.SunshineOpenLiveReplay())) openLive('lab', true); });   // Main Live replay, with Operations replay as fallback
   const grp = document.getElementById('roleSwitch');
   if (grp) { grp.appendChild(b); grp.appendChild(bl); grp.addEventListener('click', e => { if (ST.open && e.target.closest('[data-rp]')) closeConsole(); }, true); }
   else { b.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:50;background:#F59E0B;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer'; document.body.appendChild(b); }
