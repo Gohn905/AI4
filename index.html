@@ -26,6 +26,7 @@ td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}td:fi
 
 .ribbon{border-left:6px solid var(--blue);background:rgba(37,99,235,.09);padding:9px 12px;border-radius:6px;font-size:14px;margin-bottom:12px}.ribbon b{letter-spacing:.04em}.ribbon.past{border-left-color:var(--mut);background:rgba(102,114,128,.10)}
 .card.fcast{border-style:dashed;border-color:var(--blue)}.c.fc{border-style:dashed}.pckpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:2px 0 12px}.pcT{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px}.pcT b{display:block;font-size:20px;color:var(--acc);line-height:1.15}.pcT span:not(.ico){font-size:12px;color:var(--mut);display:block}
+.chg rect{fill:#F59E0B;pointer-events:none;animation:chgf 1.8s ease-out forwards}@keyframes chgf{0%{opacity:.34}100%{opacity:0}}@media(prefers-reduced-motion:reduce){.chg{display:none}}
 .drw{position:relative}.drw svg{touch-action:pan-y;cursor:crosshair}.drw{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:10px;align-items:start}.drtip{pointer-events:none;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.55;box-shadow:var(--shadow);white-space:normal}.drtip{min-height:10.5em;box-sizing:border-box}.drtip.ph{color:var(--mute)}@media(max-width:700px){.drw{grid-template-columns:minmax(0,1fr)}}.drtip i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}.drs{color:var(--mute);font-weight:600}
 .pcw{position:relative}.pcw svg{touch-action:pan-y;cursor:crosshair}.pctip{position:absolute;pointer-events:none;transform:translate(-50%,calc(-100% - 16px));background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;box-shadow:var(--shadow);white-space:nowrap;line-height:1.4}
 @media(max-width:640px){.pckpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -363,7 +364,7 @@ main.fit .snw svg{max-height:calc(100vh - 430px);min-height:200px}main.fit .snc{
 <p id="pgRo" hidden style="margin:8px 0 0"><b>Your role is view-only here:</b> you can watch the readings but not connect or control the hardware.</p></div></details></div>
 <div class="pgrow"><b>Before you connect:</b> Chrome or Edge on a desktop &middot; close the Arduino Serial Monitor &middot; connect the ESP32 once (one page per COM port) &middot; light all three panels first.</div>
 <div class="note" style="margin:-4px 0 6px">Cannot connect here? <a href="factory3d.html" target="_blank" rel="noopener">Open the factory in its own window</a>, then press Connect ESP32.</div>
-<iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1&amp;v=2026-11-12-i" allow="serial; bluetooth" title="Live 3D prototype" style="width:100%;height:calc(100vh - 150px);min-height:460px;border:0;border-radius:0;margin:0;background:transparent;display:block"></iframe>
+<iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1&amp;v=2026-11-12-j" allow="serial; bluetooth" title="Live 3D prototype" style="width:100%;height:calc(100vh - 150px);min-height:460px;border:0;border-radius:0;margin:0;background:transparent;display:block"></iframe>
 <div class="note" style="margin:8px 0 0">Press <b>Connect ESP32 (Wireless)</b> or <b>(USB)</b> inside the model, then click a part to see its readings and controls. Needs Chrome or Edge (Bluetooth also works on Android). USB: close the Arduino Serial Monitor first. Only one connection to the ESP32 at a time, so disconnect the Lab model tab&rsquo;s USB connection before using this one.</div>
 </div>
 <div id="facPanel" data-role="tech" hidden>
@@ -559,7 +560,20 @@ function pcMove(e){const s=pcS;if(!s)return;const svg=e.target&&e.target.closest
  if(!svg){if(s.moved){s.moved=false;pcShow(s.peak)}return}
  const rc=svg.getBoundingClientRect(),vx=(e.clientX-rc.left)/rc.width*s.W,t=s.h0+(vx-s.L)/(s.W-s.L-s.R)*(s.h1-s.h0);
  const i=Math.max(s.h0*S,Math.min(s.h1*S-1,Math.round(t*S-.5)));s.moved=true;pcShow(i)}
-let plDay=null,plT=0,plLive=true,drReg={},drN=0,drNow=null;
+let plDay=null,plT=0,plLive=true,drReg={},drN=0,drNow=null,drQuiet=false;const drLast={};
+/* when the strategy changes, the bars glide from the old plan to the new one, then the hours that changed glow once */
+function drAnim(id){const e=drReg[id],svg=document.querySelector('svg[data-dr="'+id+'"]');if(!e||!svg)return;
+ const slot=(svg.closest('#rtOut,#ct_use')||{}).id;if(!slot)return;const prev=drLast[slot];drLast[slot]={e,sel};
+ if(!prev||prev.sel===sel||prev.e===e||!svg.getClientRects().length||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))return;drTween(svg,prev.e,e)}
+function drTween(svg,a,b){const g=svg.querySelector('g');if(!g||!a.r||!b.r)return;const t0=performance.now(),D=700,ez=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2,
+ mix=(p,q,t)=>q.map((v,i)=>{const o=p&&p[i]!=null?p[i]:v;return o+(v-o)*t}),keys=['g','b','d','sol','ld'];
+ const frame=t=>{const r=Object.assign({},b.r),b0=Object.assign({},b.b0);keys.forEach(k=>{r[k]=mix(a.r[k],b.r[k],t)});r.peak=a.r.peak+(b.r.peak-a.r.peak)*t;b0.ld=mix(a.b0.ld,b.b0.ld,t);
+  drQuiet=true;let h;try{h=draw(r,b0,b.win,b.now)}finally{drQuiet=false}const d=document.createElement('div');d.innerHTML=h;const ng=d.querySelector('svg>g');if(ng)g.innerHTML=ng.innerHTML};
+ const step=n=>{if(!svg.isConnected)return;const t=Math.min(1,(n-t0)/D);frame(ez(t));if(t<1){requestAnimationFrame(step);return}
+  frame(1);let m='';for(let h=0;h<NS;h++){if(b.now!=null&&h<b.now)continue;const dv=Math.abs(a.r.g[h]-b.r.g[h])+Math.abs(a.r.b[h]-b.r.b[h])+Math.abs((a.r.ch||[])[h]-(b.r.ch||[])[h]||0)+Math.abs(a.r.d[h]-b.r.d[h]);
+   if(dv>1)m+='<rect x="'+(b.L+h*b.bw)+'" y="10" width="'+b.bw+'" height="250"/>'}
+  if(m)g.insertAdjacentHTML('beforeend','<g class="chg">'+m+'</g>')};
+ requestAnimationFrame(step)}
 const PLD={a:2,r:4,c:8,t:'micro'};let PLC=Object.assign({},PLD);try{Object.assign(PLC,JSON.parse(localStorage.getItem('plcfg')||'{}'))}catch(e){}
 const plCfg=()=>{const a=Math.max(1,Math.min(6,Math.round(+PLC.a)||PLD.a)),r=Math.max(1,Math.min(20,Math.round(+PLC.r)||PLD.r)),c=Math.max(1,Math.min(20,Math.round(+PLC.c)||PLD.c));return{a,r,c,per:r*c,all:a*r*c,tot:Math.min(240,a*r*c),t:['micro','opt','string'].includes(PLC.t)?PLC.t:'micro'}};
 function plOut(){const o=document.getElementById('pl_out');if(!o)return;const L=plCfg(),n=plN();
@@ -627,7 +641,7 @@ function draw(r,b0,win,now){const W=760,H=290,L=54,B=30,T=10,bw=(W-L-8)/NS,hb=bw
  if(now!=null&&typeof devMarks=='function')try{s+=devMarks(y,L,bw,H,B,T)}catch(e){}
  if(win&&r.peak>0)s+=`<line x1="${L+win[0]*hb}" x2="${L+win[1]*hb}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${L+win[1]*hb-4}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)" stroke="#fff" stroke-width="3" paint-order="stroke">billed peak ${Math.round(r.peak)} kW</text>`;
  s+=`<text x="${L}" y="${H-2}" font-size="10" fill="var(--mute)">Blue strip under the time axis = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;
- const id='d'+(++drN);drReg[id]={r,L,bw,now};{const ks=Object.keys(drReg);if(ks.length>12)delete drReg[ks[0]]}
+ const id='d'+(++drN);if(!drQuiet){drReg[id]={r,b0,win,L,bw,now};{const ks=Object.keys(drReg);if(ks.length>12)delete drReg[ks[0]]}setTimeout(()=>drAnim(id),0)}
  return `<div class="drw${now!=null?' ov':''}"><svg data-dr="${id}" viewBox="0 0 760 290" role="img" aria-label="Supply split by source, every 30 minutes. Move over the chart to read the values."><g>${s}</g><rect class="drhl" x="0" y="${T}" width="${bw}" height="${H-B-T}" fill="#000" opacity=".07" display="none" pointer-events="none"/></svg><div class="drtip ph">${DRPH}</div></div><div class="legend"><span><i style="background:var(--solar)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border:1px dashed var(--solar)"></i>Unused solar</span><span><i style="background:repeating-linear-gradient(45deg,var(--shift) 0 2px,transparent 2px 5px);border:1px solid var(--shift)"></i>Work moved into this hour</span><span><i style="background:none;border:1px dashed var(--shift)"></i>Work moved out of this hour</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span>${now!=null?'<span><b>Solid</b> = recorded, <b>faded</b> = predicted</span>':''}</div>`}
 
 function pcRender(){const p=lastPlan;if(cur==TODAY&&rtLast&&rtLast.q.p===p){const o=rtSeries(rtLast.j,rtLast.q);return pcCard(o.r,false,o.K)}return pcCard(p.r,cur<TODAY)}
@@ -686,7 +700,7 @@ const PERM={
  auditor:{see:null,act:['audit'],tabs:['ov','fc','op','pl','fk','ad','proto','fa']}
 };
 let who='owner';
-const PROTO='factory3d.html?embed=1&proto=1&v=2026-11-12-i';
+const PROTO='factory3d.html?embed=1&proto=1&v=2026-11-12-j';
 const canSee=k=>{const P=PERM[who];return !P.see||P.see.includes(k)};
 const canAct=k=>{const P=PERM[who];return !P.act||P.act.includes(k)};
 function tabOk(t){const P=PERM[who];return !P.tabs||P.tabs.includes(t)}
@@ -744,7 +758,7 @@ function costCard(r,b,sv,past){const sb=sel=='base',w=b.cost>0?Math.min(100*r.co
  <div class="costbars"><div class="barlabel">Baseline</div><div class="barwrap"><div class="barfill base" style="width:100%"></div></div><div class="barvalue">${money(b.cost)}</div></div>
  <div class="costbars"><div class="barlabel">${sb?'Baseline':NAMES[sel].replace('Optimiser: ','')}</div><div class="barwrap"><div class="barfill opt" style="width:${w.toFixed(1)}%"></div></div><div class="barvalue">${money(r.cost)}</div></div>
  <div class="footnote">${past?'Estimate from recorded weather.':'Forecast estimate, not a measurement.'}<span data-role="tech"> Daily cost includes the monthly demand charge spread over 30 days. Check the tariff assumptions against your own bill.</span></div></div>`}
-function mini3dCard(){return `<div class="card mini3dcard" data-tour="mini3d" data-role="tech"><div class="mini3d" data-go="proto" role="button" tabindex="0" title="Open the Live prototype"><iframe src="factory3d.html?embed=1&amp;proto=1&amp;mini=1&amp;v=2026-11-12-i" tabindex="-1" loading="lazy" title="3D model of the demo factory"></iframe><span class="mini3dlbl">3D demo factory &middot; open Live prototype &rarr;</span></div></div>`}
+function mini3dCard(){return `<div class="card mini3dcard" data-tour="mini3d" data-role="tech"><div class="mini3d" data-go="proto" role="button" tabindex="0" title="Open the Live prototype"><iframe src="factory3d.html?embed=1&amp;proto=1&amp;mini=1&amp;v=2026-11-12-j" tabindex="-1" loading="lazy" title="3D model of the demo factory"></iframe><span class="mini3dlbl">3D demo factory &middot; open Live prototype &rarr;</span></div></div>`}
 function ownerSteps(r,b){const cap=+F.bat||0,L=[],it=(i,t,p)=>`<div class="action"><div class="action-icon">${i}</div><div><strong>${t}</strong><p>${p}</p></div></div>`;
  if(sel=='base')return it('&#9788;','Pick a strategy','Choose one above to see the plan.');
  const c=rg(r.ch,1),d=rg(r.b,1),f=rg(r.fl,1);
@@ -917,13 +931,17 @@ function rtSeries(j,q){const s=j.series,K=j.now_step,c=q.p.b.c,qb=q.p.b;
  const Lh=N.map(t=>t<K?s.actual_load[t]:s.belief_load[t]),P=N.map(t=>t<K?s.actual_pv[t]:s.belief_pv[t]),fl=s.new_flex,ld=s.new_ld||N.map(t=>Lh[t]+fl[t]);
  const pu=s.new_pv_used||N.map(t=>Math.max(0,Math.min(P[t],ld[t]+s.new_ch[t]-s.new_dis[t]-s.new_grid[t])));
  const smart=+F.evn>0&&q.m.fx>0,bf=N.map(t=>smart?qb.ld[t]-qb.fc.load[t]:0),b0={ld:N.map(t=>Lh[t]+bf[t])};
- const pk=c.mdH&&c.mdH.length?Math.max(...c.mdH.map(t=>s.new_grid[t])):0;
- const r={g:s.new_grid,b:s.new_dis,ch:s.new_ch,d:pu,ld,sol:P,peak:pk};return{r,b0,K,c}}
-function rtDraw(j,q){recSim=j.simulated!==false;const {r,b0,K,c}=rtSeries(j,q);
+ const r={g:s.new_grid.slice(),b:s.new_dis.slice(),ch:s.new_ch.slice(),d:pu.slice(),ld:ld.slice(),sol:P,peak:0};
+ /* Hours that have already passed are a record, so they must not change with the strategy: show them as they were before any plan acted (solar only, no battery, no moved work). */
+ for(let t=0;t<K;t++){const l=b0.ld[t],u=Math.min(P[t],l);r.ld[t]=l;r.d[t]=u;r.g[t]=Math.max(0,l-u);r.b[t]=0;r.ch[t]=0}
+ r.peak=c.mdH&&c.mdH.length?Math.max(...c.mdH.map(t=>r.g[t])):0;
+ const spent=c.rates.slice(0,K).reduce((a,x,t)=>a+x*r.g[t],0)*DT,oldPast=c.rates.slice(0,K).reduce((a,x,t)=>a+x*s.new_grid[t],0)*DT;
+ return{r,b0,K,c,spent,pastShift:spent-oldPast}}
+function rtDraw(j,q){recSim=j.simulated!==false;const {r,b0,K,c,spent,pastShift}=rtSeries(j,q);
  const d=new Date(),clk=$('rtAt').value=='now'?'Clock '+p2(d.getHours())+':'+p2(d.getMinutes())+'. ':'';
  const pv=j.correction.pv_ratio,sol=pv==null?'':' Solar is running at <b>'+N0(pv*100)+'%</b> of forecast.';
- const bc=q.p.b.cost,nc=j.expected.new_plan.cost,svp=bc>0&&isFinite(nc)?' Expected saving today: <b class="'+(nc<=bc?'good':'')+'">'+N1(100*(bc-nc)/bc)+'%</b> against solar only.':'';
- return `<p style="margin:0 0 6px"><b>${esc(q.m.n)} plan.</b> <b>${recSim?'Forecast stands in for meter data up to':'Recorded up to'} ${tm(K)}.</b> Spent so far <b class="good">${money(j.spent_so_far_rm)}</b>.${svp}${sol} ${j.expected.saving_rm>=0.5?'Re-planning the rest of the day is expected to save <b>'+money(j.expected.saving_rm)+'</b> compared with sticking to the old plan.':'The day-ahead plan still looks about right for the rest of the day.'}</p>`+draw(r,b0,c.win,K)}
+ const bc=q.p.b.cost,nc=j.expected.new_plan.cost+pastShift,svp=bc>0&&isFinite(nc)?' Expected saving today: <b class="'+(nc<=bc?'good':'')+'">'+N1(100*(bc-nc)/bc)+'%</b> against solar only.':'';
+ return `<p style="margin:0 0 6px"><b>${esc(q.m.n)} plan.</b> <b>${recSim?'Forecast stands in for meter data up to':'Recorded up to'} ${tm(K)}.</b> Spent so far <b class="good">${money(spent)}</b>.${svp}${sol} ${j.expected.saving_rm>=0.5?'Re-planning the rest of the day is expected to save <b>'+money(j.expected.saving_rm)+'</b> compared with sticking to the old plan.':'The day-ahead plan still looks about right for the rest of the day.'}</p>`+draw(r,b0,c.win,K)}
 document.addEventListener('change',e=>{if(e.target&&(e.target.id=='rtSc'||e.target.id=='rtAt'))rtLoad()});
 setInterval(()=>{const e=document.getElementById('rtClock');if(e)e.textContent=clockTxt();
  const d=new Date(),h=d.getHours()+d.getMinutes()/60+d.getSeconds()/3600,a=document.getElementById('nowLn');
@@ -1310,7 +1328,7 @@ const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;rtDem=false
  if(e.target.closest('[data-retry]')){render();return}
  const pv=e.target.closest('[data-pv]');if(pv){planView=pv.dataset.pv;document.querySelectorAll('[data-pv]').forEach(q=>q.classList.toggle('on',q.dataset.pv==planView));if($('pv_all'))$('pv_all').hidden=planView!='all';if($('pv_one'))$('pv_one').hidden=planView!='one';return}
  const sc=e.target.closest('[data-sc]');if(sc){sel=sc.dataset.sc;render();return}
- if(e.target.closest('[data-goto]')){setRole('tech');window.scrollTo&&window.scrollTo(0,0);return}
+ if(e.target.closest('[data-goto]')){setRole('tech');if(view=='day'){dtab='fc';chartTab=cur==TODAY?'rt':'use';rtDem=false;applyTab();const x=document.querySelector('#chTabs [data-ct="'+chartTab+'"]');if(x)x.click();navHl();uiSave()}window.scrollTo&&window.scrollTo(0,0);return}
  const ap=e.target.closest('[data-ap]');if(ap){apClick(ap.dataset.ap);return}
  const x=e.target.closest('[data-x]');if(x){x.closest('.card').remove();return}
  const b=e.target.closest('[data-d]');if(b&&!b.classList.contains('na'))go(b.dataset.d)};
