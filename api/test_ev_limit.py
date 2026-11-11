@@ -64,7 +64,11 @@ for name, extra in (("Cost-saving", {}), ("Balanced", {"co2_allow": 0.5}), ("Low
     moved = np.abs(np.array(on_["flex"]) - np.array(ev_baseline({**BASE, "ev": EV}))).sum() * 0.5 / 2
     ok(f"{name}: same bill with or without the shift tie-break", abs(on_["cost"] - free["cost"]) < 0.5)
     if name != "Lowest-carbon":
-        ok(f"{name}: on this day no EV energy is moved when moving saves nothing", moved < 1)
+        still = optimise({**BASE, "ev": EV, **extra, "sun_pref": 0})
+        moved0 = np.abs(np.array(still["flex"]) - np.array(ev_baseline({**BASE, "ev": EV}))).sum() * 0.5 / 2
+        ok(f"{name}: with sun_pref 0, no EV energy is moved when moving saves nothing", moved0 < 1)
+        pvw = np.array(BASE["pv"]); sun_on = float(np.array(on_["flex"]) @ pvw); sun_off = float(np.array(still["flex"]) @ pvw)
+        ok(f"{name}: sun_pref moves free EV charging towards sunnier hours, same bill", sun_on >= sun_off - 1e-6 and abs(on_["cost"] - still["cost"]) < 0.5)
 # a shift that really pays must survive: big solar surplus at midday, small load, no battery
 SUN = {**BASE, "load": [v * 0.25 for v in LOAD], "pv": PV, "batt_kwh": 0, "ev": {**EV, "energy_kwh": 1200}}
 paid, nofix = optimise(SUN), optimise({**SUN, **off})
