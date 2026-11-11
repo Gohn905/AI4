@@ -10,25 +10,21 @@
 #include <BLE2902.h>
 
 // =====================================================
-// WHAT CHANGED IN THIS VERSION (control philosophy)
+// CONTROL PHILOSOPHY
 // =====================================================
-// 1. Conveyor = essential operation. AUTOMATIC mode now keeps it RUNNING.
-//    (Before: 2 s run / 5 s stop cycle.) Only a manual "CONVEYOR OFF" or
-//    "CONVEYOR SPEED 0" from you can stop it. The energy logic never does.
+// 1. Conveyor AUTOMATIC mode = fixed cycle: 2 s RUN / 5 s STOP (restored).
+//    The energy logic never touches the conveyor.
 // 2. EV indicator = shiftable load. It turns RED (deferred) as soon as ANY
 //    panel is confirmed low, and returns to GREEN last, after a hold time.
 // 3. Battery charger permission = stopped only when ALL panels are low, and
 //    restored after a stable hold time.
 // 4. Panel readings are debounced (several consecutive samples), on top of
-//    the existing 1.5 V / 1.8 V hysteresis.
-// 5. The relay switches the CHARGER INPUT (confirmed by the owner), so in
-//    AUTOMATIC mode it now follows the charging permission: ON = charging
-//    allowed, OFF = charging stopped. The battery output is never switched.
+//    the 2.0 V low / 2.3 V recover hysteresis.
+// 5. The relay switches the CHARGER INPUT, so in AUTOMATIC mode it follows
+//    the charging permission: ON = charging allowed, OFF = charging stopped.
 //    Set SOLAR_CONTROLS_RELAY = false below to go back to the 3 s demo toggle.
 //
 // Telemetry text keeps every existing label so factory3d.html still parses it.
-// New lines (Energy state / EV load / Charging permission / Relay logic /
-// Sensor quality / Conveyor policy) are extra and are ignored by the old parser.
 
 
 // =====================================================
@@ -63,10 +59,6 @@ bool ina219HasReading = false;
 // =====================================================
 // BLUETOOTH LOW ENERGY (Nordic UART style)
 // =====================================================
-// Everything printed with Out.print / Out.println goes to BOTH the
-// USB serial port and, when a browser is connected, Bluetooth.
-// Commands typed over USB or sent from the website over Bluetooth
-// are handled the same way.
 
 #define BLE_NAME     "SunShine-ESP32"
 #define NUS_SERVICE  "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
@@ -226,7 +218,11 @@ int stopPulse = 1500;
 int conveyorSpeedPct = 23;
 
 bool conveyorRunning = true;
-bool conveyorAutoMode = true;   // AUTOMATIC = always running (essential operation)
+bool conveyorAutoMode = true;   // AUTOMATIC = 2 s RUN / 5 s STOP cycle
+
+unsigned long lastConveyorChange = 0;
+const unsigned long conveyorRunTime = 2000;
+const unsigned long conveyorStopTime = 5000;
 
 
 // =====================================================
@@ -242,8 +238,8 @@ bool ledRedOn = false;
 // SOLAR PANEL READINGS
 // =====================================================
 
-const float PANEL_LOW_THRESHOLD = 1.5;
-const float PANEL_RECOVER_THRESHOLD = 1.8;
+const float PANEL_LOW_THRESHOLD = 2.0;
+const float PANEL_RECOVER_THRESHOLD = 2.3;
 
 bool panel1Low = false;
 bool panel2Low = false;
@@ -300,11 +296,6 @@ uint8_t commandLength = 0;
 // =====================================================
 // ENERGY POLICY AND STATE MACHINE
 // =====================================================
-// The relay switches the charger INPUT, and relay ON = charger connected =
-// battery charging. true: in AUTOMATIC mode the relay follows the charging
-// permission below. false: old demo behaviour (toggle every 3 s) and the
-// permission is only reported. If you ever find the relay charges when it is
-// OFF (contact wired normally-closed), tell me and the polarity can be flipped.
 const bool SOLAR_CONTROLS_RELAY = true;
 
 // A panel must read low/healthy for this many 200 ms samples in a row.
@@ -333,7 +324,9 @@ unsigned long allHealthySince = 0;
 EnergyState energyState = ES_RECOVERY;
 EnergyState lastReportedState = ES_RECOVERY;
 
-const char *energyStateName(EnergyState s) {
+// Takes a plain int so the Arduino IDE's automatic prototype (placed above
+// the enum) compiles.
+const char *energyStateName(int s) {
   switch (s) {
     case ES_NORMAL:             return "NORMAL";
     case ES_ONE_PANEL_SHADED:   return "ONE_PANEL_SHADED";
@@ -343,7 +336,7 @@ const char *energyStateName(EnergyState s) {
   }
 }
 
-// Hysteresis (1.5 V low / 1.8 V recover) plus a consecutive-sample counter.
+// Hysteresis (2.0 V low / 2.3 V recover) plus a consecutive-sample counter.
 bool updatePanelLowState(float voltage,
                          bool currentLow,
                          bool &initialised,
@@ -518,7 +511,7 @@ void updateRelay(unsigned long now) {
     return;
   }
 
-  // Old demo behaviour (kept until the relay wiring is confirmed).
+  // Old demo behaviour.
   if (now - lastRelayToggle >= RELAY_INTERVAL) {
     lastRelayToggle = now;
     setRelay(!relayState);
@@ -552,16 +545,22 @@ void setConveyorState(bool run) {
 }
 
 
-// Essential operation: in AUTOMATIC mode the belt always runs, whatever the
-// solar state. Only a manual stop command can stop it.
+// AUTOMATIC mode: 2 s RUN / 5 s STOP cycle, independent of the solar state.
 void updateConveyor(unsigned long now) {
   if (!conveyorAutoMode) {
     return;
   }
 
-  if (!conveyorRunning) {
-    setConveyorState(true);
-    Out.println("Automatic conveyor: RUNNING");
+  unsigned long requiredInterval = conveyorRunning
+                                     ? conveyorRunTime
+                                     : conveyorStopTime;
+
+  if (now - lastConveyorChange >= requiredInterval) {
+    lastConveyorChange = now;
+    setConveyorState(!conveyorRunning);
+
+    Out.print("Automatic conveyor: ");
+    Out.println(conveyorRunning ? "RUNNING" : "STOPPED");
   }
 }
 
@@ -699,7 +698,7 @@ void printSystemStatus() {
   Out.print("Conveyor speed: ");
   Out.print(conveyorSpeedPct);
   Out.println("%");
-  Out.println("Conveyor policy: essential, never stopped automatically");
+  Out.println("Conveyor policy: automatic 2 s RUN / 5 s STOP cycle");
 
   Out.println("------ INA219 READINGS ------");
   if (!ina219Ready) {
@@ -743,8 +742,8 @@ void printHelp() {
   Out.println("RELAY OFF         - Force relay OFF (GPIO5 INPUT)");
   Out.println("RELAY AUTO        - Resume automatic relay control");
   Out.println("CONVEYOR ON       - Force conveyor to run");
-  Out.println("CONVEYOR OFF      - MANUAL stop (the energy logic never uses this)");
-  Out.println("CONVEYOR AUTO     - Automatic mode: conveyor always runs");
+  Out.println("CONVEYOR OFF      - Force conveyor to stop");
+  Out.println("CONVEYOR AUTO     - Resume 2-second RUN / 5-second STOP cycle");
   Out.println("CONVEYOR SPEED n  - Run at n percent (1-100); 0 = stop");
   Out.println("LED GREEN/RED/BOTH/OFF - Force the LEDs (manual)");
   Out.println("LED AUTO          - LEDs follow the energy logic again");
@@ -802,7 +801,8 @@ void processCommand(char *command) {
   else if (strcmp(command, "CONVEYOR AUTO") == 0) {
     conveyorAutoMode = true;
     setConveyorState(true);
-    Out.println("Conveyor automatic mode resumed: always RUNNING.");
+    lastConveyorChange = millis();
+    Out.println("Conveyor automatic mode resumed: 2 seconds RUN / 5 seconds STOP.");
   }
   else if (strncmp(command, "CONVEYOR SPEED", 14) == 0) {
     char *arg = command + 14;
@@ -961,18 +961,20 @@ void setup() {
 
   unsigned long now = millis();
   lastRelayToggle = now;
+  lastConveyorChange = now;
   lastSolarRead = now;
   lastInaRead = now;
   lastStatusPrint = now;
 
   Out.println("\nSystem configuration:");
   Out.println("Solar panels: GPIO32, GPIO35, GPIO34");
+  Out.println("Solar thresholds: low < 2.0 V, recover > 2.3 V");
   Out.println("Servo conveyor: GPIO27");
   Out.println("Green LED: GPIO22");
   Out.println("Red LED: GPIO23");
   Out.println("Relay: GPIO5 (active LOW / INPUT when OFF)");
   Out.println("INA219: SDA GPIO18, SCL GPIO19, address 0x40");
-  Out.println("Conveyor policy: always runs in AUTOMATIC mode");
+  Out.println("Conveyor automatic cycle: 2 seconds RUN / 5 seconds STOP");
   Out.println(SOLAR_CONTROLS_RELAY
                 ? "Relay policy: follows the charging permission"
                 : "Relay policy: demo toggle every 3 seconds (solar control OFF)");
