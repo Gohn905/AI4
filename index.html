@@ -405,7 +405,7 @@ main.fit .plrail .mr .mrsv{height:38px!important}
 
 /* Live replay top v2: 3D runs from the card's top-right corner; controls on one line */
 .lvtop{grid-template-columns:minmax(0,1fr) clamp(260px,27%,360px)}
-.lv3d{min-height:360px}
+.lvtop{align-items:start}.lv3d{min-height:0;height:290px}
 .lvctl{flex-wrap:nowrap;gap:6px 10px}.lvctl label{white-space:nowrap;gap:4px;flex:0 1 auto;min-width:0;display:inline-flex}.lvctl select{padding:4px 6px;font-size:13px;width:auto;min-width:76px;max-width:150px;flex:1 1 auto}
 @media(max-width:820px){.lvctl{flex-wrap:wrap}}
 
@@ -418,12 +418,12 @@ main.fit .plrail .mr .mrsv{height:38px!important}
 
 /* Panel layout, monitoring-app style: modules coloured by output, on a dark roof */
 #plGrid.plwrap{gap:16px}
-#plGrid .pa{background:#1b2230;border-radius:12px;padding:10px 12px 12px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 2px 6px rgba(0,0,0,.15);width:auto}
-#plGrid .pal{display:block;color:#cbd5e1;font-size:12px;font-weight:700;margin:0 0 6px;letter-spacing:.03em}
+#plGrid .pa{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px;width:auto}
+#plGrid .pal{display:block;color:var(--mut);font-size:12px;font-weight:700;margin:0 0 6px;letter-spacing:.03em}
 #plGrid .pg{grid-template-columns:repeat(var(--c,8),46px);gap:5px}
-.pm{position:relative;width:46px;height:68px;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;
- background-image:repeating-linear-gradient(90deg,transparent 0 10.5px,rgba(255,255,255,.16) 10.5px 11.5px),repeating-linear-gradient(0deg,transparent 0 10.5px,rgba(255,255,255,.16) 10.5px 11.5px),linear-gradient(160deg,rgba(255,255,255,.18),rgba(255,255,255,0) 45%);
- box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);transition:background-color .35s}
+.pm{position:relative;width:46px;height:60px;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;
+ background-image:linear-gradient(90deg,transparent calc(33.3% - .5px),rgba(255,255,255,.35) calc(33.3% - .5px) calc(33.3% + .5px),transparent calc(33.3% + .5px) calc(66.6% - .5px),rgba(255,255,255,.35) calc(66.6% - .5px) calc(66.6% + .5px),transparent calc(66.6% + .5px)),linear-gradient(0deg,transparent calc(33.3% - .5px),rgba(255,255,255,.35) calc(33.3% - .5px) calc(33.3% + .5px),transparent calc(33.3% + .5px) calc(66.6% - .5px),rgba(255,255,255,.35) calc(66.6% - .5px) calc(66.6% + .5px),transparent calc(66.6% + .5px));
+ box-shadow:0 1px 2px rgba(0,0,0,.25);transition:background-color .35s}
 .pm b{font-size:13px;line-height:1.1;text-shadow:0 1px 2px rgba(0,0,0,.55)}.pm small{font-size:9px;opacity:.8;text-shadow:0 1px 2px rgba(0,0,0,.5)}
 .pm.pmf{box-shadow:inset 0 0 0 2px #ff6b6b,0 0 0 2px #e24b4a;background-color:#7a2b33!important}
 .pm.z b{opacity:.7}
@@ -431,6 +431,22 @@ main.fit .plrail .mr .mrsv{height:38px!important}
 .plramp{display:inline-block;width:140px;height:9px;border-radius:5px;background:linear-gradient(90deg,rgb(38,52,74),rgb(30,96,200),rgb(79,195,247))}
 .plk{display:inline-flex;align-items:center;gap:5px}.plk i{width:12px;height:12px;border-radius:2px;display:inline-block}.plk i.flk{background:#7a2b33;box-shadow:0 0 0 2px #e24b4a}
 @media(max-width:700px){#plGrid .pg{grid-template-columns:repeat(var(--c,8),minmax(0,1fr))}.pm{width:auto;height:54px}#plGrid .pa{width:100%}}
+.fksc{display:inline-block;margin-left:6px}.fksc summary{cursor:pointer;font-size:12px;color:var(--mut)}.fksc select{margin-top:4px}
+@media(max-width:1100px){.lv3d{height:240px}}
+#lvOut>.lvwide{margin:0 0 12px}
+
+/* deviation alerts above Ask Shiny */
+#dvToasts{position:fixed;right:16px;bottom:70px;z-index:3000;display:flex;flex-direction:column;gap:8px;width:min(330px,calc(100vw - 32px));pointer-events:none}
+.dvt{pointer-events:auto;background:#fff;border:1px solid var(--line);border-left:5px solid #F59E0B;border-radius:12px;padding:9px 12px 10px;box-shadow:0 8px 24px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:3px;font-size:13px;animation:dvtIn .25s ease-out}
+.dvt.hi{border-left-color:#E24B4A}
+.dvt-h{display:flex;align-items:center;justify-content:space-between}
+.dvt-s{font-size:10.5px;font-weight:800;letter-spacing:.05em;color:#93370D;background:#FFFAEB;border-radius:4px;padding:1px 6px}.dvt.hi .dvt-s{color:#B42318;background:#FEF3F2}
+.dvt-x{border:0;background:none;font-size:18px;line-height:1;padding:0 2px;cursor:pointer;color:var(--mut);margin:0}
+.dvt-m{color:var(--mut);font-size:12px}
+.dvt-b{display:flex;gap:6px;margin-top:4px}.dvt-b button{padding:4px 10px;font-size:12px;margin:0}
+@keyframes dvtIn{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+@media(prefers-reduced-motion:reduce){.dvt{animation:none}}
+@media(max-width:560px){#dvToasts{bottom:60px;right:10px}}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="liveTabBtn" data-rp="live" title="Play today forward and watch the optimiser re-plan, all on one page">Live replay</button></span><span class="sp"></span><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -859,7 +875,8 @@ function stratPlace(){/* Digital twin tabs: Energy-usage-style strategy buttons 
  if(!h)return;h.classList.add('hasstrat');h.insertAdjacentHTML('beforeend',stratChart(true))}
 new MutationObserver(()=>{if(dtab=='fk'&&!document.querySelector('#fkPanel [data-mv]'))try{stratPlace()}catch(e){}}).observe($('fkPanel'),{childList:true});
 function stratSync(){const need=role=='tech'&&(['op','pl','fk','ad'].includes(dtab)||(dtab=='fc'&&(chartTab=='rt'||chartTab=='pc')));$('app').classList.toggle('stTab',need)}
-function applyTab(){if(!tabOk(dtab))dtab='ov';if(role+dtab!==lastTab){lastTab=role+dtab;sayClear()}$('dateCard').classList.toggle('one',dtab!='ov');stratSync();const t=role=='tech';$('app').classList.toggle('fit',t&&(dtab=='fc'||dtab=='proto'));$('app').classList.toggle('fcTab',t&&dtab=='fc');$('app').classList.toggle('adTab',t&&dtab=='ad');Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&(dtab=='fa'||dtab=='lab'||dtab=='proto'||dtab=='fk')});$('fkPanel').hidden=!(t&&dtab=='fk');if(t&&dtab=='fk'){try{fkRender();if(!DEV.busy)devFetch(true)}catch(e){}}$('dateCard').hidden=t&&(dtab=='proto'||dtab=='fa'||dtab=='live');$('app').classList.toggle('liveTab',t&&dtab=='live');hdrSync();if(t&&dtab=='live')setTimeout(()=>{try{lvPreview()}catch(e){}},0);$('facPanel').hidden=!(t&&dtab=='fa');$('labPanel').hidden=!(t&&dtab=='lab');$('protoPanel').hidden=!(t&&dtab=='proto');fitProto();
+function whyClose(){const w=$('why');if(w&&!w.hidden){w.hidden=true;$('qbtn').setAttribute('aria-expanded','false')}}
+function applyTab(){if(!tabOk(dtab))dtab='ov';if(role+dtab!==lastTab){lastTab=role+dtab;sayClear();whyClose()}$('dateCard').classList.toggle('one',dtab!='ov');stratSync();const t=role=='tech';$('app').classList.toggle('fit',t&&(dtab=='fc'||dtab=='proto'));$('app').classList.toggle('fcTab',t&&dtab=='fc');$('app').classList.toggle('adTab',t&&dtab=='ad');Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&(dtab=='fa'||dtab=='lab'||dtab=='proto'||dtab=='fk')});$('fkPanel').hidden=!(t&&dtab=='fk');if(t&&dtab=='fk'){try{fkRender();if(!DEV.busy)devFetch(true)}catch(e){}}$('dateCard').hidden=t&&(dtab=='proto'||dtab=='fa'||dtab=='live');$('app').classList.toggle('liveTab',t&&dtab=='live');hdrSync();if(t&&dtab=='live')setTimeout(()=>{try{lvPreview()}catch(e){}},0);$('facPanel').hidden=!(t&&dtab=='fa');$('labPanel').hidden=!(t&&dtab=='lab');$('protoPanel').hidden=!(t&&dtab=='proto');fitProto();
  navHl();fairLoad();stratPlace();stripPlace();applyPerms()}
 function hdrSync(){if(window.SunOps&&SunOps.state&&SunOps.state.open)return;const lv=role=='tech'&&dtab=='live';document.querySelectorAll('.top [data-rp]').forEach(b=>b.classList.toggle('on',b.dataset.rp=='live'?lv:b.dataset.rp==role&&!lv))}
 function navHl(){if(document.querySelectorAll)document.querySelectorAll('#dtabs button').forEach(b=>b.classList.toggle('on',b.dataset.dt==dtab&&(!b.dataset.ct||b.dataset.ct==chartTab)))}
@@ -984,7 +1001,7 @@ function planBars(R,b,all){const M=[['Cost',q=>q.cost,q=>money(q.cost)],['Peak',
  const card=k=>{const q=R[k],ib=k=='base',sv=b.cost>0?(1-q.cost/b.cost)*100:0;
   const rows=M.map(([n,f,fmt])=>{const v=idx(k,f),w=isFinite(v)?Math.max(0,v)/hi*100:0;return `<span class="pbr" title="${n}: ${fmt(q)} (${isFinite(v)?N0(v):'-'})"><em>${n}</em><span class="pbt"><s style="width:${w.toFixed(1)}%;background:${SNC[k][1]}"></s><u style="left:${(100/hi*100).toFixed(1)}%"></u></span><b>${isFinite(v)?N0(v):'-'}</b></span>`}).join('');
   return `<button class="strategy mr pb${sel==k?' selected':''}" data-sc="${k}" style="--c:${SNC[k][1]}" aria-label="${SNC[k][0]}: bill ${money(q.cost)}, billed peak ${N0(q.peak)} kW"><span class="mrh"><b>${SNC[k][0]}</b><span>${money(q.cost)}</span></span><span class="mrf"><span class="${ib?'':'sgood'}">${ib?'Baseline':'saves '+N1(sv)+'%'}</span><span>Peak ${N0(q.peak)} kW</span></span>${rows}<span class="mrf"><span>${co2T(q)}</span></span></button>`};
- return `<div class="plrail pbrail" style="--n:${ks.length}"><div class="pbnote"><b>Scenario comparison</b> <span>bars: solar only = 100 &middot; &darr; lower is better</span></div>${ks.map(card).join('')}</div>`}
+ return `<div class="plrail pbrail" style="--n:${ks.length}">${ks.map(card).join('')}</div>`}
 function snMove(e){const svg=e.target&&e.target.closest?e.target.closest('.snw svg'):null;
  document.querySelectorAll('.snw').forEach(w=>{if(!svg||!w.contains(svg)){const t=w.querySelector('.sntip'),h=w.querySelector('.snhl');if(t){t.innerHTML=SNPH;t.classList.add('ph')}if(h)h.setAttribute('display','none')}});
  if(!svg)return;const g=snReg[svg.dataset.sn];if(!g)return;const tip=svg.parentNode.querySelector('.sntip'),hl=svg.querySelector('.snhl');
@@ -1164,9 +1181,9 @@ function liveRender(j,q,ms){LN=j.steps;LSx=LN/24;const fe=j.forecast_error,ex=j.
  $('lvOut').innerHTML=`${$('lvRib')?'':rbH}${over}
  ${dq.warn?`<div class="ribbon warn"><b>CHECK YOUR DATA.</b> Your grid readings differ from what the other readings imply by ${N0(dq.grid_gap_kw)} kW on average (${N0(dq.grid_gap_pct_of_load)}% of load). Check units, timezone and whether load includes EV charging.</div>`:''}
  ${j.learned&&j.learned.applied?`<p class="note" style="margin:6px 0"><b>Learning applied.</b> The forecast was first corrected with what was learned over ${j.learned.days} day${j.learned.days==1?'':'s'}. Average error since midnight: solar ${N0(fe.pv.mae_kw)} kW (raw ${N0(j.forecast_error_raw.pv.mae_kw)} kW), load ${N0(fe.load.mae_kw)} kW (raw ${N0(j.forecast_error_raw.load.mae_kw)} kW).</p>`:''}
+ <div class="lvbox lvwide"><h3 class="sec">Energy plan: where each kW comes from <span class="note">(${esc(q.m.n)}, re-optimised at ${now})</span></h3>${lvPlanChart(s,K,c,P,lim)}</div>
  ${tiles}
  <div class="lvgrid">
- <div class="lvbox lvwide"><h3 class="sec">Energy plan: where each kW comes from <span class="note">(${esc(q.m.n)}, re-optimised at ${now})</span></h3>${lvPlanChart(s,K,c,P,lim)}</div>
  ${ck.html}
  <div class="lvbox"><h3 class="sec">Battery charge</h3>${lvSocChart(soc,K,q.m.rs||0)}</div>
  <div class="lvbox">${liveChart('Solar: forecast vs reading vs corrected',s.forecast_pv,s.actual_pv,s.belief_pv,K,'#F59E0B',R.pv)}${lvLeg([['#BDB48F','Forecast',1],['#F59E0B',lvRep(j)?'Live reading':'Measured'],['#F59E0B','Corrected rest of day',1]])}</div>
@@ -1672,7 +1689,7 @@ $('out').addEventListener('input',e=>{if(e.target&&e.target.id=='plSl'&&lastPlan
 $('out').addEventListener('change',e=>{if(e.target&&e.target.id=='pcSel'){pcType=e.target.value;if($('chStrat'))$('chStrat').hidden=!stratOn();if(lastPlan&&$('ct_pc'))$('ct_pc').innerHTML=pcRender()}});
 $('out').onkeydown=e=>{if((e.key=='Enter'||e.key==' ')&&e.target.closest&&e.target.closest('[data-go]')){e.preventDefault();e.target.closest('[data-go]').click()}};
 $('out').onclick=e=>{if(e.target.closest('[data-rtretry]')){rtLoad();return}const s2=e.target.closest('[data-s2]');if(s2){sel=s2.dataset.s2;render();return}if(e.target.closest('[data-why2]')){const w=$('why');w.hidden=!w.hidden;$('qbtn').setAttribute('aria-expanded',String(!w.hidden));return}const go=e.target.closest('[data-go]');if(go){if(role!='tech')setRole('tech');dtab=go.dataset.go;applyTab();window.scrollTo(0,0);return}
-const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;rtDem=false;stratSync();if($('chStrat'))$('chStrat').hidden=!stratOn();const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';if($('dpvT'))$('dpvT').hidden=chartTab!='use';$('ct_wx').hidden=chartTab!='wx';$('ct_pc').hidden=chartTab!='pc';$('ct_pl').hidden=chartTab!='pl';if($('ct_rt'))$('ct_rt').hidden=chartTab!='rt';
+const ct=e.target.closest('[data-ct]');if(ct){if(ct.dataset.ct!=chartTab)whyClose();chartTab=ct.dataset.ct;rtDem=false;stratSync();if($('chStrat'))$('chStrat').hidden=!stratOn();const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';if($('dpvT'))$('dpvT').hidden=chartTab!='use';$('ct_wx').hidden=chartTab!='wx';$('ct_pc').hidden=chartTab!='pc';$('ct_pl').hidden=chartTab!='pl';if($('ct_rt'))$('ct_rt').hidden=chartTab!='rt';
   $('chTitle').textContent=chT(past);if((chartTab=='rt'||chartTab=='pc')&&cur==TODAY){rtLoad();rtStart()}
   document.querySelectorAll?document.querySelectorAll('#chTabs button').forEach(b=>b.classList.toggle('on',b.dataset.ct==chartTab)):0;navHl();return}
  const ps=e.target.closest('[data-pls]');if(ps&&lastPlan&&$('plSl')){if(ps.dataset.pls=='now'){plLive=true;plTick();plSync();return}plLive=false;plSync();plT=Math.max(0,Math.min(NS-1,plT+(+ps.dataset.pls)));$('plSl').value=plT;const g=plGridHtml(lastPlan.r,plT);$('plGrid').innerHTML=g.html;$('plGrid').classList.toggle('plfade',!!g.pred);$('plInfo').innerHTML=g.info;return}
@@ -2057,7 +2074,7 @@ function fkRender(){
  const head={ok:['On track','Solar and demand are close to the forecast, so today\u2019s plan still holds.'],warn:['Needs a look',act.length?act.length+(act.length==1?' thing is':' things are')+' away from the forecast right now. See below.':'The planning model does not match the readings well. See below.'],bad:['Off track','Something is well away from the forecast. See below for what to do.']}[lvl];
  const sc=Object.entries(ROSC).map(([k,v])=>'<option value="'+k+'"'+(k==DEV.sc?' selected':'')+'>'+esc(v[0])+'</option>').join('');
  let h='<div class="fkhead '+lvl+'"><b>'+head[0]+'</b><span>'+esc(head[1])+'</span></div>';
- h+='<div class="dpkind '+(r.sim?'sim':'meas')+'">'+(r.sim?'<b>DEMO DATA</b> No meter is connected, so today\u2019s readings up to '+tm(r.K)+' are the forecast with a test scenario applied. <label>Test scenario <select id="devSc">'+sc+'</select></label>':'<b>MEASURED</b> Readings up to '+tm(r.K)+' come from the file you loaded.')+'</div>';
+ h+='<div class="dpkind '+(r.sim?'sim':'meas')+'">'+(r.sim?'<b>DEMO DATA</b> No meter connected, so readings up to '+tm(r.K)+' are the forecast'+(DEV.sc!='none'?' with a test applied':'')+'. <details class="fksc"'+(DEV.sc!='none'?' open':'')+'><summary>Test a deviation</summary><select id="devSc">'+sc+'</select></details>':'<b>MEASURED</b> Readings up to '+tm(r.K)+' come from the file you loaded.')+'</div>';
  const on=k=>act.some(x=>x.e.key==k),tile=(n,v,sub,bad,st)=>'<div class="fkt'+(bad?' x':'')+'"><span>'+n+'</span><b>'+v+'</b><em>'+sub+'</em><i class="fkst">'+st+'</i></div>';
  h+='<h3>So far today</h3><div class="fktiles">'
   +tile('Solar',r.pvRatio==null?'\u2013':N0(r.pvRatio*100)+'%','of the forecast so far',on('pv'),on('pv')?'Off forecast':'On track')
@@ -2111,4 +2128,23 @@ setInterval(()=>{if(!document.hidden)try{devFetch(false);devUpdate()}catch(e){}}
 </script>
 <script src="devlog.js?v=2026-11-12-k" defer></script>
 <script src="ops.js?v=2026-11-12-mb" defer></script>
+<script>
+/* Deviation alerts: when a new deviation is logged (Live replay, Forecast check, Operations console, 3D),
+   a small card appears above Ask Shiny with Acknowledge and See the log. Same store as the log (devlog.js). */
+(function(){let seen=null;const box=document.createElement('div');box.id='dvToasts';box.setAttribute('aria-live','polite');document.body.appendChild(box);
+ const E=x=>String(x==null?'':x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const show=x=>{if(box.querySelector('[data-id="'+x.id+'"]'))return;const t=document.createElement('div');t.className='dvt '+(x.sev=='high'?'hi':'wa');t.dataset.id=x.id;t.setAttribute('role','alert');
+  const ack=window.SunDev&&SunDev.can&&SunDev.can('ack');
+  t.innerHTML='<div class="dvt-h"><span class="dvt-s">'+(x.sev=='high'?'HIGH':'WARNING')+'</span><button class="dvt-x" data-dvt="x" aria-label="Close">&times;</button></div><b>'+E(x.title)+'</b><span class="dvt-m">Since '+E(x.start)+(x.size?' &middot; '+E(x.size):'')+(x.sim?' &middot; simulated':'')+'</span><span class="dvt-b">'+(ack?'<button data-dvt="ack">Acknowledge</button>':'')+'<button data-dvt="log">See the log</button></span>';
+  box.prepend(t);while(box.children.length>3)box.lastChild.remove();t._tm=setTimeout(()=>t.remove(),15000)};
+ const check=()=>{if(!window.SunDev)return;const a=SunDev.list();if(seen==null){seen=new Set(a.map(x=>x.id));return}
+  a.forEach(x=>{if(!seen.has(x.id)){seen.add(x.id);if(x.status!=='closed')show(x)}});
+  box.querySelectorAll('.dvt').forEach(t=>{const r=a.find(x=>x.id==t.dataset.id);if(!r||r.status!=='open')t.remove()})};
+ box.addEventListener('click',e=>{const b=e.target.closest('[data-dvt]');if(!b)return;const t=b.closest('.dvt'),id=t&&t.dataset.id,k=b.dataset.dvt;
+  if(k=='ack'&&window.SunDev)SunDev.act(id,'ack');
+  if(k=='log'){const so=document.getElementById('sunops');if(so&&!so.hidden){const h=document.querySelector('#roleSwitch [data-rp=tech]');if(h)h.click()}if(typeof devOpen=='function')devOpen();setTimeout(()=>{const c=document.getElementById('dvCard');if(c&&c.offsetParent)c.scrollIntoView({behavior:'smooth',block:'start'})},300)}
+  if(t)t.remove()});
+ window.addEventListener('sundev',check);
+ const boot=()=>{check();setInterval(check,4000)};if(document.readyState=='complete')boot();else window.addEventListener('load',boot)})();
+</script>
 </body></html>
