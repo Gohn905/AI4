@@ -489,7 +489,7 @@ const EV_DEFER_ON_ANY_LOW=true;/* demo policy: any low panel defers the EV load.
 const SOLS={NORMAL:0,RECOVERY:.5,DEGRADED:1,SEVERE:2,LOWSOLAR:3},SKEY=['NORMAL','DEGRADED','SEVERE','LOWSOLAR'];
 const SNAME={NORMAL:'Normal',DEGRADED:'Degraded',SEVERE:'Severe',LOWSOLAR:'Low solar',RECOVERY:'Recovery',NODATA:'No data'};
 const SKIND={NORMAL:'ok',RECOVERY:'ok',DEGRADED:'warn',SEVERE:'bad',LOWSOLAR:'bad',NODATA:'off'};
-const HOLD_MS=3000,REC_MS=4000;
+const HOLD_MS=800,REC_MS=1200;/* demo: back to sunny about 2 s after the light returns (was 7 s) */
 const SOL={cur:'NODATA',n:0,src:'',shown:[false,false,false],pend:-1,pendAt:0,recUntil:0};
 function solarRaw(){
  if(mode==='proto'){if(!pFresh())return null;return{low:P.panels.map(p=>p.low===true),src:'measured'};}
@@ -543,7 +543,7 @@ function wTarget(){const c=SOL.cur,sh=SOL.shown,t={sun:.6,storm:0,rain:0,dk:0,pc
  else if(c==='LOWSOLAR'){t.sun=0;t.dk=.9;t.storm=1;t.rain=(SOL.n===3)?1:0;t.pc=[.95,.95,.95];}
  return t;}
 function weatherStep(dt,now){
- const t=wTarget(),k=clamp(1-Math.exp(-dt*2.2),0,1),sk=SKY[SOL.cur]||SKY.NODATA;
+ const t=wTarget(),k=clamp(1-Math.exp(-dt*(SOL.cur==='NORMAL'||SOL.cur==='RECOVERY'?5:2.2)),0,1),sk=SKY[SOL.cur]||SKY.NODATA;
  W.sun+=(t.sun-W.sun)*k;W.storm+=(t.storm-W.storm)*k;W.rain+=(t.rain-W.rain)*k;W.dk+=(t.dk-W.dk)*k;
  for(let i=0;i<3;i++){W.pc[i]+=(t.pc[i]-W.pc[i])*k;W.fl[i]+=(flowLevel(i)-W.fl[i])*k;}
  W.top.lerp(cA.set(sk[0]),k);W.bot.lerp(cA.set(sk[1]),k);[W.top,W.bot].forEach(c=>{c.r=clamp(c.r,0,1);c.g=clamp(c.g,0,1);c.b=clamp(c.b,0,1);});W.sun=clamp(W.sun,0,1);W.dk=clamp(W.dk,0,1);W.storm=clamp(W.storm,0,1);W.rain=clamp(W.rain,0,1);
