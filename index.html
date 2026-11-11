@@ -278,6 +278,12 @@ main.fcTab #out>[data-tour=ribbon]{order:9}main.adTab #out>[data-tour=sweep]{ord
 .dpk{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0}
 .dpk>div{border:1px solid #DAD8D0;border-radius:8px;padding:8px}.dpk>div.x{border-color:#F3B4B4;background:#FEF3F2}
 .dpk b{display:block;font-size:20px}.dpk span{font-size:12px;color:#5B6360}
+.fkcard h2{font-size:20px;margin:0 0 6px}.fkcard h3{margin:18px 0 6px;font-size:16px}.fkwhat{margin:0 0 12px;font-size:14px;color:var(--mut)}
+.fkhead{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:12px;border:1px solid;margin:0 0 10px}.fkhead b{font-size:20px}.fkhead span{font-size:14px}
+.fkhead.ok{background:#ECFDF3;border-color:#A6E3BD;color:#05603A}.fkhead.warn{background:#FFFAEB;border-color:#FEC84B;color:#93370D}.fkhead.bad{background:#FEF3F2;border-color:#F3B4B4;color:#B42318}
+.fktiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.fkt{border:1px solid #DAD8D0;border-radius:10px;padding:10px 12px;background:#fff;display:flex;flex-direction:column;gap:2px}.fkt span{font-size:13px;font-weight:700;color:var(--mut)}.fkt b{font-size:24px}.fkt em{font-style:normal;font-size:12.5px;color:var(--mut)}.fkt .fkst{font-style:normal;font-size:12px;font-weight:700;color:#05603A}.fkt.x{border-color:#F3B4B4;background:#FEF3F2}.fkt.x .fkst{color:#B42318}
+.fkmore{margin-top:8px}.fkmore>summary{cursor:pointer;font-weight:650;font-size:13.5px}
 @media print{.devstrip,.devpanel{display:none!important}}
 /* date card, Detailed tabs: written date + Today badge at the left, arrows + calendar at the far right next to the tab rail */
 #dateCard.one #ttl{display:block;order:1}#dateCard.one #badge{display:inline-block;order:2}#dateCard.one .sp{display:block;order:3;flex:1}#dateCard.one #prev{order:4}#dateCard.one #calBtn{order:5}#dateCard.one #next{order:6}
@@ -319,7 +325,7 @@ main.fit .snw svg{max-height:calc(100vh - 430px);min-height:200px}main.fit .snc{
 <div class="note" id="info" data-role="tech" style="margin-top:0"></div>
 </div>
 
-<div class="bar" id="dtabs" data-role="tech" style="margin:0 0 12px"><button data-dt="ov" class="on">Overview</button><span class="dgrp" data-dt="fc">Forecasts &amp; energy</span><button data-dt="fc" data-ct="rt" class="sub">Energy usage</button><button data-dt="fc" data-ct="use" class="sub">Daily plan</button><button data-dt="fc" data-ct="all" class="sub">View all at once</button><button data-dt="fc" data-ct="wx" class="sub">Predicted weather</button><button data-dt="fc" data-ct="pc" class="sub">Power curve</button><button data-dt="fc" data-ct="pl" class="sub">Panel layout</button><span class="dgrp" data-dt="op">Simulations</span><button data-dt="op" class="sub">Optimisation</button><button data-dt="pl" class="sub">Plan &amp; actions</button><button data-dt="ad" class="sub">Advanced</button><span class="dgrp" data-dt="proto">3D</span><button data-dt="proto" class="sub">Live prototype</button><span class="dgrp" data-dt="fa">Settings</span><button data-dt="fa" class="sub">Facility &amp; data</button></div>
+<div class="bar" id="dtabs" data-role="tech" style="margin:0 0 12px"><button data-dt="ov" class="on">Overview</button><span class="dgrp" data-dt="fc">Forecasts &amp; energy</span><button data-dt="fc" data-ct="rt" class="sub">Energy usage</button><button data-dt="fc" data-ct="use" class="sub">Daily plan</button><button data-dt="fc" data-ct="all" class="sub">View all at once</button><button data-dt="fc" data-ct="wx" class="sub">Predicted weather</button><button data-dt="fc" data-ct="pc" class="sub">Power curve</button><button data-dt="fc" data-ct="pl" class="sub">Panel layout</button><span class="dgrp" data-dt="op">Simulations</span><button data-dt="op" class="sub">Optimisation</button><button data-dt="pl" class="sub">Plan &amp; actions</button><button data-dt="fk" class="sub">Forecast check</button><button data-dt="ad" class="sub">Advanced</button><span class="dgrp" data-dt="proto">3D</span><button data-dt="proto" class="sub">Live prototype</button><span class="dgrp" data-dt="fa">Settings</span><button data-dt="fa" class="sub">Facility &amp; data</button></div>
 <div class="card" id="why" hidden><h2>What the optimiser decides</h2>
 <p class="note" style="margin-top:0">Every 30 minutes of the day, the optimiser chooses all of these together, so it can plan the battery and the equipment around the highest billed 30 minutes.</p>
 <ul style="font-size:14px">
@@ -331,6 +337,7 @@ main.fit .snw svg{max-height:calc(100vh - 430px);min-height:200px}main.fit .snc{
 <p class="note"><b>Not included yet:</b> diesel or gas, individual machines with start and stop rules, real meter history (the demand forecast is trained on synthetic history), export income, forecast uncertainty, the retail charge, the 1.6% KWTBB levy and tax.</p></div>
 
 <div id="devStrip" class="devstrip idle" hidden></div>
+<div id="fkPanel" hidden></div>
 <div id="out"><div class="card note">Loading&hellip;</div></div>
 <div class="card" id="labPanel" data-role="tech" hidden>
 <div class="cardhead"><div><h2>Lab model: a small factory with an ESP32</h2><div class="muted small">Three small solar panels act as light sensors. This page decides what the factory does.</div></div><span class="badge" id="labSrc">Not connected</span></div>
@@ -653,13 +660,13 @@ function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a
  return `<p class="note"><b>CO&#8322; trade-off:</b> Cost-saving earns ${money(dS)} more per day than Balanced, at the price of ${Math.round(dC)} kg more CO&#8322; (about ${money(dS/dC)} per kg).</p>`}
 
 // ================= pages: Brief (owner view) and Detailed (tabs) =================
-const TABS={ov:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','devlog','schedule','approve','changed'],ad:['live','reopt','learn','stress','sweep','assume','devlog','audit','changed'],fa:['changed'],lab:[],proto:[]};let dtab='ov';
+const TABS={ov:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','devlog','schedule','approve','changed'],fk:['devlog'],ad:['live','reopt','learn','stress','sweep','assume','devlog','audit','changed'],fa:['changed'],lab:[],proto:[]};let dtab='ov';
 function pgRole(){const e=$('pgRo');if(e)e.hidden=!!(PERM[who]&&PERM[who].hw)}
 function fitProto(){try{pgRole()}catch(e){}const on=role=='tech'&&dtab=='proto',h=document.documentElement;h.classList.toggle('protoTab',on);if(!on)return;const f=$('proto3d');if(!f)return;const t=f.getBoundingClientRect().top+(window.scrollY||0);f.style.height=Math.max(460,window.innerHeight-t-6)+'px';}
 window.addEventListener('resize',()=>{try{fitProto()}catch(e){}});
 var sayT=0,lastTab='';
 function sayClear(){clearTimeout(sayT);var a=$('fmsg'),b=$('amsg');if(a)a.textContent='';if(b)b.textContent=''}
-function applyTab(){if(!tabOk(dtab))dtab='ov';if(role+dtab!==lastTab){lastTab=role+dtab;sayClear()}$('dateCard').classList.toggle('one',dtab!='ov');const t=role=='tech';$('app').classList.toggle('fit',t&&(dtab=='fc'||dtab=='proto'));$('app').classList.toggle('fcTab',t&&dtab=='fc');$('app').classList.toggle('adTab',t&&dtab=='ad');Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&(dtab=='fa'||dtab=='lab'||dtab=='proto')});$('dateCard').hidden=t&&(dtab=='proto'||dtab=='fa');$('facPanel').hidden=!(t&&dtab=='fa');$('labPanel').hidden=!(t&&dtab=='lab');$('protoPanel').hidden=!(t&&dtab=='proto');fitProto();
+function applyTab(){if(!tabOk(dtab))dtab='ov';if(role+dtab!==lastTab){lastTab=role+dtab;sayClear()}$('dateCard').classList.toggle('one',dtab!='ov');const t=role=='tech';$('app').classList.toggle('fit',t&&(dtab=='fc'||dtab=='proto'));$('app').classList.toggle('fcTab',t&&dtab=='fc');$('app').classList.toggle('adTab',t&&dtab=='ad');Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&(dtab=='fa'||dtab=='lab'||dtab=='proto'||dtab=='fk')});$('fkPanel').hidden=!(t&&dtab=='fk');if(t&&dtab=='fk'){try{fkRender();if(!DEV.busy)devFetch(true)}catch(e){}}$('dateCard').hidden=t&&(dtab=='proto'||dtab=='fa');$('facPanel').hidden=!(t&&dtab=='fa');$('labPanel').hidden=!(t&&dtab=='lab');$('protoPanel').hidden=!(t&&dtab=='proto');fitProto();
  navHl();fairLoad();applyPerms()}
 function navHl(){if(document.querySelectorAll)document.querySelectorAll('#dtabs button').forEach(b=>b.classList.toggle('on',b.dataset.dt==dtab&&(!b.dataset.ct||b.dataset.ct==chartTab)))}
 $('dtabs').onclick=e=>{const b=e.target.closest('button[data-dt]');if(!b)return;dtab=b.dataset.dt;if(b.dataset.ct){chartTab=b.dataset.ct;applyTab();const x=document.querySelector('#chTabs [data-ct="'+chartTab+'"]');if(x)x.click();navHl();uiSave()}else applyTab()};
@@ -673,10 +680,10 @@ const WHO={owner:{n:'Owner'},analyst:{n:'Analyst'},operator:{n:'Operator'},appro
 const OPER=['live','reopt','learn','stress','sweep','approve','audit'];   // cards that change or run something (the rest are only for looking)
 const PERM={
  owner:{see:null,act:null,tabs:null,approve:1,hw:1,edit:1},
- analyst:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','live','reopt','learn','stress','sweep','assume'],act:['reopt','learn','stress','sweep','approve'],tabs:['ov','fc','op','pl','ad','proto','fa'],edit:1},
- operator:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','live','assume'],act:['live','approve'],tabs:['ov','fc','op','pl','ad','proto'],hw:1},
- approver:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','stress','assume','audit'],act:['approve','audit'],tabs:['ov','fc','op','pl','ad','proto','fa'],approve:1},
- auditor:{see:null,act:['audit'],tabs:['ov','fc','op','pl','ad','proto','fa']}
+ analyst:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','live','reopt','learn','stress','sweep','assume'],act:['reopt','learn','stress','sweep','approve'],tabs:['ov','fc','op','pl','fk','ad','proto','fa'],edit:1},
+ operator:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','live','assume'],act:['live','approve'],tabs:['ov','fc','op','pl','fk','ad','proto'],hw:1},
+ approver:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','stress','assume','audit'],act:['approve','audit'],tabs:['ov','fc','op','pl','fk','ad','proto','fa'],approve:1},
+ auditor:{see:null,act:['audit'],tabs:['ov','fc','op','pl','fk','ad','proto','fa']}
 };
 let who='owner';
 const PROTO='factory3d.html?embed=1&proto=1&v=2026-11-12-i';
@@ -1110,7 +1117,7 @@ async function render(){
  const my=++tok,dates=span();$('dt').value=cur;tabs();
  ['day','week','month'].forEach(v=>{$('v'+v).classList.toggle('on',view==v);$('b'+v).classList.toggle('on',view==v)});
  [['yes',addD(TODAY,-1)],['tod',TODAY],['tom',addD(TODAY,1)]].forEach(([id,x])=>$(id).classList.toggle('on',view=='day'&&cur==x));
- {const dayOnly=['fc','op','pl','ad'];document.querySelectorAll('#dtabs button,#dtabs .dgrp').forEach(b=>{if(dayOnly.includes(b.dataset.dt))b.hidden=view!='day'});if(view!='day'&&dayOnly.includes(dtab)){dtab='ov';applyTab()}}
+ {const dayOnly=['fc','op','pl','fk','ad'];document.querySelectorAll('#dtabs button,#dtabs .dgrp').forEach(b=>{if(dayOnly.includes(b.dataset.dt))b.hidden=view!='day'});if(view!='day'&&dayOnly.includes(dtab)){dtab='ov';applyTab()}}
  const f=(x,o)=>parse(x).toLocaleDateString('en-GB',o);
  $('ttl').textContent=view=='day'?f(cur,{weekday:'long',day:'numeric',month:'long',year:'numeric'}):view=='week'?'Week of '+f(dates[0],{day:'numeric',month:'short'})+' to '+f(dates[6],{day:'numeric',month:'short'}):f(cur,{month:'long',year:'numeric'});
  const [bt,bc]=rel(cur);$('calBtn').title=$('calBtn').ariaLabel='Pick a date: '+$('ttl').textContent;$('badge').innerHTML=view=='day'?`<span class="tag ${bc}">${bt}</span>`:'';
@@ -1229,7 +1236,7 @@ function localIntent(t){const s=t.toLowerCase(),nav={},fac={},num=x=>+String(x).
  if(m=s.match(/(?:max(?:imum)?\s*demand|peak)\D{0,12}(\d[\d,.]*)\s*kw\b/))fac.peak=num(m[1]);
  const out={reply:'The AI model is not reachable, so I used simple keyword matching. Please check what I understood.'};if(Object.keys(nav).length)out.navigate=nav;if(Object.keys(fac).length)out.facility=fac;
  return out.navigate||out.facility?out:null}
-const TAB2DT={overview:'ov',forecast:'fc',optimisation:'op',plan:'pl',advanced:'ad',facility:'fa'};
+const TAB2DT={forecastcheck:'fk',deviations:'fk',overview:'ov',forecast:'fc',optimisation:'op',plan:'pl',advanced:'ad',facility:'fa'};
 function applyNav(n){const bits=[];let toSummary=false;
  const wantTech=n.detail=='detailed'||n.tab||n.chart||n.open=='summary';
  if(n.detail=='brief'&&!n.tab&&!n.chart&&n.open!='summary'){applyRole('owner');try{localStorage.setItem('role','owner')}catch(e){}bits.push('Brief page')}
@@ -1401,7 +1408,7 @@ function storeCheck(){try{localStorage.setItem('__t','1');if(localStorage.getIte
 function uiSave(){try{localStorage.setItem('ui',JSON.stringify({sel,view,dtab,chartTab}))}catch(e){}}
 function uiRestore(){try{const u=JSON.parse(localStorage.getItem('ui')||'null');if(!u)return;
  if(['base','cost','bal','prod','zero'].includes(u.sel))sel=u.sel=='prod'?'bal':u.sel;if(['day','week','month'].includes(u.view))view=u.view;
- if(['ov','fc','op','pl','ad','fa'].includes(u.dtab))dtab=u.dtab;if(['use','all','wx','pc','pl','rt'].includes(u.chartTab))chartTab=u.chartTab;
+ if(['ov','fc','op','pl','fk','ad','fa'].includes(u.dtab))dtab=u.dtab;if(['use','all','wx','pc','pl','rt'].includes(u.chartTab))chartTab=u.chartTab;
  if(role=='tech')applyTab()}catch(e){}}
 storeCheck();fill();if(!saved&&/^#detailed$/i.test(location.hash)){dtab='fa';applyTab()}else uiRestore();render();whoami();
 </script><script>
@@ -1590,7 +1597,7 @@ const dName=k=>k=='pv'?'Solar':k=='load'?'Demand':'Grid import';
 function dInfo(e,j,q){
  const up=e.dir>0,bil=q.p.b.c.mdH&&q.p.b.c.mdH.length>0,hurts=e.key=='pv'?!up:true&&up,ab=Math.abs(e.pct);
  const hurt=(e.key=='pv'&&!up)||(e.key!='pv'&&up);
- const title=dName(e.key)+(e.drift?' drifting ':' ')+N0(ab)+'% '+(up?'above':'below')+' '+(e.key=='grid'?'the twin':'forecast')+' since '+tm(e.a);
+ const title=dName(e.key)+(e.drift?' drifting ':' ')+N0(ab)+'% '+(up?'above':'below')+' '+(e.key=='grid'?'the planning model':'forecast')+' since '+tm(e.a);
  const why=(e.drift?'Small but steady, so it adds up over hours. ':'')+(hurt?(bil?'The billed peak may rise.':'Today\u2019s cost may rise.'):'Cost should come out lower than planned, but the plan is re-checked.');
  const c=j.correction||{},sv=j.expected&&j.expected.saving_rm;
  const did=e.key=='grid'?'Compared with the twin. The plan is re-checked from now.':'Forecast corrected for the rest of the day'+(c.pv_ratio!=null&&c.load_ratio!=null?' (solar \u00d7'+c.pv_ratio.toFixed(2)+', demand \u00d7'+c.load_ratio.toFixed(2)+')':'')+' and the plan re-optimised from now.'+(sv>=0.5?' Expected saving from re-planning: '+money(sv)+'.':'');
@@ -1623,17 +1630,16 @@ function devProtoLine(){const p=DEV.proto;if(!p||Date.now()-DEV.protoAt>10000)re
  return p.verdict=='bad'?'ESP32 twin: needs recalibration':p.verdict=='ok'?'ESP32 twin: validated':'ESP32 twin: collecting data'}
 function devStripState(){
  const p=DEV.proto&&Date.now()-DEV.protoAt<10000?DEV.proto:null;
- if(cur!=TODAY)return{c:'idle',t:'Deviation checks use today\u2019s readings.',b:'Open today',act:'today'};
- if(DEV.err&&!DEV.res)return{c:'idle',t:'Deviation check not available right now.',b:'Details'};
- if(!DEV.res)return{c:'idle',t:'Checking today\u2019s readings\u2026',b:''};
+ if(cur!=TODAY)return{c:'idle',t:'The forecast check uses today\u2019s readings.',b:'Open today',act:'today'};
+ if(DEV.err&&!DEV.res)return{c:'idle',t:'The forecast check is not available right now.',b:'See details'};
+ if(!DEV.res)return{c:'idle',t:'Checking today against the forecast\u2026',b:''};
  const r=DEV.res,act=r.eps.filter(e=>e.on).map(e=>({e,i:dInfo(e,DEV.j,DEV.q)})).sort((a,b)=>(b.i.sev=='high')-(a.i.sev=='high')||(a.e.key=='grid')-(b.e.key=='grid')||Math.abs(b.e.pct)-Math.abs(a.e.pct));
  const twBad=r.tw&&r.tw.ready&&!r.tw.ok,pBad=p&&p.verdict=='bad',sim=r.sim?' (simulated)':'';
  if(act.length){const top=act[0],more=act.length>1?' +'+(act.length-1)+' more':'';
-  return{c:top.i.sev=='high'||twBad?'bad':'warn',t:top.i.title+'. '+top.i.why+more+(sim?' ':'')+sim.trim(),b:'Details'}}
- if(twBad)return{c:'bad',t:'Digital twin needs recalibration: peak '+(r.tw.pkErr>=0?'+':'\u2212')+N0(Math.abs(r.tw.pkErr)*100)+'%, energy '+(r.tw.eErr>=0?'+':'\u2212')+N0(Math.abs(r.tw.eErr)*100)+'% against the plan.'+sim,b:'Details'};
- if(pBad)return{c:'warn',t:'ESP32 prototype is off what the twin expects. Open Details.',b:'Details'};
- const pr=r.pvRatio==null?'':'Solar '+N0(r.pvRatio*100)+'% and demand '+N0((r.ldRatio||0)*100)+'% of forecast so far. ';
- return{c:'ok',t:'Tracking forecast. '+pr+(r.tw&&r.tw.ready?'Twin validated.':'')+sim,b:'Details'}}
+  return{c:top.i.sev=='high'||twBad?'bad':'warn',t:top.i.title+'. '+top.i.why+more+(sim?' ':'')+sim.trim(),b:'See details'}}
+ if(twBad)return{c:'bad',t:'The planning model does not match the readings well (peak '+(r.tw.pkErr>=0?'+':'\u2212')+N0(Math.abs(r.tw.pkErr)*100)+'%, energy '+(r.tw.eErr>=0?'+':'\u2212')+N0(Math.abs(r.tw.eErr)*100)+'%).'+sim,b:'See details'};
+ if(pBad)return{c:'warn',t:'The ESP32 prototype is off what its 3D model expects.',b:'See details'};
+ return{c:'ok',t:'On track: today is matching the forecast.'+sim,b:'See check'}}
 function devUpdate(){
  const el=document.getElementById('devStrip');if(!el)return;
  const show=view=='day'&&(role=='owner'||dtab=='ov')&&!(role=='tech'&&(dtab=='fa'||dtab=='lab'||dtab=='proto'));
@@ -1642,7 +1648,7 @@ function devUpdate(){
   el.innerHTML='<span class="dsdot"></span><span class="dstxt">'+esc(s.t)+(pl?' <span class="dsp">'+esc(pl)+'</span>':'')+'</span>'+(s.b?'<span class="dsgo">'+esc(s.b)+' &rsaquo;</span>':'');
   el.setAttribute('role','button');el.tabIndex=0;el.dataset.act=s.act||'open';
   if(!DEV.busy)devFetch(false)}
- if(document.getElementById('devPanel')&&!document.getElementById('devPanel').hidden)devPanelRender()}
+ try{fkRender()}catch(e){}}
 /* ---- details panel ---- */
 function devChart(){const r=DEV.res,sr=DEV.j.series,K=r.K,tg=DEV.twinG,R=DRL();if(!tg||!sr.old_grid)return'';
  const W=700,H=210,L=48,B=26,T=10,x=t=>L+(W-L-8)*(t+.5)/NS,mx=niceAxis(0,Math.max(...tg,...sr.old_grid.slice(0,K),1)*1.08),y=v=>H-B-(v/mx.hi)*(H-B-T),fl=dFloor();
@@ -1653,37 +1659,45 @@ function devChart(){const r=DEV.res,sr=DEV.j.series,K=r.K,tg=DEV.twinG,R=DRL();i
  r.eps.filter(e=>e.key=='grid').forEach(e=>{for(let t=e.a;t<=e.b;t++)s+='<circle cx="'+x(t).toFixed(1)+'" cy="'+y(sr.old_grid[t]).toFixed(1)+'" r="4" fill="#B42318" stroke="#fff" stroke-width="1.5"/>'});
  const nx=(L+(W-L-8)*K/NS).toFixed(1);s+='<line x1="'+nx+'" x2="'+nx+'" y1="'+T+'" y2="'+(H-B)+'" stroke="#252B2A" stroke-dasharray="3 3"/><text x="'+(+nx+4)+'" y="'+(T+10)+'" font-size="11" fill="#252B2A">now</text>';
  return'<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto" role="img" aria-label="Grid import: digital twin expected path with tolerance band, and what the readings imply">'+s+'</svg><div class="legend"><span><i style="background:#2563eb"></i>Twin expected, with \u00b1'+N0(R.grid*100)+'% band</span><span><i style="background:#252B2A"></i>Measured (implied by the readings)</span><span><i style="background:#B42318"></i>Outside the band</span></div>'}
-function devPanelRender(){
- const el=document.getElementById('devPanelBody');if(!el)return;const R=DRL();
- if(cur!=TODAY){el.innerHTML='<p>Deviation checks run on today\u2019s readings. Open today to see them.</p>';return}
- if(!DEV.res){el.innerHTML='<p>'+(DEV.err?'The check could not run: '+esc(DEV.err):'Checking today\u2019s readings\u2026')+'</p>';return}
- const r=DEV.res,j=DEV.j,q=DEV.q,pc=v=>(v>=0?'+':'\u2212')+N0(Math.abs(v)*100)+'%',sc=Object.entries(ROSC).map(([k,v])=>'<option value="'+k+'"'+(k==DEV.sc?' selected':'')+'>'+esc(v[0])+'</option>').join('');
- const eps=r.eps.slice().sort((a,b)=>b.a-a.a).map(e=>({e,i:dInfo(e,j,q)}));
- let h='<div class="dpkind '+(r.sim?'sim':'meas')+'"><b>'+(r.sim?'SIMULATED':'MEASURED')+'</b> '+esc(r.sim?'No meter is connected. Readings up to '+tm(r.K)+' are the forecast with the scenario below applied.':'Readings up to '+tm(r.K)+' come from the file you loaded.')+(r.sim?' <label>Demo scenario <select id="devSc">'+sc+'</select></label>':'')+'</div>';
- h+='<h3>What is off now</h3>';
+function fkRender(){
+ const el=document.getElementById('fkPanel');if(!el||el.hidden)return;const R=DRL();
+ const wrap=b=>'<div class="card fkcard"><h2>Forecast check</h2><p class="fkwhat">Every half-hour the system compares what it <b>expected</b> for today (the forecast) with what <b>actually happened</b>. When the two drift apart, the plan may no longer be the best one, so it is flagged here, the forecast is corrected and the plan is re-checked.</p>'+b+'</div>';
+ if(cur!=TODAY){el.innerHTML=wrap('<p class="note">This check only runs on today\u2019s readings. <button type="button" data-fktoday="1">Open today</button></p>');return}
+ if(!DEV.res){el.innerHTML=wrap('<p class="note">'+(DEV.err?'The check could not run: '+esc(DEV.err):'Checking today\u2019s readings\u2026')+'</p>');return}
+ const r=DEV.res,j=DEV.j,q=DEV.q,t=r.tw,pc=v=>(v>=0?'+':'\u2212')+N0(Math.abs(v)*100)+'%';
+ const eps=r.eps.slice().sort((a,b)=>(b.on-a.on)||b.a-a.a).map(e=>({e,i:dInfo(e,j,q)})),act=eps.filter(x=>x.e.on),twBad=!!(t&&t.ready&&!t.ok);
+ const lvl=act.some(x=>x.i.sev=='high')?'bad':(act.length||twBad)?'warn':'ok';
+ const head={ok:['On track','Solar and demand are close to the forecast, so today\u2019s plan still holds.'],warn:['Needs a look',act.length?act.length+(act.length==1?' thing is':' things are')+' away from the forecast right now. See below.':'The planning model does not match the readings well. See below.'],bad:['Off track','Something is well away from the forecast. See below for what to do.']}[lvl];
+ const sc=Object.entries(ROSC).map(([k,v])=>'<option value="'+k+'"'+(k==DEV.sc?' selected':'')+'>'+esc(v[0])+'</option>').join('');
+ let h='<div class="fkhead '+lvl+'"><b>'+head[0]+'</b><span>'+esc(head[1])+'</span></div>';
+ h+='<div class="dpkind '+(r.sim?'sim':'meas')+'">'+(r.sim?'<b>DEMO DATA</b> No meter is connected, so today\u2019s readings up to '+tm(r.K)+' are the forecast with a test scenario applied. <label>Test scenario <select id="devSc">'+sc+'</select></label>':'<b>MEASURED</b> Readings up to '+tm(r.K)+' come from the file you loaded.')+'</div>';
+ const on=k=>act.some(x=>x.e.key==k),tile=(n,v,sub,bad,st)=>'<div class="fkt'+(bad?' x':'')+'"><span>'+n+'</span><b>'+v+'</b><em>'+sub+'</em><i class="fkst">'+st+'</i></div>';
+ h+='<h3>So far today</h3><div class="fktiles">'
+  +tile('Solar',r.pvRatio==null?'\u2013':N0(r.pvRatio*100)+'%','of the forecast so far',on('pv'),on('pv')?'Off forecast':'On track')
+  +tile('Demand',r.ldRatio==null?'\u2013':N0(r.ldRatio*100)+'%','of the forecast so far',on('load'),on('load')?'Off forecast':'On track')
+  +tile('Grid import',t&&t.ready?N0(t.share*100)+'%':'\u2013',t&&t.ready?'of readings match the plan\u2019s estimate':'needs 2 hours of readings',on('grid')||twBad,t&&t.ready?(on('grid')||twBad?'Off the plan':'On track'):'Waiting')+'</div>';
+ const card=({e,i})=>'<div class="dpep '+i.sev+'"><div class="dph"><span class="dpsev">'+(i.sev=='high'?'High':i.sev=='warn'?'Watch':'Info')+'</span><b>'+esc(i.title)+'</b>'+(e.on?'':'<span class="dpend">ended</span>')+'</div><div class="dpg"><span>What to do</span><div>'+esc(i.todo)+'</div></div><details class="fkmore"><summary>More detail</summary><div class="dpg"><span>When</span><div>'+esc(i.span)+'</div><span>Size</span><div>'+esc(N0(Math.abs(e.pct))+'% '+(e.dir>0?'above':'below')+', '+i.size)+'</div><span>Why it matters</span><div>'+esc(i.why)+'</div><span>What the system did</span><div>'+esc(i.did)+'</div></div></details></div>';
+ h+='<h3>What is off right now</h3>'+(act.length?act.map(card).join(''):'<p class="dpok">Nothing. Solar, demand and grid import are all inside tolerance.</p>');
+ const old=eps.filter(x=>!x.e.on);if(old.length)h+='<details class="fkmore"><summary>Earlier today, already back to normal ('+old.length+')</summary>'+old.map(card).join('')+'</details>';
  h+=devLogLine();
- h+=eps.length?eps.map(({e,i})=>'<div class="dpep '+i.sev+'"><div class="dph"><span class="dpsev">'+(i.sev=='high'?'High':i.sev=='warn'?'Watch':'Info')+'</span><b>'+esc(i.title)+'</b>'+(e.on?'':'<span class="dpend">ended</span>')+'</div><div class="dpg"><span>When</span><div>'+esc(i.span)+'</div><span>Size</span><div>'+esc(N0(Math.abs(e.pct))+'% '+(e.dir>0?'above':'below')+', '+i.size)+'</div><span>Why it matters</span><div>'+esc(i.why)+'</div><span>What the system did</span><div>'+esc(i.did)+'</div><span>What to do</span><div>'+esc(i.todo)+'</div></div></div>').join(''):'<p class="dpok">Nothing is off. Solar, demand and grid import are inside tolerance.</p>';
- h+='<p class="note">Rule: a reading counts as off when it is more than '+N0(R.load*100)+'% (demand), '+N0(R.pv*100)+'% (solar) or '+N0(R.grid*100)+'% (grid import) from what was expected, by at least the size floor ('+N0(dFloor())+' kW, 7% of peak demand), for '+R.run+' readings in a row. Slow drift also counts: the average over '+R.driftWin/2+' hours more than half way to those limits. The Operations console uses the same limits.</p>';
- h+='<h3>Does the digital twin match reality?</h3>';
- const t=r.tw;
- if(!t||!t.ready)h+='<p>Not enough readings yet. The check needs at least 2 hours of today.</p>';
- else h+='<div class="dpv '+(t.ok?'ok':'bad')+'"><b>'+(t.ok?'Twin validated':'Needs recalibration')+'</b><span>'+esc('Pass needs: '+t.pkLabel.toLowerCase()+' within \u00b1'+N0(R.peakTol*100)+'%, energy within \u00b1'+N0(R.energyTol*100)+'%, and at least '+N0(R.share*100)+'% of readings within \u00b1'+N0(R.grid*100)+'%.')+'</span></div>'+devChart()+'<div class="dpk"><div><b>'+N1(t.maePct)+'%</b><span>Average error ('+N0(t.mae)+' kW)</span></div><div class="'+(Math.abs(t.pkErr)<=R.peakTol?'':'x')+'"><b>'+pc(t.pkErr)+'</b><span>'+esc(t.pkLabel)+': '+N0(t.pkT)+' twin, '+N0(t.pkA)+' measured kW</span></div><div class="'+(Math.abs(t.eErr)<=R.energyTol?'':'x')+'"><b>'+pc(t.eErr)+'</b><span>Energy: '+N0(t.eT)+' twin, '+N0(t.eA)+' measured kWh</span></div><div class="'+(t.share>=R.share?'':'x')+'"><b>'+N0(t.share*100)+'%</b><span>Of readings within tolerance</span></div></div><p class="note">The twin is the day-ahead plan on the forecast. \u201cMeasured\u201d is the grid import the readings imply, because no grid meter is connected. With a real grid meter it becomes a direct measurement.</p>';
+ h+='<h3>Is the planning model accurate?</h3>';
+ if(!t||!t.ready)h+='<p class="note">Not enough readings yet. It needs at least 2 hours of today.</p>';
+ else h+='<div class="dpv '+(t.ok?'ok':'bad')+'"><b>'+(t.ok?'Yes, it matches the readings':'Not quite, it needs recalibrating')+'</b><span>'+(t.ok?'The grid import it expected is close to what the readings show, so the savings figures can be trusted.':'The grid import it expected differs from the readings (peak '+pc(t.pkErr)+', energy '+pc(t.eErr)+'). Savings figures may be less reliable until it is recalibrated.')+'</span></div><details class="fkmore"><summary>Show the numbers</summary>'+devChart()+'<div class="dpk"><div><b>'+N1(t.maePct)+'%</b><span>Average error ('+N0(t.mae)+' kW)</span></div><div class="'+(Math.abs(t.pkErr)<=R.peakTol?'':'x')+'"><b>'+pc(t.pkErr)+'</b><span>'+esc(t.pkLabel)+': '+N0(t.pkT)+' model, '+N0(t.pkA)+' measured kW</span></div><div class="'+(Math.abs(t.eErr)<=R.energyTol?'':'x')+'"><b>'+pc(t.eErr)+'</b><span>Energy: '+N0(t.eT)+' model, '+N0(t.eA)+' measured kWh</span></div><div class="'+(t.share>=R.share?'':'x')+'"><b>'+N0(t.share*100)+'%</b><span>Of readings within tolerance</span></div></div><p class="note">Pass needs: '+esc(t.pkLabel.toLowerCase())+' within \u00b1'+N0(R.peakTol*100)+'%, energy within \u00b1'+N0(R.energyTol*100)+'%, and at least '+N0(R.share*100)+'% of readings within \u00b1'+N0(R.grid*100)+'%. \u201cMeasured\u201d is the grid import the readings imply, because no grid meter is connected.</p></details>';
  const p=DEV.proto&&Date.now()-DEV.protoAt<10000?DEV.proto:null;
- h+='<h3>Demo factory (ESP32) against its twin</h3>';
- h+=p&&p.items&&p.items.length?'<div class="dpv '+(p.verdict=='bad'?'bad':p.verdict=='ok'?'ok':'wait')+'"><b>'+(p.verdict=='bad'?'Needs recalibration':p.verdict=='ok'?'Twin validated':'Collecting data')+'</b><span>Last '+p.n+' seconds of readings against what the 3D model expects.</span></div><div class="scroll"><table><tr><th>Part</th><th>Twin expects</th><th>ESP32 measured</th><th>Match</th><th>Tolerance</th><th></th></tr>'+p.items.map(i=>'<tr><td>'+esc(i.name)+'</td><td>'+esc(i.exp)+'</td><td>'+esc(i.meas)+'</td><td>'+(i.pct==null?'&ndash;':N0(i.pct)+'% of expected')+'</td><td>'+esc(i.tol)+'</td><td>'+(i.ok===true?'<b class="good">Pass</b>':i.ok===false?'<b style="color:#B42318">Fail</b>':'<span class="note">'+esc(i.why||'not checked')+'</span>')+'</td></tr>').join('')+'</table></div>':'<p class="note">Connect the ESP32 on the 3D tab (Live prototype). Its panels, battery, conveyor and EV charger LED are then compared with what the model expects, and the 3D chips show the match.</p>';
- el.innerHTML=h}
+ h+='<details class="fkmore"><summary>Demo factory (ESP32) against its 3D model</summary>'+(p&&p.items&&p.items.length?'<div class="dpv '+(p.verdict=='bad'?'bad':p.verdict=='ok'?'ok':'wait')+'"><b>'+(p.verdict=='bad'?'Needs recalibration':p.verdict=='ok'?'Matches the model':'Collecting data')+'</b><span>Last '+p.n+' seconds of readings against what the 3D model expects.</span></div><div class="scroll"><table><tr><th>Part</th><th>Model expects</th><th>ESP32 measured</th><th>Match</th><th>Tolerance</th><th></th></tr>'+p.items.map(i=>'<tr><td>'+esc(i.name)+'</td><td>'+esc(i.exp)+'</td><td>'+esc(i.meas)+'</td><td>'+(i.pct==null?'&ndash;':N0(i.pct)+'% of expected')+'</td><td>'+esc(i.tol)+'</td><td>'+(i.ok===true?'<b class="good">Pass</b>':i.ok===false?'<b style="color:#B42318">Fail</b>':'<span class="note">'+esc(i.why||'not checked')+'</span>')+'</td></tr>').join('')+'</table></div>':'<p class="note">Connect the ESP32 on the Live prototype tab to see this check.</p>')+'</details>';
+ h+='<details class="fkmore"><summary>How a reading counts as off</summary><p class="note">A reading is off when it is more than '+N0(R.load*100)+'% (demand), '+N0(R.pv*100)+'% (solar) or '+N0(R.grid*100)+'% (grid import) from what was expected, by at least '+N0(dFloor())+' kW, for '+R.run+' readings in a row. Slow drift also counts: the average over '+R.driftWin/2+' hours more than half way to those limits. The Operations console uses the same limits.</p></details>';
+ el.innerHTML=wrap(h)}
 function devLogLine(){const D=window.SunDev;if(!D)return'';const a=D.list().filter(x=>x.status!='closed'&&x.day==cur);
  return'<p class="note" style="margin:0 0 6px">'+(a.length?'<b>'+a.length+' open in the deviation log</b> for today. ':'Nothing open in the deviation log for today. ')+'Operators acknowledge, analysts investigate and resolve, approvers see open items before approving. <button type="button" data-devgo="1">Go to the log</button></p>'}
-function devOpen(){let p=document.getElementById('devPanel');
- if(!p){p=document.createElement('div');p.id='devPanel';p.className='devpanel';p.setAttribute('role','dialog');p.setAttribute('aria-modal','true');p.setAttribute('aria-label','Deviations and digital twin check');p.innerHTML='<div class="dpbox"><div class="dpt"><h2>Deviations and digital twin check</h2><button type="button" data-dpx="1" aria-label="Close">Close</button></div><div id="devPanelBody"></div></div>';document.body.appendChild(p)}
- p.hidden=false;devPanelRender();if(!DEV.busy)devFetch(true)}
+function devOpen(){if(role!='tech')setRole('tech');dtab='fk';applyTab();window.scrollTo(0,0);navHl()}
 function devClose(){const p=document.getElementById('devPanel');if(p)p.hidden=true}
 document.addEventListener('click',e=>{const t=e.target;if(!t.closest)return;
  if(t.closest('[data-dpx]')||t.id=='devPanel'){devClose();return}
+ if(t.closest('[data-fktoday]')){const b=document.getElementById('tod');if(b)b.click();return}
  if(t.closest('[data-devgo]')){devClose();const c=document.getElementById('dvCard');if(c&&!c.hidden&&c.offsetParent)c.scrollIntoView({behavior:'smooth',block:'center'});else alert('The full log is on the Detailed view, Overview tab.');return}
  const s=t.closest('#devStrip');if(s){if(s.dataset.act=='today'){const b=document.getElementById('tod');if(b)b.click()}else devOpen()}});
 document.addEventListener('keydown',e=>{if(e.key=='Escape')devClose();const s=e.target&&e.target.id=='devStrip';if(s&&(e.key=='Enter'||e.key==' ')){e.preventDefault();devOpen()}});
-document.addEventListener('change',e=>{if(e.target&&e.target.id=='devSc'){DEV.sc=e.target.value;DEV.res=null;devPanelRender();devFetch(true)}});
+document.addEventListener('change',e=>{if(e.target&&e.target.id=='devSc'){DEV.sc=e.target.value;DEV.res=null;fkRender();devFetch(true)}});
 /* ESP32 twin failures go into the shared log: a part must be off for 5 seconds in a row, and back for 10 seconds, to avoid flicker */
 function devHw(p){const D=window.SunDev;if(!D||!p||!p.items)return;const H=DEV.hw||(DEV.hw={}),n=new Date(),hm=p2(n.getHours())+':'+p2(n.getMinutes()),day=typeof TODAY!=='undefined'?TODAY:cur,fac=(typeof F!=='undefined'&&F.name)||'site';
  p.items.forEach(i=>{const h=H[i.id]||(H[i.id]={bad:0,good:0,on:false});
