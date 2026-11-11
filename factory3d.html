@@ -87,14 +87,14 @@ body.embed main{height:100vh;display:flex;flex-direction:column;max-width:none}
 <h1>Sun Shine demo factory</h1>
 <p class="t">Click a part in the model, or pick one below, to see its status. Drag to rotate, scroll or pinch to zoom. The conveyor is a placeholder block at the assumed size, and the EV station stands separately on the right. Opened on its own it runs a simulator, and Connect ESP32 (USB) shows your real prototype in Chrome or Edge. Inside the lab page it shows the lab model.</p>
 <div class="tb" id="tb"><div class="r" id="chips"></div></div>
-<div class="cvwrap"><canvas id="cv"></canvas><svg class="hudsvg" id="hsvg" aria-hidden="true"></svg><div class="ovl" id="ovl"></div><div class="stbar off" id="stbar" title="Cloud, rain and flowing dots are visual cues for the solar state, not weather or power measurements."><div class="s1"><i class="sdot"></i><b id="stName">Solar: waiting for data</b><span id="stTxt"></span><span class="pill" id="stSrc"></span></div><div class="s2" id="stPol"></div><div class="ovbar" id="ovsum"></div></div>
+<div class="cvwrap"><canvas id="cv"></canvas><svg class="hudsvg" id="hsvg" aria-hidden="true"></svg><div class="ovl" id="ovl"></div><div class="stbar off" id="stbar" title="Cloud, rain and flowing dots are visual cues for the solar state, not weather or power measurements."><div class="s1"><i class="sdot"></i><b id="stName">Solar: waiting for data</b><span id="stTxt"></span><span class="pill" id="stSrc"></span><span class="pill" id="stCue" style="display:none" title="Cloud and rain on the model are a visual cue for lost sunlight. There is no weather sensor.">SIMULATED WEATHER CUE</span></div><div class="s2" id="stPol"></div><div class="ovbar" id="ovsum"></div></div>
 <div class="vc" id="vc"><div class="vcs"><div class="vcube" id="vcube"><div class="fF" data-v="3" title="Front view">Front</div><div class="fB" data-v="4" title="Back view (door)">Back</div><div class="fR" data-v="6" title="Right view">Right</div><div class="fL" data-v="5" title="Left view">Left</div><div class="fT" data-v="2" title="Top view">Top</div><div class="fD nb"></div></div></div></div>
 <div class="zoom" id="zoomb"><button id="zin" title="Zoom in" aria-label="Zoom in"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button><button class="vh" id="v1" title="Isometric view">Iso</button><button id="zout" title="Zoom out" aria-label="Zoom out"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button></div>
 <div class="dock"><div class="card" id="card"></div><div class="r" id="ctl"></div><div class="note" id="sst"></div>
 <details id="logbox" hidden><summary>Serial log (for troubleshooting)</summary><pre id="log" style="max-height:170px;overflow:auto;font-size:12px;background:var(--btn);border:1px solid var(--line);border-radius:8px;padding:8px;white-space:pre-wrap"></pre></details></div></div>
 <div class="r cnx" id="cnx"><span class="badge off" id="src">Simulated here</span><button id="conn">Connect ESP32 (USB)</button><button id="connb">Connect ESP32 (Wireless)</button></div>
 <div class="r vtog"><label><input type="checkbox" id="troof" checked> Roof</label><label><input type="checkbox" id="tpan" checked> Office front panel</label></div>
-<div class="note verbox">Page version 2026-11-12-a</div>
+<div class="note verbox">Page version 2026-11-12-b</div>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -176,7 +176,7 @@ function statLab(id){
 }
 
 /* ===== Prototype mode: reads your sketch's Serial text over Web Serial (Chrome or Edge, 115200 baud) ===== */
-const VER='2026-11-12-a';let CHG_POS=true;try{const q=localStorage.getItem('chgpos');if(q!==null)CHG_POS=q==='1';}catch(e){}
+const VER='2026-11-12-b';let CHG_POS=true;try{const q=localStorage.getItem('chgpos');if(q!==null)CHG_POS=q==='1';}catch(e){}
 function flipSign(){CHG_POS=!CHG_POS;try{localStorage.setItem('chgpos',CHG_POS?'1':'0');}catch(e){}renderUI();}
 const EV_MIN_V=1.8;/* what counts as high solar for the EV load */
 const P={panels:[{v:NaN,low:null},{v:NaN,low:null},{v:NaN,low:null}],relay:{on:null,auto:null},conv:{run:null,auto:null,pct:null},led:null,ledc:null,ledo:{g:null,r:null},ina:{st:'unknown',bus:NaN,shunt:NaN,load:NaN,ma:NaN,mw:NaN},at:0};
@@ -212,14 +212,15 @@ function spark(arr,w,h,color,zero){const v=arr.filter(isFinite);if(v.length<2)re
 function statP(id){
  if(!pFresh())return{t:'No data',k:'off',rows:[],note:'Waiting for the ESP32. If nothing appears, close the Arduino Serial Monitor (only one program can use the USB port) and press Disconnect, then Connect again.'};
  if(id.startsWith('panel')){const i=+id.slice(5)-1,p=P.panels[i];
-  return{t:p.low?'Low light':'Light detected',k:p.low?'warn':'ok',rows:[['Voltage',p.v.toFixed(2)+' V'],['Low-light limit','below 1.5 V, recovers above 1.8 V'],['Last ~90 s',spark(HIST.p[i],150,28,'#2f6fd6',false)]],note:'Read through a 10k + 10k divider on GPIO '+[32,35,34][i]+' (the sketch doubles the pin voltage).'+(P.panels.every(q=>q.low)?' All three panels are low, so the red LED is on.':'')};}
+  const nLow=P.panels.filter(q=>q.low===true).length;
+  return{t:p.low?(nLow===1?'Shaded':'Low light'):'Light detected',k:p.low?'warn':'ok',rows:[['Voltage',p.v.toFixed(2)+' V'],['Low-light limit','below 1.5 V, recovers above 1.8 V'],['Last ~90 s',spark(HIST.p[i],150,28,'#2f6fd6',false)]],note:'Read through a 10k + 10k divider on GPIO '+[32,35,34][i]+' (the sketch doubles the pin voltage).'+(P.panels.every(q=>q.low)?' All three panels are low, so the red LED is on.':nLow===1&&p.low?' Only this panel is low, so it looks like shade or a fault at this panel, not weather.':'')};}
  if(id==='battery'){const a=P.ina;
   if(a.st==='none')return{t:'No sensor',k:'bad',rows:[],note:'INA219 not detected. Check VCC, GND, SDA (GPIO18), SCL (GPIO19) and address 0x40.'};
   if(a.st!=='ok')return{t:'Waiting',k:'off',rows:[],note:'Waiting for the first INA219 reading.'};
   const v=isFinite(a.load)?a.load:a.bus,pct=Math.round(clamp((v-3.3)/0.9*100,0,100)),m=CHG_POS?a.ma:-a.ma;
   const [t,k]=m>20?['Charging','ok']:m<-20?['Discharging','warn']:['Idle','off'];
   return{t,k,rows:[['Voltage (VIN+)',v.toFixed(3)+' V'],['Net current into battery',(m>20?'charging, '+Math.round(m):m<-20?'discharging, '+Math.round(-m):'idle, '+Math.round(Math.abs(m)))+' mA'],['Power',a.mw.toFixed(0)+' mW'],['Shunt voltage',a.shunt.toFixed(2)+' mV'],['Charger relay (GPIO 5)',(P.relay.on?'ON':'OFF')+' / '+(P.relay.auto?'automatic':'manual')],['Current, last ~90 s (up = charging)',spark(HIST.ma.map(x=>CHG_POS?x:-x),150,28,'#d98a00',true)],['Conveyor right now',P.conv.run?'Running':'Stopped'],['Current direction',CHG_POS?'positive = charging':'negative = charging'],['Charge (rough estimate)',pct+'%<div class="bar '+k+'"><i style="width:'+pct+'%"></i></div>']],note:'The INA219 measures the net current through its own shunt: anything else on that wire (such as the conveyor servo) is added in, so charging minus load can read as idle. If charging shows as discharging, press Flip current direction. The percentage is only a rough estimate from voltage.'};}
- if(id==='line1')return{t:P.conv.run?'Running':'Stopped',k:P.conv.run?'ok':'off',rows:[['Control',P.conv.auto?'Automatic (2 s run, 5 s stop)':'Manual'],['Speed',P.conv.pct!=null?P.conv.pct+'%':'unknown (upload the new sketch)'],['Energy policy','never stops the conveyor']],note:'Essential production load: no energy rule on this page ever sends a stop. The buttons below are manual controls for the operator only.'};
+ if(id==='line1')return{t:P.conv.run?'Running':'Stopped',k:P.conv.run?'ok':'off',rows:[['Control',P.conv.auto?'Automatic ('+(CONV_AUTO_ALWAYS_RUN?'always running':'2 s run, 5 s stop')+')':'Manual'],['Speed',P.conv.pct!=null?P.conv.pct+'%':'unknown (upload the new sketch)'],['Energy policy','never stops the conveyor']],note:'Essential production load: no energy rule on this page ever sends a stop. The buttons below are manual controls for the operator only.'};
  const best=Math.max(0,...P.panels.map(q=>isFinite(q.v)?q.v:0)),nl=P.panels.filter(q=>q.low===true).length,gOn=P.ledo.g!==null?P.ledo.g:P.led==='GREEN',rOn=P.ledo.r!==null?P.ledo.r:P.led==='RED';
  const eg=evExpectGreen(),mG=gOn&&!rOn,mR=rOn&&!gOn,agree=eg===null||!(mG||mR)||P.ledc===false?null:(mG===eg);
  return{t:mG?'Enabled (green)':mR?'Deferred (red)':'Unknown',k:mG?'ok':mR?'warn':'off',rows:[['Panels with low light',nl+' of 3'],['Policy',EV_DEFER_ON_ANY_LOW?'defer if any panel is low':'defer below '+EV_MIN_V.toFixed(1)+' V'],['LED control',P.ledc===null?'unknown (upload the new sketch)':P.ledc?'Automatic (follows solar)':'Manual'],['Green LED',gOn?'On':'Off'],['Red LED',rOn?'On':'Off'],['ESP32 LED vs policy',agree===null?'not compared':agree?'agrees':'differs: the sketch may not have the one-panel rule yet']],note:'Simulated flexible load: a red/green LED standing in for an EV charger. No real EV load is switched. The LED is driven by the ESP32; this page only shows it. Policy: the EV load is deferred when any panel is low and re-enabled only after the panels stay recovered.'};
@@ -231,6 +232,7 @@ function applyProto(dt,now){const ok=pFresh();
  LED[0].material.color.setHex(ok&&(P.ledo.g!==null?P.ledo.g:P.led==='GREEN')?0x2ecc71:0x1d4d33);LED[1].material.color.setHex(ok&&(P.ledo.r!==null?P.ledo.r:P.led==='RED')?0xe74c3c:0x5a1f1f);
  l1.intensity=0.35+0.55*(ok?P.panels.reduce((a,p)=>a+clamp((p.v||0)/3,0,1),0)/3:0.4);
  if(ok&&P.conv.run)PR1.forEach(m=>{m.position.x+=70*dt;});placePR(PR1);
+ {const a=P.ina,mA=CHG_POS?a.ma:-a.ma,chg=ok&&P.relay.on===true&&a.st==='ok'&&mA>20;if(sel!=='battery'&&BAT.material.emissive)BAT.material.emissive.setHex(chg?(Math.round(60+50*(.5+.5*Math.sin(now/300)))<<8|0x20):0);}
 }
 let port=null,rd=null,wr=null,keep=false;
 const SER={paints:0,bytes:0,lines:0,last:0,since:0,err:''},LOG=[];
@@ -303,7 +305,7 @@ let lastKey='',dirty=true,ANCH=null,lastW=0;
 const hv=new THREE.Vector3(),TG={};
 function anchors(){if(ANCH)return ANCH;ANCH={};EL.forEach(a=>{const b=new THREE.Box3();M.filter(m=>m.userData.el===a[0]&&!m.userData.prod).forEach(m=>{m.updateMatrixWorld(true);b.expandByObject(m);});if(!b.isEmpty())ANCH[a[0]]=b.getCenter(new THREE.Vector3());});return ANCH;}
 /* one plain word per part */
-function word(s){if(s.k==='ok')return'Good';if(s.k==='off')return/no data|not connected|waiting|not calib/i.test(s.t)?'No data':s.t;if(/defer/i.test(s.t))return'Deferred';if(/paus/i.test(s.t))return'Paused';if(/low|dark|discharg/i.test(s.t))return'Low';return s.k==='bad'?'Problem':'Unusual';}
+function word(s){if(s.k==='ok')return'Good';if(s.k==='off')return/no data|not connected|waiting|not calib/i.test(s.t)?'No data':s.t;if(/^shaded$/i.test(s.t))return'Shaded';if(/defer/i.test(s.t))return'Deferred';if(/paus/i.test(s.t))return'Paused';if(/low|dark|discharg/i.test(s.t))return'Low';return s.k==='bad'?'Problem':'Unusual';}
 EL.forEach(a=>{const id=a[0],b=document.createElement('div');b.className='lab off';b.onclick=()=>select(id);ovl.appendChild(b);
  const g=document.createElementNS(NS_,'g'),p=document.createElementNS(NS_,'path'),r=document.createElementNS(NS_,'circle'),c=document.createElementNS(NS_,'circle');
  p.setAttribute('class','ld');r.setAttribute('class','ring');r.setAttribute('r',6);c.setAttribute('class','core');c.setAttribute('r',3);g.append(p,r,c);hsvg.appendChild(g);
@@ -440,6 +442,7 @@ size();requestAnimationFrame(frame);
    "Low" comes from the sketch's own LOW LIGHT flag (it already has hysteresis: below 1.5 V, recovers above 1.8 V).
    On top of that the page waits HOLD_MS before showing an improvement and shows RECOVERY for REC_MS, so the picture never flickers.
    Cloud and rain are a visual metaphor for lost sunlight, not a weather measurement. One low panel means shading or a fault at that panel. */
+const CONV_AUTO_ALWAYS_RUN=true;/* new sketch: AUTOMATIC keeps the belt running (essential load). Set false only if the ESP32 still has the old 2 s run / 5 s stop sketch. */
 const EV_DEFER_ON_ANY_LOW=true;/* demo policy: any low panel defers the EV load. Set false if the sketch still uses the old "best panel at least 1.8 V" rule. */
 const SOLS={NORMAL:0,RECOVERY:.5,DEGRADED:1,SEVERE:2,LOWSOLAR:3},SKEY=['NORMAL','DEGRADED','SEVERE','LOWSOLAR'];
 const SNAME={NORMAL:'Normal',DEGRADED:'Degraded',SEVERE:'Severe',LOWSOLAR:'Low solar',RECOVERY:'Recovery',NODATA:'No data'};
@@ -515,21 +518,31 @@ function weatherStep(dt,now){
  const stormy=SOL.cur==='SEVERE'||SOL.cur==='LOWSOLAR';
  if(stormy!==W.stormy){W.stormy=stormy;cw.classList.toggle('stormy',stormy);Object.values(TG).forEach(x=>{x.h=0;x.w=0;});dirty=true;}}
 /* top-left banner: what state the panels are in, whether it is measured or simulated, and what the demo policy does with it */
+/* a mismatch is only shown once it has lasted 3 s, so the firmware's own hold times (EV green about 7 s after light returns, relay 2 s minimum) cannot cause a flash */
+const HELD={},CVS={v:null,at:0};
+function held(k,c){const t=performance.now();if(!c){HELD[k]=0;return false;}if(!HELD[k])HELD[k]=t;return t-HELD[k]>3000;}
 function stBanner(){
  const el=$('stbar');if(!el||MINI)return;const c=SOL.cur,live=mode==='proto'&&pFresh();
  el.className='stbar '+SKIND[c];
  $('stName').textContent=c==='NODATA'?'Solar: waiting for data':'Solar: '+SNAME[c];
- $('stTxt').textContent=c==='NODATA'?'':(3-SOL.n)+' of 3 panels lit'+(c==='RECOVERY'?' · confirming recovery':'');
+ const nm=SOL.shown.map((b,i)=>b?SHORT['panel'+(i+1)]:null).filter(Boolean);
+  $('stTxt').textContent=c==='NODATA'?'':(3-SOL.n)+' of 3 panels lit'+(nm.length&&(c==='DEGRADED'||c==='SEVERE')?' · '+nm.join(' + ')+(nm.length===1?' shaded':' low'):'')+(c==='RECOVERY'?' · confirming recovery':'');
+  $('stCue').style.display=(c!=='NODATA'&&(W.storm>.15||Math.max(...W.pc)>.3))?'':'none';
  const sp=$('stSrc');sp.textContent=SOL.src==='measured'?'Measured (ESP32)':SOL.src==='simulated'?'Simulated':SOL.src?'Lab model':'';sp.style.display=SOL.src?'':'none';
  if(S&&S.mode==='feed'&&!stale()&&mode!=='proto'){el.className='stbar warn';$('stName').textContent='Reading from the Operations console';$('stTxt').textContent='not the ESP32 prototype';sp.textContent='Feed';sp.style.display='';$('stPol').innerHTML='The planner\'s schedule drawn on the model. <em>Never controls equipment.</em>';return;}
  const eg=evExpectGreen(),parts=[];
  if(live){const g=P.ledo.g!==null?P.ledo.g:P.led==='GREEN',r=P.ledo.r!==null?P.ledo.r:P.led==='RED';
-  const mG=g&&!r,mR=r&&!g,txt=mG?'green (enabled)':mR?'red (deferred)':g&&r?'both on':'off/unknown',bad=P.ledc!==false&&eg!==null&&(mG||mR)&&mG!==eg;
+  const mG=g&&!r,mR=r&&!g,txt=mG?'green (enabled)':mR?'red (deferred)':g&&r?'both on':'off/unknown',bad=held('ev',P.ledc!==false&&eg!==null&&(mG||mR)&&mG!==eg);
   parts.push('EV load (simulated LED): <em>'+txt+'</em>'+(P.ledc===false?' (manual)':bad?' <span class="wn">differs from policy</span>':''));
-  const rl=P.relay.on===null?'unknown':P.relay.on?'ON':'OFF',rbad=c==='LOWSOLAR'&&P.relay.on===true&&P.relay.auto!==false;
+  const rl=P.relay.on===null?'unknown':P.relay.on?'ON':'OFF',rbad=held('rl',c==='LOWSOLAR'&&P.relay.on===true&&P.relay.auto!==false);
   parts.push('Charger relay: <em>'+rl+'</em>'+(P.relay.auto===false?' (manual)':rbad?' <span class="wn">policy: stop charging</span>':''));}
  else if(c!=='NODATA'){parts.push('EV load (simulated): <em>'+(eg===null?'holding':eg?'enabled':'deferred')+'</em> by policy');parts.push('Charger: <em>'+(c==='LOWSOLAR'?'stop':'allowed')+'</em> by policy');}
- parts.push('Conveyor: <em>protected</em>, never stopped by energy logic');
+  if(live){const t=performance.now();if(P.conv.run!==CVS.v){CVS.v=P.conv.run;CVS.at=t;}
+   const stopAuto=CONV_AUTO_ALWAYS_RUN&&P.conv.auto===true&&P.conv.run===false&&t-CVS.at>3000;
+   if(stopAuto)parts.push('<span class="wn">\u26A0 CONVEYOR STOPPED IN AUTOMATIC MODE: check equipment</span> (the sketch should keep it running)');
+   else if(P.conv.run===false&&P.conv.auto===false)parts.push('Conveyor: <em>stopped manually</em>');
+   else parts.push('Conveyor: <em>'+(P.conv.run?'running':'stopped')+'</em> (ESP32 report), never stopped by energy logic');}
+  else parts.push('Conveyor: <em>protected</em>, never stopped by energy logic');
  $('stPol').innerHTML=parts.join(' · ');}
 setInterval(()=>{try{stBanner();}catch(e){}},250);
 
@@ -537,7 +550,7 @@ setInterval(()=>{try{stBanner();}catch(e){}},250);
    Once a second the page compares what the ESP32 reports with what the 3D model expects, over the last 60 s.
    Tolerances: panels within 25% of each other (same percent as the planner's solar rule), conveyor run share within 10 points of 2 s on / 5 s off,
    battery and EV LED direction agreeing at least 80% of the time. The result is sent to the main page ("sunshine-twin"). */
-const TW={pv:.25,runShare:2/7,runTol:.10,share:.80,win:60,minN:12,S:[],cur:{verdict:'wait',items:[],n:0}};
+const TW={pv:.25,runShare:CONV_AUTO_ALWAYS_RUN?1:2/7,runTol:CONV_AUTO_ALWAYS_RUN?.05:.10,share:.80,win:60,minN:12,S:[],cur:{verdict:'wait',items:[],n:0}};
 function twSample(){if(mode!=='proto'||!pFresh())return;
  const v=P.panels.map(p=>p.v),fin=v.map(x=>isFinite(x)?x:0),m=CHG_POS?P.ina.ma:-P.ina.ma,a=P.ina,bv=isFinite(a.load)?a.load:a.bus;
  TW.S.push({v,best:Math.max(0,...fin),run:P.conv.run,auto:P.conv.auto,relay:P.relay.on,m,ina:a.st==='ok',bpct:isFinite(bv)?clamp((bv-3.3)/0.9*100,0,100):NaN,g:P.ledo.g!==null?P.ledo.g:P.led==='GREEN',ledOK:P.ledo.g!==null||P.led!==null,ledAuto:P.ledc!==false,nl:P.panels.filter(p=>p.low===true).length});
@@ -554,7 +567,7 @@ function twEval(){const out={verdict:'wait',items:[],n:TW.S.length,at:Date.now()
  else{let ag=0;bu.forEach(x=>{const exp=x.relay&&x.bpct<98,got=x.m>20;if(exp===got||(!exp&&!got))ag++;});const sh=ag/bu.length;
   it.push({id:'battery',name:'Battery',exp:'charging only while the relay is on and not full',meas:Math.round(sh*100)+'% of readings agree',pct:sh*100,ok:sh>=TW.share,tol:'at least '+Math.round(TW.share*100)+'% agree'});}
  const cu=S_.filter(x=>x.auto===true&&x.run!==null);
- if(cu.length<14)it.push({id:'line1',name:'Conveyor belt',exp:'running '+Math.round(TW.runShare*100)+'% of the time (2 s on, 5 s off)',meas:'manual or too few readings',pct:null,ok:null,tol:'within '+Math.round(TW.runTol*100)+' points',why:'manual mode: not checked'});
+ if(cu.length<14)it.push({id:'line1',name:'Conveyor belt',exp:'running '+Math.round(TW.runShare*100)+'% of the time ('+(CONV_AUTO_ALWAYS_RUN?'always running in automatic mode':'2 s on, 5 s off')+')',meas:'manual or too few readings',pct:null,ok:null,tol:'within '+Math.round(TW.runTol*100)+' points',why:'manual mode: not checked'});
  else{const sh=cu.filter(x=>x.run).length/cu.length;it.push({id:'line1',name:'Conveyor belt',exp:Math.round(TW.runShare*100)+'% running',meas:Math.round(sh*100)+'% running',pct:sh/TW.runShare*100,ok:Math.abs(sh-TW.runShare)<=TW.runTol,tol:'within '+Math.round(TW.runTol*100)+' points'});}
  const eu=S_.filter(x=>x.ledOK&&x.ledAuto&&(EV_DEFER_ON_ANY_LOW||x.best>=EV_MIN_V||x.best<1.5));
  if(eu.length<TW.minN)it.push({id:'ev',name:nm('ev'),exp:(EV_DEFER_ON_ANY_LOW?'green LED only when no panel is low':'green LED when best panel is at least '+EV_MIN_V.toFixed(1)+' V'),meas:'manual or no LED data',pct:null,ok:null,tol:'at least '+Math.round(TW.share*100)+'% agree',why:'manual or no LED data'});
