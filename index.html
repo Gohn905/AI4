@@ -345,7 +345,7 @@ main[data-role=owner] #out>:not([data-tour]):not(#devStrip){order:-3}main[data-r
 .uvsw .seg{padding:3px}.uvsw .seg button{padding:6px 14px;font-size:13px}.uvsw[hidden]{display:none}
 .drw.wide svg{display:block;width:100%;height:auto}
 main.fit #ct_use .drw.wide{display:block}
-main.fit .plmain .drw.wide svg{max-height:calc(100vh - 300px)}
+main.fit #ct_use .drw.wide svg,main.fit #ct_use .snw svg{max-height:none!important;min-height:0!important}
 .plrail .strategy.mr{padding:7px 10px 6px;border-top:3px solid var(--c);display:flex;flex-direction:column;gap:3px}
 .plrail .strategy.mr.selected{padding:6px 9px 5px;border-top:3px solid var(--c)}
 .mr .mrh,.mr .mrf{display:flex;justify-content:space-between;gap:6px;align-items:baseline;font-size:12px}
@@ -372,6 +372,21 @@ main.fit .plrail .mr .mrsv{height:38px!important}
 @media(prefers-reduced-motion:reduce){.lvpn.bad{animation:none}}
 .lvwide .legend{justify-content:center}
 .lvgrid{grid-auto-flow:row dense}
+
+/* Live replay top: bigger 3D, ribbon in the left column */
+.lvtop{grid-template-columns:minmax(0,1fr) minmax(360px,46%)}
+.lv3d{min-height:330px}
+.lvrb{margin:6px 0 0;padding:6px 10px;font-size:13px}
+@media(max-width:1100px){.lvtop{grid-template-columns:minmax(0,1fr)}.lv3d{min-height:260px}}
+
+.pbrail{grid-template-columns:repeat(var(--n,4),minmax(0,1fr))}
+@media(max-width:900px){.pbrail{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){.pbrail{grid-template-columns:minmax(0,1fr)}}
+.pbnote{grid-column:1/-1;font-size:12px;color:var(--mut)}.pbnote b{color:var(--ink);font-size:13px;margin-right:6px}
+.pb .pbr{display:grid;grid-template-columns:34px minmax(0,1fr) 30px;gap:6px;align-items:center;font-size:11px;color:var(--mut);font-weight:600}
+.pb .pbr em{font-style:normal}.pb .pbr b{text-align:right;color:var(--ink);font-size:12px;font-variant-numeric:tabular-nums}
+.pbt{position:relative;height:11px;background:#F3EFE2;border-radius:3px}
+.pbt s{position:absolute;left:0;top:0;bottom:0;border-radius:3px;text-decoration:none;opacity:.9}
+.pbt u{position:absolute;top:-3px;bottom:-3px;width:0;border-left:1.5px dashed #252B2A;text-decoration:none}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="liveTabBtn" data-rp="live" title="Play today forward and watch the optimiser re-plan, all on one page">Live replay</button></span><span class="sp"></span><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -723,7 +738,7 @@ function pcCard(r,past,K){
   +`<g id="pcHov"><line id="pcLine" x1="${p.x.toFixed(1)}" x2="${p.x.toFixed(1)}" y1="${T}" y2="${H-B}" stroke="${col}" stroke-opacity=".5"/><circle id="pcHalo" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="11" fill="${col}" fill-opacity=".25"/><circle id="pcDot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="6" fill="${col}" stroke="#fff" stroke-width="2.5"/></g>`
   +xAxis(xf,H-B,h0,h1,st)+`</svg><div id="pcTip" class="pctip" style="left:${p.left}%;top:${p.top}%">${p.html}</div></div>`
   +`<p class="note">${live?'The part after the line is the prediction, corrected for what has been seen so far.':past?'Rebuilt from recorded weather, not from an inverter reading.':''} Smoothed between 30-minute values. Move over the chart to read a value.</p>`}
-function draw(r,b0,win,now,wide){const W=wide?1000:760,H=wide?330:290,L=54,B=30,T=10,bw=(W-L-8)/NS,hb=bw*S,ax=niceAxis(0,Math.max(...r.ld,...b0.ld,...r.sol,...r.g.map((g,h)=>g+r.b[h]),1)*1.03),mx=ax.hi,y=v=>H-B-(v/mx)*(H-B-T);
+function draw(r,b0,win,now,wide){const W=wide?1000:760,H=wide?320:290,L=54,B=30,T=10,bw=(W-L-8)/NS,hb=bw*S,ax=niceAxis(0,Math.max(...r.ld,...b0.ld,...r.sol,...r.g.map((g,h)=>g+r.b[h]+Math.max(r.sol[h],r.d[h])+Math.max(0,b0.ld[h]-r.ld[h])),1)*1.03),mx=ax.hi,y=v=>H-B-(v/mx)*(H-B-T);
  let s='<defs><pattern id="mv" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--shift)" opacity=".30"/><rect width="2.5" height="6" fill="var(--shift)"/></pattern></defs>';
  s+=yGrid(ax,y,L,W-8)+yTitle(T,H-B,'kW');
  if(win)s+=`<rect x="${L+win[0]*hb}" y="${H-B+3}" width="${(win[1]-win[0])*hb}" height="3" fill="var(--grid)" opacity=".5"/>`;
@@ -884,11 +899,12 @@ function ownerSteps(r,b){const cap=+F.bat||0,L=[],it=(i,t,p)=>`<div class="actio
  if(r.c.mdH.length)L.push(it('&#8600;','Billed peak','Hold it to '+N0(r.peak)+' kW.'));
  return L.join('')}
 function actCard(r,b){return `<div class="card" data-tour="actions"><div class="cardhead"><div><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><h2 style="margin:0">Recommended next steps</h2><span class="badge amber">For your review</span></div><div class="muted small">For this strategy</div></div></div><div data-role="owner">${ownerSteps(r,b)}</div><ul data-role="tech">${recs(r,b)}</ul><button class="on" data-role="owner" data-goto="1" style="width:100%;margin-top:15px">View detailed energy plan &rarr;</button></div>`}
+const co2NS=q=>{const n=sum(q.ld)*DT*F.ef;return n>0?(q.co2/n-1)*100:null},co2T=q=>{const v=co2NS(q);return v==null?'':'CO&#8322; '+(v>=0?'+':'&minus;')+N0(Math.abs(v))+'% vs no solar'};
 function miniRail(R,b){const C={base:['Baseline','#6b7280'],cost:['Cost-saving','#F59E0B'],bal:['Balanced','#2563EB'],zero:['Lowest-carbon','#16803D']},K=['cost','bal','zero'].filter(k=>R[k]),W=240,H=46,mx=Math.max(1,b.g.reduce((m,v)=>Math.max(m,v),0),...K.map(k=>Math.max(...R[k].g)))*1.08,
   P=a=>a.map((v,i)=>[i/(NS-1)*W,H-2-v/mx*(H-6)]),
   spark=(a,col,id)=>{const pt=P(a),ln=monoPath(pt);return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" class="mrsv" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".42"/><stop offset="1" stop-color="${col}" stop-opacity=".02"/></linearGradient></defs><path d="${ln}L${W} ${H}L0 ${H}Z" fill="url(#${id})"/><path d="${ln}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`},
   card=(k,x)=>{const sv=b.cost>0?(1-x.cost/b.cost)*100:0,dc=b.co2?(x.co2/b.co2-1)*100:0,ib=k=='base';
-   return `<button class="strategy mr${sel==k?' selected':''}" data-sc="${k}" style="--c:${C[k][1]}" aria-label="${C[k][0]}: bill ${money(x.cost)}${ib?'':', saves '+N1(sv)+'%'}, billed peak ${N0(x.peak)} kW"><span class="mrh"><b>${C[k][0]}</b><span>${money(x.cost)}</span></span>${spark(x.g,C[k][1],'mrg'+k+(++snN))}<span class="mrf"><span class="${ib?'':'sgood'}">${ib?'Solar only':'saves '+N1(sv)+'%'}</span><span>Peak ${N0(x.peak)} kW${!ib&&b.co2?' &middot; CO&#8322; '+(dc>=0?'+':'')+N1(dc)+'%':''}</span></span></button>`};
+   return `<button class="strategy mr${sel==k?' selected':''}" data-sc="${k}" style="--c:${C[k][1]}" aria-label="${C[k][0]}: bill ${money(x.cost)}${ib?'':', saves '+N1(sv)+'%'}, billed peak ${N0(x.peak)} kW"><span class="mrh"><b>${C[k][0]}</b><span>${money(x.cost)}</span></span>${spark(x.g,C[k][1],'mrg'+k+(++snN))}<span class="mrf"><span class="${ib?'':'sgood'}">${ib?'Solar only':'saves '+N1(sv)+'%'}</span><span>Peak ${N0(x.peak)} kW</span></span><span class="mrf"><span>${co2T(x)}</span></span></button>`};
  return `<div class="plrail" data-tour="strategies"><div class="note" style="margin:0 0 2px"><b>Compare plans</b> (grid import, same scale). Click one to open it.</div>`+card('base',b)+K.map(k=>card(k,R[k])).join('')+`</div>`}
 let planView='all',dpView='plan',snReg={},snN=0;
 const SNC={base:['Solar only','#6b7280'],cost:['Cost-saving','#F59E0B'],bal:['Balanced','#2563EB'],prod:['Production-first','#b24fc9'],zero:['Lowest-carbon','#16803D']};
@@ -910,22 +926,17 @@ function scenChart(R,b,c){
  const id='s'+(++snN);snReg[id]={L,bw,all,R,b};{const ks=Object.keys(snReg);if(ks.length>12)delete snReg[ks[0]]}
  const chips=all.map(k=>{const q=R[k],sv=b.cost>0?(1-q.cost/b.cost)*100:0,dc=b.co2?(q.co2/b.co2-1)*100:0;
   return `<button class="snc${sel==k?' on':''}" data-sc="${k}" style="--c:${SNC[k][1]}" aria-label="${SNC[k][0]}: bill ${money(q.cost)}, billed peak ${N0(q.peak)} kW"><b>${SNC[k][0]}</b><span class="snv">${money(q.cost)}</span><span class="tiny sgood">${k=='base'?'no battery, no shifting':'saves '+N1(sv)+'%'}</span><span class="tiny">Peak ${N0(q.peak)} kW${k=='base'||!b.co2?'':' &middot; CO&#8322; '+(dc>=0?'+':'')+N1(dc)+'%'}</span></button>`}).join('');
- const bars=scBars(R,b,all);
+ const bars=planBars(R,b,all);
  return {bars,chart:`<div class="snw"><svg data-sn="${id}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Grid import through the day for each plan. Move over the chart to compare them."><g>${s}</g><rect class="snhl" x="0" y="${T}" width="${bw}" height="${H-B-T}" fill="#000" opacity=".07" display="none" pointer-events="none"/></svg><div class="drtip sntip ph">${SNPH}</div></div><div class="legend"><span><i style="background:var(--solar);opacity:.35"></i>Solar generated</span>${all.map(k=>`<span><i style="background:${SNC[k][1]}"></i>${SNC[k][0]}</span>`).join('')}</div>`,chips:`<div class="snrow" data-tour="strategies">${chips}</div>`}}
 const SNPH='Move over the chart to compare the plans in that half-hour.';
-/* grouped bars, same style as the Operations console's Scenario comparison: index, solar only = 100, lower is better */
-function scBars(R,b,all){const M=[['Electricity cost',q=>q.cost],['CO₂ emissions',q=>q.co2],['Billed peak',q=>q.peak],['Grid energy',q=>sum(q.g)*DT]],
-  W=760,H=250,m={l:44,r:10,t:16,b:30},iw=W-m.l-m.r,ih=H-m.t-m.b,gw=iw/M.length,ks=all.filter(k=>R[k]),bw=Math.min(34,gw*.8/ks.length),
-  val=(k,f)=>{const a=f(R.base||b),v=f(R[k]);return a>0&&isFinite(v)?v/a*100:NaN};
- let hi=120;ks.forEach(k=>M.forEach(([,f])=>{const v=val(k,f);if(v>hi)hi=Math.ceil(v/20)*20}));
- const Y=v=>m.t+ih*(1-v/hi);let g='';
- for(let v=0;v<=hi;v+=hi/6){const yy=Y(v).toFixed(1);g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${yy}" y2="${yy}" stroke="#EDE6D0"/><text x="${m.l-6}" y="${(+yy+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#5B6360">${N0(v)}</text>`}
- M.forEach(([n,f],i)=>{const cx=m.l+gw*(i+.5);ks.forEach((k,j)=>{const v=val(k,f);if(!isFinite(v))return;const xx=cx-bw*ks.length/2+j*bw,yy=Y(v),on=k==sel;
-   g+=`<rect x="${xx.toFixed(1)}" y="${yy.toFixed(1)}" width="${(bw-3).toFixed(1)}" height="${Math.max(0,m.t+ih-yy).toFixed(1)}" rx="3" fill="${SNC[k][1]}" opacity="${on||sel=='base'?1:.55}"${on?' stroke="#252B2A" stroke-width="1.2"':''}><title>${esc(n+' - '+SNC[k][0]+': '+N0(v))}</title></rect>`;
-   if(bw>=20)g+=`<text x="${(xx+(bw-3)/2).toFixed(1)}" y="${(yy-4).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#252B2A">${N0(v)}</text>`});
-  g+=`<text x="${cx.toFixed(1)}" y="${H-10}" text-anchor="middle" font-size="12" fill="#5B6360">${n} &darr;</text>`});
- g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${Y(100).toFixed(1)}" y2="${Y(100).toFixed(1)}" stroke="#252B2A" stroke-dasharray="6 4" stroke-width="1.5"/>`;
- return `<div class="scb"><div class="scbh"><b>Scenario comparison</b><span class="note">solar only = 100 &middot; &darr; lower is better</span></div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Scenario index, solar only = 100">${g}</svg></div>`}
+/* All plans: one card per plan with its own bars (index, solar only = 100, lower is better) */
+function planBars(R,b,all){const M=[['Cost',q=>q.cost,q=>money(q.cost)],['Peak',q=>q.peak,q=>N0(q.peak)+' kW'],['CO₂',q=>q.co2,q=>N1(q.co2/1000)+' t']],ks=all.filter(k=>R[k]),B0=R.base||b,
+  idx=(k,f)=>{const a=f(B0),v=f(R[k]);return a>0&&isFinite(v)?v/a*100:NaN};
+ let hi=120;ks.forEach(k=>M.forEach(([,f])=>{const v=idx(k,f);if(v>hi)hi=Math.ceil(v/20)*20}));
+ const card=k=>{const q=R[k],ib=k=='base',sv=b.cost>0?(1-q.cost/b.cost)*100:0;
+  const rows=M.map(([n,f,fmt])=>{const v=idx(k,f),w=isFinite(v)?Math.max(0,v)/hi*100:0;return `<span class="pbr" title="${n}: ${fmt(q)} (${isFinite(v)?N0(v):'-'})"><em>${n}</em><span class="pbt"><s style="width:${w.toFixed(1)}%;background:${SNC[k][1]}"></s><u style="left:${(100/hi*100).toFixed(1)}%"></u></span><b>${isFinite(v)?N0(v):'-'}</b></span>`}).join('');
+  return `<button class="strategy mr pb${sel==k?' selected':''}" data-sc="${k}" style="--c:${SNC[k][1]}" aria-label="${SNC[k][0]}: bill ${money(q.cost)}, billed peak ${N0(q.peak)} kW"><span class="mrh"><b>${SNC[k][0]}</b><span>${money(q.cost)}</span></span><span class="mrf"><span class="${ib?'':'sgood'}">${ib?'Baseline':'saves '+N1(sv)+'%'}</span><span>Peak ${N0(q.peak)} kW</span></span>${rows}<span class="mrf"><span>${co2T(q)}</span></span></button>`};
+ return `<div class="plrail pbrail" style="--n:${ks.length}"><div class="pbnote"><b>Scenario comparison</b> <span>bars: solar only = 100 &middot; &darr; lower is better</span></div>${ks.map(card).join('')}</div>`}
 function snMove(e){const svg=e.target&&e.target.closest?e.target.closest('.snw svg'):null;
  document.querySelectorAll('.snw').forEach(w=>{if(!svg||!w.contains(svg)){const t=w.querySelector('.sntip'),h=w.querySelector('.snhl');if(t){t.innerHTML=SNPH;t.classList.add('ph')}if(h)h.setAttribute('display','none')}});
  if(!svg)return;const g=snReg[svg.dataset.sn];if(!g)return;const tip=svg.parentNode.querySelector('.sntip'),hl=svg.querySelector('.snhl');
@@ -1100,15 +1111,16 @@ function liveRender(j,q,ms){LN=j.steps;LSx=LN/24;const fe=j.forecast_error,ex=j.
   ['Day cost, old plan',money(o.cost),'','estimate'],['Day cost, re-planned',money(n.cost),'good','estimate'],['Saving from re-planning',money(ex.saving_rm),ex.saving_rm>0.5?'good':'',ex.saving_pct==null?'':N1(ex.saving_pct)+'% of the old-plan day']]);
  const over=n.limit_violation_steps>0&&lim>0?`<div class="ribbon warn"><b>GRID LIMIT.</b> Even the new plan is expected to exceed ${N0(lim)} kW for ${hrsL(n.limit_violation_steps)} (highest ${N0(n.max_grid_kw)} kW).</div>`:'';
  const R=window.SunDevRules||{pv:.25,load:.2};try{if(typeof DEV!='undefined')DEV.lp=Math.max(0,...s.forecast_load)}catch(e){}
- const rib=j.preview?'<b>PREVIEW.</b> Nothing has played yet: this is the plan from the forecast, with the clock at '+now+'. Press <b>Start</b> to play the day.':lvRep(j)?'<b>LIVE REPLAY.</b> Simulated clock, up to '+now+'. Before '+tmL(lvSim.k0)+' the forecast stands in. After that, solar is '+(lvSim.src=='lamp'?'your prototype lamp (panel voltage &divide; '+LAMP_FULL.toFixed(1)+' V = share of forecast)':'the slider')+' and demand is the forecast times the demand slider. The rest of the day is a corrected forecast. Not metered; nothing is controlled.':`<b>${j.simulated?'SIMULATED REPLAY.':'MEASURED DATA.'}</b> Up to ${now}. ${j.simulated?'The day so far is the forecast with simulated deviations; it is not measured.':'The rest of the day is a corrected forecast, not a measurement.'}`;
- $('lvOut').innerHTML=`<div class="ribbon${j.simulated?'':' past'}">${rib}</div>${over}
+ const rib=j.preview?'<b>PREVIEW.</b> Forecast plan at '+now+'. Press <b>Start</b> to play the day.':lvRep(j)?'<b>LIVE REPLAY.</b> Simulated clock, up to '+now+'. Before '+tmL(lvSim.k0)+' the forecast stands in. After that, solar is '+(lvSim.src=='lamp'?'your prototype lamp (panel voltage &divide; '+LAMP_FULL.toFixed(1)+' V = share of forecast)':'the slider')+' and demand is the forecast times the demand slider. The rest of the day is a corrected forecast. Not metered; nothing is controlled.':`<b>${j.simulated?'SIMULATED REPLAY.':'MEASURED DATA.'}</b> Up to ${now}. ${j.simulated?'The day so far is the forecast with simulated deviations; it is not measured.':'The rest of the day is a corrected forecast, not a measurement.'}`;
+ const rbH=`<div class="ribbon lvrb${j.simulated?'':' past'}">${rib}</div>`;if($('lvRib'))$('lvRib').innerHTML=rbH;
+ $('lvOut').innerHTML=`${$('lvRib')?'':rbH}${over}
  ${dq.warn?`<div class="ribbon warn"><b>CHECK YOUR DATA.</b> Your grid readings differ from what the other readings imply by ${N0(dq.grid_gap_kw)} kW on average (${N0(dq.grid_gap_pct_of_load)}% of load). Check units, timezone and whether load includes EV charging.</div>`:''}
  ${j.learned&&j.learned.applied?`<p class="note" style="margin:6px 0"><b>Learning applied.</b> The forecast was first corrected with what was learned over ${j.learned.days} day${j.learned.days==1?'':'s'}. Average error since midnight: solar ${N0(fe.pv.mae_kw)} kW (raw ${N0(j.forecast_error_raw.pv.mae_kw)} kW), load ${N0(fe.load.mae_kw)} kW (raw ${N0(j.forecast_error_raw.load.mae_kw)} kW).</p>`:''}
  ${tiles}
  <div class="lvgrid">
+ <div class="lvbox lvwide"><h3 class="sec">Energy plan: where each kW comes from <span class="note">(${esc(q.m.n)}, re-optimised at ${now})</span></h3>${lvPlanChart(s,K,c,P,lim)}</div>
  ${ck.html}
  <div class="lvbox"><h3 class="sec">Battery charge</h3>${lvSocChart(soc,K,q.m.rs||0)}</div>
- <div class="lvbox lvwide"><h3 class="sec">Energy plan: where each kW comes from <span class="note">(${esc(q.m.n)}, re-optimised at ${now})</span></h3>${lvPlanChart(s,K,c,P,lim)}</div>
  <div class="lvbox">${liveChart('Solar: forecast vs reading vs corrected',s.forecast_pv,s.actual_pv,s.belief_pv,K,'#F59E0B',R.pv)}${lvLeg([['#BDB48F','Forecast',1],['#F59E0B',lvRep(j)?'Live reading':'Measured'],['#F59E0B','Corrected rest of day',1]])}</div>
  <div class="lvbox">${liveChart('Site demand (without EV): forecast vs reading vs corrected',s.forecast_load,s.actual_load,s.belief_load,K,'#5B6360',R.load)}${lvLeg([['#BDB48F','Forecast',1],['#5B6360',lvRep(j)?'Live reading':'Measured'],['#5B6360','Corrected rest of day',1]])}</div>
  <div class="lvbox"><h3 class="sec">Grid import: old plan vs re-optimised</h3>${lvGridChart(s,K,c,lim,n.billed_peak_kw)}</div>
@@ -1185,7 +1197,7 @@ window.addEventListener('message',e=>{const d=e.data;if(!d||d.type!='sunshine-pr
  if(LAMP.test)return;if(d.off||!d.P||!d.P.panels){LAMP.off=true;return}LAMP.off=false;LAMP.v=d.P.panels.map(p=>p.v==null?NaN:+p.v);LAMP.low=d.P.panels.map(p=>p.low===true?true:p.low===false?false:null);LAMP.at=Date.now()-(+d.age||0)});
 const lampFresh=()=>!LAMP.off&&Date.now()-LAMP.at<3500;
 function lampRatio(){if(!lampFresh())return null;const v=LAMP.v.filter(x=>isFinite(x));if(!v.length)return null;return Math.max(0,Math.min(1.2,v.reduce((a,b)=>a+b,0)/v.length/LAMP_FULL))}
-function liveCard(){const td=cur==TODAY;return `<div class="card lvpage" data-role="tech" data-tour="live"><div class="lvhead"><h2 style="margin:0">Live replay</h2><span class="badge amber">SIMULATION &middot; recommendation only</span><span class="note" style="margin:0">A day plays forward in 15-minute steps. After every step the optimiser measures the forecast error, corrects the rest of the day and re-plans. No equipment is controlled.</span></div>
+function liveCard(){const td=cur==TODAY;return `<div class="card lvpage" data-role="tech" data-tour="live"><div class="lvhead"><h2 style="margin:0">Live replay</h2><span class="badge amber">SIMULATION &middot; recommendation only</span><span class="note" style="margin:0">15-minute steps. Re-plans after each step. Nothing is controlled.</span></div>
 ${td?`<div class="lvtop"><div class="lvtopl"><div class="lvctl"><label class="note">Strategy <select id="lvMd">${MODES.filter(m=>m.k!='prod').map(m=>`<option value="${m.k}"${m.k==(sel=='bal'?'bal':sel=='zero'?'zero':'cost')?' selected':''}>${m.n}</option>`).join('')}</select></label>
 <label class="note">Solar from <select id="lvSrc"><option value="lamp" selected>Prototype lamp</option><option value="slider">Slider (no board)</option><option value="sc">Scenario (no board)</option></select></label>
 <span id="lvScW" hidden><select id="lvSc">${Object.entries(ROSC).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join('')}</select></span>
@@ -1194,16 +1206,17 @@ ${td?`<div class="lvtop"><div class="lvtopl"><div class="lvctl"><label class="no
 <label class="note">Step every <select id="lvSpd"><option value="s5">5 s</option><option value="s10" selected>10 s</option><option value="s20">20 s</option><option value="s40">40 s</option><option value="man">I press Next</option></select></label></div>
 <div class="lpbox" id="lpBox"><div id="lpLamp"><div id="lpSt"></div><div id="lpV" class="note"></div></div>
 <label class="note" id="lpSl" hidden>Solar as share of forecast <input type="range" id="lvSl" min="0" max="120" value="100"> <b id="lvSlV">100%</b></label>
-<label class="note" id="lpLd">Demand as share of forecast <input type="range" id="lvLd" min="60" max="140" value="100"> <b id="lvLdV">100%</b></label></div>
+</div>
 <div class="lvrun"><div id="lvTime" class="lvtime"><span class="lvt">08:00</span> <span class="badge amber">SIMULATED CLOCK</span> <span class="note">ready</span></div>
 <button class="on" id="lvGo" data-lvs="go">&#9654; Start</button><button data-lvs="next">Next step</button><button data-lvs="reset">Reset</button><span class="sp"></span><div id="lvPanels" class="pchs" hidden></div></div>
 <div id="lvFault" class="lvfault" role="alert" hidden></div>
 <div id="lvDev" class="lvfault lvdev" role="alert" hidden></div>
-<div class="barwrap" style="margin:8px 0 4px"><div class="barfill" id="lvProg" style="width:33.3%;background:var(--amb)"></div></div></div>
+<div class="barwrap" style="margin:8px 0 4px"><div class="barfill" id="lvProg" style="width:33.3%;background:var(--amb)"></div></div><div id="lvRib"></div></div>
 <div class="lv3d"><iframe id="lv3d" src="factory3d.html?embed=1&amp;proto=1&amp;mini=1&amp;v=2026-11-12-m" tabindex="-1" title="3D model of the demo factory"></iframe><span class="mini3dlbl">3D demo factory</span></div></div>
 <span id="lvMsg" class="note"></span><div id="lvOut" style="margin-top:8px"></div>
 <div class="lvbox" style="margin-top:12px"><h3 class="sec" style="margin-top:0">Decisions so far</h3><ul id="lvLog" class="lvlog"><li class="note" style="border:0;background:none;padding:0">Press <b>Start</b>: each step's decision appears here.</li></ul><div id="lvEnd"></div></div>
 <p class="note" style="margin:8px 0 0">${lrnStat()} <button data-lrc="1">Forget what was learned</button></p>
+<details style="margin-top:8px"><summary class="note"><b>Test setting</b>: demand as share of forecast</summary><div class="lpbox"><label class="note" id="lpLd">Demand as share of forecast <input type="range" id="lvLd" min="60" max="140" value="100"> <b id="lvLdV">100%</b></label></div></details>
 <details style="margin-top:10px"><summary class="note"><b>Other ways to give it data</b>: a measured CSV file, or one simulated replay at a fixed time</summary>
 <div class="bar"><label class="note">Measured data (CSV): <input type="file" id="lvFile" accept=".csv,text/csv"></label> <button data-lvt="1">Download CSV template</button></div>
 <p class="note">Columns: <code>load_kw</code> (site load, <b>without</b> EV charging) and <code>solar_kw</code> are required; optional <code>battery_kw</code> (discharge +, charging &minus;), <code>ev_kw</code>, <code>grid_kw</code>, <code>soc_kwh</code>. One row per 30 minutes from 00:00 today.</p>
@@ -1239,7 +1252,7 @@ function lvGo(){const s=lvSim;
 function lvNext(){if(!lvSim||lvSim.done)lvInit();const s=lvSim;if(s.timer||s.busy)return;
  const k=s.last<0?s.k0:s.last+1;if(k>s.end){s.done=true;lvEnd();lvDraw();return}
  s.t=k*60/LVS;$('lvMsg').textContent='';lvStep(k);lvDraw()}
-function lvReset(){lvStop();lvSim=null;$('lvLog').innerHTML='';$('lvEnd').innerHTML='';$('lvOut').innerHTML='';$('lvMsg').textContent='';lvDraw();lvPreview()}
+function lvReset(){lvStop();lvSim=null;if($('lvRib'))$('lvRib').innerHTML='';$('lvLog').innerHTML='';$('lvEnd').innerHTML='';$('lvOut').innerHTML='';$('lvMsg').textContent='';lvDraw();lvPreview()}
 function lvTick(){const s=lvSim;if(!s||!s.timer)return;if(!$('lvTime')){lvStop();return}
  if(s.busy){lvDraw();return}                      // the clock waits while the server plans, so the time shown is the time of the data
  if(s.last>=s.end){s.done=true;lvStop();lvEnd();lvDraw();return}
@@ -1367,7 +1380,7 @@ function dayHtml(R,rows){
  return rib+offB+limB+headCard(r,b,c,sv,past)+`${kpiRow(r,b,c,sv)}${costCard(r,b,sv,past)}${mini3dCard()}${actCard(r,b)}${window.SunDev?SunDev.card():''}${apCard()}
  ${flowCard(r,b)}
  <div class="card${past?'':' fcast'}" data-tour="chart" data-role="tech"><div class="plangrid"><div class="plmain"><div class="bar" style="margin-bottom:6px"><h2 id="chTitle" style="margin:0">${chT(past)}</h2>${stratChart()}<span class="sp"></span><span id="dpvT" class="uvsw"${chartTab=='use'?'':' hidden'}><span class="seg" role="group" aria-label="Daily plan view"><button data-uv="plan" class="${dpView=='plan'?'on':''}" aria-pressed="${dpView=='plan'}">${esc(NAMES[sel].replace('Optimiser: ',''))}</button><button data-uv="all" class="${dpView=='all'?'on':''}" aria-pressed="${dpView=='all'}">All plans</button></span></span></div>
- <div id="ct_use"${chartTab=='use'?'':' hidden'}><div id="uv_plan"${dpView=='plan'?'':' hidden'}>${draw(r,b,c.win,null,1)}${miniRail(R,b)}</div><div id="uv_all"${dpView=='all'?'':' hidden'}>${(()=>{const sc=scenChart(R,b,c);return sc.chart+`<div class="scgrid">${sc.bars}<div class="sccol">${sc.chips}</div></div>`})()}</div></div><div id="ct_wx"${chartTab=='wx'?'':' hidden'}>${fcCard(fc,past,fn)}</div><div id="ct_pc"${chartTab=='pc'?'':' hidden'}>${pcCard(r,past)}</div><div id="ct_pl"${chartTab=='pl'?'':' hidden'}>${panelCard(r)}</div>${cur==TODAY?`<div id="ct_rt"${chartTab=='rt'?'':' hidden'}>${rtShell()}</div>`:''}</div><div class="chside"><span id="chTabs">${cur==TODAY?`<button data-ct="rt" class="${chartTab=='rt'?'on':''}">Energy usage</button> `:''}<button data-ct="use" class="${chartTab=='use'?'on':''}" data-tp="${past?1:0}">Daily plan</button> <button data-ct="wx" class="${chartTab=='wx'?'on':''}">${past?'Recorded weather':'Predicted weather'}</button> <button data-ct="pc" class="${chartTab=='pc'?'on':''}">Power curve</button> <button data-ct="pl" class="${chartTab=='pl'?'on':''}">Panel layout</button></span></div></div></div>
+ <div id="ct_use"${chartTab=='use'?'':' hidden'}><div id="uv_plan"${dpView=='plan'?'':' hidden'}>${draw(r,b,c.win,null,1)}${miniRail(R,b)}</div><div id="uv_all"${dpView=='all'?'':' hidden'}>${(()=>{const sc=scenChart(R,b,c);return sc.chart+sc.bars})()}</div></div><div id="ct_wx"${chartTab=='wx'?'':' hidden'}>${fcCard(fc,past,fn)}</div><div id="ct_pc"${chartTab=='pc'?'':' hidden'}>${pcCard(r,past)}</div><div id="ct_pl"${chartTab=='pl'?'':' hidden'}>${panelCard(r)}</div>${cur==TODAY?`<div id="ct_rt"${chartTab=='rt'?'':' hidden'}>${rtShell()}</div>`:''}</div><div class="chside"><span id="chTabs">${cur==TODAY?`<button data-ct="rt" class="${chartTab=='rt'?'on':''}">Energy usage</button> `:''}<button data-ct="use" class="${chartTab=='use'?'on':''}" data-tp="${past?1:0}">Daily plan</button> <button data-ct="wx" class="${chartTab=='wx'?'on':''}">${past?'Recorded weather':'Predicted weather'}</button> <button data-ct="pc" class="${chartTab=='pc'?'on':''}">Power curve</button> <button data-ct="pl" class="${chartTab=='pl'?'on':''}">Panel layout</button></span></div></div></div>
  ${stratCards(R,b)}
  <div class="card" data-tour="compare" data-role="tech"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
  ${(()=>{const cs=['cost','bal','zero'].map(k=>R[k]&&R[k].cost);if(cs.some(x=>x==null)||!cs.every(x=>Math.abs(x-cs[0])<0.01)||rows.every(x=>Math.abs(R[x.k].cost-b.cost)<0.01))return'';const su=sum((b.sol||[]).map((v,i)=>Math.max(0,v-b.ld[i])))*DT;return '<p class="note"><b>Why do the strategies match?</b> '+(su>0.5?'On this day solar is more than the site needs for part of the day (about '+N0(su)+' kWh of surplus). The surplus fills the battery for free, so cost and carbon do not compete. ':'On this day cost and carbon do not compete, so every strategy reaches the same plan. ')+'The strategies only differ when their goals conflict. Open the <b>Battery size sweep</b> (Advanced) to see whether a different battery size would use more of it.</p>'})()}${rows.length>1&&rows.every(x=>Math.abs(R[x.k].cost-b.cost)<0.01)?'<p class="note"><b>Why are all the strategies the same?</b> On this day no peak rate or maximum demand charge applies (for example a weekend on a time-of-use tariff), so moving energy or using the battery cannot lower the bill. Try a weekday.</p>':''}<div class="qrow"><div class="qt">${tradeoff(R)}</div><details class="qh"><summary title="Yearly saving, tariff check and carbon notes" aria-label="Notes on this table">?</summary><div class="qb"><p class="note">${ann}</p><p class="note">${tc}</p><p class="note">${carbon}</p></div></details></div></div>
