@@ -353,7 +353,7 @@ main.fit .snw svg{max-height:calc(100vh - 430px);min-height:200px}main.fit .snc{
 <p id="pgRo" hidden style="margin:8px 0 0"><b>Your role is view-only here:</b> you can watch the readings but not connect or control the hardware.</p></div></details></div>
 <div class="pgrow"><b>Before you connect:</b> Chrome or Edge on a desktop &middot; close the Arduino Serial Monitor &middot; connect the ESP32 once (one page per COM port) &middot; light all three panels first.</div>
 <div class="pgrow pgtags"><span class="pgtag warn">EV LED = representative flexible-load indicator, not a real EV load</span><span class="pgtag warn">Battery % is an estimate; trust measured voltage, current and relay state</span></div><div class="note" style="margin:-4px 0 6px">Cannot connect here? <a href="factory3d.html" target="_blank" rel="noopener">Open the factory in its own window</a>, then press Connect ESP32.</div>
-<iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1&amp;v=2026-11-12-d" allow="serial; bluetooth" title="Live 3D prototype" style="width:100%;height:calc(100vh - 150px);min-height:460px;border:0;border-radius:0;margin:0;background:transparent;display:block"></iframe>
+<iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1&amp;v=2026-11-12-e" allow="serial; bluetooth" title="Live 3D prototype" style="width:100%;height:calc(100vh - 150px);min-height:460px;border:0;border-radius:0;margin:0;background:transparent;display:block"></iframe>
 <div class="note" style="margin:8px 0 0">Press <b>Connect ESP32 (Wireless)</b> or <b>(USB)</b> inside the model, then click a part to see its readings and controls. Needs Chrome or Edge (Bluetooth also works on Android). USB: close the Arduino Serial Monitor first. Only one connection to the ESP32 at a time, so disconnect the Lab model tab&rsquo;s USB connection before using this one.</div>
 </div>
 <div id="facPanel" data-role="tech" hidden>
@@ -676,7 +676,7 @@ const PERM={
  auditor:{see:null,act:['audit'],tabs:['ov','fc','op','pl','ad','proto','fa']}
 };
 let who='owner';
-const PROTO='factory3d.html?embed=1&proto=1&v=2026-11-12-d';
+const PROTO='factory3d.html?embed=1&proto=1&v=2026-11-12-e';
 const canSee=k=>{const P=PERM[who];return !P.see||P.see.includes(k)};
 const canAct=k=>{const P=PERM[who];return !P.act||P.act.includes(k)};
 function tabOk(t){const P=PERM[who];return !P.tabs||P.tabs.includes(t)}
@@ -734,7 +734,7 @@ function costCard(r,b,sv,past){const sb=sel=='base',w=b.cost>0?Math.min(100*r.co
  <div class="costbars"><div class="barlabel">Baseline</div><div class="barwrap"><div class="barfill base" style="width:100%"></div></div><div class="barvalue">${money(b.cost)}</div></div>
  <div class="costbars"><div class="barlabel">${sb?'Baseline':NAMES[sel].replace('Optimiser: ','')}</div><div class="barwrap"><div class="barfill opt" style="width:${w.toFixed(1)}%"></div></div><div class="barvalue">${money(r.cost)}</div></div>
  <div class="footnote">${past?'Estimate from recorded weather.':'Forecast estimate, not a measurement.'}<span data-role="tech"> Daily cost includes the monthly demand charge spread over 30 days. Check the tariff assumptions against your own bill.</span></div></div>`}
-function mini3dCard(){return `<div class="card mini3dcard" data-tour="mini3d" data-role="tech"><div class="mini3d" data-go="proto" role="button" tabindex="0" title="Open the Live prototype"><iframe src="factory3d.html?embed=1&amp;proto=1&amp;mini=1&amp;v=2026-11-12-d" tabindex="-1" loading="lazy" title="3D model of the demo factory"></iframe><span class="mini3dlbl">3D demo factory &middot; open Live prototype &rarr;</span></div></div>`}
+function mini3dCard(){return `<div class="card mini3dcard" data-tour="mini3d" data-role="tech"><div class="mini3d" data-go="proto" role="button" tabindex="0" title="Open the Live prototype"><iframe src="factory3d.html?embed=1&amp;proto=1&amp;mini=1&amp;v=2026-11-12-e" tabindex="-1" loading="lazy" title="3D model of the demo factory"></iframe><span class="mini3dlbl">3D demo factory &middot; open Live prototype &rarr;</span></div></div>`}
 function ownerSteps(r,b){const cap=+F.bat||0,L=[],it=(i,t,p)=>`<div class="action"><div class="action-icon">${i}</div><div><strong>${t}</strong><p>${p}</p></div></div>`;
  if(sel=='base')return it('&#9788;','Pick a strategy','Choose one above to see the plan.');
  const c=rg(r.ch,1),d=rg(r.b,1),f=rg(r.fl,1);
@@ -1687,6 +1687,8 @@ function devHw(p){const D=window.SunDev;if(!D||!p||!p.items)return;const H=DEV.h
   if(i.ok===false){h.bad++;h.good=0;if(!h.on&&h.bad>=5){h.on=true;D.add({kind:'hw',fac,day,start:hm,slot:i.id+'@'+hm,dir:i.id,sev:'warn',title:i.name+' is off what the twin expects',detail:'Measured: '+i.meas+'. The twin expects: '+i.exp+'.',source:'3D prototype (ESP32 readings)',sim:false})}}
   else if(i.ok===true){h.good++;h.bad=0;if(h.on&&h.good>=10)h.on=false}});
  const any=Object.values(H).some(h=>h.on);if(DEV.hwAny&&!any)D.recover({kind:'hw',fac,day,start:hm});DEV.hwAny=any}
+/* One ESP32 connection (the Live prototype page) feeds every other 3D view, e.g. the Overview thumbnail, so they always show the same thing. */
+window.addEventListener('message',e=>{const d=e.data;if(!d||d.type!='sunshine-proto')return;const fs=[...document.querySelectorAll('iframe')];if(!fs.some(f=>f.contentWindow===e.source))return;const to=(location.origin==='null'||location.protocol==='file:')?'*':location.origin;fs.forEach(f=>{if(f.contentWindow&&f.contentWindow!==e.source&&/[?&]proto=1/.test(f.src))f.contentWindow.postMessage({type:'sunshine-proto-state',P:d.P,age:d.age,bt:d.bt,off:d.off},to)})});
 window.addEventListener('message',e=>{const f=document.getElementById('proto3d'),d=e.data;if(!d||d.type!='sunshine-twin'||!f||e.source!==f.contentWindow)return;DEV.proto=d.twin;DEV.protoAt=Date.now();try{devHw(d.twin)}catch(x){}devUpdate()});
 /* markers on the Energy usage chart: expected demand band and red triangles where the reading left it */
 function devMarks(y,L,bw,H,B,T){const r=DEV.res;if(!r||!DEV.j||cur!=TODAY)return'';const sr=DEV.j.series,R=DRL(),fl=dFloor();let s='',up='',dn='';
