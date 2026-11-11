@@ -251,15 +251,15 @@ main[data-role=tech] #dtabs .dgrp{text-align:left;align-self:stretch;padding-lef
 main.fcTab #out>[data-tour=ribbon]{order:9}main.adTab #out>[data-tour=sweep]{order:-1}#amsg:empty{display:none}main[data-role=tech]{padding-top:11px}main[data-role=tech] #dateCard.one{min-height:41px;margin-top:0;padding:0 2px}
 
 /* deviation strip + panel */
-.devstrip{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 14px;border-radius:12px;border:1px solid;cursor:pointer;font-size:14.5px;line-height:1.35}
+.devstrip{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:9px 12px;border-left:6px solid #16A34A;border-radius:10px;background:rgba(22,163,74,.10);color:inherit;cursor:pointer;font-size:14px;line-height:1.5}
+main[data-role=owner] .devstrip{font-size:15px}
 .devstrip[hidden]{display:none}
-.devstrip .dsdot{width:12px;height:12px;border-radius:50%;flex:none;background:currentColor}
-.devstrip .dstxt{flex:1;font-weight:600}.devstrip .dsp{font-weight:500;opacity:.85;margin-left:6px;white-space:nowrap}
-.devstrip .dsgo{white-space:nowrap;font-weight:700}
-.devstrip.ok{background:#ECFDF3;border-color:#A6E3BD;color:#05603A}
-.devstrip.warn{background:#FFFAEB;border-color:#FEC84B;color:#93370D}
-.devstrip.bad{background:#FEF3F2;border-color:#F3B4B4;color:#B42318}
-.devstrip.idle{background:#F4F4F1;border-color:#DAD8D0;color:#5B6360}
+.devstrip .dsdot{display:none}
+.devstrip .dstxt{flex:1}.devstrip .dstxt b{letter-spacing:.04em}.devstrip .dsp{opacity:.85;margin-left:6px;white-space:nowrap}
+.devstrip .dsgo{white-space:nowrap;font-weight:700}.devstrip:hover .dsgo{text-decoration:underline}
+.devstrip.warn{border-left-color:var(--amb);background:rgba(250,204,21,.18)}
+.devstrip.bad{border-left-color:#DC2626;background:rgba(220,38,38,.09)}
+.devstrip.idle{border-left-color:var(--mut);background:rgba(102,114,128,.10)}
 .devstrip:focus-visible{outline:3px solid #12304A;outline-offset:2px}
 .devpanel{position:fixed;inset:0;z-index:9000;background:rgba(18,48,74,.45);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:4vh 12px}
 .devpanel[hidden]{display:none}
@@ -305,8 +305,11 @@ main.fit .snw svg{max-height:calc(100vh - 430px);min-height:200px}main.fit .snc{
 .pgrow{font-size:12.5px;color:var(--mut);margin:0 0 4px;line-height:1.4;clear:both}.pgrow b{color:var(--ink)}.pgtags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}.pgtag{border-radius:99px;padding:2px 10px;font-size:12px;font-weight:650;border:1px solid #F3D486;background:#FFF4D6;color:#7A4B00}
 @container (min-width:1060px){.pfrm{position:absolute;right:0;top:0;margin:0}}
 /* strategy buttons come back on the tabs whose numbers depend on the strategy */
-main.stTab #dateCard.one .stratbar{display:flex;order:3;margin-left:14px;gap:10px;padding:5px 12px;background:var(--card);border:1px solid var(--card-line);border-radius:15px;box-shadow:var(--shadow)}
+main.stTab #dateCard.one .stratbar{display:none;order:3;margin-left:14px;gap:10px;padding:5px 12px;background:var(--card);border:1px solid var(--card-line);border-radius:15px;box-shadow:var(--shadow)}
 main.stTab #dateCard.one .sp{order:4}
+.hasstrat{display:flex!important;align-items:center;flex-wrap:wrap;gap:6px 14px}.hasstrat .stratr{font-size:14px;font-weight:400;text-transform:none;letter-spacing:normal}.hasstrat .stratr b{font-weight:700}.hasstrat .stratr button{font-size:14px;text-transform:none;letter-spacing:normal}
+/* Brief only: forecast line under the headline card */
+main[data-role=owner] #out>:not([data-tour]):not(#devStrip){order:-3}main[data-role=owner] #out>[data-tour=headline]{order:-2}main[data-role=owner] #out>[data-tour=ribbon]{order:-1}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span></span><span class="sp"></span><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -359,17 +362,9 @@ main.stTab #dateCard.one .sp{order:4}
 <p class="note">This is a lab model. The panels are small solar panels used as light sensors, the battery level is simulated, and the laptop's USB stands in for grid power. The rules here are a simplified version of the optimiser's logic. The full day plan comes from the other tabs.</p>
 </div>
 <div class="card" id="protoPanel" data-role="tech" hidden>
-<h2 title="Reads the ESP32 over USB or Bluetooth and lets you control the relay, conveyor speed and LEDs. Press Connect ESP32 inside the model, then click a part. Needs Chrome or Edge. Close the Arduino Serial Monitor first. One connection at a time.">Live physical prototype &mdash; ESP32 readings</h2><div class="pfrm" id="protoFrame"><span class="pf m" title="Measured: read from the ESP32 right now over USB or Bluetooth."><i></i><b>Measured</b> live</span><span class="pf r" title="Replay: historical facility data played back in the Operations console. Not live."><i></i><b>Replay</b> dataset</span>
-<details><summary>Demo flow and safety checks</summary><div class="pfd">
-<h3>What each part stands for</h3><ul><li><b>Solar panels 1 to 3:</b> small panels used as light sensors.</li><li><b>Conveyor:</b> the essential operation. It must keep running.</li><li><b>EV indicator:</b> a representative shiftable load. Green = allowed, red = deferred.</li><li><b>Battery charger:</b> charges only when the input is sufficient. Its status should match the relay and the INA219 readings.</li></ul>
-<h3>Demo flow</h3><ol><li>Press Connect ESP32 inside the model. The badge must say &ldquo;ESP32 &hellip; (live)&rdquo;.</li><li>All panels lit: <b>Normal</b>, EV load green.</li><li>Block one panel: <b>Degraded</b>, EV load red. The conveyor keeps running.</li><li>Block two: <b>Severe</b>. Battery charging depends on the measured surplus.</li><li>Block all three: <b>Low solar</b>. The charger stops and the conveyor stays protected.</li><li>Uncover them: <b>Recovery</b> for a few seconds, then <b>Normal</b>. The EV load returns only after the panels stay recovered.</li></ol>
-<h3>Be honest on stage</h3><ul><li>Cloud, rain and moving dots are a visual cue for lost sunlight, not weather data or a power measurement.</li><li>The EV load is a red/green LED standing in for a flexible load. No real EV is switched.</li><li>The battery reading is net current through the INA219 shunt, and the percentage is only a rough voltage estimate.</li><li>This prototype does not feed the Python optimiser. The Operations replay is a separate facility dataset.</li></ul>
-<h3>Check before you start</h3><ul><li>The conveyor has its own stable supply. Test it with all three panels covered.</li><li>Cover <b>one</b> panel first and watch the three voltages. Only that panel should drop. If all three move together, &ldquo;one panel shaded&rdquo; cannot be shown by voltage.</li><li>Every ADC pin stays under 3.3 V at the panel&rsquo;s open-circuit voltage.</li><li>The charger relay is rated for the battery current and its wiring is confirmed. If unsure, show the recommendation only.</li></ul>
-<p id="pgRo" hidden style="margin:8px 0 0"><b>Your role is view-only here:</b> you can watch the readings but not connect or control the hardware.</p></div></details></div>
-<div class="pgrow"><b>Before you connect:</b> Chrome or Edge on a desktop &middot; close the Arduino Serial Monitor &middot; connect the ESP32 once (one page per COM port) &middot; light all three panels first.</div>
-<div class="note" style="margin:-4px 0 6px">Cannot connect here? <a href="factory3d.html" target="_blank" rel="noopener">Open the factory in its own window</a>, then press Connect ESP32.</div>
+<h2 title="Reads the ESP32 over USB or Bluetooth and lets you control the relay, conveyor speed and LEDs. Press Connect ESP32 inside the model, then click a part. Needs Chrome or Edge. Close the Arduino Serial Monitor first. One connection at a time.">Live physical prototype &mdash; ESP32 readings</h2><div class="note" style="margin:-4px 0 6px">Cannot connect here? <a href="factory3d.html" target="_blank" rel="noopener">Open the factory in its own window</a>, then press Connect ESP32.</div>
 <iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1&amp;v=2026-11-12-k" allow="serial; bluetooth" title="Live 3D prototype" style="width:100%;height:calc(100vh - 150px);min-height:460px;border:0;border-radius:0;margin:0;background:transparent;display:block"></iframe>
-<div class="note" style="margin:8px 0 0">Press <b>Connect ESP32 (Wireless)</b> or <b>(USB)</b> inside the model, then click a part to see its readings and controls. Needs Chrome or Edge (Bluetooth also works on Android). USB: close the Arduino Serial Monitor first. Only one connection to the ESP32 at a time, so disconnect the Lab model tab&rsquo;s USB connection before using this one.</div>
+
 </div>
 <div id="facPanel" data-role="tech" hidden>
 <details class="card" id="setup" open><summary id="fsum">My facility</summary>
@@ -651,7 +646,7 @@ function pcCard(r,past,K){
  const live=K!=null,ks=live?Math.max(0,Math.min(pts.length,K-h0*S)):0,line=monoPath(pts),area=line+`L${pts[pts.length-1][0].toFixed(1)} ${y0.toFixed(1)}L${pts[0][0].toFixed(1)} ${y0.toFixed(1)}Z`,span=h1-h0,st=NW?(span<=6?1:span<=12?3:4):(span<=8?1:span<=14?2:3),p=pcPos(pk);
  const E=sum(r.sol)*DT,spk=r.sol.indexOf(Math.max(...r.sol)),ca=sum(r.d)*DT*F.ef;
  const tile=(bg,ic,v,l)=>`<div class="pcT"><span class="ico" style="background:${bg}">${ic}</span><div><b>${v}</b><span>${l}</span></div></div>`;
- const tiles=`<div class="pckpis">`+tile('#e3f4d6','&#9788;',live?'Live':past?'Rebuilt':'Forecast',live?'Not measured (no meter)':'Data (not measured)')+tile('#ffe5cc','&#9889;',N0(E),'Solar energy, kWh')+tile('#dbe8fb','&#8599;',N0(Math.max(...r.sol)),'Peak solar, kW at '+tm(spk))+tile('#fdf0c4','&#9831;',N0(ca),'CO&#8322; avoided, kg')+`</div>`;
+ const tiles=`<div class="pckpis">`+tile('#e3f4d6','&#9788;',live?'Live':past?'Rebuilt':'Forecast',live?'No meter':'Estimate')+tile('#ffe5cc','&#9889;',N0(E),'Solar energy, kWh')+tile('#dbe8fb','&#8599;',N0(Math.max(...r.sol)),'Peak solar, kW at '+tm(spk))+tile('#fdf0c4','&#9831;',N0(ca),'CO&#8322; avoided, kg')+`</div>`;
  pcS.live=live;
  const ar=P=>P.length<2?'':monoPath(P)+`L${P[P.length-1][0].toFixed(1)} ${y0.toFixed(1)}L${P[0][0].toFixed(1)} ${y0.toFixed(1)}Z`,
   curveBody=()=>{if(!live)return `<path d="${area}" fill="url(#pcg)"/><path d="${line}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>`;
@@ -665,7 +660,7 @@ function pcCard(r,past,K){
   +yGrid(ax,y,L,W-R)+yTitle(T,H-B,'kW')+curveBody()
   +`<g id="pcHov"><line id="pcLine" x1="${p.x.toFixed(1)}" x2="${p.x.toFixed(1)}" y1="${T}" y2="${H-B}" stroke="${col}" stroke-opacity=".5"/><circle id="pcHalo" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="11" fill="${col}" fill-opacity=".25"/><circle id="pcDot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="6" fill="${col}" stroke="#fff" stroke-width="2.5"/></g>`
   +xAxis(xf,H-B,h0,h1,st)+`</svg><div id="pcTip" class="pctip" style="left:${p.left}%;top:${p.top}%">${p.html}</div></div>`
-  +`<p class="note">${live?'The part after the line is the prediction, corrected for what has been seen so far.':past?'Rebuilt from recorded weather, not from an inverter reading.':'A forecast, not a measurement: real values will differ.'} Smoothed between 30-minute values. Move over the chart to read a value.</p>`}
+  +`<p class="note">${live?'The part after the line is the prediction, corrected for what has been seen so far.':past?'Rebuilt from recorded weather, not from an inverter reading.':''} Smoothed between 30-minute values. Move over the chart to read a value.</p>`}
 function draw(r,b0,win,now){const W=760,H=290,L=54,B=30,T=10,bw=(W-L-8)/NS,hb=bw*S,ax=niceAxis(0,Math.max(...r.ld,...b0.ld,...r.sol,...r.g.map((g,h)=>g+r.b[h]),1)*1.03),mx=ax.hi,y=v=>H-B-(v/mx)*(H-B-T);
  let s='<defs><pattern id="mv" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--shift)" opacity=".30"/><rect width="2.5" height="6" fill="var(--shift)"/></pattern></defs>';
  s+=yGrid(ax,y,L,W-8)+yTitle(T,H-B,'kW');
@@ -708,7 +703,7 @@ function fcCard(fc,past,fn){
  return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Solar and demand ${past?'record':'forecast'}">${g}</svg>
  <div class="legend"><span><i style="background:var(--solar)"></i>Solar output, kW${past?'':' (expected)'}</span>${band?'<span><i style="background:var(--solar);opacity:.3"></i>Likely range (10% to 90%)</span>':''}<span><i style="background:none;border-top:2px dashed var(--mute);height:0;width:14px"></i>${dl}, kW</span>${fc.lb?'<span><i style="background:var(--mute);opacity:.25"></i>Typical demand range on similar days (middle 50%)</span>':''}</div>
  <div class="wxg">${fc.local?'':(()=>{const cl=Math.round(av(fc.cloud)),gh=Math.round(Math.max(...fc.ghi)),cw=cl<20?'Mostly clear':cl<50?'Partly cloudy':cl<80?'Cloudy':'Overcast',gw=gh>=800?'Very strong':gh>=500?'Strong':gh>=250?'Moderate':'Weak';return [['t','&#127777;&#65039;','Highest temperature',Math.max(...fc.temp).toFixed(1)+' &deg;C','Daytime high'],['c','&#9729;&#65039;','Average cloud cover',cl+'%',cw],['s','&#9728;&#65039;','Strongest sunshine',gh+' W/m&sup2;',gw],['e','&#9889;','Solar energy '+(past?'':'expected'),N0(E)+' kWh',band?'Likely '+N0(sum(fc.pv_p10)*DT)+' to '+N0(sum(fc.pv_p90)*DT)+' kWh':'For the whole day']].map(([c,i,l,v,h])=>`<div class="wxt"><span class="ic ${c}">${i}</span><div><small>${l}</small><b>${v}</b><em>${h}</em></div></div>`).join('')})()}</div>
- <p class="note">${fc.local?(fc.model.pv.startsWith('your')?'Solar is the pv_kw column of your meter file (recorded).':'Solar is the typical output for this month, taken from your meter file. It is not a measurement for this date.'):past?'Rebuilt from recorded weather, not from an inverter reading.':'Not measured: this is a prediction, so real values will differ.'}</p>${fc.lb&&fc.lb.mae!=null?`<p class="note">Average error of this demand estimate on the days in your meter file: <b>${N1(fc.lb.mae)}%</b> of typical demand. It is measured on the same days the model was fitted on, so a true forecast can do slightly worse.</p>`:''}<p class="note">${esc(fn)}</p>`}
+ <p class="note">${fc.local?(fc.model.pv.startsWith('your')?'Solar is the pv_kw column of your meter file (recorded).':'Solar is the typical output for this month, taken from your meter file. '):past?'Rebuilt from recorded weather, not from an inverter reading.':'Not measured: this is a prediction, so real values will differ.'}</p>${fc.lb&&fc.lb.mae!=null?`<p class="note">Average error of this demand estimate on the days in your meter file: <b>${N1(fc.lb.mae)}%</b> of typical demand. It is measured on the same days the model was fitted on, so a true forecast can do slightly worse.</p>`:''}<p class="note">${esc(fn)}</p>`}
 
 function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a.cost,dC=a.co2-z.co2;
  if(dS<1||dC<0.5)return'<p class="note">CO&#8322; trade-off: Cost-saving and Balanced give almost the same result on this day.</p>';
@@ -721,9 +716,24 @@ function fitProto(){try{pgRole()}catch(e){}const on=role=='tech'&&dtab=='proto',
 window.addEventListener('resize',()=>{try{fitProto()}catch(e){}});
 var sayT=0,lastTab='';
 function sayClear(){clearTimeout(sayT);var a=$('fmsg'),b=$('amsg');if(a)a.textContent='';if(b)b.textContent=''}
-function stratSync(){const need=role=='tech'&&(['op','pl','fk','ad'].includes(dtab)||(dtab=='fc'&&(chartTab=='use'||chartTab=='pc')));$('app').classList.toggle('stTab',need)}
+const DEVSTRIP=document.getElementById('devStrip');
+function stripPlace(){/* Brief: the On track bar sits under the cost-savings row; Detailed: back at the top */
+ const out=$('out'),ds=DEVSTRIP;if(!out||!ds)return;
+ const kpi=role=='owner'?out.querySelector(':scope>[data-tour=kpi]'):null;
+ if(kpi){if(kpi.nextElementSibling!==ds)kpi.after(ds)}
+ else if(ds.parentNode===out)out.parentNode.insertBefore(ds,$('fkPanel'))}
+function stratPlace(){/* Digital twin tabs: Energy-usage-style strategy buttons on the title line of the first card */
+ document.querySelectorAll('[data-mv]').forEach(x=>x.remove());document.querySelectorAll('.hasstrat').forEach(h=>h.classList.remove('hasstrat'));
+ if(role!='tech'||!['op','pl','fk','ad'].includes(dtab))return;
+ let h=null;
+ if(dtab=='fk')h=document.querySelector('#fkPanel h2');
+ else{const skip=['ribbon','changed','devlog'],cs=Array.from($('out').children).filter(el=>!el.hidden&&el.dataset&&el.dataset.tour&&skip.indexOf(el.dataset.tour)<0&&el.querySelector('h2'));
+  cs.sort((a,b)=>(+getComputedStyle(a).order||0)-(+getComputedStyle(b).order||0));if(cs[0])h=cs[0].querySelector('h2')}
+ if(!h)return;h.classList.add('hasstrat');h.insertAdjacentHTML('beforeend',stratChart(true))}
+new MutationObserver(()=>{if(dtab=='fk'&&!document.querySelector('#fkPanel [data-mv]'))try{stratPlace()}catch(e){}}).observe($('fkPanel'),{childList:true});
+function stratSync(){const need=role=='tech'&&(['op','pl','fk','ad'].includes(dtab)||false);$('app').classList.toggle('stTab',need)}
 function applyTab(){if(!tabOk(dtab))dtab='ov';if(role+dtab!==lastTab){lastTab=role+dtab;sayClear()}$('dateCard').classList.toggle('one',dtab!='ov');stratSync();const t=role=='tech';$('app').classList.toggle('fit',t&&(dtab=='fc'||dtab=='proto'));$('app').classList.toggle('fcTab',t&&dtab=='fc');$('app').classList.toggle('adTab',t&&dtab=='ad');Array.from($('out').children).forEach(el=>{const k=el.dataset&&el.dataset.tour;el.hidden=k?t&&!TABS[dtab].includes(k):t&&(dtab=='fa'||dtab=='lab'||dtab=='proto'||dtab=='fk')});$('fkPanel').hidden=!(t&&dtab=='fk');if(t&&dtab=='fk'){try{fkRender();if(!DEV.busy)devFetch(true)}catch(e){}}$('dateCard').hidden=t&&(dtab=='proto'||dtab=='fa');$('facPanel').hidden=!(t&&dtab=='fa');$('labPanel').hidden=!(t&&dtab=='lab');$('protoPanel').hidden=!(t&&dtab=='proto');fitProto();
- navHl();fairLoad();applyPerms()}
+ navHl();fairLoad();stratPlace();stripPlace();applyPerms()}
 function navHl(){if(document.querySelectorAll)document.querySelectorAll('#dtabs button').forEach(b=>b.classList.toggle('on',b.dataset.dt==dtab&&(!b.dataset.ct||b.dataset.ct==chartTab)))}
 $('dtabs').onclick=e=>{const b=e.target.closest('button[data-dt]');if(!b)return;dtab=b.dataset.dt;if(b.dataset.ct){chartTab=b.dataset.ct;applyTab();const x=document.querySelector('#chTabs [data-ct="'+chartTab+'"]');if(x)x.click();navHl();uiSave()}else applyTab()};
 // ================= roles =================
@@ -799,7 +809,7 @@ function costCard(r,b,sv,past){const sb=sel=='base',w=b.cost>0?Math.min(100*r.co
  return `<div class="card" data-tour="costbars"><div class="cardhead"><div><h2>Electricity cost comparison</h2><div class="muted small">Baseline vs selected strategy</div></div>${!sb&&sv>=0.05?`<span class="badge green">${N1(sv)}% lower</span>`:''}</div>
  <div class="costbars"><div class="barlabel">Baseline</div><div class="barwrap"><div class="barfill base" style="width:100%"></div></div><div class="barvalue">${money(b.cost)}</div></div>
  <div class="costbars"><div class="barlabel">${sb?'Baseline':NAMES[sel].replace('Optimiser: ','')}</div><div class="barwrap"><div class="barfill opt" style="width:${w.toFixed(1)}%"></div></div><div class="barvalue">${money(r.cost)}</div></div>
- <div class="footnote">${past?'Estimate from recorded weather.':'Forecast estimate, not a measurement.'}<span data-role="tech"> Daily cost includes the monthly demand charge spread over 30 days. Check the tariff assumptions against your own bill.</span></div></div>`}
+ <div class="footnote"><span data-role="tech">Daily cost includes the monthly demand charge spread over 30 days. Check the tariff assumptions against your own bill.</span></div></div>`}
 function mini3dCard(){return `<div class="card mini3dcard" data-tour="mini3d" data-role="tech"><div class="mini3d" data-go="proto" role="button" tabindex="0" title="Open the Live prototype"><iframe src="factory3d.html?embed=1&amp;proto=1&amp;mini=1&amp;v=2026-11-12-k" tabindex="-1" loading="lazy" title="3D model of the demo factory"></iframe><span class="mini3dlbl">3D demo factory &middot; open Live prototype &rarr;</span></div></div>`}
 function ownerSteps(r,b){const cap=+F.bat||0,L=[],it=(i,t,p)=>`<div class="action"><div class="action-icon">${i}</div><div><strong>${t}</strong><p>${p}</p></div></div>`;
  if(sel=='base')return it('&#9788;','Pick a strategy','Choose one above to see the plan.');
@@ -1107,7 +1117,7 @@ function dayHtml(R,rows){
  if(sp)fn+=` Solar error ${sp.shown_mae_pct??sp.model_mae_pct}% of kWp vs ${sp.naive_mae_pct}% for yesterday's output.`;
  if(ld)fn+=` Demand error ${ld.model_mae_pct}% of peak vs ${ld.naive_mae_pct}% for same-as-last-week${/SYNTHETIC/.test(m.data_note||'')?' (measured on SYNTHETIC history, not real accuracy)':''}.`;
  if(m.data_note)fn+=' '+m.data_note;if(fc.weather&&fc.weather.stale)fn+=' Weather is a saved copy because the weather service did not answer.';
- const past=cur<TODAY,rib=past?`<div class="ribbon past" data-tour="ribbon"><b>${fc.local?'LOOKING BACK.':'RECORDED WEATHER.'}</b> ${fc.local?'A past day rebuilt from your meter file.':'A past day, estimated from recorded weather.'}${fc.meter=='simulated'?' <b>SIMULATED DEMAND:</b> this date is not in your meter file, so demand is a ridge-regression estimate fitted on your own readings. It is the expected pattern, not a measurement.':fc.meter=='actual'?' Demand is your real meter reading.':''}<span data-role="tech"> Demand is ${fc.meter=='actual'?'your real meter reading':fc.meter=='simulated'?'simulated (ridge regression on your meter data)':'modelled, because no meter data covers this day'}. Savings are what each strategy would have achieved.</span></div>`:`<div class="ribbon" data-tour="ribbon"><b>${cur==TODAY?'FORECAST FOR TODAY.':'FORECAST.'}</b> A prediction, not a measurement.<span data-role="tech">${cur==TODAY?' Hours that have already passed are still forecast values.':' This day has not happened yet.'} Weather comes from a weather forecast; solar and demand are calculated from it.</span></div>`;
+ const past=cur<TODAY,rib=past?`<div class="ribbon past" data-tour="ribbon"><b>${fc.local?'LOOKING BACK.':'RECORDED WEATHER.'}</b> ${fc.local?'A past day rebuilt from your meter file.':'A past day, estimated from recorded weather.'}${fc.meter=='simulated'?' <b>SIMULATED DEMAND:</b> this date is not in your meter file, so demand is a ridge-regression estimate fitted on your own readings. It is the expected pattern, not a measurement.':fc.meter=='actual'?' Demand is your real meter reading.':''}<span data-role="tech"> Demand is ${fc.meter=='actual'?'your real meter reading':fc.meter=='simulated'?'simulated (ridge regression on your meter data)':'modelled, because no meter data covers this day'}. Savings are what each strategy would have achieved.</span></div>`:'';
  const off=R.base.offline||r.offline,offB=off?`<div class="ribbon warn"><b>OFFLINE.</b> The server could not be reached, so this screen shows results saved on this device at ${new Date(off).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}. They may be out of date. Try again in a minute.</div>`:'';
  const L=+F.lim,mxg=Math.max(...r.g),mxb=Math.max(...b.g),
   limB=(L>0&&mxg>L+1?`<div class="ribbon warn"><b>GRID LIMIT NOT MET.</b> Highest grid import is ${N0(mxg)} kW, above the ${N0(L)} kW limit.${sel=='base'?' Pick a strategy to see whether it can be held.':' The battery and chargers cannot hold it, so this is the closest plan.'}</div>`:'')+(L>0&&sel!='base'&&mxb>L+1&&mxg<=L+1?`<div class="ribbon"><b>GRID LIMIT.</b> Solar only, the site would draw up to ${N0(mxb)} kW, above the ${N0(L)} kW limit. This plan holds it at or under ${N0(L)} kW.</div>`:'')+(+F.evn>0&&fc.evun>0.5?`<div class="ribbon warn"><b>EV CHARGING.</b> ${N0(fc.evun)} kWh of the EV demand cannot be delivered on this day: the chargers are closed or there are too few hours or too little power.</div>`:'');
@@ -1159,7 +1169,8 @@ function ratesCard(){const t=tf(),k=F.volt+F.struct;
  Object.keys(TF).map(x=>`<tr class="${x==k?'sel':''}"><td>${TF[x].n}</td><td>${TF[x].ep}</td><td>${TF[x].eo}</td><td>${TF[x].ad||'&mdash;'}</td><td>${TF[x].cap||'&mdash;'}</td><td>${TF[x].net||'&mdash;'}</td><td>${TF[x].md||'&mdash;'}</td></tr>`).join('')+
  `</table></div></details><p class="note">Rates follow the TNB RP4 schedule (1 Jul 2025 to 31 Dec 2027). AFA changes every month, so enter the current value in My facility. Verify against your own bill on <a href="https://www.mytnb.com.my/" target="_blank" rel="noopener noreferrer">mytnb.com.my</a>.</p>`}
 
-function stratChart(){const k=['base',...MODES.map(m=>m.k)];return `<span class="stratr" id="chStrat"${chartTab=='rt'?'':' hidden'}><b>Strategy</b><span class="bar" style="margin:0">${k.map(x=>`<button data-s2="${x}" aria-pressed="${x==sel}" class="${x==sel?'on':''}">${NAMES[x].replace('Optimiser: ','')}</button>`).join('')}</span><button data-why2="1" title="What does the optimiser decide?">?</button></span>`}
+const stratOn=()=>false;
+function stratChart(mv){const k=['base',...MODES.map(m=>m.k)];return `<span class="stratr"${mv?' data-mv="1"':' id="chStrat"'}${mv||stratOn()?'':' hidden'}><b>Strategy</b><span class="bar" style="margin:0">${k.map(x=>`<button data-s2="${x}" aria-pressed="${x==sel}" class="${x==sel?'on':''}">${NAMES[x].replace('Optimiser: ','')}</button>`).join('')}</span><button data-why2="1" title="What does the optimiser decide?">?</button></span>`}
 function tabs(){const k=['base',...MODES.map(m=>m.k)];$('tabs').innerHTML=k.map(x=>`<button data-s="${x}" aria-pressed="${x==sel}" class="${x==sel?'on':''}">${NAMES[x].replace('Optimiser: ','')}</button>`).join('')}
 
 function dayInfo(){const ml=meterLoad(cur),past=cur<TODAY;
@@ -1223,7 +1234,7 @@ const STEPS=[
  {s:'#bView',t:'Day, week or month',x:'Brief always starts from today. Day, Week and Month change the period it covers.'},
  {s:'#dateCard',t:'Pick a day',x:'Use Yesterday, Today and Tomorrow, or the arrows and the date box. Day, Week and Month change the view. In Week and Month, tap a day to open it. Dashed boxes are forecasts.'},
  {s:'#tabs',t:'Choose a strategy',x:'Baseline is solar only. The three optimiser strategies plan the battery and the flexible equipment, with different limits on extra CO2. The ? button explains what the optimiser decides.'},
- {s:'[data-tour=ribbon]',t:'Forecast or recorded?',x:'This banner always says whether the day is a prediction or recorded weather. Forecast cards have dashed borders.'},
+ {s:'[data-tour=ribbon]',t:'Forecast or recorded?',x:'On past days this banner says the weather is recorded, not predicted. Forecast cards have dashed borders.'},
  {s:'[data-tour=headline]',t:'Headline numbers and summary',x:'Saving per day, billed peak reduction and CO2, then a plain-English summary. Press Rewrite with AI for an AI-written version; every number in it is checked.'},
  {s:'[data-tour=kpi]',t:'The numbers behind it',x:'Cost without the plan, with the plan, what you save, the billed peak and how much solar is used.'},
  {s:'[data-tour=flow]',t:'Where the energy comes from',x:'Solar, battery and grid for the whole day, baseline against the plan, with self-consumption: how much of your solar is used on site.'},
@@ -1357,7 +1368,7 @@ $('out').addEventListener('input',e=>{if(e.target&&e.target.id=='plSl'&&lastPlan
 $('out').addEventListener('change',e=>{if(e.target&&e.target.id=='pcSel'){pcType=e.target.value;if(lastPlan&&$('ct_pc'))$('ct_pc').innerHTML=pcRender()}});
 $('out').onkeydown=e=>{if((e.key=='Enter'||e.key==' ')&&e.target.closest&&e.target.closest('[data-go]')){e.preventDefault();e.target.closest('[data-go]').click()}};
 $('out').onclick=e=>{if(e.target.closest('[data-rtretry]')){rtLoad();return}const s2=e.target.closest('[data-s2]');if(s2){sel=s2.dataset.s2;render();return}if(e.target.closest('[data-why2]')){const w=$('why');w.hidden=!w.hidden;$('qbtn').setAttribute('aria-expanded',String(!w.hidden));return}const go=e.target.closest('[data-go]');if(go){if(role!='tech')setRole('tech');dtab=go.dataset.go;applyTab();window.scrollTo(0,0);return}
-const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;rtDem=false;stratSync();if($('chStrat'))$('chStrat').hidden=chartTab!='rt';const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';if($('ct_all'))$('ct_all').hidden=chartTab!='all';$('ct_wx').hidden=chartTab!='wx';$('ct_pc').hidden=chartTab!='pc';$('ct_pl').hidden=chartTab!='pl';if($('ct_rt'))$('ct_rt').hidden=chartTab!='rt';
+const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;rtDem=false;stratSync();if($('chStrat'))$('chStrat').hidden=!stratOn();const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';if($('ct_all'))$('ct_all').hidden=chartTab!='all';$('ct_wx').hidden=chartTab!='wx';$('ct_pc').hidden=chartTab!='pc';$('ct_pl').hidden=chartTab!='pl';if($('ct_rt'))$('ct_rt').hidden=chartTab!='rt';
   $('chTitle').textContent=chT(past);if((chartTab=='rt'||chartTab=='pc')&&cur==TODAY){rtLoad();rtStart()}
   document.querySelectorAll?document.querySelectorAll('#chTabs button').forEach(b=>b.classList.toggle('on',b.dataset.ct==chartTab)):0;navHl();return}
  const ps=e.target.closest('[data-pls]');if(ps&&lastPlan&&$('plSl')){if(ps.dataset.pls=='now'){plLive=true;plTick();plSync();return}plLive=false;plSync();plT=Math.max(0,Math.min(NS-1,plT+(+ps.dataset.pls)));$('plSl').value=plT;const g=plGridHtml(lastPlan.r,plT);$('plGrid').innerHTML=g.html;$('plGrid').classList.toggle('plfade',!!g.pred);$('plInfo').innerHTML=g.info;return}
@@ -1380,6 +1391,7 @@ const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;rtDem=false
  const x=e.target.closest('[data-x]');if(x){x.closest('.card').remove();return}
  const b=e.target.closest('[data-d]');if(b&&!b.classList.contains('na'))go(b.dataset.d)};
 $('tabs').onclick=e=>{const b=e.target.closest('[data-s]');if(b){sel=b.dataset.s;render()}};
+$('fkPanel').addEventListener('click',e=>{const s2=e.target.closest('[data-s2]');if(s2){sel=s2.dataset.s2;render();return}if(e.target.closest('[data-why2]')){const w=$('why');w.hidden=!w.hidden;$('qbtn').setAttribute('aria-expanded',String(!w.hidden))}});
 $('qbtn').onclick=()=>{const w=$('why');w.hidden=!w.hidden;$('qbtn').setAttribute('aria-expanded',String(!w.hidden))};
 
 
@@ -1638,7 +1650,7 @@ window.__lab=L;
    Percent tolerances are shared. The size floor is 5% of the day's peak (the console's 100 kW floor is about 5% of its demo site).
    Data: today's readings up to now (/api/replan: measured file if one was loaded, otherwise the simulated replay).
    Twin = the day-ahead plan on the forecast. Measured grid = what the readings imply. */
-window.SunDevRules={load:.20,pv:.25,grid:.15,floorFrac:.07,floorMin:5,floorMax:100,run:2,driftWin:6,driftFrac:.5,peakTol:.10,energyTol:.10,share:.80};
+window.SunDevRules={load:.10,pv:.25,grid:.15,floorFrac:.03,floorMin:3,floorMax:50,run:2,driftWin:6,driftFrac:.5,peakTol:.10,energyTol:.10,share:.80};
 const DEV={j:null,q:null,twinG:null,res:null,at:0,busy:false,sc:'none',err:'',proto:null,protoAt:0,key:'',logged:{}};
 const DRL=()=>window.SunDevRules;
 const dFloor=()=>{const R=DRL();return Math.max(R.floorMin,Math.min(R.floorMax,R.floorFrac*(DEV.lp||0)))};/* same formula as the console: 7% of peak demand, between 5 and 100 kW */
@@ -1704,7 +1716,7 @@ function devStripState(){
  if(DEV.err&&!DEV.res)return{c:'idle',t:'The forecast check is not available right now.',b:'See details'};
  if(!DEV.res)return{c:'idle',t:'Checking today against the forecast\u2026',b:''};
  const r=DEV.res,act=r.eps.filter(e=>e.on).map(e=>({e,i:dInfo(e,DEV.j,DEV.q)})).sort((a,b)=>(b.i.sev=='high')-(a.i.sev=='high')||(a.e.key=='grid')-(b.e.key=='grid')||Math.abs(b.e.pct)-Math.abs(a.e.pct));
- const twBad=r.tw&&r.tw.ready&&!r.tw.ok,pBad=p&&p.verdict=='bad',sim=r.sim?' (simulated)':'';
+ const twBad=r.tw&&r.tw.ready&&!r.tw.ok,pBad=p&&p.verdict=='bad',sim='';
  if(act.length){const top=act[0],more=act.length>1?' +'+(act.length-1)+' more':'';
   return{c:top.i.sev=='high'||twBad?'bad':'warn',t:top.i.title+'. '+top.i.why+more+(sim?' ':'')+sim.trim(),b:'See details'}}
  if(twBad)return{c:'bad',t:'The planning model does not match the readings well (peak '+(r.tw.pkErr>=0?'+':'\u2212')+N0(Math.abs(r.tw.pkErr)*100)+'%, energy '+(r.tw.eErr>=0?'+':'\u2212')+N0(Math.abs(r.tw.eErr)*100)+'%).'+sim,b:'See details'};
@@ -1715,7 +1727,7 @@ function devUpdate(){
  const show=view=='day'&&(role=='owner'||dtab=='ov')&&!(role=='tech'&&(dtab=='fa'||dtab=='lab'||dtab=='proto'));
  el.hidden=!show;if(show){const s=devStripState(),pl=devProtoLine();
   el.className='devstrip '+s.c;
-  el.innerHTML='<span class="dsdot"></span><span class="dstxt">'+esc(s.t)+(pl?' <span class="dsp">'+esc(pl)+'</span>':'')+'</span>'+(s.b?'<span class="dsgo">'+esc(s.b)+' &rsaquo;</span>':'');
+  el.innerHTML='<span class="dstxt"><b>'+({ok:'ON TRACK.',warn:'NEEDS A LOOK.',bad:'OFF TRACK.',idle:'FORECAST CHECK.'}[s.c]||'')+'</b> '+esc(s.t.replace(/^On track:\s*/,''))+(pl?' <span class="dsp">'+esc(pl)+'</span>':'')+'</span>'+(s.b?'<span class="dsgo">'+esc(s.b)+' &rsaquo;</span>':'');
   el.setAttribute('role','button');el.tabIndex=0;el.dataset.act=s.act||'open';
   if(!DEV.busy)devFetch(false)}
  try{fkRender()}catch(e){}}
