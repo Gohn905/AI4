@@ -907,10 +907,10 @@ const acc=k=>who=='owner'||!(k in ACC)?2:ACC[k][RIX[who]];
 const canStrat=()=>acc('op')==2||acc('use')==2;            // change the selected strategy: Owner, Analyst, Approver
 const PERM={
  owner:{see:null,act:null,tabs:null,approve:1,hw:1,edit:1},
- analyst:{see:null,act:['reopt','learn','stress','sweep','approve'],tabs:['ov','fc','op','pl','fk','ad','live','proto','fa'],edit:1,hw:1},
+ analyst:{see:null,act:['reopt','learn','stress','sweep','approve','live'],tabs:['ov','fc','op','pl','fk','ad','live','proto','fa'],edit:1,hw:1},
  operator:{see:null,act:['live','approve'],tabs:['ov','fc','op','pl','fk','ad','live','proto','fa'],hw:1},
- approver:{see:null,act:['approve'],tabs:['ov','fc','op','pl','fk','proto','fa'],approve:1},
- auditor:{see:null,act:['audit'],tabs:['ov','fc','op','pl','fk','ad','proto','fa']}
+ approver:{see:null,act:['approve'],tabs:['ov','fc','op','pl','fk','live','proto','fa'],approve:1},
+ auditor:{see:null,act:['audit'],tabs:['ov','fc','op','pl','fk','ad','live','proto','fa']}
 };
 let who='owner';
 const PROTO='factory3d.html?embed=1&proto=1&v=2026-11-12-k';
@@ -931,8 +931,8 @@ function applyPerms(){const P=PERM[who]||PERM.owner;
  Array.from($('dtabs').children).forEach(b=>{if(b.classList.contains('dgrp')){flush();grp=b;any=false}else{const k=b.dataset.ct||(b.dataset.dt=='pl'?'plan':b.dataset.dt),ok=tabOk(b.dataset.dt)&&acc(k)>0;b.classList.toggle('rolehide',!ok);b.classList.toggle('rvo',ok&&acc(k)==1);b.title=ok&&acc(k)==1?'View only for your role':'';if(ok)any=true}});flush();
  $('app').classList.toggle('nostrat',!canStrat());if(window.SunDev)SunDev.refresh()}
 function setWho(w,quiet){if(!PERM[w])return;const prev=who;who=w;try{sessionStorage.setItem('who',w)}catch(e){}
- $('whoSel').value=w;sizeWho();$('viewSw').classList.toggle('rolehide',w!='owner');window.sunWho=w;if(window.sunSetRole)window.sunSetRole(w);
- if(w!='owner'&&role!='tech')applyRole('tech');if(!tabOk(dtab))dtab='ov';applyTab();if(!quiet&&prev!==w)actLog('Switched role to '+WHO[w].n)}
+ $('whoSel').value=w;sizeWho();$('viewSw').classList.toggle('rolehide',false);window.sunWho=w;if(window.sunSetRole)window.sunSetRole(w);
+ if(!tabOk(dtab))dtab='ov';applyTab();if(!quiet&&prev!==w)actLog('Switched role to '+WHO[w].n)}
 function applyAuthRole(){const ur=((user&&user.userRoles)||[]).map(x=>String(x).toLowerCase()),r=['owner','approver','auditor','operator','analyst'].find(x=>ur.includes(x));
  if(r){setWho(r,true);$('whoSel').disabled=true;$('whoSel').title='Your role comes from your sign-in';sizeWho()}}
 function sizeWho(){const e=$('whoSel');if(!e)return;try{const c=document.createElement('canvas').getContext('2d'),cs=getComputedStyle(e);c.font=cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;e.style.width=Math.ceil(c.measureText(e.options[e.selectedIndex].text).width)+(e.disabled?14:34)+'px'}catch(x){}}
@@ -1508,14 +1508,14 @@ function periodHtml(dates,items){
  const head=kpis([['Baseline cost',money(base),'',n+' days'],['With strategy',money(opt)],['You save',money(base-opt),'good',(base>0?(100*(base-opt)/base).toFixed(1):0)+'%'],
   ['Highest billed peak',Math.round(pk)+' kW','','baseline '+Math.round(pkb)+' kW'],['Solar used',pvA>0?Math.round(100*pvU/pvA)+'%':'-']]);
  const past=dates.some(d=>d<TODAY&&okDate(d)),live=dates.some(d=>d>=TODAY&&d<=MAX);
- const notes=(past?`Past days are fixed to the strategy you follow (${NAMES[F.follow]}, set in My facility), so changing the tab does not rewrite history. `:'')+(live?`Today and forecast days use the ${NAMES[sel]} tab. `:'');
+ const notes=`Every day uses ${NAMES[sel].replace('Optimiser: ','')}. `;
  let cells='';
  if(view=='month'){cells+=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<div class="dh">${x}</div>`).join('');cells+='<div></div>'.repeat((parse(dates[0]).getDay()+6)%7)}
- const mkr=d=>{const q=M?meterLoad(d):null;return q&&q.k=='actual'?'<small class="mk a">meter</small>':q&&q.k=='simulated'?'<small class="mk s">sim</small>':''};
+ const mkr=d=>{const q=M?meterLoad(d):null;return q&&q.k=='actual'?'<small class="mk a">meter</small>':''};
  const nA=dates.filter(d=>M&&M.days[d]).length,nS=dates.filter((d,i)=>items[i]&&items[i].r&&M&&!M.days[d]&&meterLoad(d)&&meterLoad(d).k=='simulated').length,
-  lbNote=nA||nS?`<b>${nA}</b> day${nA==1?'':'s'} use your real meter readings (green "meter") and <b>${nS}</b> ${nS==1?'is':'are'} simulated (amber "sim"): a ridge regression fitted on your own meter file, so simulated days are the expected pattern, not measurements. `:'';
+  lbNote=nA||nS?`${nA?`<b>${nA}</b> day${nA==1?' uses':'s use'} your meter readings; `:''}${nS?`demand on the other days is predicted from your meter file. `:''}`:'';
  dates.forEach((d,i)=>{const x=items[i],tg=rel(d)[0],has=x&&x.r;
-  const body=has?`<b class="good">${money(x.b.cost-x.r.cost)}</b><small>${d>=TODAY?'forecast':''}</small>`:'<small>no data</small>';
+  const body=has?`<b class="good">${money(Math.abs(x.b.cost-x.r.cost)<0.5?0:x.b.cost-x.r.cost)}</b><small>${d>=TODAY?'forecast':''}</small>`:'<small>no data</small>';
   cells+=`<button class="c${d>=TODAY?' fc':''}${d==cur?' sel':''}${has?'':' na'}" data-d="${d}"><small>${view=='week'?parse(d).toLocaleDateString('en-GB',{weekday:'short'})+' ':''}${parse(d).getDate()}${isWk(d)?'':' (wknd)'}</small>${body}${has?mkr(d):''}</button>`});
  return `${view=='month'&&window.SunOps&&SunOps.monthBill?'<div class="card" id="mbill"></div>':''}<div class="card"><h2>Strategy vs baseline</h2>${head}<p class="note">${notes}${lbNote}Demand charge is prorated by the days shown, using the highest peak in the period. Dashed days are forecasts, solid days use recorded weather. Tap a day to open it with the full comparison.</p></div>
  ${view=='week'?weekChart(dates,items):''}<div class="card"><div class="cal" style="${view=='week'?'grid-template-columns:repeat(auto-fit,minmax(100px,1fr))':''}">${cells}</div></div>`}
@@ -1570,7 +1570,7 @@ async function render(){
    const miss=res.filter(x=>x.status!='fulfilled').length;
    $('out').innerHTML=(miss?`<div class="ribbon warn"><b>PARTIAL.</b> The optimiser did not answer, so only the baseline is shown. <button data-retry="1">Try again</button></div>`:'')+dayHtml(R,ok);aiRestore();apShow();cvDefault();applyTab();changeCard();maybeTour();if(cur==TODAY&&(chartTab=='rt'||chartTab=='pc')){rtLoad();rtStart()}setTimeout(()=>warm(my),1500);return}
   const items=dates.map(()=>null),idx=dates.map((x,i)=>i).filter(i=>okDate(dates[i]));
-  let done=0;const run=async i=>{try{items[i]={b:await getRun(dates[i],'base'),r:await getRun(dates[i],dates[i]<TODAY?F.follow:sel)}}catch(e){items[i]=null}done++;const p=$('prog');if(p)p.textContent=`Loading day ${done} of ${idx.length}. A new day takes a few seconds, then it is saved on this device.`};
+  let done=0;const run=async i=>{try{items[i]={b:await getRun(dates[i],'base'),r:await getRun(dates[i],sel)}}catch(e){items[i]=null}done++;const p=$('prog');if(p)p.textContent=`Loading day ${done} of ${idx.length}. A new day takes a few seconds, then it is saved on this device.`};
   if(idx.length){await run(idx[0]);for(let k=1;k<idx.length;k+=6){await Promise.all(idx.slice(k,k+6).map(run));if(my!=tok)return}}
   if(my!=tok)return;$('out').innerHTML=periodHtml(dates,items);applyTab();changeCard();if(view=='month'&&$('mbill'))try{SunOps.monthBill($('mbill'),{calMonth:parse(cur).getMonth(),strat:sel})}catch(e){$('mbill').hidden=true}setTimeout(()=>warm(my),1500)
  }catch(e){if(my==tok)$('out').innerHTML=errCard(e.message)}}
@@ -1587,7 +1587,7 @@ async function explainClick(){if(!aiFacts)return;const k=JSON.stringify(aiFacts)
  btn.disabled=false}
 async function warm(my){if(my!=tok||view=='month')return;const mon=addD(cur,-((parse(cur).getDay()+6)%7));
  for(let i=0;i<7;i++){const d=addD(mon,i);if(!okDate(d))continue;
-  for(const m of ['base',d<TODAY?F.follow:sel]){if(my!=tok)return;try{await getRun(d,m)}catch(e){}}
+  for(const m of ['base',sel]){if(my!=tok)return;try{await getRun(d,m)}catch(e){}}
   await new Promise(r=>setTimeout(r,120))}}
 
 /* Take the tour: one short tour per page. It tours the page you are on (Brief, each Detailed tab, Live replay). */
@@ -1721,7 +1721,7 @@ function applyNav(n){const bits=[],no=[];let scrollTo=null;const rn=WHO[who].n;
  if(n.tab=='livereplay'){if(tabOk('live')&&window.SunshineOpenLiveReplay&&window.SunshineOpenLiveReplay()!==false)cAdd('msg n','Opened: Live replay');else cAdd('msg n','Your role ('+rn+') cannot open the Live replay.');return}
  if(n.open=='operations'){if(window.SunOps){window.SunOps.open();cAdd('msg n','Opened: Operations console')}return}
  if(n.open=='tour'){chatOpen(false);tStart();return}
- if(n.detail=='brief'&&!n.tab&&!n.chart&&!n.open){if(who!='owner')no.push('the Brief page is only for the Owner');else{applyRole('owner');try{localStorage.setItem('role','owner')}catch(e){}bits.push('Brief page')}}
+ if(n.detail=='brief'&&!n.tab&&!n.chart&&!n.open){applyRole('owner');try{localStorage.setItem('role','owner')}catch(e){}bits.push('Brief page')}
  else if(n.detail=='detailed'||n.tab||n.chart||['summary','why','deviations'].includes(n.open))goTech();
  if(n.tab&&TAB2DT[n.tab]){const t=TAB2DT[n.tab];if(tabOk(t)&&acc(t=='pl'?'plan':t)>0){dtab=t;bits.push(TABNAME[t])}else no.push(TABNAME[t]+' is not open to your role')}
  if(n.chart){const k=n.chart=='all'?'use':n.chart;if(tabOk('fc')&&acc(k)>0){dtab='fc';chartTab=k;rtDem=false;if(n.chart=='all')dpView='all';else if(k=='use')dpView='plan';bits.push(CHNAME[n.chart])}}
