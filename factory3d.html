@@ -28,7 +28,7 @@ label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--mut)}
 html.embed,body.embed{height:100%;overflow:hidden}
 body.embed main{height:100vh;display:flex;flex-direction:column;max-width:none}
 .embed .cvwrap{flex:1;min-height:0;margin-top:6px}.embed canvas{height:100%;min-height:0}
-.tb{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}.tb .r{margin:0}.tb .ttl{display:none;font-size:15px;font-weight:650;margin-right:6px;white-space:nowrap}
+.tb{display:flex;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;align-items:center;gap:6px 8px}.tb::-webkit-scrollbar{display:none}.tb #chips{flex-wrap:nowrap;gap:6px}.tb button{white-space:nowrap;flex:none}.tb .r{margin:0}.tb .ttl{display:none;font-size:15px;font-weight:650;margin-right:6px;white-space:nowrap}
 .tb button{padding:4px 10px}.tb .badge{white-space:nowrap}
 .cnx{margin-top:6px}.cnx button{padding:4px 10px}.cnx .badge{white-space:nowrap}
 /* the status card and controls float over the canvas so the model gets the room */
@@ -83,18 +83,23 @@ body.embed main{height:100vh;display:flex;flex-direction:column;max-width:none}
 .stbar .ovbar{position:static;font-size:11.5px}
 .cvwrap.stormy .lab{background:rgba(255,255,255,.74);border-radius:8px;padding:3px 8px}
 .mini .stbar{display:none!important}
+#wr{padding:4px 8px;display:inline-flex;align-items:center}#wr.on{background:var(--line)}
+#tools{position:fixed;left:10px;bottom:46px;z-index:30;width:min(400px,calc(100% - 20px));max-height:calc(100% - 70px);overflow:auto;background:var(--btn);border:1px solid var(--line);border-radius:10px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.18)}#tools[hidden]{display:none}
+#tools .gl{margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}#tools .glr{display:flex;flex-wrap:wrap;gap:6px 14px;margin:6px 0}#tools input[type=number]{width:70px}#tools .gldrive{display:block;margin:6px 0;font-size:13px}.ro #tools .gldrive{display:none}
 </style></head><body><main>
 <h1>Sun Shine demo factory</h1>
-<p class="t">Click a part in the model, or pick one below, to see its status. Drag to rotate, scroll or pinch to zoom. The conveyor is a placeholder block at the assumed size, and the EV station stands separately on the right. Opened on its own it runs a simulator, and Connect ESP32 (USB) shows your real prototype in Chrome or Edge. Inside the lab page it shows the lab model.</p>
+<p class="t">Click a part in the model, or pick one below, to see its status. Drag to rotate, scroll or pinch to zoom. The conveyor is a placeholder block at the assumed size, and the EV station stands separately on the right. Connect ESP32 (USB) shows your prototype in Chrome or Edge. Inside the lab page it shows the lab model.</p>
 <div class="tb" id="tb"><div class="r" id="chips"></div></div>
-<div class="cvwrap"><canvas id="cv"></canvas><svg class="hudsvg" id="hsvg" aria-hidden="true"></svg><div class="ovl" id="ovl"></div><div class="stbar off" id="stbar" title="Cloud, rain and flowing dots are visual cues for the solar state, not weather or power measurements."><div class="s1"><i class="sdot"></i><b id="stName">Solar: waiting for data</b><span id="stTxt"></span><span class="pill" id="stSrc"></span><span class="pill" id="stCue" style="display:none" title="Cloud and rain on the model are a visual cue for lost sunlight. There is no weather sensor.">SIMULATED WEATHER CUE</span></div><div class="s2" id="stPol"></div><div class="ovbar" id="ovsum"></div></div>
+<div class="cvwrap"><canvas id="cv"></canvas><svg class="hudsvg" id="hsvg" aria-hidden="true"></svg><div class="ovl" id="ovl"></div><div class="stbar off" id="stbar"><div class="s1"><i class="sdot"></i><b id="stName">Solar: waiting for data</b><span id="stTxt"></span><span class="pill" id="stSrc"></span><span class="pill" id="stCue" style="display:none"></span></div><div class="s2" id="stPol"></div><div class="ovbar" id="ovsum"></div></div>
 <div class="vc" id="vc"><div class="vcs"><div class="vcube" id="vcube"><div class="fF" data-v="3" title="Front view">Front</div><div class="fB" data-v="4" title="Back view (door)">Back</div><div class="fR" data-v="6" title="Right view">Right</div><div class="fL" data-v="5" title="Left view">Left</div><div class="fT" data-v="2" title="Top view">Top</div><div class="fD nb"></div></div></div></div>
 <div class="zoom" id="zoomb"><button id="zin" title="Zoom in" aria-label="Zoom in"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button><button class="vh" id="v1" title="Isometric view">Iso</button><button id="zout" title="Zoom out" aria-label="Zoom out"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button></div>
-<div class="dock"><div class="card" id="card"></div><div class="r" id="ctl"></div><div class="note" id="sst"></div>
-<details id="logbox" hidden><summary>Serial log (for troubleshooting)</summary><pre id="log" style="max-height:170px;overflow:auto;font-size:12px;background:var(--btn);border:1px solid var(--line);border-radius:8px;padding:8px;white-space:pre-wrap"></pre></details></div></div>
-<div class="r cnx" id="cnx"><span class="badge off" id="src">Simulated here</span><button id="conn">Connect ESP32 (USB)</button><button id="connb">Connect ESP32 (Wireless)</button></div>
+<div class="dock"><div class="card" id="card"></div><div class="r" id="ctl"></div></div></div>
+<div class="r cnx" id="cnx"><button id="wr" type="button" title="Details and settings" aria-label="Details and settings"><svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5 5L3.5 17.5a1.8 1.8 0 0 0 2.5 2.5l6.2-6.2a4 4 0 0 0 5-5l-2.4 2.4-2.1-.6-.6-2.1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button><span class="badge off" id="src">Not connected</span><button id="conn">Connect ESP32 (USB)</button><button id="connb">Connect ESP32 (Wireless)</button></div>
+<div id="tools" hidden><div class="note" id="sst"></div>
+<div class="gl gldrive0"><b>Green light limits</b><div class="glr"><label>Green on at or above <input id="glOn" type="number" step="0.05" min="0.2" max="3.3"> V</label><label>Green off below <input id="glOff" type="number" step="0.05" min="0.1" max="3.2"> V</label></div><label class="gldrive"><input type="checkbox" id="glDrive"> Switch the green and red light from these limits</label><div class="note" id="glNote"></div><button id="glReset" type="button">Reset to 1.5 V / 1.8 V</button></div>
+<details id="logbox" hidden><summary>Serial log</summary><pre id="log" style="max-height:170px;overflow:auto;font-size:12px;background:var(--btn);border:1px solid var(--line);border-radius:8px;padding:8px;white-space:pre-wrap"></pre></details></div>
 <div class="r vtog"><label><input type="checkbox" id="troof" checked> Roof</label><label><input type="checkbox" id="tpan" checked> Office front panel</label></div>
-<div class="note verbox">Page version 2026-11-12-b</div>
+<div class="note verbox">Page version 2026-11-12-f</div>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -132,7 +137,7 @@ const PR1=mkPR(-98,'line1');
 const PRL=210,PRA=22,PRB=232;
 function placePR(P){P.forEach(m=>{if(m.position.x>PRB)m.position.x-=PRL;const s=Math.max(0.02,Math.min(1,Math.min(m.position.x-PRA,PRB-m.position.x)/20));m.scale.set(s,s,s);m.position.y=56+7.5*s;});}
 placePR(PR1);
-const EL=[['panel3','Solar panel 1'],['panel2','Solar panel 2'],['panel1','Solar panel 3'],['battery','Battery'],['line1','Conveyor belt'],['ev','EV load (indicator)']];
+const EL=[['panel3','Solar panel 1'],['panel2','Solar panel 2'],['panel1','Solar panel 3'],['battery','Battery'],['line1','Conveyor belt'],['ev','EV load']];
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),plaus=v=>isFinite(v)&&v>=2.5&&v<=4.5;
 let S=null,sel=null,hl=null,labMode='none',labAt=0;
 /* same rules as the lab page */
@@ -166,18 +171,24 @@ function statLab(id){
   return S.state==='NONE'?{t:'Dark',k:'warn',rows,note:'All three panels are dark: night, heavy cloud, or everything covered.'}:{t:'Blocked',k:'bad',rows,note:'Far below the other panels, so this looks like a fault at this panel (shade, dirt or a loose wire), not the weather.'};}
  if(id==='battery'){const b=Math.round(S.bat),full=S.bat>=99.5;
   let [t,k]=!ready?['Waiting','off']:S.state==='OK'?(full?['Full','ok']:['Charging','ok']):S.state==='FAULT'?(full?['Full','ok']:['Charging slowly','warn']):(S.bat>15.5?['Discharging','warn']:['Low, using grid','bad']);
-  const rows=[['Charge (simulated)',b+'%<div class="bar '+k+'"><i style="width:'+b+'%"></i></div>']];
+  const rows=[['Charge',b+'%<div class="bar '+k+'"><i style="width:'+b+'%"></i></div>']];
   const v=plaus(S.vina)?S.vina:plaus(S.vdiv)?S.vdiv:NaN;
   if(isFinite(v)){rows.push(['Voltage (real)',v.toFixed(2)+' V']);if(plaus(S.vina)&&isFinite(S.ima)){const m=S.ima;rows.push(['Current (real)',m<-20?'charging, '+Math.round(-m)+' mA':m>20?'discharging, '+Math.round(m)+' mA':'idle, '+Math.round(m)+' mA']);}}
-  return{t,k,rows,note:'The charge level is simulated on the page. Voltage and current are real only if the divider or INA219 is connected.'};}
+  return{t,k,rows,note:'The charge level is the model\'s estimate. Voltage and current come from the divider or INA219 when connected.'};}
  if(id==='line1')return{t:S.s1?'Running':'Stopped',k:S.s1?'ok':'off',rows:[['Power source',S.power],['Servo','1 (production line)']],note:'The conveyor keeps running on solar, battery or grid.'};
  const run=!!S.s2,why=!ready?'Waiting for readings':S.state==='NONE'?'No solar: paused to save energy':S.state==='FAULT'?'Two or more panels blocked':'';
  return{t:run?'Charging':ready?'Paused':'Stopped',k:run?'ok':ready?'warn':'off',rows:[['Flexible load (servo 2)',run?'Running':'Paused']].concat(run?[]:[['Reason',why]],[['Green light',S.g?'On':'Off'],['Red light',S.r==2?'Blinking':S.r?'On':'Off']]),note:'The EV charger is the load that can wait, so it pauses first when solar drops. The lights show the system: green = running on solar, red blinking = panel fault, red steady = no solar.'};
 }
 
 /* ===== Prototype mode: reads your sketch's Serial text over Web Serial (Chrome or Edge, 115200 baud) ===== */
-const VER='2026-11-12-e';let CHG_POS=true;try{const q=localStorage.getItem('chgpos');if(q!==null)CHG_POS=q==='1';}catch(e){}
+const VER='2026-11-12-f';let CHG_POS=true;try{const q=localStorage.getItem('chgpos');if(q!==null)CHG_POS=q==='1';}catch(e){}
 function flipSign(){CHG_POS=!CHG_POS;try{localStorage.setItem('chgpos',CHG_POS?'1':'0');}catch(e){}renderUI();}
+/* green light limits (set in the spanner panel): green on at or above GL.on volts, off below GL.off volts, kept in between */
+const GL={on:1.8,off:1.5,drive:false,st:[null,null,null],sent:null,sentAt:0};
+try{const c=JSON.parse(localStorage.getItem('glcfg'));if(c&&+c.on>+c.off){GL.on=+c.on;GL.off=+c.off;GL.drive=!!c.drive;}}catch(e){}
+const glCustom=()=>GL.on!==1.8||GL.off!==1.5,glActive=()=>glCustom()||GL.drive;
+function glLow(i,v){let s=GL.st[i];if(!isFinite(v))return s===true;if(v<GL.off)s=true;else if(v>=GL.on)s=false;else if(s===null)s=P.panels[i].low===true;GL.st[i]=s;return s;}
+function glSave(){try{localStorage.setItem('glcfg',JSON.stringify({on:GL.on,off:GL.off,drive:GL.drive}));}catch(e){}}
 const EV_MIN_V=1.8;/* what counts as high solar for the EV load */
 const P={es:null,evl:null,chg:null,sq:null,panels:[{v:NaN,low:null},{v:NaN,low:null},{v:NaN,low:null}],relay:{on:null,auto:null},conv:{run:null,auto:null,pct:null},led:null,ledc:null,ledo:{g:null,r:null},ina:{st:'unknown',bus:NaN,shunt:NaN,load:NaN,ma:NaN,mw:NaN},at:0};
 const pFresh=()=>P.at>0&&performance.now()-P.at<4000;
@@ -185,7 +196,7 @@ const HIST={p:[[],[],[]],ma:[],t:[]};
 function pushHist(){const n=Date.now();if(HIST.t.length&&n-HIST.t[HIST.t.length-1]<800)return;HIST.t.push(n);P.panels.forEach((p,i)=>{HIST.p[i].push(p.v);});HIST.ma.push(P.ina.ma);if(HIST.t.length>90){HIST.t.shift();HIST.p.forEach(a=>a.shift());HIST.ma.shift();}}
 function parseLine(l){let m;const n=performance.now();if(l){SER.lines++;SER.last=n;LOG.push(l);if(LOG.length>14)LOG.shift();}
  const N='(-?\\d+(?:\\.\\d+)?)';
- if(m=l.match(new RegExp('Panel ([123]) \\(GPIO\\d+\\):\\s*'+N+'\\s*V\\s*\\|\\s*(LOW LIGHT|LIGHT DETECTED)','i'))){const p=P.panels[+m[1]-1];p.v=+m[2];p.low=m[3].toUpperCase()==='LOW LIGHT';P.at=n;if(m[1]==='3')pushHist();}
+ if(m=l.match(new RegExp('Panel ([123]) \\(GPIO\\d+\\):\\s*'+N+'\\s*V\\s*\\|\\s*(LOW LIGHT|LIGHT DETECTED)','i'))){const p=P.panels[+m[1]-1];p.v=+m[2];p.low=m[3].toUpperCase()==='LOW LIGHT';if(glActive())p.low=glLow(+m[1]-1,p.v);P.at=n;if(m[1]==='3')pushHist();}
  else if(m=l.match(/Solar LED status:\s*(RED|GREEN)/i))P.led=m[1].toUpperCase();
  else if(m=l.match(/LED control:\s*(AUTOMATIC|MANUAL)/i))P.ledc=m[1].toUpperCase()==='AUTOMATIC';
  else if(m=l.match(/LED output:\s*green=(ON|OFF)\s*red=(ON|OFF)/i)){P.ledo.g=m[1].toUpperCase()==='ON';P.ledo.r=m[2].toUpperCase()==='ON';}
@@ -227,7 +238,7 @@ function statP(id){
  if(id==='line1')return{t:P.conv.run?'Running':'Stopped',k:P.conv.run?'ok':'off',rows:[['Control',P.conv.auto?'Automatic ('+(CONV_AUTO_ALWAYS_RUN?'always running':'2 s run, 5 s stop')+')':'Manual'],['Speed',P.conv.pct!=null?P.conv.pct+'%':'unknown (upload the new sketch)'],['Energy policy','never stops the conveyor']],note:'Essential production load: no energy rule on this page ever sends a stop. The buttons below are manual controls for the operator only.'};
  const best=Math.max(0,...P.panels.map(q=>isFinite(q.v)?q.v:0)),nl=P.panels.filter(q=>q.low===true).length,gOn=P.ledo.g!==null?P.ledo.g:P.led==='GREEN',rOn=P.ledo.r!==null?P.ledo.r:P.led==='RED';
  const eg=evExpectGreen(),mG=gOn&&!rOn,mR=rOn&&!gOn,agree=eg===null||!(mG||mR)||P.ledc===false?null:(mG===eg);
- return{t:mG?'Enabled (green)':mR?'Deferred (red)':'Unknown',k:mG?'ok':mR?'warn':'off',rows:[['Panels with low light',nl+' of 3'],['ESP32 energy state',P.es?P.es.replace(/_/g,' ').toLowerCase():'unknown (upload the new sketch)'],['Policy',EV_DEFER_ON_ANY_LOW?'defer if any panel is low':'defer below '+EV_MIN_V.toFixed(1)+' V'],['LED control',P.ledc===null?'unknown (upload the new sketch)':P.ledc?'Automatic (follows solar)':'Manual'],['Green LED',gOn?'On':'Off'],['Red LED',rOn?'On':'Off'],['ESP32 LED vs policy',agree===null?'not compared':agree?'agrees':'differs: the sketch may not have the one-panel rule yet']],note:'Simulated flexible load: a red/green LED standing in for an EV charger. No real EV load is switched. The LED is driven by the ESP32; this page only shows it. Policy: the EV load is deferred when any panel is low and re-enabled only after the panels stay recovered.'};
+ return{t:mG?'Enabled (green)':mR?'Deferred (red)':'Unknown',k:mG?'ok':mR?'warn':'off',rows:[['Panels with low light',nl+' of 3'],['ESP32 energy state',P.es?P.es.replace(/_/g,' ').toLowerCase():'unknown (upload the new sketch)'],['Policy',EV_DEFER_ON_ANY_LOW?'defer if any panel is low':'defer below '+EV_MIN_V.toFixed(1)+' V'],['LED control',P.ledc===null?'unknown (upload the new sketch)':P.ledc?'Automatic (follows solar)':'Manual'],['Green LED',gOn?'On':'Off'],['Red LED',rOn?'On':'Off'],['ESP32 LED vs policy',agree===null?'not compared':agree?'agrees':'differs: the sketch may not have the one-panel rule yet']],note:'A red/green LED stands in for the EV charger. The ESP32 drives it, or this page does when you switch on the green light limits in the spanner panel. Policy: the EV load is deferred when any panel is low and re-enabled only after the panels stay recovered.'};
 }
 function protoSummary(){if(!pFresh())return'<b>Waiting for the ESP32</b><div class="note">Pick a part once data arrives. If nothing appears, close the Arduino Serial Monitor first.</div>';
  const n=P.panels.filter(p=>!p.low).length;return'<b>'+n+' of 3 panels have light</b><div class="note">Conveyor: '+(P.conv.run?'running':'stopped')+'. Battery charger relay: '+(P.relay.on?'on':'off')+'. Twin check: '+(TW.cur.verdict==='ok'?'validated':TW.cur.verdict==='bad'?'needs recalibration':'collecting data')+'. Click a part to see its readings.</div>';}
@@ -285,7 +296,7 @@ function serStatus(){
  let h='Connected. '+SER.bytes+' bytes, '+SER.lines+' lines, last line '+age+'.';
  if(wait>3000&&SER.bytes===0)h+=' No bytes yet: check the USB cable carries data, press the ESP32 EN (reset) button, and make sure the Arduino Serial Monitor is closed.';
  else if(wait>5000&&!pFresh())h+=' Text is arriving but no "Panel 1 (GPIO32)" lines were recognised. Open the log below and compare with your sketch output.';
- h+=' [page '+VER+', screen refreshed '+(++SER.paints)+' times]';s.textContent=h;$('log').textContent=LOG.join('\n');
+ h+=' [page '+VER+']';s.textContent=h;$('log').textContent=LOG.join('\n');
 }
 function renderUI(){
  const ch=$('chips');if(!ch.children.length)EL.forEach(a=>{const b=document.createElement('button');b.dataset.id=a[0];b.innerHTML='<span class="dot off"></span><span>'+a[1]+'</span><span class="tw"></span>';b.onclick=()=>select(a[0]);ch.appendChild(b);});
@@ -296,8 +307,8 @@ function renderUI(){
   card.innerHTML='<b>'+(ok?'Power source: '+S.power:'Pick a part')+'</b><div class="note">'+(ok?S.act+' Click a part to see its status.':(mode==='lab'&&labMode==='none'?'Connect the ESP32 or press Use simulator on the lab page.':'Click a part in the model or one of the buttons above to see its status.'))+'</div>';}
  else{const s=stat(sel),name=EL.find(a=>a[0]===sel)[1];
   card.innerHTML='<div class="h"><b>'+name+'</b><span class="badge '+s.k+'">'+s.t+'</span></div>'+(s.rows.length?'<table>'+s.rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join('')+'</table>':'')+(s.note?'<div class="note">'+s.note+'</div>':'');}
- const sb=$('src');let txt='Simulated here',k='warn';
- if(mode==='proto'){txt=pFresh()?'ESP32 '+(btMode?'wireless':'over USB')+' (live)':'Connected, no data yet';k=pFresh()?'ok':'off';}else if(mode==='lab'){if(labMode==='none'){txt='Not connected';k='off';}else if(stale()){txt='No data';k='off';}else if(labMode==='serial'){txt='ESP32 over USB (live)';k='ok';}else{txt='Lab simulator';k='warn';}}
+ const sb=$('src');let txt='Not connected',k='off';
+ if(mode==='proto'){txt=pFresh()?'ESP32 '+(btMode?'wireless':'over USB')+' (live)':'Connected, no data yet';k=pFresh()?'ok':'off';}else if(mode==='lab'){if(labMode==='none'){txt='Not connected';k='off';}else if(stale()){txt='No data';k='off';}else if(labMode==='serial'){txt='ESP32 over USB (live)';k='ok';}else{txt='Lab model';k='ok';}}
  sb.textContent=txt;sb.className='badge '+k;
 hudRender();
 }
@@ -437,11 +448,11 @@ function fromReading(r){
  if(!r)return null;const pv=(r.panels||[]).map(p=>+p.v),rel=[0,1,2].map(i=>clamp((isFinite(pv[i])?pv[i]:0)/3.3,0,1)),b=r.battery||{},c=r.conveyor||{},e=r.ev||{};
  return{mode:'feed',state:'OK',rel,blocked:[false,false,false],raw:pv.length===3?pv:[NaN,NaN,NaN],bat:+b.pct||0,bchg:!!b.charging,bv:+b.v,power:c.mode||'-',spd:+c.speed||0,act:e.reason||'',s1:c.running?1:0,s2:e.charging?1:0,g:e.charging?1:0,r:e.charging?0:1,vdiv:NaN,vina:NaN,ima:NaN};}
 function statFeed(id){
- const pct=i=>Math.round(clamp(S.rel[i]*100,0,100)),src='This is the Operations console\'s feed drawn on the model (replay, simulation or a hardware feed: see the console). It does not control anything.';
+ const pct=i=>Math.round(clamp(S.rel[i]*100,0,100)),src='This is the Operations console\'s feed drawn on the model (replay or a hardware feed: see the console). It does not control anything.';
  if(id.startsWith('panel')){const i=+id.slice(5)-1;return{t:pct(i)+'% of best',k:'ok',rows:[['Share of the site\'s best solar output',pct(i)+'%<div class="bar ok"><i style="width:'+pct(i)+'%"></i></div>']],note:src};}
  if(id==='battery'){const b=Math.round(S.bat);return{t:S.bchg?'Charging':'Not charging',k:S.bchg?'ok':'off',rows:[['Charge (from the feed)',b+'%<div class="bar ok"><i style="width:'+b+'%"></i></div>']].concat(isFinite(S.bv)?[['Cell voltage (mapped)',S.bv.toFixed(2)+' V']]:[]),note:src};}
  if(id==='line1')return{t:S.s1?'Running':'Idle',k:S.s1?'ok':'off',rows:[['Power source',S.power],['Speed',S.spd+'%']],note:'Essential production load. '+src};
- return{t:S.s2?'Charging':'Held back',k:S.s2?'ok':'warn',rows:[['Reason',S.act||'-']],note:'A simulated flexible load: the planned EV charging. '+src};}
+ return{t:S.s2?'Charging':'Held back',k:S.s2?'ok':'warn',rows:[['Reason',S.act||'-']],note:'The planned EV charging. '+src};}
 window.SunShine={updateLab(l){labMode=l&&l.mode||'none';labAt=performance.now();S=fromLab(l);},
  update(r){if(EMB&&!PQ&&mode==='sim')mode='lab';if(mode==='proto')return;labMode='feed';labAt=performance.now();S=fromReading(r);},
  simulate(){if(mode==='proto')return;mode='sim';renderCtl();renderUI();}};
@@ -530,7 +541,7 @@ function weatherStep(dt,now){
  cc.copy(cWhite).lerp(cDark,W.dk);
  PC.forEach((c,i)=>{const o=W.pc[i];c.g.visible=o>.02;if(c.g.visible){c.mat.color.copy(cc);c.mat.opacity=o*.92;c.g.position.x=PAN[i].position.x+Math.sin(now/1800+i*2)*4;}
   const s=SHD[i];s.visible=o>.02;if(s.visible)s.material.opacity=o*.32;});
- STM.g.visible=W.storm>.02;if(STM.g.visible){STM.mat.color.copy(cWhite).lerp(cDark,Math.max(W.dk,.6));STM.mat.opacity=W.storm*.9;STM.g.position.x=150+Math.sin(now/5000)*10;}
+ STM.g.visible=false;/* the big storm cloud is removed: it covered the labels */
  RN.visible=W.rain>.03;if(RN.visible){RN.material.opacity=.7*W.rain;for(let i=0;i<RN_N;i++){let y=RNP[i*6+1]-dt*230*(.8+((i*37)%10)/25);if(y<0)y+=190;RNP[i*6+1]=y;RNP[i*6+4]=y-9;}RNG.attributes.position.needsUpdate=true;}
  FP.forEach((p,i)=>{const f=W.fl[i],vis=f>.03;p.dots.forEach((d,j)=>{d.visible=vis;if(vis){const s=((now/1000*(.10+.22*f))+j/5+p.ph)%1,q=pathAt(p,s),sc=.5+.9*f;d.position.set(q[0],q[1],q[2]);d.scale.set(sc,sc,sc);}});});
  if(AMB)AMB.intensity=.6-.22*(1-W.sun);l1.intensity*=.55+.45*W.sun;
@@ -546,16 +557,16 @@ function stBanner(){
  $('stName').textContent=c==='NODATA'?'Solar: waiting for data':'Solar: '+SNAME[c];
  const nm=SOL.shown.map((b,i)=>b?SHORT['panel'+(i+1)]:null).filter(Boolean);
   $('stTxt').textContent=c==='NODATA'?'':(3-SOL.n)+' of 3 panels lit'+(nm.length&&(c==='DEGRADED'||c==='SEVERE')?' · '+nm.join(' + ')+(nm.length===1?' shaded':' low'):'')+(c==='RECOVERY'?' · confirming recovery':'');
-  $('stCue').style.display=(c!=='NODATA'&&(W.storm>.15||Math.max(...W.pc)>.3))?'':'none';
- const sp=$('stSrc');sp.textContent=SOL.src==='measured'?'Measured (ESP32)':SOL.src==='simulated'?'Simulated':SOL.src?'Lab model':'';sp.style.display=SOL.src?'':'none';
+  
+ const sp=$('stSrc');sp.textContent=SOL.src==='measured'?'Measured (ESP32)':SOL.src==='simulated'?'Model':SOL.src?'Lab model':'';sp.style.display=SOL.src?'':'none';
  if(S&&S.mode==='feed'&&!stale()&&mode!=='proto'){el.className='stbar warn';$('stName').textContent='Reading from the Operations console';$('stTxt').textContent='not the ESP32 prototype';sp.textContent='Feed';sp.style.display='';$('stPol').innerHTML='The planner\'s schedule drawn on the model. <em>Never controls equipment.</em>';return;}
  const eg=evExpectGreen(),parts=[];
  if(live){const g=P.ledo.g!==null?P.ledo.g:P.led==='GREEN',r=P.ledo.r!==null?P.ledo.r:P.led==='RED';
-  const mG=g&&!r,mR=r&&!g,txt=mG?'green (enabled)':mR?'red (deferred)':g&&r?'both on':'off/unknown',bad=held('ev',P.ledc!==false&&eg!==null&&(mG||mR)&&mG!==eg);
-  parts.push('EV load (simulated LED): <em>'+txt+'</em>'+(P.ledc===false?' (manual)':bad?' <span class="wn">differs from policy</span>':''));
+  const mG=g&&!r,mR=r&&!g,txt=mG?'green (enabled)':mR?'red (deferred)':g&&r?'both on':'off/unknown',bad=held('ev',(P.ledc!==false||GL.drive)&&eg!==null&&(mG||mR)&&mG!==eg);
+  parts.push('EV load: <em>'+txt+'</em>'+(P.ledc===false&&!GL.drive?' (manual)':bad?' <span class="wn">differs from policy</span>':''));
   const rl=P.relay.on===null?'unknown':P.relay.on?'ON':'OFF',rbad=held('rl',(P.chg?P.chg==='STOPPED':c==='LOWSOLAR')&&P.relay.on===true&&P.relay.auto!==false);
   parts.push('Charger relay: <em>'+rl+'</em>'+(P.relay.auto===false?' (manual)':rbad?' <span class="wn">policy: stop charging</span>':''));if(P.es)parts.push('ESP32 state: <em>'+P.es.replace(/_/g,' ').toLowerCase()+'</em>');}
- else if(c!=='NODATA'){parts.push('EV load (simulated): <em>'+(eg===null?'holding':eg?'enabled':'deferred')+'</em> by policy');parts.push('Charger: <em>'+(c==='LOWSOLAR'?'stop':'allowed')+'</em> by policy');}
+ else if(c!=='NODATA'){parts.push('EV load: <em>'+(eg===null?'holding':eg?'enabled':'deferred')+'</em> by policy');parts.push('Charger: <em>'+(c==='LOWSOLAR'?'stop':'allowed')+'</em> by policy');}
   if(live){const t=performance.now();if(P.conv.run!==CVS.v){CVS.v=P.conv.run;CVS.at=t;}
    const stopAuto=CONV_AUTO_ALWAYS_RUN&&P.conv.auto===true&&P.conv.run===false&&t-CVS.at>3000;
    if(stopAuto)parts.push('<span class="wn">\u26A0 CONVEYOR STOPPED IN AUTOMATIC MODE: check equipment</span> (the sketch should keep it running)');
@@ -588,12 +599,29 @@ function twEval(){const out={verdict:'wait',items:[],n:TW.S.length,at:Date.now()
  const cu=S_.filter(x=>x.auto===true&&x.run!==null);
  if(cu.length<14)it.push({id:'line1',name:'Conveyor belt',exp:'running '+Math.round(TW.runShare*100)+'% of the time ('+(CONV_AUTO_ALWAYS_RUN?'always running in automatic mode':'2 s on, 5 s off')+')',meas:'manual or too few readings',pct:null,ok:null,tol:'within '+Math.round(TW.runTol*100)+' points',why:'manual mode: not checked'});
  else{const sh=cu.filter(x=>x.run).length/cu.length;it.push({id:'line1',name:'Conveyor belt',exp:Math.round(TW.runShare*100)+'% running',meas:Math.round(sh*100)+'% running',pct:sh/TW.runShare*100,ok:Math.abs(sh-TW.runShare)<=TW.runTol,tol:'within '+Math.round(TW.runTol*100)+' points'});}
- const eu=S_.filter(x=>x.ledOK&&x.ledAuto&&(EV_DEFER_ON_ANY_LOW||x.best>=EV_MIN_V||x.best<1.5));
+ const eu=S_.filter(x=>x.ledOK&&(x.ledAuto||GL.drive)&&(EV_DEFER_ON_ANY_LOW||x.best>=EV_MIN_V||x.best<1.5));
  if(eu.length<TW.minN)it.push({id:'ev',name:nm('ev'),exp:(EV_DEFER_ON_ANY_LOW?'green LED only when no panel is low':'green LED when best panel is at least '+EV_MIN_V.toFixed(1)+' V'),meas:'manual or no LED data',pct:null,ok:null,tol:'at least '+Math.round(TW.share*100)+'% agree',why:'manual or no LED data'});
  else{const ag=eu.filter(x=>x.g===(EV_DEFER_ON_ANY_LOW?x.nl===0:x.best>=EV_MIN_V)).length,sh=ag/eu.length;it.push({id:'ev',name:nm('ev'),exp:(EV_DEFER_ON_ANY_LOW?'green LED only when no panel is low':'green LED when best panel is at least '+EV_MIN_V.toFixed(1)+' V'),meas:Math.round(sh*100)+'% of readings agree',pct:sh*100,ok:sh>=TW.share,tol:'at least '+Math.round(TW.share*100)+'% agree'});}
  out.verdict=it.some(x=>x.ok===false)?'bad':it.some(x=>x.ok===true)?'ok':'wait';return out;}
 const twById=id=>mode==='proto'?TW.cur.items.find(x=>x.id===id):null;
 setInterval(()=>{try{if(EMB&&PQ&&!MINI&&window.parent!==window){const to=(location.origin==='null'||location.protocol==='file:')?'*':location.origin;window.parent.postMessage((mode==='proto'&&P.at>0)?{type:'sunshine-proto',P:P,age:performance.now()-P.at,bt:btMode}:{type:'sunshine-proto',off:true},to);}}catch(e){}},500);
 setInterval(()=>{try{twSample();TW.cur=twEval();if(EMB&&window.parent!==window){const to=location.origin==='null'?'*':location.origin;window.parent.postMessage({type:'sunshine-twin',twin:TW.cur},to);}}catch(e){}},1000);
+/* spanner panel and green light limits */
+(function(){const $w=$('wr'),T=$('tools'),gOn=$('glOn'),gOff=$('glOff'),gD=$('glDrive'),gN=$('glNote');if(!$w||!T)return;
+ const ro=()=>document.body.classList.contains('ro');
+ const fill=()=>{gOn.value=GL.on.toFixed(2);gOff.value=GL.off.toFixed(2);gD.checked=GL.drive;};fill();
+ $w.onclick=()=>{T.hidden=!T.hidden;$w.classList.toggle('on',!T.hidden);};
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!T.hidden){T.hidden=true;$w.classList.remove('on');}});
+ const apply=(msg)=>{const on=+gOn.value,off=+gOff.value;if(!(isFinite(on)&&isFinite(off)&&off>0&&on>off&&on<=3.3)){gN.textContent='Green on must be higher than green off (both between 0.1 and 3.3 V).';return;}
+  GL.on=on;GL.off=off;GL.st=[null,null,null];if(!ro()&&!GL.drive&&mode==='proto'){GL.drive=true;gD.checked=true;}glSave();gN.textContent=msg||'Saved.';};
+ gOn.onchange=gOff.onchange=()=>apply();
+ gD.onchange=()=>{GL.drive=gD.checked;GL.sent=null;glSave();if(!GL.drive&&mode==='proto'&&!ro())cmd('LED AUTO');};
+ $('glReset').onclick=()=>{GL.on=1.8;GL.off=1.5;GL.st=[null,null,null];GL.drive=false;fill();glSave();if(mode==='proto'&&!ro())cmd('LED AUTO');gN.textContent='Back to the sketch\'s own limits.';};
+ setInterval(()=>{try{
+  if(!T.hidden&&document.activeElement!==gOn&&document.activeElement!==gOff){const v=P.panels.map((q,i)=>'Panel '+(i+1)+': '+(isFinite(q.v)?q.v.toFixed(2)+' V '+(q.low===true?'(low)':q.low===false?'(lit)':''):'no data'));if(mode==='proto'&&pFresh())gN.textContent='Now: '+v.join(' | ');}
+  if(!GL.drive||mode!=='proto'||!pFresh()||ro())return;
+  const nLow=P.panels.filter(q=>q.low===true).length,want=EV_DEFER_ON_ANY_LOW?nLow===0:nLow<3,t=performance.now();
+  if(want!==GL.sent||t-GL.sentAt>5000){cmd(want?'LED GREEN':'LED RED');GL.sent=want;GL.sentAt=t;}
+ }catch(e){}},500);})();
 setInterval(()=>{try{renderUI();}catch(e){}},250);
 </script></body></html>
