@@ -457,6 +457,12 @@ main.fit .plrail .mr .mrsv{height:38px!important}
 #sunOpsBtn,#sunopsEntry{display:none!important}
 
 .lvev{display:flex;flex-direction:column;padding:4px 10px;border-radius:9px;border:1px solid #D9C2EC;background:#F7F0FC;color:#5B2C83;font-size:11px;line-height:1.25}.lvev b{font-size:13px}.lvev.held{background:#FFFAEB;border-color:#FEC84B;color:#93370D}.lvev.off{background:#F4F4F1;border-color:#DAD8D0;color:#5B6360}.lvev[hidden]{display:none}
+
+/* Live replay: fixed slots, so nothing jumps while it runs */
+.lvalerts{display:flex;gap:8px;min-height:54px;align-items:stretch}.lvalerts>.lvfault{flex:1;margin:8px 0 0}
+#lvPanels[hidden],#lvEv[hidden]{display:flex!important;visibility:hidden}
+#lpLamp{min-height:48px}#lpV{min-height:1.4em}
+.lvrep .kpis{margin-top:4px}.lvai{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-start;margin-top:10px}.lvai .note{flex:1;min-width:260px;margin:0;line-height:1.5}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="liveTabBtn" data-rp="live" title="Play today forward and watch the optimiser re-plan, all on one page">Live replay</button></span><span class="sp"></span><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -1194,7 +1200,7 @@ function liveRender(j,q,ms){LN=j.steps;LSx=LN/24;const fe=j.forecast_error,ex=j.
   cap=+q.req.batt_kwh||0,eta=Math.sqrt(+q.req.eff||.9),lim=+F.lim||0;
  const soc=[50];{let x=.5*cap;for(let t=0;t<LN;t++){x=Math.max(0,Math.min(cap,x+eta*DT*s.new_ch[t]-DT/eta*s.new_dis[t]));soc.push(cap>0?100*x/cap:0)}}
  const P=rngL().map(t=>t<K?s.actual_pv[t]:s.belief_pv[t]);
- const ck=lvCheck(j,soc),live=lvRep(j)&&!j.preview;lvBanner(ck,live?j:null);lv3dFeed(j,soc);
+ const ck=lvCheck(j,soc),live=lvRep(j)&&!j.preview;if(live){const H=lvSim.hist||(lvSim.hist={});H[j.now_step]={off:ck.off.map(x=>x.k),ev:lvSim.evMsg,soc:Math.min(...soc.slice(0,j.now_step+1))};lvSim.res=q.m.rs||0}lvBanner(ck,live?j:null);lv3dFeed(j,soc);
  const tiles=kpis([['Solar vs forecast, last 2 h',pr(j.correction.pv_ratio),'','since midnight '+pr(fe.pv.ratio)],['Demand vs forecast, last 2 h',pr(j.correction.load_ratio),'','since midnight '+pr(fe.load.ratio)],['Spent so far',money(j.spent_so_far_rm),'',b?'peak so far '+N0(j.peak_so_far_kw)+' kW':'no demand charge today'],
   ['Day cost, old plan',money(o.cost),'','estimate'],['Day cost, re-planned',money(n.cost),'good','estimate'],['Saving from re-planning',money(ex.saving_rm),ex.saving_rm>0.5?'good':'',ex.saving_pct==null?'':N1(ex.saving_pct)+'% of the old-plan day']]);
  const over=n.limit_violation_steps>0&&lim>0?`<div class="ribbon warn"><b>GRID LIMIT.</b> Even the new plan is expected to exceed ${N0(lim)} kW for ${hrsL(n.limit_violation_steps)} (highest ${N0(n.max_grid_kw)} kW).</div>`:'';
@@ -1284,6 +1290,8 @@ setInterval(()=>{if(LAMP.test)LAMP.at=Date.now()},1000);
 window.addEventListener('message',e=>{const d=e.data;if(!d||d.type!='sunshine-proto')return;const f=document.getElementById('proto3d');if(!f||e.source!==f.contentWindow)return;
  if(LAMP.test)return;if(d.off||!d.P||!d.P.panels){LAMP.off=true;return}LAMP.off=false;LAMP.v=d.P.panels.map(p=>p.v==null?NaN:+p.v);LAMP.low=d.P.panels.map(p=>p.low===true?true:p.low===false?false:null);LAMP.at=Date.now()-(+d.age||0)});
 const lampFresh=()=>!LAMP.off&&Date.now()-LAMP.at<3500;
+/* for what is SHOWN only: the badge and panel tiles stay up through short gaps between ESP32 messages, so they do not blink */
+const lampUi=()=>lampFresh()||(LAMP.at>0&&Date.now()-LAMP.at<10000);
 function lampRatio(){if(!lampFresh())return null;const v=LAMP.v.filter(x=>isFinite(x));if(!v.length)return null;return Math.max(0,Math.min(1.2,v.reduce((a,b)=>a+b,0)/v.length/LAMP_FULL))}
 function liveCard(){const td=cur==TODAY;return `<div class="card lvpage" data-role="tech" data-tour="live">
 ${td?`<div class="lvtop"><div class="lvtopl"><div class="lvhead"><h2 style="margin:0">Live replay</h2><span class="badge amber">SIMULATION &middot; recommendation only</span><span class="note" style="margin:0">15-minute steps. Re-plans after each step. Nothing is controlled.</span></div><div class="lvctl"><label class="note">Strategy <select id="lvMd">${MODES.filter(m=>m.k!='prod').map(m=>`<option value="${m.k}"${m.k==(sel=='bal'?'bal':sel=='zero'?'zero':'cost')?' selected':''}>${m.n}</option>`).join('')}</select></label>
@@ -1296,13 +1304,12 @@ ${td?`<div class="lvtop"><div class="lvtopl"><div class="lvhead"><h2 style="marg
 <label class="note" id="lpSl" hidden>Solar as share of forecast <input type="range" id="lvSl" min="0" max="120" value="100"> <b id="lvSlV">100%</b></label>
 </div>
 <div class="lvrun"><div id="lvTime" class="lvtime"><span class="lvt">08:00</span> <span class="badge amber">SIMULATED CLOCK</span> <span class="note">ready</span></div>
-<button class="on" id="lvGo" data-lvs="go">&#9654; Start</button><button data-lvs="next">Next step</button><button data-lvs="reset">Reset</button><span class="sp"></span><div id="lvEv" class="lvev" hidden></div><div id="lvPanels" class="pchs" hidden></div></div>
-<div id="lvFault" class="lvfault" role="alert" hidden></div>
-<div id="lvDev" class="lvfault lvdev" role="alert" hidden></div>
+<button class="on" id="lvGo" data-lvs="go">&#9654; Start</button><button data-lvs="next">Next step</button><button data-lvs="reset">Reset</button><button data-lvs="report">Report</button><span class="sp"></span><div id="lvEv" class="lvev" hidden></div><div id="lvPanels" class="pchs" hidden></div></div>
+<div class="lvalerts"><div id="lvFault" class="lvfault" role="alert" hidden></div><div id="lvDev" class="lvfault lvdev" role="alert" hidden></div></div>
 <div class="barwrap" style="margin:8px 0 4px"><div class="barfill" id="lvProg" style="width:33.3%;background:var(--amb)"></div></div><div id="lvRib"></div></div>
 <div class="lv3d"><iframe id="lv3d" src="factory3d.html?embed=1&amp;proto=1&amp;mini=1&amp;v=2026-11-12-m" tabindex="-1" title="3D model of the demo factory"></iframe><span class="mini3dlbl">3D demo factory</span></div></div>
 <span id="lvMsg" class="note"></span><div id="lvOut" style="margin-top:8px"></div>
-<div class="lvbox" style="margin-top:12px"><h3 class="sec" style="margin-top:0">Decisions so far</h3><ul id="lvLog" class="lvlog"><li class="note" style="border:0;background:none;padding:0">Press <b>Start</b>: each step's decision appears here.</li></ul><div id="lvEnd"></div></div>
+<div class="lvbox" style="margin-top:12px"><h3 class="sec" style="margin-top:0">Decisions so far</h3><div id="lvEnd"></div><ul id="lvLog" class="lvlog"><li class="note" style="border:0;background:none;padding:0">Press <b>Start</b>: each step's decision appears here.</li></ul></div>
 <p class="note" style="margin:8px 0 0">${lrnStat()} <button data-lrc="1">Forget what was learned</button></p>
 <details style="margin-top:8px"><summary class="note"><b>Test setting</b>: demand as share of forecast</summary><div class="lpbox"><label class="note" id="lpLd">Demand as share of forecast <input type="range" id="lvLd" min="60" max="140" value="100"> <b id="lvLdV">100%</b></label></div></details>
 <details style="margin-top:10px"><summary class="note"><b>Other ways to give it data</b>: a measured CSV file, or one simulated replay at a fixed time</summary>
@@ -1312,10 +1319,10 @@ ${td?`<div class="lvtop"><div class="lvtopl"><div class="lvhead"><h2 style="marg
 :`<div class="lvhead"><h2 style="margin:0">Live replay</h2><span class="badge amber">SIMULATION &middot; recommendation only</span><span class="note" style="margin:0">15-minute steps. Re-plans after each step. Nothing is controlled.</span></div><p class="note"><b>Open today to use this.</b> It compares the forecast with what happened so far today.</p><span id="lvMsg" class="note"></span><div id="lvOut"></div>`}</div>`}
 function lpDraw(){const b=$('lpBox');if(!b||!$('lvSrc'))return;const src=$('lvSrc').value;
  $('lvScW').hidden=src!='sc';$('lpLamp').hidden=src!='lamp';$('lpSl').hidden=src!='slider';$('lpLd').hidden=src=='sc';
- if(src=='lamp'){const ok=lampFresh(),r=lampRatio();
+ if(src=='lamp'){const ok=lampUi(),r=lampRatio();
   $('lpSt').innerHTML=ok?'<span class="badge" style="background:#DDF3E4;color:#05603A">PROTOTYPE CONNECTED</span>':'<span class="badge amber">NO PROTOTYPE DATA</span> <span class="note">Open the <b>3D</b> tab, press <b>Connect ESP32</b>, then come back here.</span>';
   $('lpV').innerHTML=ok&&r!=null?'Lamp at <b>'+N0(r*100)+'%</b> of full light ('+LAMP_FULL.toFixed(1)+' V)':''}
- const pf=pfUpdate(),ok=lampFresh(),pc=$('lvPanels'),fb=$('lvFault');
+ const pf=pfUpdate(),ok=lampUi(),pc=$('lvPanels'),fb=$('lvFault');
  if(pc){pc.hidden=!ok;if(ok)pc.innerHTML=[2,1,0].map(i=>{const x=LAMP.v[i];const f=pf.fault[i],lw=!f&&(LAMP.low[i]===true||(LAMP.low[i]==null&&x<2)),lv=isFinite(x)?Math.max(0,Math.min(1,x/(LAMP_FULL||3))):0;return `<div class="lvpn ${f?'bad':lw?'low':'ok'}" title="Panel ${3-i}: ${isFinite(x)?x.toFixed(2):'n/a'} V, ${f?'fault':lw?'low light':'lit'}"><span class="lvpc"><em>Panel ${3-i}</em><s style="height:${N0(lv*100)}%"></s></span><b>${isFinite(x)?x.toFixed(2):'n/a'} V</b><i>${f?'Fault':lw?'Low light':'Lit'}</i></div>`}).join('')}
  if(fb){const fl=[2,1,0].filter(i=>pf.fault[i]);fb.hidden=!fl.length;if(fl.length){const t=fl.map(i=>'Panel '+(3-i)+' fault: '+LAMP.v[i].toFixed(1)+' V').join(' &middot; ');if(fb.dataset.t!==t){fb.dataset.t=t;fb.innerHTML='&#9888; '+t}}else fb.dataset.t=''}
  $('lvSlV').textContent=$('lvSl').value+'%';$('lvLdV').textContent=$('lvLd').value+'%'}
@@ -1394,8 +1401,32 @@ function lvLogAdd(j){const s=lvSim,c=j.correction,ex=j.expected,pv=c.pv_ratio,ld
  if(s.gap){t='<i>No lamp reading during this step, so the previous value was kept.</i> '+t;s.gap=false}
  s.log.unshift({h:tmL(j.now_step),off,t});s.log=s.log.slice(0,14);
  $('lvLog').innerHTML=s.log.map(x=>`<li class="${x.off?'lvoff':'lvok'}"><b>${x.h}</b> ${x.t}</li>`).join('')}
-function lvEnd(){const s=lvSim,j=s&&s.lastJ;if(!j||!$('lvEnd'))return;const fe=j.forecast_error,l=j.learned&&j.learned.applied;
- $('lvEnd').innerHTML=`<div class="ribbon past"><b>RUN COMPLETE (simulated).</b> Average forecast error: solar ${N0(fe.pv.mae_kw)} kW, load ${N0(fe.load.mae_kw)} kW.${l?` Without learning it would have been solar ${N0(j.forecast_error_raw.pv.mae_kw)} kW, load ${N0(j.forecast_error_raw.load.mae_kw)} kW.`:''}</div>
+/* Run report: how far the day moved from the original (day-ahead) plan, what re-planning recovered, and what happened step by step */
+function lvRepData(){const s=lvSim,j=s&&s.lastJ;if(!j||!s.hist)return null;const q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return null;
+ const sr=j.series,ex=j.expected,o=ex.old_plan,n=ex.new_plan,c=q.p.b.c,N_=sr.plan_grid?sr.plan_grid.length:LN,inW=i=>c.win&&i*24/N_>=c.win[0]&&i*24/N_<c.win[1];
+ const pg=sr.plan_grid||[],planPeak=c.win?Math.max(0,...pg.filter((v,i)=>inW(i))):Math.max(0,...pg),H=Object.values(s.hist),cnt=k=>H.filter(h=>h.off.includes(k)).length;
+ const twinOk=H.length?H.filter(h=>!h.off.includes('grid')).length/H.length*100:100,ev=H.filter(h=>h.ev=='held').length,socMin=Math.min(100,...H.map(h=>h.soc));
+ const k0=s.k0,k1=j.now_step;let ps=0,pf=0,ls=0,lf=0;for(let t=k0;t<k1;t++){ps+=sr.actual_pv[t];pf+=sr.forecast_pv[t];ls+=sr.actual_load[t];lf+=sr.forecast_load[t]}
+ const plan=j.day_ahead_expected_cost!=null?j.day_ahead_expected_cost:o.cost;
+ return{strategy:q.m.n,start:tmL(k0),end:tmL(k1),plan_cost:+plan.toFixed(2),kept_cost:+o.cost.toFixed(2),new_cost:+n.cost.toFixed(2),plan_peak:Math.round(planPeak),new_peak:Math.round(n.billed_peak_kw||0),
+  solar_pct:pf>0?Math.round(ps/pf*100):100,demand_pct:lf>0?Math.round(ls/lf*100):100,steps:Math.max(1,H.length),solar_off:cnt('pv'),demand_off:cnt('load'),grid_off:cnt('grid'),
+  twin_pct:Math.round(twinOk),ev_held:ev,soc_min:Math.round(socMin),reserve:Math.round((s.res||0)*100),learned:!!(j.learned&&j.learned.applied)}}
+function lvReport(){const el=$('lvEnd');if(!el)return;const d=lvRepData();if(!d){el.innerHTML='<p class="note">Play at least one step first.</p>';return}
+ const dc=d.kept_cost-d.plan_cost,rec=d.kept_cost-d.new_cost,pct=v=>(v>=0?'+':'−')+N1(Math.abs(v))+'%',mv=v=>(v>=0?'+':'−')+money(Math.abs(v));
+ const row=(n,a,b,c,cls)=>`<tr><td>${n}</td><td>${a}</td><td>${b}</td><td><b>${c}</b></td><td class="${cls||''}">${cls=='good'?'better':cls=='bad'?'worse':''}</td></tr>`;
+ el.innerHTML=`<div class="lvbox lvrep"><div class="bar" style="margin:0 0 6px"><h3 class="sec" style="margin:0">Run report: ${d.start}&ndash;${d.end}, ${esc(d.strategy)}</h3><span class="badge amber">SIMULATED</span></div>
+ ${kpis([['Day moved from the plan',mv(dc),dc>0.5?'bad':'',d.plan_cost>0?pct(dc/d.plan_cost*100)+' vs '+money(d.plan_cost):''],['Recovered by re-planning',money(Math.max(0,rec)),rec>0.5?'good':'','vs keeping the old plan'],['Solar vs forecast',d.solar_pct+'%',d.solar_pct<85?'bad':'',d.solar_off+' intervals off'],['Demand vs forecast',d.demand_pct+'%',d.demand_pct>110?'bad':'',d.demand_off+' intervals off'],['Digital twin',d.twin_pct+'%',d.twin_pct<80?'bad':'good','intervals within tolerance'],['EV charging held',d.ev_held+' intervals','','re-planned later']])}
+ <table class="sch lvtbl" style="margin-top:8px"><tr><th>Whole day</th><th>Original plan</th><th>Old plan kept</th><th>Re-planned</th><th></th></tr>
+ ${row('Day cost',money(d.plan_cost),money(d.kept_cost),money(d.new_cost),d.new_cost<d.kept_cost-0.5?'good':'')}
+ ${row('Billed peak',N0(d.plan_peak)+' kW','',N0(d.new_peak)+' kW',d.new_peak>d.plan_peak+1?'bad':'')}
+ ${row('Lowest battery charge','','',d.soc_min+'%',d.soc_min<=d.reserve+5?'bad':'')}</table>
+ <div class="lvai"><button class="on" data-lvai="1">AI review: how to improve</button><span id="lvAiTxt" class="note"></span></div></div>`;lvSim.rep=d}
+async function lvAi(){const d=lvSim&&lvSim.rep,t=$('lvAiTxt');if(!d||!t)return;t.textContent='Writing the review...';
+ try{const j=await api('/api/explain',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({kind:'replay'},d))});
+  t.innerHTML=(j.source=='ai'?'<span class="badge">AI</span> ':'<span class="badge">Template</span> ')+esc(j.text)+(j.note?' <span class="note">('+esc(j.note)+')</span>':'')}
+ catch(e){t.textContent='The review is not available right now ('+e.message+'). Sign in to use AI.'}}
+function lvEnd(){const s=lvSim,j=s&&s.lastJ;if(!j||!$('lvEnd'))return;lvReport();const rp=$('lvEnd').innerHTML;const fe=j.forecast_error,l=j.learned&&j.learned.applied;
+ $('lvEnd').innerHTML=rp+`<div class="ribbon past"><b>RUN COMPLETE (simulated).</b> Average forecast error: solar ${N0(fe.pv.mae_kw)} kW, load ${N0(fe.load.mae_kw)} kW.${l?` Without learning it would have been solar ${N0(j.forecast_error_raw.pv.mae_kw)} kW, load ${N0(j.forecast_error_raw.load.mae_kw)} kW.`:''}</div>
  <p class="note" style="margin:6px 0">${lrnStat()} Let the system learn from this run, then press <b>Run again</b>: the forecast is corrected before the day starts. It only helps for an error that <b>repeats</b> (for example the lamp held at about half brightness every step); a one-off dip is not worth learning and would make tomorrow&rsquo;s forecast worse. Hours after the run ended count as &ldquo;as forecast&rdquo;.</p><button class="on" data-lvl="1">Learn from this run</button> <span id="lvLrn" class="note"></span>`}
 async function lvLearn(){const s=lvSim,p=lastPlan;if(!s||!p)return;const m=$('lvLrn');m.textContent='Learning...';const fc=p.b.fc,al=fc.load.slice(),ap=fc.pv.slice();
  if(s.src=='sc')ROSC[s.sc][1].forEach(e=>{const a=e.from_h,z=e.to_h,arr=e.what=='pv'?ap:al;for(let t=0;t<NS;t++)if(t/S>=a-1e-9&&(t+1)/S<=z+1e-9)arr[t]*=e.factor});
@@ -1787,8 +1818,9 @@ const ct=e.target.closest('[data-ct]');if(ct){if(ct.dataset.ct!=chartTab)whyClos
  if(e.target.closest('[data-lvt]')){liveTemplate();return}
  if(e.target.closest('[data-lrd]')){lrnDemo();return}
  if(e.target.closest('[data-lrc]')){lrnSet(null);if($('lrnStat'))$('lrnStat').innerHTML=lrnStat();if($('lrnOut'))$('lrnOut').innerHTML='<div class="ribbon past">Cleared.</div>';return}
- {const g=e.target.closest('[data-lvs]');if(g){const a=g.dataset.lvs;a=='go'?lvGo():a=='next'?lvNext():lvReset();return}}
+ {const g=e.target.closest('[data-lvs]');if(g){const a=g.dataset.lvs;a=='go'?lvGo():a=='next'?lvNext():a=='report'?(lvReport(),$('lvEnd').scrollIntoView({behavior:'smooth',block:'start'})):lvReset();return}}
  if(e.target.closest('[data-lvl]')){lvLearn();return}
+ if(e.target.closest('[data-lvai]')){lvAi();return}
  if(e.target.closest('[data-lv]')){liveRun({replay:{now_step:+$('lvNow').value,scenario:ROSC[$('lvSc').value][1]}},'Running simulated replay...');return}
  if(e.target.closest('[data-au]')){auditRun();return}
  if(e.target.closest('[data-retry]')){render();return}
