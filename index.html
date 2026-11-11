@@ -95,6 +95,7 @@ th{font-weight:700}table th{background:#E6F1DC}.ribbon{border-radius:10px}
 @media(max-width:640px){.top{padding:10px 14px}.brand{order:-1;width:100%;justify-content:flex-start}.costbars{grid-template-columns:70px 1fr 80px}}
 .shiny{width:28px;height:28px;border-radius:50%;object-fit:cover;flex:none}
 .chead .shiny{width:34px;height:34px;margin-right:8px}
+#chatTyping{display:flex;align-items:center;gap:6px;padding:0 12px;color:var(--mut);font-size:13px}#chatTyping img{width:60px;height:auto;flex:none}@media(prefers-reduced-motion:reduce){#chatTyping img{display:none}}
 .brow{display:flex;gap:8px;align-items:flex-start;align-self:flex-start;max-width:94%}.brow .shiny{margin-top:2px}.brow .msg{max-width:none}
 .stratbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;justify-content:flex-end}
 .layout{grid-template-columns:minmax(0,1fr)!important}#facPanel>.card{margin-bottom:16px}
@@ -441,7 +442,7 @@ main.fit .snw svg{max-height:calc(100vh - 430px);min-height:200px}main.fit .snc{
 <div id="chatPanel" role="dialog" aria-label="Shiny" hidden>
 <div class="chead"><img class="shiny" src="shiny.png" alt="" onerror="this.style.display='none'"><b>Shiny</b><span class="sp"></span><button id="chatX" aria-label="Close Shiny">Close</button></div>
 <div id="chatLog" aria-live="polite"></div>
-<div class="note" id="chatTyping" hidden style="padding:0 12px">Shiny is thinking&hellip;</div>
+<div id="chatTyping" role="status" hidden><img src="shiny-thinking.gif" alt="" onerror="this.style.display='none'"><span>Shiny is thinking&hellip;</span></div>
 <div id="chatChips" class="chips"><button data-calc="1" title="A plain explanation of every step, from weather to savings">How we calculated this</button><button data-chip="Set up a factory in Penang">Set up a factory in Penang</button><button data-chip="Show this month with the cost-saving strategy">Show this month</button><button data-chip="What does the Balanced strategy do?">What is Balanced?</button></div>
 <div class="cin"><input type="file" id="chatFile" accept=".csv,.txt,text/csv,text/plain" hidden><button id="chatAttach" title="Attach a meter CSV, or a .txt file with the text of your bill">Attach</button><textarea id="chatIn" rows="1" placeholder="Describe your site or ask&hellip;" aria-label="Message"></textarea><button class="on" id="chatSend">Send</button></div></div>
 <div id="roleGate" hidden role="dialog" aria-modal="true" aria-labelledby="rgTitle"><div class="rg"><h2 id="rgTitle">Who is using this?</h2><p class="note" style="margin-top:0">Pick your role. Every role sees the same numbers; the role decides what you can open and what you can change. You can change it at the top at any time.</p>
