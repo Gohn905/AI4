@@ -421,15 +421,14 @@ main.fit .plrail .mr .mrsv{height:38px!important}
 #plGrid .pa{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px;width:auto}
 #plGrid .pal{display:block;color:var(--mut);font-size:12px;font-weight:700;margin:0 0 6px;letter-spacing:.03em}
 #plGrid .pg{grid-template-columns:repeat(var(--c,8),46px);gap:5px}
-.pm{position:relative;width:46px;height:60px;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;
- background-image:linear-gradient(90deg,transparent calc(33.3% - .5px),rgba(255,255,255,.35) calc(33.3% - .5px) calc(33.3% + .5px),transparent calc(33.3% + .5px) calc(66.6% - .5px),rgba(255,255,255,.35) calc(66.6% - .5px) calc(66.6% + .5px),transparent calc(66.6% + .5px)),linear-gradient(0deg,transparent calc(33.3% - .5px),rgba(255,255,255,.35) calc(33.3% - .5px) calc(33.3% + .5px),transparent calc(33.3% + .5px) calc(66.6% - .5px),rgba(255,255,255,.35) calc(66.6% - .5px) calc(66.6% + .5px),transparent calc(66.6% + .5px));
- box-shadow:0 1px 2px rgba(0,0,0,.25);transition:background-color .35s}
-.pm b{font-size:13px;line-height:1.1;text-shadow:0 1px 2px rgba(0,0,0,.55)}.pm small{font-size:9px;opacity:.8;text-shadow:0 1px 2px rgba(0,0,0,.5)}
-.pm.pmf{box-shadow:inset 0 0 0 2px #ff6b6b,0 0 0 2px #e24b4a;background-color:#7a2b33!important}
-.pm.z b{opacity:.7}
+.pm{position:relative;width:44px;height:52px;border-radius:3px;overflow:hidden;display:flex;flex-direction:column;background:#F7931E;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.pm i{display:block;height:22px;background-color:#22324d;background-image:linear-gradient(90deg,transparent calc(33.3% - .5px),rgba(255,255,255,.45) calc(33.3% - .5px) calc(33.3% + .5px),transparent calc(33.3% + .5px) calc(66.6% - .5px),rgba(255,255,255,.45) calc(66.6% - .5px) calc(66.6% + .5px),transparent calc(66.6% + .5px)),linear-gradient(0deg,transparent calc(50% - .5px),rgba(255,255,255,.45) calc(50% - .5px) calc(50% + .5px),transparent calc(50% + .5px));border-bottom:1px solid rgba(255,255,255,.5)}
+.pm b{flex:1;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;-webkit-text-stroke:.6px rgba(0,0,0,.45);text-shadow:0 1px 1px rgba(0,0,0,.35);font-variant-numeric:tabular-nums}
+.pm.pmf{background:#D64545;box-shadow:0 0 0 2px #fff,0 0 0 3.5px #D64545}
+.pm.z{background:#9aa4b2}
 .plleg{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:12px;color:var(--mut);margin:0 0 8px}
 .plramp{display:inline-block;width:140px;height:9px;border-radius:5px;background:linear-gradient(90deg,rgb(38,52,74),rgb(30,96,200),rgb(79,195,247))}
-.plk{display:inline-flex;align-items:center;gap:5px}.plk i{width:12px;height:12px;border-radius:2px;display:inline-block}.plk i.flk{background:#7a2b33;box-shadow:0 0 0 2px #e24b4a}
+.plk{display:inline-flex;align-items:center;gap:5px}.plk i{width:12px;height:12px;border-radius:2px;display:inline-block}.plk i.flk{background:#D64545}
 @media(max-width:700px){#plGrid .pg{grid-template-columns:repeat(var(--c,8),minmax(0,1fr))}.pm{width:auto;height:54px}#plGrid .pa{width:100%}}
 .fksc{display:inline-block;margin-left:6px}.fksc summary{cursor:pointer;font-size:12px;color:var(--mut)}.fksc select{margin-top:4px}
 @media(max-width:1100px){.lv3d{height:240px}}
@@ -447,6 +446,12 @@ main.fit .plrail .mr .mrsv{height:38px!important}
 @keyframes dvtIn{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
 @media(prefers-reduced-motion:reduce){.dvt{animation:none}}
 @media(max-width:560px){#dvToasts{bottom:60px;right:10px}}
+
+/* roles: view-only markers and strategy lock */
+#dtabs button.rvo::after{content:"\1F441";font-size:11px;margin-left:6px;opacity:.55;filter:grayscale(1)}
+.nostrat [data-s2]:not(.on),.nostrat #tabs [data-s]:not(.on){opacity:.45;cursor:not-allowed}.nostrat [data-sc]{cursor:default}
+.nostrat [data-s2],.nostrat #tabs [data-s]{pointer-events:none}
+.nostrat .stratr b::after{content:" \1F512";font-size:11px}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="liveTabBtn" data-rp="live" title="Play today forward and watch the optimiser re-plan, all on one page">Live replay</button></span><span class="sp"></span><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -762,7 +767,7 @@ function plGridHtml(r,t,fr,live){fr=fr||0;const pred=cur==TODAY&&t>plNow().t,n=p
  const med=[...out].sort((a,b)=>a-b)[Math.floor(T/2)];let fl=0;
  const rw=+(document.getElementById('cv_w')||{}).value||550,
   ramp=k=>{const S0=[[38,52,74],[30,96,200],[79,195,247]],q=Math.max(0,Math.min(1,k))*2,i=Math.min(1,Math.floor(q)),u=q-i,a=S0[i],b=S0[i+1];return `rgb(${a.map((x,j)=>Math.round(x+(b[j]-x)*u)).join(',')})`};
- const tile=(v,i)=>{const f=med>30&&v<med*.9;if(f)fl++;const nm=String.fromCharCode(65+Math.floor(i/Lc.per))+(i%Lc.per+1);return `<div class="pm${f?' pmf':''}${v<=0?' z':''}" style="background-color:${v<=0?'#3a4250':ramp(v/rw)}" title="Panel ${nm}: ${v} W"><b>${v}</b><small>${nm}</small></div>`};
+ const tile=(v,i)=>{const f=med>30&&v<med*.9;if(f)fl++;const nm=String.fromCharCode(65+Math.floor(i/Lc.per))+(i%Lc.per+1);return `<div class="pm${f?' pmf':''}${v<=0?' z':''}" title="Panel ${nm}: ${v} W"><i></i><b>${v}</b></div>`};
  const arr=(a,b,name)=>`<div class="pa"><span class="pal">${name}</span><div class="pg" style="--c:${Lc.c}">${out.slice(a,b).map((v,j)=>tile(v,a+j)).join('')}</div></div>`;
  let html='';for(let k=0;k*Lc.per<T;k++)html+=arr(k*Lc.per,Math.min(T,(k+1)*Lc.per),'Array '+String.fromCharCode(65+k));
  return{pred,html,info:`<b>${live?'Live '+clockTxt():tm(t)}</b>${pred?' <span class="plpred">Predicted</span>':''}: site solar ${N0(sv)} kW over ${N0(n)} panels, about ${N0(base)} W each. `+(fl?`<b style="color:#92400E">${fl} of the ${T} panels shown are more than 10% below the middle value (red).</b>`:`No panel shown is more than 10% below the middle value.`)}}
@@ -772,7 +777,7 @@ function panelCard(r){if(!(+F.kwp>0))return `<div id="plBox"><p class="note">Ent
  const g=plGridHtml(r,plT,live?np.fr:0,live);
  return `<div id="plBox"><p class="note">Watts per panel. Drag the slider to move through the day. <b>Live</b> follows the clock; later times are faded (predicted).</p>
  <div class="bar" style="margin:6px 0"><span class="note" style="margin:0">Time</span>${cur==TODAY?`<button data-pls="now" id="plNow" class="${live?'on':''}" title="Follow the clock">&#9679; Live</button>`:''}<button data-pls="-1" aria-label="30 minutes earlier" title="30 minutes earlier">&#9664;</button><input type="range" id="plSl" min="0" max="${NS-1}" step="1" value="${plT}" style="flex:1;min-width:160px" aria-label="Time of day, 30-minute steps"><button data-pls="1" aria-label="30 minutes later" title="30 minutes later">&#9654;</button></div>
- <div id="plInfo" class="note" style="margin:0 0 8px">${g.info}</div><div class="plleg"><span>0 W</span><i class="plramp"></i><span>${N0(+(document.getElementById('cv_w')||{}).value||550)} W</span><span class="plk"><i style="background:#3a4250"></i>No sun</span><span class="plk"><i class="flk"></i>More than 10% below the middle</span></div><div id="plGrid" class="plwrap${g.pred?' plfade':''}">${g.html}</div>
+ <div id="plInfo" class="note" style="margin:0 0 8px">${g.info}</div><div class="plleg"><span class="plk"><i style="background:#F7931E"></i>Normal (W)</span><span class="plk"><i class="flk"></i>More than 10% below the middle</span><span class="plk"><i style="background:#9aa4b2"></i>No sun</span></div><div id="plGrid" class="plwrap${g.pred?' plfade':''}">${g.html}</div>
  <p class="note"><b>Demo values.</b> ${live?'Live follows the clock and refreshes every few seconds, but these ':'These '}are not meter readings: the site solar forecast is split evenly across ${N0(plN())} panels (${N0(+F.kwp)} kWp), with a small made-up spread and two made-up weak panels to show how a fault would look. ${plCfg().t=='string'?'<b>String inverter:</b> real per-panel readings do not exist with this setup, so this can only be a demo. ':''}Layout: ${plCfg().a} array${plCfg().a>1?'s':''} of ${plCfg().r} rows by ${plCfg().c} panels, set in Facility &amp; data. When the customer's per-panel data is loaded, it replaces these numbers.</p></div>`}
 function pcCard(r,past,K){
  const TY={sol:['Solar power',r.sol,'#F59E0B'],ld:['Site demand',r.ld,'#5B6360'],g:['Grid import',r.g,'#2b6cb0'],bat:['Battery',r.b.map((v,i)=>v-r.ch[i]),'#16803D']};
@@ -889,11 +894,17 @@ let techCur=null;
 // Role = what a person is responsible for. With a work sign-in the role comes from the account; otherwise the picker is a demo switch.
 const WHO={owner:{n:'Owner'},analyst:{n:'Analyst'},operator:{n:'Operator'},approver:{n:'Approver'},auditor:{n:'Auditor'}};
 const OPER=['live','reopt','learn','stress','sweep','approve','audit'];   // cards that change or run something (the rest are only for looking)
+/* Role access (first version of the role spec). 2 = main access, 1 = view only, 0 = hidden. Order: analyst, operator, approver, auditor.
+   View only = you can look and use display controls (time slider, data type), but you cannot change the plan or saved data. */
+const ACC={ov:[2,2,2,2],rt:[2,2,1,1],use:[2,1,2,1],wx:[2,1,1,1],pc:[2,1,1,1],pl:[2,1,1,1],op:[2,1,2,1],plan:[2,2,2,1],fk:[2,1,1,2],ad:[2,1,0,2],proto:[2,2,1,1],fa:[2,1,1,1]};
+const RIX={analyst:0,operator:1,approver:2,auditor:3};
+const acc=k=>who=='owner'||!(k in ACC)?2:ACC[k][RIX[who]];
+const canStrat=()=>acc('op')==2||acc('use')==2;            // change the selected strategy: Owner, Analyst, Approver
 const PERM={
  owner:{see:null,act:null,tabs:null,approve:1,hw:1,edit:1},
- analyst:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','live','reopt','learn','stress','sweep','assume'],act:['reopt','learn','stress','sweep','approve'],tabs:['ov','fc','op','pl','fk','ad','live','proto','fa'],edit:1},
- operator:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','live','assume'],act:['live','approve'],tabs:['ov','fc','op','pl','fk','ad','live','proto'],hw:1},
- approver:{see:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed','chart','strategies','compare','fair','actions','schedule','approve','stress','assume','audit'],act:['approve','audit'],tabs:['ov','fc','op','pl','fk','ad','proto','fa'],approve:1},
+ analyst:{see:null,act:['reopt','learn','stress','sweep','approve'],tabs:['ov','fc','op','pl','fk','ad','live','proto','fa'],edit:1,hw:1},
+ operator:{see:null,act:['live','approve'],tabs:['ov','fc','op','pl','fk','ad','live','proto','fa'],hw:1},
+ approver:{see:null,act:['approve'],tabs:['ov','fc','op','pl','fk','proto','fa'],approve:1},
  auditor:{see:null,act:['audit'],tabs:['ov','fc','op','pl','fk','ad','proto','fa']}
 };
 let who='owner';
@@ -912,7 +923,8 @@ function applyPerms(){const P=PERM[who]||PERM.owner;
  const fp=$('facPanel'),lp=$('labPanel');fp.inert=!P.edit;fp.classList.toggle('vo',!P.edit);lp.inert=!P.hw;lp.classList.toggle('vo',!P.hw);
  const f=$('proto3d');if(f){const u=PROTO+(P.hw?'':'&ro=1');if(f.getAttribute('src')!==u)f.setAttribute('src',u)}
  let grp=null,any=false;const flush=()=>{if(grp)grp.classList.toggle('rolehide',!any)};
- Array.from($('dtabs').children).forEach(b=>{if(b.classList.contains('dgrp')){flush();grp=b;any=false}else{const ok=tabOk(b.dataset.dt);b.classList.toggle('rolehide',!ok);if(ok)any=true}});flush();if(window.SunDev)SunDev.refresh()}
+ Array.from($('dtabs').children).forEach(b=>{if(b.classList.contains('dgrp')){flush();grp=b;any=false}else{const k=b.dataset.ct||(b.dataset.dt=='pl'?'plan':b.dataset.dt),ok=tabOk(b.dataset.dt)&&acc(k)>0;b.classList.toggle('rolehide',!ok);b.classList.toggle('rvo',ok&&acc(k)==1);b.title=ok&&acc(k)==1?'View only for your role':'';if(ok)any=true}});flush();
+ $('app').classList.toggle('nostrat',!canStrat());if(window.SunDev)SunDev.refresh()}
 function setWho(w,quiet){if(!PERM[w])return;const prev=who;who=w;try{sessionStorage.setItem('who',w)}catch(e){}
  $('whoSel').value=w;sizeWho();$('viewSw').classList.toggle('rolehide',w!='owner');window.sunWho=w;if(window.sunSetRole)window.sunSetRole(w);
  if(w!='owner'&&role!='tech')applyRole('tech');if(!tabOk(dtab))dtab='ov';applyTab();if(!quiet&&prev!==w)actLog('Switched role to '+WHO[w].n)}
@@ -1643,7 +1655,7 @@ function applyNav(n){const bits=[];let toSummary=false;
  if(n.open=='summary'){dtab='ov';toSummary=true;bits.push('the AI summary')}
  if(n.date&&okDate(n.date)){cur=n.date;view=n.view||'day';bits.push(n.date)}
  if(n.view){view=n.view;bits.push(n.view+' view')}
- if(n.strategy){sel=n.strategy=='zero'?'bal':n.strategy;bits.push(NAMES[sel].replace('Optimiser: ',''))}
+ if(n.strategy&&canStrat()){sel=n.strategy=='zero'?'bal':n.strategy;bits.push(NAMES[sel].replace('Optimiser: ',''))}
  if(n.chart){chartTab=n.chart;rtDem=false;bits.push(({rt:'energy usage chart',use:'daily plan chart',wx:'weather chart',pc:'power curve',pl:'panel layout'})[n.chart]||'chart')}
  if(n.open=='why'){$('why').hidden=false;$('qbtn').setAttribute('aria-expanded','true');bits.push('what the optimiser decides')}
  if(n.open=='tour'){chatOpen(false);tStart();return}
@@ -1688,7 +1700,7 @@ $('out').addEventListener('pointermove',pcMove);$('out').addEventListener('point
 $('out').addEventListener('input',e=>{if(e.target&&e.target.id=='plSl'&&lastPlan){plLive=false;plSync();plT=+e.target.value;const g=plGridHtml(lastPlan.r,plT);$('plGrid').innerHTML=g.html;$('plGrid').classList.toggle('plfade',!!g.pred);$('plInfo').innerHTML=g.info}});
 $('out').addEventListener('change',e=>{if(e.target&&e.target.id=='pcSel'){pcType=e.target.value;if($('chStrat'))$('chStrat').hidden=!stratOn();if(lastPlan&&$('ct_pc'))$('ct_pc').innerHTML=pcRender()}});
 $('out').onkeydown=e=>{if((e.key=='Enter'||e.key==' ')&&e.target.closest&&e.target.closest('[data-go]')){e.preventDefault();e.target.closest('[data-go]').click()}};
-$('out').onclick=e=>{if(e.target.closest('[data-rtretry]')){rtLoad();return}const s2=e.target.closest('[data-s2]');if(s2){sel=s2.dataset.s2;render();return}if(e.target.closest('[data-why2]')){const w=$('why');w.hidden=!w.hidden;$('qbtn').setAttribute('aria-expanded',String(!w.hidden));return}const go=e.target.closest('[data-go]');if(go){if(role!='tech')setRole('tech');dtab=go.dataset.go;applyTab();window.scrollTo(0,0);return}
+$('out').onclick=e=>{if(e.target.closest('[data-rtretry]')){rtLoad();return}const s2=e.target.closest('[data-s2]');if(s2){if(canStrat()){sel=s2.dataset.s2;render()}return}if(e.target.closest('[data-why2]')){const w=$('why');w.hidden=!w.hidden;$('qbtn').setAttribute('aria-expanded',String(!w.hidden));return}const go=e.target.closest('[data-go]');if(go){if(role!='tech')setRole('tech');dtab=go.dataset.go;applyTab();window.scrollTo(0,0);return}
 const ct=e.target.closest('[data-ct]');if(ct){if(ct.dataset.ct!=chartTab)whyClose();chartTab=ct.dataset.ct;rtDem=false;stratSync();if($('chStrat'))$('chStrat').hidden=!stratOn();const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';if($('dpvT'))$('dpvT').hidden=chartTab!='use';$('ct_wx').hidden=chartTab!='wx';$('ct_pc').hidden=chartTab!='pc';$('ct_pl').hidden=chartTab!='pl';if($('ct_rt'))$('ct_rt').hidden=chartTab!='rt';
   $('chTitle').textContent=chT(past);if((chartTab=='rt'||chartTab=='pc')&&cur==TODAY){rtLoad();rtStart()}
   document.querySelectorAll?document.querySelectorAll('#chTabs button').forEach(b=>b.classList.toggle('on',b.dataset.ct==chartTab)):0;navHl();return}
@@ -1707,13 +1719,13 @@ const ct=e.target.closest('[data-ct]');if(ct){if(ct.dataset.ct!=chartTab)whyClos
  if(e.target.closest('[data-retry]')){render();return}
  const uv=e.target.closest('[data-uv]');if(uv){dpView=uv.dataset.uv;document.querySelectorAll('[data-uv]').forEach(q=>{const on=q.dataset.uv==dpView;q.classList.toggle('on',on);q.setAttribute('aria-pressed',on)});if($('uv_plan'))$('uv_plan').hidden=dpView!='plan';if($('uv_all'))$('uv_all').hidden=dpView!='all';return}
  const pv=e.target.closest('[data-pv]');if(pv){planView=pv.dataset.pv;document.querySelectorAll('[data-pv]').forEach(q=>q.classList.toggle('on',q.dataset.pv==planView));if($('pv_all'))$('pv_all').hidden=planView!='all';if($('pv_one'))$('pv_one').hidden=planView!='one';return}
- const sc=e.target.closest('[data-sc]');if(sc){sel=sc.dataset.sc;render();return}
+ const sc=e.target.closest('[data-sc]');if(sc){if(canStrat()){sel=sc.dataset.sc;render()}return}
  if(e.target.closest('[data-goto]')){setRole('tech');if(view=='day'){dtab='fc';chartTab=cur==TODAY?'rt':'use';rtDem=false;applyTab();const x=document.querySelector('#chTabs [data-ct="'+chartTab+'"]');if(x)x.click();navHl();uiSave()}window.scrollTo&&window.scrollTo(0,0);return}
  const ap=e.target.closest('[data-ap]');if(ap){apClick(ap.dataset.ap);return}
  const x=e.target.closest('[data-x]');if(x){x.closest('.card').remove();return}
  const b=e.target.closest('[data-d]');if(b&&!b.classList.contains('na'))go(b.dataset.d)};
-$('tabs').onclick=e=>{const b=e.target.closest('[data-s]');if(b){sel=b.dataset.s;render()}};
-$('fkPanel').addEventListener('click',e=>{const s2=e.target.closest('[data-s2]');if(s2){sel=s2.dataset.s2;render();return}if(e.target.closest('[data-why2]')){const w=$('why');w.hidden=!w.hidden;$('qbtn').setAttribute('aria-expanded',String(!w.hidden))}});
+$('tabs').onclick=e=>{const b=e.target.closest('[data-s]');if(b&&canStrat()){sel=b.dataset.s;render()}};
+$('fkPanel').addEventListener('click',e=>{const s2=e.target.closest('[data-s2]');if(s2){if(canStrat()){sel=s2.dataset.s2;render()}return}if(e.target.closest('[data-why2]')){const w=$('why');w.hidden=!w.hidden;$('qbtn').setAttribute('aria-expanded',String(!w.hidden))}});
 $('qbtn').onclick=()=>{const w=$('why');w.hidden=!w.hidden;$('qbtn').setAttribute('aria-expanded',String(!w.hidden))};
 
 
@@ -2074,7 +2086,7 @@ function fkRender(){
  const head={ok:['On track','Solar and demand are close to the forecast, so today\u2019s plan still holds.'],warn:['Needs a look',act.length?act.length+(act.length==1?' thing is':' things are')+' away from the forecast right now. See below.':'The planning model does not match the readings well. See below.'],bad:['Off track','Something is well away from the forecast. See below for what to do.']}[lvl];
  const sc=Object.entries(ROSC).map(([k,v])=>'<option value="'+k+'"'+(k==DEV.sc?' selected':'')+'>'+esc(v[0])+'</option>').join('');
  let h='<div class="fkhead '+lvl+'"><b>'+head[0]+'</b><span>'+esc(head[1])+'</span></div>';
- h+='<div class="dpkind '+(r.sim?'sim':'meas')+'">'+(r.sim?'<b>DEMO DATA</b> No meter connected, so readings up to '+tm(r.K)+' are the forecast'+(DEV.sc!='none'?' with a test applied':'')+'. <details class="fksc"'+(DEV.sc!='none'?' open':'')+'><summary>Test a deviation</summary><select id="devSc">'+sc+'</select></details>':'<b>MEASURED</b> Readings up to '+tm(r.K)+' come from the file you loaded.')+'</div>';
+ h+='<div class="dpkind '+(r.sim?'sim':'meas')+'">'+(r.sim?'<b>DEMO DATA</b> No meter connected, so readings up to '+tm(r.K)+' are the forecast'+(DEV.sc!='none'?' with a test applied':'')+'. <details class="fksc"'+(DEV.sc!='none'?' open':'')+(acc('fk')==2&&who!='auditor'?'':' hidden')+'><summary>Test a deviation</summary><select id="devSc">'+sc+'</select></details>':'<b>MEASURED</b> Readings up to '+tm(r.K)+' come from the file you loaded.')+'</div>';
  const on=k=>act.some(x=>x.e.key==k),tile=(n,v,sub,bad,st)=>'<div class="fkt'+(bad?' x':'')+'"><span>'+n+'</span><b>'+v+'</b><em>'+sub+'</em><i class="fkst">'+st+'</i></div>';
  h+='<h3>So far today</h3><div class="fktiles">'
   +tile('Solar',r.pvRatio==null?'\u2013':N0(r.pvRatio*100)+'%','of the forecast so far',on('pv'),on('pv')?'Off forecast':'On track')
