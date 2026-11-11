@@ -251,15 +251,15 @@ main[data-role=tech] #dtabs .dgrp{text-align:left;align-self:stretch;padding-lef
 main.fcTab #out>[data-tour=ribbon]{order:9}main.adTab #out>[data-tour=sweep]{order:-1}#amsg:empty{display:none}main[data-role=tech]{padding-top:11px}main[data-role=tech] #dateCard.one{min-height:41px;margin-top:0;padding:0 2px}
 
 /* deviation strip + panel */
-.devstrip{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 14px;border-radius:12px;border:1px solid;cursor:pointer;font-size:14.5px;line-height:1.35}
+.devstrip{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:9px 12px;border-left:6px solid #16A34A;border-radius:10px;background:rgba(22,163,74,.10);color:inherit;cursor:pointer;font-size:14px;line-height:1.5}
+main[data-role=owner] .devstrip{font-size:15px}
 .devstrip[hidden]{display:none}
-.devstrip .dsdot{width:12px;height:12px;border-radius:50%;flex:none;background:currentColor}
-.devstrip .dstxt{flex:1;font-weight:600}.devstrip .dsp{font-weight:500;opacity:.85;margin-left:6px;white-space:nowrap}
-.devstrip .dsgo{white-space:nowrap;font-weight:700}
-.devstrip.ok{background:#ECFDF3;border-color:#A6E3BD;color:#05603A}
-.devstrip.warn{background:#FFFAEB;border-color:#FEC84B;color:#93370D}
-.devstrip.bad{background:#FEF3F2;border-color:#F3B4B4;color:#B42318}
-.devstrip.idle{background:#F4F4F1;border-color:#DAD8D0;color:#5B6360}
+.devstrip .dsdot{display:none}
+.devstrip .dstxt{flex:1}.devstrip .dstxt b{letter-spacing:.04em}.devstrip .dsp{opacity:.85;margin-left:6px;white-space:nowrap}
+.devstrip .dsgo{white-space:nowrap;font-weight:700}.devstrip:hover .dsgo{text-decoration:underline}
+.devstrip.warn{border-left-color:var(--amb);background:rgba(250,204,21,.18)}
+.devstrip.bad{border-left-color:#DC2626;background:rgba(220,38,38,.09)}
+.devstrip.idle{border-left-color:var(--mut);background:rgba(102,114,128,.10)}
 .devstrip:focus-visible{outline:3px solid #12304A;outline-offset:2px}
 .devpanel{position:fixed;inset:0;z-index:9000;background:rgba(18,48,74,.45);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:4vh 12px}
 .devpanel[hidden]{display:none}
@@ -1724,7 +1724,7 @@ function devStripState(){
  if(DEV.err&&!DEV.res)return{c:'idle',t:'The forecast check is not available right now.',b:'See details'};
  if(!DEV.res)return{c:'idle',t:'Checking today against the forecast\u2026',b:''};
  const r=DEV.res,act=r.eps.filter(e=>e.on).map(e=>({e,i:dInfo(e,DEV.j,DEV.q)})).sort((a,b)=>(b.i.sev=='high')-(a.i.sev=='high')||(a.e.key=='grid')-(b.e.key=='grid')||Math.abs(b.e.pct)-Math.abs(a.e.pct));
- const twBad=r.tw&&r.tw.ready&&!r.tw.ok,pBad=p&&p.verdict=='bad',sim=r.sim?' (simulated)':'';
+ const twBad=r.tw&&r.tw.ready&&!r.tw.ok,pBad=p&&p.verdict=='bad',sim='';
  if(act.length){const top=act[0],more=act.length>1?' +'+(act.length-1)+' more':'';
   return{c:top.i.sev=='high'||twBad?'bad':'warn',t:top.i.title+'. '+top.i.why+more+(sim?' ':'')+sim.trim(),b:'See details'}}
  if(twBad)return{c:'bad',t:'The planning model does not match the readings well (peak '+(r.tw.pkErr>=0?'+':'\u2212')+N0(Math.abs(r.tw.pkErr)*100)+'%, energy '+(r.tw.eErr>=0?'+':'\u2212')+N0(Math.abs(r.tw.eErr)*100)+'%).'+sim,b:'See details'};
@@ -1735,7 +1735,7 @@ function devUpdate(){
  const show=view=='day'&&(role=='owner'||dtab=='ov')&&!(role=='tech'&&(dtab=='fa'||dtab=='lab'||dtab=='proto'));
  el.hidden=!show;if(show){const s=devStripState(),pl=devProtoLine();
   el.className='devstrip '+s.c;
-  el.innerHTML='<span class="dsdot"></span><span class="dstxt">'+esc(s.t)+(pl?' <span class="dsp">'+esc(pl)+'</span>':'')+'</span>'+(s.b?'<span class="dsgo">'+esc(s.b)+' &rsaquo;</span>':'');
+  el.innerHTML='<span class="dstxt"><b>'+({ok:'ON TRACK.',warn:'NEEDS A LOOK.',bad:'OFF TRACK.',idle:'FORECAST CHECK.'}[s.c]||'')+'</b> '+esc(s.t.replace(/^On track:\s*/,''))+(pl?' <span class="dsp">'+esc(pl)+'</span>':'')+'</span>'+(s.b?'<span class="dsgo">'+esc(s.b)+' &rsaquo;</span>':'');
   el.setAttribute('role','button');el.tabIndex=0;el.dataset.act=s.act||'open';
   if(!DEV.busy)devFetch(false)}
  try{fkRender()}catch(e){}}
