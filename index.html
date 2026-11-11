@@ -710,7 +710,8 @@ function tradeoff(R){const a=R.cost,z=R.bal;if(!a||!z)return'';const dS=z.cost-a
  return `<p class="note"><b>CO&#8322; trade-off:</b> Cost-saving earns ${money(dS)} more per day than Balanced, at the price of ${Math.round(dC)} kg more CO&#8322; (about ${money(dS/dC)} per kg).</p>`}
 
 // ================= pages: Brief (owner view) and Detailed (tabs) =================
-const TABS={ov:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','devlog','schedule','approve','changed'],fk:['devlog'],ad:['live','stress','sweep','assume','devlog','audit','changed'],fa:['changed'],lab:[],proto:[]};let dtab='ov';
+const TABS={ov:['ribbon','headline','kpi','costbars','mini3d','flow','devlog','changed'],fc:['ribbon','chart','changed'],op:['ribbon','strategies','compare','fair','changed'],pl:['actions','devlog','schedule','approve','changed'],fk:['devlog'],ad:['stress','sweep','assume','audit','changed'],live:['live'],fa:['changed'],lab:[],proto:[]};let dtab='ov';
+window.SunshineOpenLiveReplay=function(){if(!tabOk('live'))return false;view='day';cur=TODAY;dtab='live';if(role!='tech')setRole('tech');render();applyTab();uiSave();window.scrollTo(0,0);return true};
 function pgRole(){const e=$('pgRo');if(e)e.hidden=!!(PERM[who]&&PERM[who].hw)}
 function fitProto(){try{pgRole()}catch(e){}const on=role=='tech'&&dtab=='proto',h=document.documentElement;h.classList.toggle('protoTab',on);if(!on)return;const f=$('proto3d');if(!f)return;const t=f.getBoundingClientRect().top+(window.scrollY||0);f.style.height=Math.max(460,window.innerHeight-t-6)+'px';}
 window.addEventListener('resize',()=>{try{fitProto()}catch(e){}});
@@ -1545,7 +1546,7 @@ function storeCheck(){try{localStorage.setItem('__t','1');if(localStorage.getIte
 function uiSave(){try{localStorage.setItem('ui',JSON.stringify({sel,view,dtab,chartTab}))}catch(e){}}
 function uiRestore(){try{const u=JSON.parse(localStorage.getItem('ui')||'null');if(!u)return;
  if(['base','cost','bal','prod','zero'].includes(u.sel))sel=u.sel=='prod'?'bal':u.sel;if(['day','week','month'].includes(u.view))view=u.view;
- if(['ov','fc','op','pl','fk','ad','fa'].includes(u.dtab))dtab=u.dtab;if(['use','all','wx','pc','pl','rt'].includes(u.chartTab))chartTab=u.chartTab;
+ if(['ov','fc','op','pl','fk','ad','live','fa'].includes(u.dtab))dtab=u.dtab;if(['use','all','wx','pc','pl','rt'].includes(u.chartTab))chartTab=u.chartTab;
  if(role=='tech')applyTab()}catch(e){}}
 storeCheck();fill();if(!saved&&/^#detailed$/i.test(location.hash)){dtab='fa';applyTab()}else uiRestore();render();whoami();
 </script><script>
