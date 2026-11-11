@@ -333,6 +333,13 @@ main[data-role=owner] #out>:not([data-tour]):not(#devStrip){order:-3}main[data-r
 .lvfault{margin:8px 0 0;padding:9px 14px;border-radius:10px;background:#FEF3F2;border:1px solid #E24B4A;border-left:6px solid #B42318;color:#B42318;font-weight:800;font-size:16px}.lvfault[hidden]{display:none}
 @media(max-width:1100px){.lvgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.lvw2{grid-column:1/-1}}
 @media(max-width:820px){.lvgrid{grid-template-columns:minmax(0,1fr)}.lvw2{grid-column:auto}}
+
+.lvtop{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:14px;align-items:stretch}.lvtopl{min-width:0}
+.lv3d{position:relative;min-height:270px;border:1px solid var(--card-line);border-radius:12px;overflow:hidden;background:#fffaf0}.lv3d iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+.lvdev{border-left-color:#B45309;background:#FFFAEB;border-color:#FEC84B;color:#93370D;font-size:15px}
+.lvst{display:inline-block;font-size:11px;font-weight:800;padding:1px 8px;border-radius:99px}.lvst.g{background:#DDF3E4;color:#05603A}.lvst.b{background:#FDE8E8;color:#B42318}.lvtbl td.bad{color:#B42318;font-weight:700}
+.lvtw{display:flex;flex-direction:column;padding:8px 12px;border-radius:10px;border:1px solid;margin:2px 0 8px}.lvtw b{font-size:18px}.lvtw span{font-size:12.5px}.lvtw.g{background:#ECFDF3;border-color:#A6E3BD;color:#05603A}.lvtw.b{background:#FEF3F2;border-color:#F3B4B4;color:#B42318}
+@media(max-width:1100px){.lvtop{grid-template-columns:minmax(0,1fr)}.lv3d{min-height:240px}}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="liveTabBtn" data-rp="live" title="Play today forward and watch the optimiser re-plan, all on one page">Live replay</button></span><span class="sp"></span><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -961,75 +968,95 @@ function liveParse(txt,full){const L=txt.replace(/^\uFEFF/,'').split(/\r?\n/).ma
 function liveTemplate(){const q=sameReq();if(!q)return;const d=new Date(),k=Math.max(1,Math.min(NS-1,Math.floor((d.getHours()*60+d.getMinutes())/(60/S)))),fc=q.p.b.fc;
  let t='time,load_kw,solar_kw,battery_kw,ev_kw,grid_kw,soc_kwh\n';for(let i=0;i<k;i++)t+=tm(i)+','+N1(fc.load[i]).replace(/,/g,'')+','+N1(fc.pv[i]).replace(/,/g,'')+',,,,\n';
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='today_so_far_template.csv';document.body.appendChild(a);a.click();a.remove()}
+let LN=48,LSx=2;const tmL=i=>p2(Math.floor(i/LSx))+':'+p2(Math.round(i%LSx*60/LSx)),hrsL=n=>N1(n*24/LN)+' h',rngL=()=>Array.from({length:LN},(_,i)=>i);
 function liveChart(title,fc,act,bel,k,col,th){const W=typeof LVW!='undefined'?LVW:760,H=200,L=54,R=12,T=14,B=26,mx=Math.max(...fc,...act,...bel,1),ax=niceAxis(0,mx*1.05),y=v=>T+(ax.hi-v)/(ax.hi-ax.lo)*(H-T-B),xf=t=>L+(W-L-R)*t/24,
-  pth=(a,from,to)=>{let d='';for(let i=from;i<to;i++)d+=(d?'L':'M')+xf((i+.5)/S).toFixed(1)+' '+y(a[i]).toFixed(1);return d},nx=xf(k/S).toFixed(1);
+  pth=(a,from,to)=>{let d='';for(let i=from;i<to;i++)d+=(d?'L':'M')+xf((i+.5)/LSx).toFixed(1)+' '+y(a[i]).toFixed(1);return d},nx=xf(k/LSx).toFixed(1);
  let bd='',mk='';
- if(th){const fl=typeof dFloor=='function'?dFloor():0,bw=xf(1/S)-xf(0);for(let i=0;i<NS;i++){const w=Math.max(th*fc[i],fl),hi=Math.min(ax.hi,fc[i]+w),lo=Math.max(0,fc[i]-w);bd+=`<rect x="${xf(i/S).toFixed(1)}" y="${y(hi).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1,y(lo)-y(hi)).toFixed(1)}" fill="${col}" opacity=".13"/>`}
-  if(typeof dFlags=='function'&&typeof dRuns=='function'&&k>0){dRuns(dFlags(act,fc,th,k)).forEach(([a,b])=>{for(let t=a;t<=b;t++)mk+=`<circle cx="${xf((t+.5)/S).toFixed(1)}" cy="${y(act[t]).toFixed(1)}" r="4.5" fill="#B42318" stroke="#fff" stroke-width="1.2"><title>${tm(t)} off the forecast</title></circle>`})}}
+ if(th){const fl=typeof dFloor=='function'?dFloor():0,bw=xf(1/LSx)-xf(0);for(let i=0;i<LN;i++){const w=Math.max(th*fc[i],fl),hi=Math.min(ax.hi,fc[i]+w),lo=Math.max(0,fc[i]-w);bd+=`<rect x="${xf(i/LSx).toFixed(1)}" y="${y(hi).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1,y(lo)-y(hi)).toFixed(1)}" fill="${col}" opacity=".13"/>`}
+  if(typeof dFlags=='function'&&typeof dRuns=='function'&&k>0){dRuns(dFlags(act,fc,th,k)).forEach(([a,b])=>{for(let t=a;t<=b;t++)mk+=`<circle cx="${xf((t+.5)/LSx).toFixed(1)}" cy="${y(act[t]).toFixed(1)}" r="4.5" fill="#B42318" stroke="#fff" stroke-width="1.2"><title>${tmL(t)} off the forecast</title></circle>`})}}
  return `<h3 class="sec" style="margin:10px 0 2px">${title}</h3><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="${esc(title)}">${yGrid(ax,y,L,W-R)}${yTitle(T,H-B,'kW')}${xAxis(xf,H-B,0,24,4)}${bd}
- <path d="${pth(fc,0,NS)}" fill="none" stroke="#BDB48F" stroke-width="1.5" stroke-dasharray="5 4"/><path d="${pth(bel,k,NS)}" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="2 3"/><path d="${pth(act,0,k)}" fill="none" stroke="${col}" stroke-width="2.5"/>
+ <path d="${pth(fc,0,LN)}" fill="none" stroke="#BDB48F" stroke-width="1.5" stroke-dasharray="5 4"/><path d="${pth(bel,k,LN)}" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="2 3"/><path d="${pth(act,0,k)}" fill="none" stroke="${col}" stroke-width="2.5"/>
  <line x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="#252B2A" stroke-dasharray="3 3"/><text x="${(+nx+4)}" y="${T+10}" font-size="11" fill="#252B2A">now</text>${mk}</svg>`}
 const lvRep=j=>typeof lvSim!='undefined'&&lvSim&&lvSim.lastJ===j&&lvSim.src!='sc';
 /* ---- Live page charts (all share one time axis: 00:00 to 24:00, a dashed "now" line, past solid, future faded) ---- */
 let LVW=520;
 function lvAx(H,T,B,lo,hi){const ax=niceAxis(lo,hi),y=v=>T+(ax.hi-v)/(ax.hi-ax.lo)*(H-T-B),xf=t=>54+(LVW-54-12)*t/24;return{ax,y,xf}}
-function lvFrame(H,T,B,g,k,unit){const {ax,y,xf}=g,nx=xf(k/S).toFixed(1);return{pre:yGrid(ax,y,54,LVW-12)+yTitle(T,H-B,unit)+xAxis(xf,H-B,0,24,4),
- now:`<line x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="#252B2A" stroke-dasharray="3 3"/><text x="${(+nx+4)}" y="${T+10}" font-size="11" font-weight="700" fill="#252B2A" stroke="#fff" stroke-width="3" paint-order="stroke">now ${tm(k)}</text>`}}
-const lvPth=(a,y,xf,from,to)=>{let d='';for(let i=from;i<to;i++)d+=(d?'L':'M')+xf((i+.5)/S).toFixed(1)+' '+y(a[i]).toFixed(1);return d};
+function lvFrame(H,T,B,g,k,unit){const {ax,y,xf}=g,nx=xf(k/LSx).toFixed(1);return{pre:yGrid(ax,y,54,LVW-12)+yTitle(T,H-B,unit)+xAxis(xf,H-B,0,24,4),
+ now:`<line x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="#252B2A" stroke-dasharray="3 3"/><text x="${(+nx+4)}" y="${T+10}" font-size="11" font-weight="700" fill="#252B2A" stroke="#fff" stroke-width="3" paint-order="stroke">now ${tmL(k)}</text>`}}
+const lvPth=(a,y,xf,from,to)=>{let d='';for(let i=from;i<to;i++)d+=(d?'L':'M')+xf((i+.5)/LSx).toFixed(1)+' '+y(a[i]).toFixed(1);return d};
 function lvHline(g,v,col,txt,dash){const {y}=g,yy=y(v).toFixed(1);return `<line x1="54" x2="${LVW-12}" y1="${yy}" y2="${yy}" stroke="${col}" stroke-width="1.3"${dash?' stroke-dasharray="6 4"':''}/><text x="${LVW-14}" y="${(+yy-4).toFixed(1)}" text-anchor="end" font-size="10.5" font-weight="700" fill="${col}" stroke="#fff" stroke-width="3" paint-order="stroke">${txt}</text>`}
 const lvSvg=(H,lbl,body)=>`<svg viewBox="0 0 ${LVW} ${H}" role="img" aria-label="${esc(lbl)}">${body}</svg>`;
 const lvLeg=a=>'<div class="legend">'+a.map(([c,t,d])=>`<span><i style="background:${d?'none':c};${d?'border-top:2px dashed '+c+';height:0;border-radius:0;vertical-align:3px':''}"></i>${t}</span>`).join('')+'</div>';
 /* 1. Energy plan: where each kW comes from (solar, battery, grid), battery charging below zero, total demand as a line */
 function lvPlanChart(s,k,c,P,lim){LVW=1000;try{return lvPlanChart0(s,k,c,P,lim)}finally{LVW=520}}
-function lvPlanChart0(s,k,c,P,lim){const H=410,T=14,B=26,bw=(LVW-54-12)/NS,ld=s.new_ld,
-  up=N.map(t=>s.new_pv_used[t]+s.new_dis[t]+s.new_grid[t]),g=lvAx(H,T,B,-Math.max(...s.new_ch,0)*1.05,Math.max(...up,...ld,...P,1)*1.05),{y,xf}=g,f=lvFrame(H,T,B,g,k,'kW');
+function lvPlanChart0(s,k,c,P,lim){const H=410,T=14,B=26,bw=(LVW-54-12)/LN,ld=s.new_ld,
+  up=rngL().map(t=>s.new_pv_used[t]+s.new_dis[t]+s.new_grid[t]),g=lvAx(H,T,B,-Math.max(...s.new_ch,0)*1.05,Math.max(...up,...ld,...P,1)*1.05),{y,xf}=g,f=lvFrame(H,T,B,g,k,'kW');
  let b='';if(c.win)b+=`<rect x="${xf(c.win[0])}" y="${T}" width="${xf(c.win[1])-xf(c.win[0])}" height="${H-B-T}" fill="var(--grid)" opacity=".05"/>`;
- N.forEach(t=>{const x=(54+t*bw+.6).toFixed(1),w=(bw-1.2).toFixed(1),op=t<k?1:.45;let base=0;
+ rngL().forEach(t=>{const x=(54+t*bw+.6).toFixed(1),w=(bw-1.2).toFixed(1),op=t<k?1:.45;let base=0;
   [[s.new_pv_used[t],'var(--sun)'],[s.new_dis[t],'var(--bat)'],[s.new_grid[t],'var(--grid)']].forEach(([v,col])=>{if(v>0.5){b+=`<rect x="${x}" y="${y(base+v).toFixed(1)}" width="${w}" height="${(y(base)-y(base+v)).toFixed(1)}" fill="${col}" opacity="${op}"/>`;base+=v}});
   if(s.new_ch[t]>0.5)b+=`<rect x="${x}" y="${y(0).toFixed(1)}" width="${w}" height="${(y(-s.new_ch[t])-y(0)).toFixed(1)}" fill="#86C59B" opacity="${op}"/>`});
- b+=`<path d="${lvPth(ld,y,xf,0,NS)}" fill="none" stroke="#252B2A" stroke-width="1.8"/><path d="${lvPth(P,y,xf,0,NS)}" fill="none" stroke="var(--solar)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+ b+=`<path d="${lvPth(ld,y,xf,0,LN)}" fill="none" stroke="#252B2A" stroke-width="1.8"/><path d="${lvPth(P,y,xf,0,LN)}" fill="none" stroke="var(--solar)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
  if(lim>0&&lim<g.ax.hi)b+=lvHline(g,lim,'#B42318','grid limit '+N0(lim)+' kW',1);
  return lvSvg(H,'Energy plan',f.pre+b+f.now)+lvLeg([['var(--sun)','Solar used'],['var(--bat)','Battery discharge'],['#86C59B','Battery charging (below 0)'],['var(--grid)','Grid import'],['#252B2A','Site demand incl. EV'],['var(--solar)','Solar available',1]])}
 /* 2. Grid import: plan kept vs plan re-optimised now (shows what the optimiser changes), with grid limit and billed peak */
 function lvGridChart(s,k,c,lim,pk){const H=230,T=14,B=26,g=lvAx(H,T,B,0,Math.max(...s.new_grid,...s.old_grid,lim||0,1)*1.08),{y,xf}=g,f=lvFrame(H,T,B,g,k,'kW');
  let b='';if(c.win)b+=`<rect x="${xf(c.win[0])}" y="${H-B+3}" width="${xf(c.win[1])-xf(c.win[0])}" height="3" fill="var(--grid)" opacity=".5"/>`;
- b+=`<path d="${lvPth(s.old_grid,y,xf,k,NS)}" fill="none" stroke="#9A9066" stroke-width="2" stroke-dasharray="5 4"/><path d="${lvPth(s.new_grid,y,xf,0,k+1)}" fill="none" stroke="var(--grid)" stroke-width="2.5"/><path d="${lvPth(s.new_grid,y,xf,k,NS)}" fill="none" stroke="var(--grid)" stroke-width="2" opacity=".75"/>`;
+ if(s.plan_grid)b+=`<path d="${lvPth(s.plan_grid,y,xf,0,LN)}" fill="none" stroke="#7C3AED" stroke-width="1.6" stroke-dasharray="1.5 3"/>`;b+=`<path d="${lvPth(s.old_grid,y,xf,k,LN)}" fill="none" stroke="#9A9066" stroke-width="2" stroke-dasharray="5 4"/><path d="${lvPth(s.new_grid,y,xf,0,k+1)}" fill="none" stroke="var(--grid)" stroke-width="2.5"/><path d="${lvPth(s.new_grid,y,xf,k,LN)}" fill="none" stroke="var(--grid)" stroke-width="2" opacity=".75"/>`;
  if(lim>0)b+=lvHline(g,lim,'#B42318','grid limit',1);if(pk>0)b+=lvHline(g,pk,'var(--grid)','billed peak '+N0(pk)+' kW',1);
- return lvSvg(H,'Grid import',f.pre+b+f.now)+lvLeg([['var(--grid)','Re-optimised plan'],['#9A9066','Old plan, kept',1]])}
+ return lvSvg(H,'Grid import',f.pre+b+f.now)+lvLeg([['var(--grid)','Re-optimised plan'],['#9A9066','Old plan, kept',1]].concat(s.plan_grid?[['#7C3AED','Digital twin (day-ahead)',1]]:[]))}
 /* 3. Battery charge, % of the battery (computed from the planned charge and discharge, 50% at 00:00) */
 function lvSocChart(soc,k,rs){const H=200,T=14,B=26,g=lvAx(H,T,B,0,100),{y,xf}=g,f=lvFrame(H,T,B,g,k,'%');
- const p=(a,b)=>{let d='';for(let i=a;i<=b;i++)d+=(d?'L':'M')+xf(i/S).toFixed(1)+' '+y(soc[i]).toFixed(1);return d};
- let b=`<path d="${p(0,NS)}L${xf(24)} ${y(0)}L${xf(0)} ${y(0)}Z" fill="var(--bat)" opacity=".08"/><path d="${p(0,k)}" fill="none" stroke="var(--bat)" stroke-width="2.5"/><path d="${p(k,NS)}" fill="none" stroke="var(--bat)" stroke-width="2" stroke-dasharray="5 4"/>`;
+ const p=(a,b)=>{let d='';for(let i=a;i<=b;i++)d+=(d?'L':'M')+xf(i/LSx).toFixed(1)+' '+y(soc[i]).toFixed(1);return d};
+ let b=`<path d="${p(0,LN)}L${xf(24)} ${y(0)}L${xf(0)} ${y(0)}Z" fill="var(--bat)" opacity=".08"/><path d="${p(0,k)}" fill="none" stroke="var(--bat)" stroke-width="2.5"/><path d="${p(k,LN)}" fill="none" stroke="var(--bat)" stroke-width="2" stroke-dasharray="5 4"/>`;
  if(rs>0)b+=lvHline(g,rs*100,'#92400E','reserve '+N0(rs*100)+'%',1);
  return lvSvg(H,'Battery charge',f.pre+b+f.now)+lvLeg([['var(--bat)','So far'],['var(--bat)','Planned',1]])}
 /* the optimiser's numbers for the whole day: old plan kept vs re-optimised now (same corrected forecast, same state) */
 function lvEngineTable(j,ms){const o=j.expected.old_plan,n=j.expected.new_plan,lim=+F.lim||0,
   row=(nm,a,b,fm,lowBetter=true)=>{const d=b-a,z=fm(Math.abs(d))===fm(0),ch=!z&&lowBetter!==null,good=ch&&(lowBetter?d<0:d>0),bad=ch&&!good;return `<tr><td>${nm}</td><td>${fm(a)}</td><td><b>${fm(b)}</b></td><td class="${good?'good':bad?'bad':''}">${z?'&mdash;':(d>0?'+':'−')+fm(Math.abs(d))}</td></tr>`},
-  rm=v=>money(v),kw=v=>N0(v)+' kW',kwh=v=>N0(v)+' kWh',pc=v=>v==null?'n/a':N1(v)+'%',h=v=>hrs(v);
- return `<table class="sch lvtbl"><tr><th>For the whole day</th><th>Old plan, kept</th><th>Re-optimised now</th><th>Change</th></tr>
+  rm=v=>money(v),kw=v=>N0(v)+' kW',kwh=v=>N0(v)+' kWh',pc=v=>v==null?'n/a':N1(v)+'%',h=v=>hrsL(v);
+ return `<table class="sch lvtbl"><tr><th>Whole day</th><th>Old plan</th><th>Re-planned</th><th>Change</th></tr>
  ${row('Day cost',o.cost,n.cost,rm)}${row('Energy charge',o.energy_cost,n.energy_cost,rm)}${row('Maximum demand charge',o.demand_cost,n.demand_cost,rm)}
  ${row('Grid energy',o.grid_kwh,n.grid_kwh,kwh)}${row('Billed peak',o.billed_peak_kw,n.billed_peak_kw,kw)}${row('Highest import',o.max_grid_kw,n.max_grid_kw,kw)}
  ${row('Solar used on site',o.solar_self_consumption_pct||0,n.solar_self_consumption_pct||0,pc,false)}${lim>0?row('Time over grid limit',o.limit_violation_steps,n.limit_violation_steps,h):''}${row('Battery throughput',o.battery_throughput_kwh,n.battery_throughput_kwh,kwh,null)}</table>
- <p class="note" style="margin:4px 0 0">Linear program (HiGHS), re-solved at <b>${tm(j.now_step)}</b>${ms?' in '+N0(ms)+' ms':''}. Steps before now are locked to what happened.</p>`}
+ <p class="note" style="margin:4px 0 0">Linear program (HiGHS), re-solved at <b>${tmL(j.now_step)}</b>${ms?' in '+N0(ms)+' ms':''}. Steps before now are locked to what happened.</p>`}
 /* the next 4 hours the optimiser recommends */
 function lvNextTable(j,q,soc){const s=j.series,c=q.p.b.c,lo=Math.min(...c.rates);
- return `<table class="sch lvtbl"><tr><th>Time</th><th>Price</th><th>Solar</th><th>Demand</th><th>Battery</th><th>Charge</th><th>EV</th><th>Grid</th></tr>${j.next_steps.map(x=>{const t=x.step,pk=c.rates[t]>lo+1e-9;
-  return `<tr><td>${tm(t)}</td><td><span class="lvpk ${pk?'p':''}">${N1(c.rates[t]*100)} sen</span></td><td>${N0(s.belief_pv[t])}</td><td>${N0(s.belief_load[t])}</td><td class="${x.battery_kw>0.5?'good':''}">${Math.abs(x.battery_kw)<0.5?'idle':sgn(x.battery_kw)}</td><td>${N0(soc[t+1])}%</td><td>${N0(x.ev_kw)}</td><td>${N0(x.grid_kw)}</td></tr>`}).join('')}</table>
+ return `<table class="sch lvtbl"><tr><th>Time</th><th>Price</th><th>Solar</th><th>Demand</th><th>Battery</th><th>Charge</th><th>EV</th><th>Grid</th></tr>${j.next_steps.map(x=>{const t=x.step,pk=c.rates[Math.floor(t*S/LSx)]>lo+1e-9;
+  return `<tr><td>${tmL(t)}</td><td><span class="lvpk ${pk?'p':''}">${N1(c.rates[Math.floor(t*S/LSx)]*100)} sen</span></td><td>${N0(s.belief_pv[t])}</td><td>${N0(s.belief_load[t])}</td><td class="${x.battery_kw>0.5?'good':''}">${Math.abs(x.battery_kw)<0.5?'idle':sgn(x.battery_kw)}</td><td>${N0(soc[t+1])}%</td><td>${N0(x.ev_kw)}</td><td>${N0(x.grid_kw)}</td></tr>`}).join('')}</table>
  <p class="note" style="margin:4px 0 0">kW. Battery <b>+</b> = discharge, <b>&minus;</b> = charging. Orange price = peak tariff. Solar and demand are the corrected forecast.</p>`}
-function liveRender(j,q,ms){const fe=j.forecast_error,ex=j.expected,o=ex.old_plan,n=ex.new_plan,pr=x=>x==null?'n/a':N0(x*100)+'%',now=tm(j.now_step),dq=j.data_quality,s=j.series,b=q.p.b.c.mdH.length>0,K=j.now_step,c=q.p.b.c,
+/* This interval: expected vs read, and the digital twin (day-ahead plan) validated against what happened so far */
+function lvCheck(j,soc){const s=j.series,K=j.now_step,R=window.SunDevRules||{load:.1,pv:.25,grid:.15,share:.8},fl=typeof dFloor=='function'?dFloor():5;
+ if(K<1)return{html:'',off:[]};const t=K-1,rows=[['Demand','load',s.forecast_load[t],s.actual_load[t],R.load],['Solar','pv',s.forecast_pv[t],s.actual_pv[t],R.pv]].concat(s.plan_grid?[['Grid import','grid',s.plan_grid[t],s.new_grid[t],R.grid]]:[]);
+ const off=[],tr=rows.map(([n,k,e,a,th])=>{const d=a-e,bad=Math.abs(d)>=Math.max(th*e,fl),p=e>1?d/e:NaN;if(bad)off.push({n,k,t,e,a,p});return `<tr><td>${n}</td><td>${N0(e)}</td><td>${N0(a)}</td><td class="${bad?'bad':''}">${isFinite(p)?(p>0?'+':'')+N0(p*100)+'%':'-'}</td><td><span class="lvst ${bad?'b':'g'}">${bad?'Off':'OK'}</span></td></tr>`}).join('');
+ let tw='';if(s.plan_grid){const k0=typeof lvSim!='undefined'&&lvSim&&lvSim.lastJ===j?Math.min(lvSim.k0,K):Math.max(0,K-8);let n=0,ok=0,ae=0,aa=0;for(let i=k0;i<K;i++){const e=s.plan_grid[i],a=s.new_grid[i];n++;ae+=Math.abs(a-e);aa+=a;if(Math.abs(a-e)<Math.max(R.grid*e,fl))ok++}
+  const sh=n?ok/n:1,good=sh>=(R.share||.8);tw=`<div class="lvbox"><h3 class="sec">Digital twin check</h3><div class="lvtw ${good?'g':'b'}"><b>${good?'Twin valid':'Recalibrate'}</b><span>${N0(sh*100)}% of ${n} intervals within &plusmn;${N0(R.grid*100)}%</span></div><table class="sch lvtbl"><tr><td>Grid import error</td><td><b>${aa?N1(100*ae/aa):'0'}%</b></td></tr><tr><td>Intervals checked</td><td>${n}</td></tr></table></div>`;
+  if(!good)off.push({n:'Digital twin',k:'twin',t,e:0,a:0,p:NaN,share:sh})}
+ return{off,html:`<div class="lvbox lvw2"><h3 class="sec">This interval: ${tmL(t)}&ndash;${tmL(K)}</h3><table class="sch lvtbl"><tr><th></th><th>Expected, kW</th><th>Read, kW</th><th>Deviation</th><th></th></tr>${tr}</table></div>${tw}`}}
+function lvBanner(ck,j){const b=$('lvDev');if(!b)return;const o=ck.off;b.hidden=!o.length;if(!o.length)return;
+ b.innerHTML='&#9888; '+tmL(o[0].t)+' &middot; '+o.map(x=>x.k=='twin'?'Digital twin out of tolerance':x.n+' '+(isFinite(x.p)?(x.p>0?'+':'')+N0(x.p*100)+'%':'')+' vs '+(x.k=='grid'?'twin':'forecast')).join(' &middot; ');
+ if(j&&window.SunDev)o.forEach(x=>{try{SunDev.add({kind:x.k=='grid'?'twin':x.k,sev:x.k=='grid'||x.k=='twin'?'high':'warn',title:x.k=='twin'?'Digital twin out of tolerance':x.n+' '+(x.a>x.e?'above':'below')+(x.k=='grid'?' twin':' forecast'),detail:N0(Math.abs(x.a-x.e))+' kW'+(isFinite(x.p)?' ('+N0(Math.abs(x.p)*100)+'%)':''),slot:x.t,start:tmL(x.t),dir:x.k=='load'||x.k=='pv'?(x.a>x.e?'above':'below'):'',day:TODAY,fac:'Live replay',sim:true,source:'live replay'})}catch(e){}})}
+/* drive the 3D model from the replay when no ESP32 is connected (with the ESP32, the model mirrors the real panels instead) */
+let LV3D=null;
+function lv3dFeed(j,soc){const s=j.series,K=Math.max(1,j.now_step),t=K-1,mx=Math.max(...s.forecast_pv,1),ml=Math.max(...s.forecast_load,1),rel=Math.max(0,Math.min(1,(t<j.now_step?s.actual_pv[t]:s.belief_pv[t])/mx)),ev=s.new_flex[t]>1,ch=s.new_ch[t]>1,dis=s.new_dis[t]>1,ld=s.actual_load[t]||s.belief_load[t];
+ LV3D={panels:[1,.98,1.015].map(k=>({v:+(3.3*Math.min(1,rel*k)).toFixed(2)})),battery:{v:+(3.3+.009*soc[K]).toFixed(2),pct:Math.round(soc[K]),charging:ch},conveyor:{running:ld>.4*ml,speed:Math.max(30,Math.min(100,Math.round(100*ld/ml))),dir:'Forward',mode:dis?'Battery':rel>.2?'Solar + grid':'Grid'},ev:{charging:ev,reason:ev?'Charging in sunny hours':'Held back'}};lv3dPost()}
+function lv3dPost(){const f=$('lv3d');if(!f||!LV3D||!f.contentWindow)return;const to=(location.origin==='null'||location.protocol==='file:')?'*':location.origin;try{f.contentWindow.postMessage({type:'sunshine-reading',reading:LV3D},to)}catch(e){}}
+setInterval(lv3dPost,3000);
+function liveRender(j,q,ms){LN=j.steps;LSx=LN/24;const fe=j.forecast_error,ex=j.expected,o=ex.old_plan,n=ex.new_plan,pr=x=>x==null?'n/a':N0(x*100)+'%',now=tmL(j.now_step),dq=j.data_quality,s=j.series,b=q.p.b.c.mdH.length>0,K=j.now_step,c=q.p.b.c,
   cap=+q.req.batt_kwh||0,eta=Math.sqrt(+q.req.eff||.9),lim=+F.lim||0;
- const soc=[50];{let x=.5*cap;for(let t=0;t<NS;t++){x=Math.max(0,Math.min(cap,x+eta*DT*s.new_ch[t]-DT/eta*s.new_dis[t]));soc.push(cap>0?100*x/cap:0)}}
- const P=N.map(t=>t<K?s.actual_pv[t]:s.belief_pv[t]);
+ const soc=[50];{let x=.5*cap;for(let t=0;t<LN;t++){x=Math.max(0,Math.min(cap,x+eta*DT*s.new_ch[t]-DT/eta*s.new_dis[t]));soc.push(cap>0?100*x/cap:0)}}
+ const P=rngL().map(t=>t<K?s.actual_pv[t]:s.belief_pv[t]);
+ const ck=lvCheck(j,soc),live=lvRep(j)&&!j.preview;lvBanner(ck,live?j:null);lv3dFeed(j,soc);
  const tiles=kpis([['Solar vs forecast, last 2 h',pr(j.correction.pv_ratio),'','since midnight '+pr(fe.pv.ratio)],['Demand vs forecast, last 2 h',pr(j.correction.load_ratio),'','since midnight '+pr(fe.load.ratio)],['Spent so far',money(j.spent_so_far_rm),'',b?'peak so far '+N0(j.peak_so_far_kw)+' kW':'no demand charge today'],
   ['Day cost, old plan',money(o.cost),'','estimate'],['Day cost, re-planned',money(n.cost),'good','estimate'],['Saving from re-planning',money(ex.saving_rm),ex.saving_rm>0.5?'good':'',ex.saving_pct==null?'':N1(ex.saving_pct)+'% of the old-plan day']]);
- const over=n.limit_violation_steps>0&&lim>0?`<div class="ribbon warn"><b>GRID LIMIT.</b> Even the new plan is expected to exceed ${N0(lim)} kW for ${hrs(n.limit_violation_steps)} (highest ${N0(n.max_grid_kw)} kW).</div>`:'';
+ const over=n.limit_violation_steps>0&&lim>0?`<div class="ribbon warn"><b>GRID LIMIT.</b> Even the new plan is expected to exceed ${N0(lim)} kW for ${hrsL(n.limit_violation_steps)} (highest ${N0(n.max_grid_kw)} kW).</div>`:'';
  const R=window.SunDevRules||{pv:.25,load:.2};try{if(typeof DEV!='undefined')DEV.lp=Math.max(0,...s.forecast_load)}catch(e){}
- const rib=j.preview?'<b>PREVIEW.</b> Nothing has played yet: this is the plan from the forecast, with the clock at '+now+'. Press <b>Start</b> to play the day.':lvRep(j)?'<b>LIVE REPLAY.</b> Simulated clock, up to '+now+'. Before '+tm(lvSim.k0)+' the forecast stands in. After that, solar is '+(lvSim.src=='lamp'?'your prototype lamp (panel voltage &divide; '+LAMP_FULL.toFixed(1)+' V = share of forecast)':'the slider')+' and demand is the forecast times the demand slider. The rest of the day is a corrected forecast. Not metered; nothing is controlled.':`<b>${j.simulated?'SIMULATED REPLAY.':'MEASURED DATA.'}</b> Up to ${now}. ${j.simulated?'The day so far is the forecast with simulated deviations; it is not measured.':'The rest of the day is a corrected forecast, not a measurement.'}`;
+ const rib=j.preview?'<b>PREVIEW.</b> Nothing has played yet: this is the plan from the forecast, with the clock at '+now+'. Press <b>Start</b> to play the day.':lvRep(j)?'<b>LIVE REPLAY.</b> Simulated clock, up to '+now+'. Before '+tmL(lvSim.k0)+' the forecast stands in. After that, solar is '+(lvSim.src=='lamp'?'your prototype lamp (panel voltage &divide; '+LAMP_FULL.toFixed(1)+' V = share of forecast)':'the slider')+' and demand is the forecast times the demand slider. The rest of the day is a corrected forecast. Not metered; nothing is controlled.':`<b>${j.simulated?'SIMULATED REPLAY.':'MEASURED DATA.'}</b> Up to ${now}. ${j.simulated?'The day so far is the forecast with simulated deviations; it is not measured.':'The rest of the day is a corrected forecast, not a measurement.'}`;
  $('lvOut').innerHTML=`<div class="ribbon${j.simulated?'':' past'}">${rib}</div>${over}
  ${dq.warn?`<div class="ribbon warn"><b>CHECK YOUR DATA.</b> Your grid readings differ from what the other readings imply by ${N0(dq.grid_gap_kw)} kW on average (${N0(dq.grid_gap_pct_of_load)}% of load). Check units, timezone and whether load includes EV charging.</div>`:''}
  ${j.learned&&j.learned.applied?`<p class="note" style="margin:6px 0"><b>Learning applied.</b> The forecast was first corrected with what was learned over ${j.learned.days} day${j.learned.days==1?'':'s'}. Average error since midnight: solar ${N0(fe.pv.mae_kw)} kW (raw ${N0(j.forecast_error_raw.pv.mae_kw)} kW), load ${N0(fe.load.mae_kw)} kW (raw ${N0(j.forecast_error_raw.load.mae_kw)} kW).</p>`:''}
  ${tiles}
  <div class="lvgrid">
+ ${ck.html}
  <div class="lvbox lvw2"><h3 class="sec">Energy plan: where each kW comes from <span class="note">(${esc(q.m.n)}, re-optimised at ${now})</span></h3>${lvPlanChart(s,K,c,P,lim)}</div>
  <div class="lvbox"><h3 class="sec">Optimisation engine, live</h3>${lvEngineTable(j,ms)}</div>
  <div class="lvbox">${liveChart('Solar: forecast vs reading vs corrected',s.forecast_pv,s.actual_pv,s.belief_pv,K,'#F59E0B',R.pv)}${lvLeg([['#BDB48F','Forecast',1],['#F59E0B',lvRep(j)?'Live reading':'Measured'],['#F59E0B','Corrected rest of day',1]])}</div>
@@ -1040,9 +1067,9 @@ function liveRender(j,q,ms){const fe=j.forecast_error,ex=j.expected,o=ex.old_pla
  </div>
  <p class="note">Shaded band on solar and demand = the expected range (&plusmn;${N0(R.pv*100)}% solar, &plusmn;${N0(R.load*100)}% demand, the same rule as the deviation strip). <b style="color:#B42318">Red dots</b> = off the forecast for 2 steps in a row. Battery data: ${esc(dq.battery_source)}. EV data: ${esc(dq.ev_source)}. Battery charge: ${esc(dq.soc_source)}. Old and new plans are compared on the same corrected forecast, from the same state, with the same grid-limit guard, so the saving is an estimate, not a measurement.</p>`}
 let lvPrevTok=0;
-async function lvPreview(){const o=$('lvOut');if(!o||o.innerHTML.trim()||(lvSim&&lvSim.last>=0)||cur!=TODAY)return;const q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return;const tag=++lvPrevTok,k=Math.max(1,Math.min(NS-1,Math.floor(lvStart0()*S/60)));
+async function lvPreview(){const o=$('lvOut');if(!o||o.innerHTML.trim()||(lvSim&&lvSim.last>=0)||cur!=TODAY)return;const q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return;const tag=++lvPrevTok,k=Math.max(1,Math.min(LVN-1,Math.floor(lvStart0()*LVS/60))),Q=liveQ(q);
  o.innerHTML='<p class="note">Loading the plan...</p>';const t0=performance.now();
- try{const lp=lrnGet(),j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,lp?{learned:lp}:{},{replay:{now_step:k,scenario:ROSC.none[1]}}))});
+ try{const lp=lrnFine(),j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},Q.req,lp?{learned:lp}:{},{replay:{now_step:k,scenario:ROSC.none[1]}}))});
   if(tag!=lvPrevTok||!$('lvOut')||(lvSim&&lvSim.last>=0))return;j.preview=true;liveRender(j,q,performance.now()-t0)}
  catch(e){if(tag==lvPrevTok&&$('lvOut')&&!(lvSim&&lvSim.last>=0))$('lvOut').innerHTML=''}}
 async function liveRun(body,msg){const q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return;const m=$('lvMsg');m.textContent=msg||'Calculating...';$('lvOut').innerHTML='';const lp=lrnGet(),t0=performance.now();lvPrevTok++;
@@ -1086,7 +1113,14 @@ setInterval(()=>{const e=document.getElementById('rtClock');if(e)e.textContent=c
 // ================= LIVE REPLAY (replaces "Today so far", "Re-optimisation simulation" and "Learning from forecast error") =================
 // A simulated clock plays the day in 30-minute steps. Solar for each step comes from the prototype lamp (panel voltage / LAMP_FULL = share of the forecast),
 // a slider (no board) or a scenario. After every step the server measures the error, corrects the rest of the day and re-plans. Recommendation only.
-const LAMP_FULL=3.0;   // volts: same full scale the 3D model uses (3.0 V = 100% of the forecast)
+const LAMP_FULL=3.0;
+/* Live replay runs in 15-minute steps (judge feedback: read and re-plan every 15 minutes). The rest of the app stays at 30 minutes.
+   The 30-minute forecast is interpolated to 15 minutes (a smoothing of hourly weather, not new information). */
+const LVS=4,LVN=96;
+const upFine=a=>{const o=[];for(let j=0;j<LVN;j++){const x=(j+.5)/LVS*S-.5,i=Math.max(0,Math.min(NS-1,Math.floor(x))),f=Math.max(0,Math.min(1,x-i)),b=Math.min(NS-1,i+1);o.push(+(a[i]*(1-f)+a[b]*f).toFixed(3))}return o};
+const rep2=a=>a.reduce((o,v)=>(o.push(v,v),o),[]);
+function liveQ(q){const r=Object.assign({},q.req,{load:upFine(q.req.load),pv:upFine(q.req.pv),rates:rep2(q.req.rates)});return{req:r,fc:{load:r.load,pv:r.pv}}}
+function lrnFine(){const p=lrnGet();if(!p)return null;const o=Object.assign({},p,{n:LVN});['pv','load','pv_count','load_count'].forEach(k=>{if(Array.isArray(p[k]))o[k]=rep2(p[k])});return o}   // volts: same full scale the 3D model uses (3.0 V = 100% of the forecast)
 const LAMP={v:[NaN,NaN,NaN],low:[null,null,null],at:0,off:true,test:false};
 /* Panel fault rule: a panel is broken or fully covered when it is far below the MIDDLE reading of the three for a while.
    The middle reading ignores one very bright panel, so a lamp aimed at one panel is not a fault. Low light (the sketch's own
@@ -1101,8 +1135,8 @@ window.addEventListener('message',e=>{const d=e.data;if(!d||d.type!='sunshine-pr
  if(LAMP.test)return;if(d.off||!d.P||!d.P.panels){LAMP.off=true;return}LAMP.off=false;LAMP.v=d.P.panels.map(p=>p.v==null?NaN:+p.v);LAMP.low=d.P.panels.map(p=>p.low===true?true:p.low===false?false:null);LAMP.at=Date.now()-(+d.age||0)});
 const lampFresh=()=>!LAMP.off&&Date.now()-LAMP.at<3500;
 function lampRatio(){if(!lampFresh())return null;const v=LAMP.v.filter(x=>isFinite(x));if(!v.length)return null;return Math.max(0,Math.min(1.2,v.reduce((a,b)=>a+b,0)/v.length/LAMP_FULL))}
-function liveCard(){const td=cur==TODAY;return `<div class="card lvpage" data-role="tech" data-tour="live"><div class="lvhead"><h2 style="margin:0">Live replay</h2><span class="badge amber">SIMULATION &middot; recommendation only</span><span class="note" style="margin:0">A day plays forward in 30-minute steps. After every step the optimiser measures the forecast error, corrects the rest of the day and re-plans. No equipment is controlled.</span></div>
-${td?`<div class="lvctl"><label class="note">Strategy <select id="lvMd">${MODES.filter(m=>m.k!='prod').map(m=>`<option value="${m.k}"${m.k==(sel=='bal'?'bal':sel=='zero'?'zero':'cost')?' selected':''}>${m.n}</option>`).join('')}</select></label>
+function liveCard(){const td=cur==TODAY;return `<div class="card lvpage" data-role="tech" data-tour="live"><div class="lvhead"><h2 style="margin:0">Live replay</h2><span class="badge amber">SIMULATION &middot; recommendation only</span><span class="note" style="margin:0">A day plays forward in 15-minute steps. After every step the optimiser measures the forecast error, corrects the rest of the day and re-plans. No equipment is controlled.</span></div>
+${td?`<div class="lvtop"><div class="lvtopl"><div class="lvctl"><label class="note">Strategy <select id="lvMd">${MODES.filter(m=>m.k!='prod').map(m=>`<option value="${m.k}"${m.k==(sel=='bal'?'bal':sel=='zero'?'zero':'cost')?' selected':''}>${m.n}</option>`).join('')}</select></label>
 <label class="note">Solar from <select id="lvSrc"><option value="lamp" selected>Prototype lamp</option><option value="slider">Slider (no board)</option><option value="sc">Scenario (no board)</option></select></label>
 <span id="lvScW" hidden><select id="lvSc">${Object.entries(ROSC).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join('')}</select></span>
 <label class="note">Start <select id="lvStart"><option value="12">06:00</option><option value="14">07:00</option><option value="16" selected>08:00</option><option value="20">10:00</option><option value="now">now</option></select></label>
@@ -1114,7 +1148,9 @@ ${td?`<div class="lvctl"><label class="note">Strategy <select id="lvMd">${MODES.
 <div class="lvrun"><div id="lvTime" class="lvtime"><span class="lvt">08:00</span> <span class="badge amber">SIMULATED CLOCK</span> <span class="note">ready</span></div>
 <button class="on" id="lvGo" data-lvs="go">&#9654; Start</button><button data-lvs="next">Next step</button><button data-lvs="reset">Reset</button><span class="sp"></span><div id="lvPanels" class="pchs" hidden></div></div>
 <div id="lvFault" class="lvfault" role="alert" hidden></div>
-<div class="barwrap" style="margin:4px 0 8px"><div class="barfill" id="lvProg" style="width:33.3%;background:var(--amb)"></div></div>
+<div id="lvDev" class="lvfault lvdev" role="alert" hidden></div>
+<div class="barwrap" style="margin:8px 0 4px"><div class="barfill" id="lvProg" style="width:33.3%;background:var(--amb)"></div></div></div>
+<div class="lv3d"><iframe id="lv3d" src="factory3d.html?embed=1&amp;proto=1&amp;mini=1&amp;v=2026-11-12-m" tabindex="-1" title="3D model of the demo factory"></iframe><span class="mini3dlbl">3D demo factory</span></div></div>
 <span id="lvMsg" class="note"></span><div id="lvOut" style="margin-top:8px"></div>
 <div class="lvbox" style="margin-top:12px"><h3 class="sec" style="margin-top:0">Decisions so far</h3><ul id="lvLog" class="lvlog"><li class="note" style="border:0;background:none;padding:0">Press <b>Start</b>: each step's decision appears here.</li></ul><div id="lvEnd"></div></div>
 <p class="note" style="margin:8px 0 0">${lrnStat()} <button data-lrc="1">Forget what was learned</button></p>
@@ -1133,16 +1169,16 @@ function lpDraw(){const b=$('lpBox');if(!b||!$('lvSrc'))return;const src=$('lvSr
  if(fb){const fl=[2,1,0].filter(i=>pf.fault[i]);fb.hidden=!fl.length;if(fl.length){const t=fl.map(i=>'Panel '+(3-i)+' fault: '+LAMP.v[i].toFixed(1)+' V').join(' &middot; ');if(fb.dataset.t!==t){fb.dataset.t=t;fb.innerHTML='&#9888; '+t}}else fb.dataset.t=''}
  $('lvSlV').textContent=$('lvSl').value+'%';$('lvLdV').textContent=$('lvLd').value+'%'}
 setInterval(lpDraw,500);
-let lvSim=null;const LVSPD={s5:6,s10:3,s20:1.5,s40:.75,man:0};   // simulated minutes per real second
+let lvSim=null;const LVSPD={s5:3,s10:1.5,s20:.75,s40:.375,man:0};   // simulated minutes per real second (one 15-minute step every 5/10/20/40 s)
 function lvStop(){if(lvSim&&lvSim.timer){clearInterval(lvSim.timer);lvSim.timer=0}}
 function lvHm(m){m=Math.max(0,Math.min(1440,Math.floor(m)));return p2(Math.floor(m/60))+':'+p2(m%60)}
 function lvStart0(){const v=$('lvStart').value;if(v=='now'){const d=new Date();return Math.max(30,Math.min(1410,d.getHours()*60+d.getMinutes()))}return +v*30}
 function lvDraw(){const s=lvSim,el=$('lvTime');if(!el)return;
  const t=s?s.t:lvStart0(),st=!s?'ready':s.done?'end of run':s.timer?(s.busy?'planning...':'running'):'paused';
- el.innerHTML=`<span class="lvt">${lvHm(t)}</span> <span class="badge amber">SIMULATED CLOCK</span> <span class="note">${st}</span>`;
+ el.innerHTML=`<span class="lvt">${lvHm(t)}</span> <span class="badge amber">SIMULATED CLOCK</span> <span class="badge">15-MIN STEPS</span> <span class="note">${st}</span>`;
  $('lvProg').style.width=(100*t/1440).toFixed(1)+'%';
  $('lvGo').innerHTML=s&&s.timer?'&#9208; Pause':s&&s.done?'&#8635; Run again':s&&s.last>=0?'&#9654; Resume':'&#9654; Start'}
-function lvInit(){lvStop();const t0=lvStart0();lvSim={t:t0,spd:3,src:$('lvSrc').value,sc:$('lvSc').value,last:-1,busy:false,log:[],timer:0,done:false,k0:Math.max(1,Math.min(NS-1,Math.floor(t0*S/60))),end:+$('lvUntil').value,
+function lvInit(){lvStop();const t0=lvStart0();lvSim={t:t0,spd:3,src:$('lvSrc').value,sc:$('lvSc').value,last:-1,busy:false,log:[],timer:0,done:false,k0:Math.max(1,Math.min(LVN-1,Math.floor(t0*LVS/60))),end:Math.min(LVN-1,+$('lvUntil').value*2+(+$('lvUntil').value>=47?1:0)),
   pvr:[],ldr:[],acc:{ps:0,pn:0,ls:0,ln:0},lastP:null,lastL:null,gaps:0,gap:false};
  $('lvLog').innerHTML='';$('lvEnd').innerHTML='';$('lvMsg').textContent=''}
 function lvGo(){const s=lvSim;
@@ -1152,14 +1188,14 @@ function lvGo(){const s=lvSim;
  $('lvMsg').textContent='';lvSim.timer=setInterval(lvTick,250);lvTick()}
 function lvNext(){if(!lvSim||lvSim.done)lvInit();const s=lvSim;if(s.timer||s.busy)return;
  const k=s.last<0?s.k0:s.last+1;if(k>s.end){s.done=true;lvEnd();lvDraw();return}
- s.t=k*60/S;$('lvMsg').textContent='';lvStep(k);lvDraw()}
+ s.t=k*60/LVS;$('lvMsg').textContent='';lvStep(k);lvDraw()}
 function lvReset(){lvStop();lvSim=null;$('lvLog').innerHTML='';$('lvEnd').innerHTML='';$('lvOut').innerHTML='';$('lvMsg').textContent='';lvDraw();lvPreview()}
 function lvTick(){const s=lvSim;if(!s||!s.timer)return;if(!$('lvTime')){lvStop();return}
  if(s.busy){lvDraw();return}                      // the clock waits while the server plans, so the time shown is the time of the data
  if(s.last>=s.end){s.done=true;lvStop();lvEnd();lvDraw();return}
  const sp=LVSPD[$('lvSpd').value];s.spd=sp>0?sp:3;
  if(s.last>=0)s.t=Math.min(1440,s.t+s.spd*.25);
- const k=Math.min(s.end,Math.floor(s.t*S/60));
+ const k=Math.min(s.end,Math.floor(s.t*LVS/60));
  if(k>=1&&k>s.last){lvStep(k);lvDraw();return}
  lvDraw()}
 // every 250 ms the lamp (or slider) is read; a step's solar value is the average of what was read during that step
@@ -1174,11 +1210,11 @@ function lvFinish(k){const s=lvSim;
  s.gap=s.src=='lamp'&&!a.pn;if(s.gap)s.gaps++;
  for(let t=s.last;t<k;t++){s.pvr[t]=pm;s.ldr[t]=lm}
  s.lastP=pm;s.lastL=lm;s.acc={ps:0,pn:0,ls:0,ln:0};return true}
-async function lvStep(k){const s=lvSim,q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return;s.busy=true;const lp=lrnGet();
+async function lvStep(k){const s=lvSim,q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return;s.busy=true;const lp=lrnFine(),Q=liveQ(q);
  try{let body;
   if(s.src=='sc')body={replay:{now_step:k,scenario:ROSC[s.sc][1]}};
-  else{if(!lvFinish(k)){lvStop();return}const fc=q.p.b.fc;body={now:{load:N.slice(0,k).map(t=>fc.load[t]*s.ldr[t]),pv:N.slice(0,k).map(t=>fc.pv[t]*s.pvr[t])}}}
-  const t0=performance.now();lvPrevTok++;const j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},q.req,lp?{learned:lp}:{},body))});
+  else{if(!lvFinish(k)){lvStop();return}const fc=Q.fc,ix=Array.from({length:k},(_,t)=>t);body={now:{load:ix.map(t=>fc.load[t]*s.ldr[t]),pv:ix.map(t=>fc.pv[t]*s.pvr[t])}}}
+  const t0=performance.now();lvPrevTok++;const j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},Q.req,lp?{learned:lp}:{},body))});
   if(lvSim!==s||!$('lvOut'))return;
   s.last=k;s.lastJ=j;lvLast=j;liveRender(j,q,performance.now()-t0);lvLogAdd(j);if(s.last>=s.end&&!s.timer){s.done=true;lvEnd()}}
  catch(e){if(lvSim===s){lvStop();if($('lvMsg'))$('lvMsg').textContent='Paused: '+e.message+' Press Resume to continue.'}}
@@ -1188,14 +1224,14 @@ function lvLogAdd(j){const s=lvSim,c=j.correction,ex=j.expected,pv=c.pv_ratio,ld
   t='Reality differs from the forecast ('+b.join(' and ')+'). Rest of the day corrected and the plan recomputed. '+(ex.saving_rm>=0.5?'Re-planning is expected to save <b>'+money(ex.saving_rm)+'</b> compared with sticking to the old plan.':'The old plan is already about as good on the corrected forecast, so it is kept.')}
  else t='On track: reality is close to the forecast, so the plan stands.';
  if(s.gap){t='<i>No lamp reading during this step, so the previous value was kept.</i> '+t;s.gap=false}
- s.log.unshift({h:tm(j.now_step),off,t});s.log=s.log.slice(0,14);
+ s.log.unshift({h:tmL(j.now_step),off,t});s.log=s.log.slice(0,14);
  $('lvLog').innerHTML=s.log.map(x=>`<li class="${x.off?'lvoff':'lvok'}"><b>${x.h}</b> ${x.t}</li>`).join('')}
 function lvEnd(){const s=lvSim,j=s&&s.lastJ;if(!j||!$('lvEnd'))return;const fe=j.forecast_error,l=j.learned&&j.learned.applied;
  $('lvEnd').innerHTML=`<div class="ribbon past"><b>RUN COMPLETE (simulated).</b> Average forecast error: solar ${N0(fe.pv.mae_kw)} kW, load ${N0(fe.load.mae_kw)} kW.${l?` Without learning it would have been solar ${N0(j.forecast_error_raw.pv.mae_kw)} kW, load ${N0(j.forecast_error_raw.load.mae_kw)} kW.`:''}</div>
  <p class="note" style="margin:6px 0">${lrnStat()} Let the system learn from this run, then press <b>Run again</b>: the forecast is corrected before the day starts. It only helps for an error that <b>repeats</b> (for example the lamp held at about half brightness every step); a one-off dip is not worth learning and would make tomorrow&rsquo;s forecast worse. Hours after the run ended count as &ldquo;as forecast&rdquo;.</p><button class="on" data-lvl="1">Learn from this run</button> <span id="lvLrn" class="note"></span>`}
 async function lvLearn(){const s=lvSim,p=lastPlan;if(!s||!p)return;const m=$('lvLrn');m.textContent='Learning...';const fc=p.b.fc,al=fc.load.slice(),ap=fc.pv.slice();
  if(s.src=='sc')ROSC[s.sc][1].forEach(e=>{const a=e.from_h,z=e.to_h,arr=e.what=='pv'?ap:al;for(let t=0;t<NS;t++)if(t/S>=a-1e-9&&(t+1)/S<=z+1e-9)arr[t]*=e.factor});
- else for(let t=0;t<Math.min(s.last,NS);t++)if(s.pvr[t]!=null){al[t]=fc.load[t]*s.ldr[t];ap[t]=fc.pv[t]*s.pvr[t]}
+ else for(let t=0;t<NS;t++){const a=2*t,b=2*t+1;if(b<s.last&&s.pvr[a]!=null&&s.pvr[b]!=null){al[t]=fc.load[t]*(s.ldr[a]+s.ldr[b])/2;ap[t]=fc.pv[t]*(s.pvr[a]+s.pvr[b])/2}}   // the 15-minute run, averaged back to the 30-minute profile
  try{const j=await api('/api/learn',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'update',profile:lrnGet(),forecast:{load:fc.load,pv:fc.pv},actual:{load:al,pv:ap}})});
   lrnSet(j.profile,'sim-'+TODAY+'-'+(lrnDates().filter(x=>String(x).indexOf('sim-')==0).length+1));
   m.innerHTML='<b>Learned.</b> '+lrnStat()+' Press <b>Run again</b> to see the corrected forecast.';if($('lrnStat'))$('lrnStat').innerHTML=lrnStat()}
