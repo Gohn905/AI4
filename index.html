@@ -529,7 +529,7 @@ main.fit .plrail .mr .mrsv{height:38px!important}
 </div>
 <input id="f_volt" type="hidden"><input id="f_struct" type="hidden">
 <p class="note">No bill handy? Upload your meter readings (CSV). The maximum demand is filled in for you, and your real demand is used. The file is read in this browser and never uploaded.</p>
-<div class="bar" style="margin-top:6px"><input type="file" id="m_file" accept=".csv,.txt,text/csv"> <button class="on" id="m_go">Use this file</button> <button id="m_clear">Remove</button></div>
+<div class="bar" style="margin-top:6px"><input type="file" id="m_file" accept=".csv,.txt,text/csv"> <button class="on" id="m_go">Use this file</button> <button id="m_leader" title="The organisers' year of 30-minute readings for the Leader Energy site">Load Leader site data</button> <button id="m_clear">Remove</button></div>
 <div class="note" id="m_msg"></div>
 <h3 class="sec">3. Equipment</h3>
 <div class="form">
@@ -1807,6 +1807,24 @@ function importMeter(text,unit){let r;try{r=parseMeter(text,unit)}catch(e){r=nul
  cache.clear();meterMsg();if(r.skipped)$('m_msg').textContent+=` ${r.skipped} unreadable rows were skipped.`;
  $('f_peak').value=r.pk;
  applyLocal([`<b>Demand source:</b> your meter file, ${r.n} complete days (${r.from} to ${r.to}), read as ${r.unit=='kwh'?'kWh per interval':'kW'}. Dates inside the file now show your real demand; other dates are simulated (ridge regression fitted on your file).`,`<b>Maximum demand</b> was filled in from the file: the highest reading is ${r.pk} kW. Overwrite it with the figure from your bill if they differ.`]);return{r}}
+/* Leader site preset: the organisers' year of 30-minute readings (leader_site.csv, same file as the Operations console).
+   The file's load_kw is grid draw after solar and its timestamps mark the END of each half-hour (the console detects both),
+   so here demand = load_kw + pv_kw and each row moves to the start of its interval. EV charging stays separate (EV settings). */
+async function leaderPreset(){const m=$('m_msg');m.textContent='Loading the Leader site data...';
+ try{const r=await fetch('leader_site.csv',{cache:'no-cache'});if(!r.ok)throw new Error('leader_site.csv not found (HTTP '+r.status+')');
+  const L=(await r.text()).split(/\r?\n/).filter(x=>x.trim()),H=L[0].split(',').map(x=>x.trim().toLowerCase()),ix=k=>H.indexOf(k),it=ix('timestamp'),il=ix('load_kw'),ip=ix('pv_kw'),iT=ix('temp_c'),ie=ix('ev_kw');
+  if(it<0||il<0||ip<0)throw new Error('unexpected columns in leader_site.csv');
+  const out=['timestamp,demand_kw,pv_kw,temp_c'],evDay={};
+  for(const row of L.slice(1)){const c=row.split(','),mm=/^(\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d)/.exec(c[it]);if(!mm)continue;
+   const t=new Date(Date.UTC(+mm[1],+mm[2]-1,+mm[3],+mm[4],+mm[5])-30*60e3),ts=t.toISOString().slice(0,16).replace('T',' '),ld=parseFloat(c[il]),pv=parseFloat(c[ip]);
+   if(!isFinite(ld)||!isFinite(pv))continue;out.push(ts+','+(ld+pv).toFixed(2)+','+pv.toFixed(2)+','+(iT>=0?c[iT]:''));
+   if(ie>=0&&t.getUTCDay()>=1&&t.getUTCDay()<=5){const k=ts.slice(0,10);evDay[k]=(evDay[k]||0)+(parseFloat(c[ie])||0)*.5}}
+  const ev=Object.values(evDay),evMean=ev.length?Math.round(ev.reduce((a,b)=>a+b,0)/ev.length):+F.eve,pvMax=Math.max(...out.slice(1).map(x=>+x.split(',')[2]));
+  $('f_name').value='Leader site';$('f_kwp').value=Math.round(pvMax/0.8/10)*10;$('f_eve').value=evMean;$('f_evn').value=8;$('f_evkw').value=50;$('f_ef').value=0.74;$('f_bat').value=1000;
+  const x=importMeter(out.join('\n'),'kw');if(x.err)throw new Error(x.err);
+  m.textContent+=' Leader site: demand = grid draw + solar (as in the Operations console). Solar size '+$('f_kwp').value+' kWp is ESTIMATED from the highest solar reading. Battery 1,000 kWh is an assumption. EV '+evMean+' kWh per weekday is the file average.'}
+ catch(e){m.textContent='Could not load the Leader site data: '+e.message}}
+$('m_leader').onclick=leaderPreset;
 $('m_go').onclick=async()=>{const f=$('m_file').files[0];if(!f){$('m_msg').textContent='Choose a CSV file first.';return}
  const x=importMeter(await f.text(),$('m_unit').value);if(x.err)$('m_msg').textContent=x.err};
 $('m_clear').onclick=()=>{setPend(['<b>Demand source:</b> meter data removed. Demand is back to the modelled profile.']);M=null;try{localStorage.removeItem('meter')}catch(e){}cache.clear();meterMsg();render()};
