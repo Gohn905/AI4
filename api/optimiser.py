@@ -17,11 +17,11 @@ N = 24                    # default: hourly. Send 48 values per profile for half
 
 
 def _steps(d):
-    """Number of time steps: 24 (hourly) or 48 (half-hourly), taken from the length of 'load'."""
+    """Number of time steps: 24 (hourly), 48 (half-hourly) or 96 (15-minute), taken from the length of 'load'."""
     v = d.get("load")
     n = len(v) if isinstance(v, list) else 0
-    if n not in (24, 48):
-        raise ValueError("load must be a list of 24 (hourly) or 48 (half-hourly) numbers")
+    if n not in (24, 48, 96):
+        raise ValueError("load must be a list of 24 (hourly), 48 (half-hourly) or 96 (15-minute) numbers")
     return n
 
 
@@ -219,6 +219,16 @@ def optimise(d):
     if not math.isfinite(shift_pen) or not 0 <= shift_pen <= 0.02:
         raise ValueError("shift_penalty must be between 0 and 0.02")
     c[ix["Dev"]] = shift_pen * dt
+    # Tie-break 2 (show case): when two hours cost the same, charge the EV and the battery in the sunniest hours.
+    # Weight 0 at the solar peak, 1 with no sun. 0.015 RM/kWh is above 2 x shift_penalty (so a free move to sunny hours happens)
+    # and well below the smallest tariff gap (4 sen/kWh), so it never trades away a real saving. "sun_pref": 0 switches it off.
+    sun_pref = float(d.get("sun_pref", 0.015))
+    if not math.isfinite(sun_pref) or not 0 <= sun_pref <= 0.03:
+        raise ValueError("sun_pref must be between 0 and 0.03")
+    if sun_pref > 0 and pv.max() > 0:
+        w_sun = 1.0 - pv / pv.max()
+        c[ix["Flex"]] += sun_pref * w_sun * dt
+        c[ix["Ch"]] += sun_pref * w_sun * dt
     c[ix["CapO"]] = 1000.0  # soft cap on total grid energy: peak savings are worth ~RM 8 per kWh here, so this must be far higher
 
     bounds = [(0, None)] * nv
