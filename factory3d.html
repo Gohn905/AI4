@@ -176,10 +176,10 @@ function statLab(id){
 }
 
 /* ===== Prototype mode: reads your sketch's Serial text over Web Serial (Chrome or Edge, 115200 baud) ===== */
-const VER='2026-11-12-d';let CHG_POS=true;try{const q=localStorage.getItem('chgpos');if(q!==null)CHG_POS=q==='1';}catch(e){}
+const VER='2026-11-12-e';let CHG_POS=true;try{const q=localStorage.getItem('chgpos');if(q!==null)CHG_POS=q==='1';}catch(e){}
 function flipSign(){CHG_POS=!CHG_POS;try{localStorage.setItem('chgpos',CHG_POS?'1':'0');}catch(e){}renderUI();}
 const EV_MIN_V=1.8;/* what counts as high solar for the EV load */
-const P={panels:[{v:NaN,low:null},{v:NaN,low:null},{v:NaN,low:null}],relay:{on:null,auto:null},conv:{run:null,auto:null,pct:null},led:null,ledc:null,ledo:{g:null,r:null},ina:{st:'unknown',bus:NaN,shunt:NaN,load:NaN,ma:NaN,mw:NaN},at:0};
+const P={es:null,evl:null,chg:null,sq:null,panels:[{v:NaN,low:null},{v:NaN,low:null},{v:NaN,low:null}],relay:{on:null,auto:null},conv:{run:null,auto:null,pct:null},led:null,ledc:null,ledo:{g:null,r:null},ina:{st:'unknown',bus:NaN,shunt:NaN,load:NaN,ma:NaN,mw:NaN},at:0};
 const pFresh=()=>P.at>0&&performance.now()-P.at<4000;
 const HIST={p:[[],[],[]],ma:[],t:[]};
 function pushHist(){const n=Date.now();if(HIST.t.length&&n-HIST.t[HIST.t.length-1]<800)return;HIST.t.push(n);P.panels.forEach((p,i)=>{HIST.p[i].push(p.v);});HIST.ma.push(P.ina.ma);if(HIST.t.length>90){HIST.t.shift();HIST.p.forEach(a=>a.shift());HIST.ma.shift();}}
@@ -196,6 +196,10 @@ function parseLine(l){let m;const n=performance.now();if(l){SER.lines++;SER.last
  else if(m=l.match(/Conveyor control:\s*(AUTOMATIC|MANUAL)/i))P.conv.auto=m[1].toUpperCase()==='AUTOMATIC';
  else if(m=l.match(/^\W*Conveyor:\s*(RUNNING|STOPPED)/i))P.conv.run=m[1].toUpperCase()==='RUNNING';
  else if(m=l.match(/(?:Automatic|Manual) conveyor(?: command)?:\s*(RUNNING|STOPPED)/i))P.conv.run=m[1].toUpperCase()==='RUNNING';
+ else if(m=l.match(/^\W*Energy state:\s*([A-Z_]+)\s*$/i))P.es=m[1].toUpperCase();
+ else if(m=l.match(/^\W*EV load:\s*(ENABLED|DEFERRED)\s*$/i))P.evl=m[1].toUpperCase();
+ else if(m=l.match(/^\W*Charging permission:\s*(ALLOWED|STOPPED)\s*$/i))P.chg=m[1].toUpperCase();
+ else if(m=l.match(/^\W*Sensor quality:\s*(.+?)\s*$/i))P.sq=m[1];
  else if(/INA219 unavailable/i.test(l))P.ina.st='none';
  else if(/Waiting for first INA219/i.test(l))P.ina.st='wait';
  else if(m=l.match(new RegExp('Bus Voltage \\(VIN-\\):\\s*'+N+'\\s*V','i'))){P.ina.bus=+m[1];P.ina.st='ok';}
@@ -219,11 +223,11 @@ function statP(id){
   if(a.st!=='ok')return{t:'Waiting',k:'off',rows:[],note:'Waiting for the first INA219 reading.'};
   const v=isFinite(a.load)?a.load:a.bus,pct=Math.round(clamp((v-3.3)/0.9*100,0,100)),m=CHG_POS?a.ma:-a.ma;
   const [t,k]=m>20?['Charging','ok']:m<-20?['Discharging','warn']:['Idle','off'];
-  return{t,k,rows:[['Voltage (VIN+)',v.toFixed(3)+' V'],['Net current into battery',(m>20?'charging, '+Math.round(m):m<-20?'discharging, '+Math.round(-m):'idle, '+Math.round(Math.abs(m)))+' mA'],['Power',a.mw.toFixed(0)+' mW'],['Shunt voltage',a.shunt.toFixed(2)+' mV'],['Charger relay (GPIO 5)',(P.relay.on?'ON':'OFF')+' / '+(P.relay.auto?'automatic':'manual')],['Current, last ~90 s (up = charging)',spark(HIST.ma.map(x=>CHG_POS?x:-x),150,28,'#d98a00',true)],['Conveyor right now',P.conv.run?'Running':'Stopped'],['Current direction',CHG_POS?'positive = charging':'negative = charging'],['Charge (rough estimate)',pct+'%<div class="bar '+k+'"><i style="width:'+pct+'%"></i></div>']],note:'The INA219 measures the net current through its own shunt: anything else on that wire (such as the conveyor servo) is added in, so charging minus load can read as idle. If charging shows as discharging, press Flip current direction. The percentage is only a rough estimate from voltage.'};}
+  return{t,k,rows:[['Voltage (VIN+)',v.toFixed(3)+' V'],['Net current into battery',(m>20?'charging, '+Math.round(m):m<-20?'discharging, '+Math.round(-m):'idle, '+Math.round(Math.abs(m)))+' mA'],['Power',a.mw.toFixed(0)+' mW'],['Shunt voltage',a.shunt.toFixed(2)+' mV'],['Charger relay (GPIO 5)',(P.relay.on?'ON':'OFF')+' / '+(P.relay.auto?'automatic':'manual')],['Charging permission (ESP32)',P.chg?(P.chg==='ALLOWED'?'Allowed':'Stopped'):'unknown (upload the new sketch)'],...(P.sq&&!/^OK/i.test(P.sq)?[['Sensor quality','<span class="wn">'+P.sq+'</span>']]:[]),['Current, last ~90 s (up = charging)',spark(HIST.ma.map(x=>CHG_POS?x:-x),150,28,'#d98a00',true)],['Conveyor right now',P.conv.run?'Running':'Stopped'],['Current direction',CHG_POS?'positive = charging':'negative = charging'],['Charge (rough estimate)',pct+'%<div class="bar '+k+'"><i style="width:'+pct+'%"></i></div>']],note:'The INA219 measures the net current through its own shunt: anything else on that wire (such as the conveyor servo) is added in, so charging minus load can read as idle. If charging shows as discharging, press Flip current direction. The percentage is only a rough estimate from voltage.'};}
  if(id==='line1')return{t:P.conv.run?'Running':'Stopped',k:P.conv.run?'ok':'off',rows:[['Control',P.conv.auto?'Automatic ('+(CONV_AUTO_ALWAYS_RUN?'always running':'2 s run, 5 s stop')+')':'Manual'],['Speed',P.conv.pct!=null?P.conv.pct+'%':'unknown (upload the new sketch)'],['Energy policy','never stops the conveyor']],note:'Essential production load: no energy rule on this page ever sends a stop. The buttons below are manual controls for the operator only.'};
  const best=Math.max(0,...P.panels.map(q=>isFinite(q.v)?q.v:0)),nl=P.panels.filter(q=>q.low===true).length,gOn=P.ledo.g!==null?P.ledo.g:P.led==='GREEN',rOn=P.ledo.r!==null?P.ledo.r:P.led==='RED';
  const eg=evExpectGreen(),mG=gOn&&!rOn,mR=rOn&&!gOn,agree=eg===null||!(mG||mR)||P.ledc===false?null:(mG===eg);
- return{t:mG?'Enabled (green)':mR?'Deferred (red)':'Unknown',k:mG?'ok':mR?'warn':'off',rows:[['Panels with low light',nl+' of 3'],['Policy',EV_DEFER_ON_ANY_LOW?'defer if any panel is low':'defer below '+EV_MIN_V.toFixed(1)+' V'],['LED control',P.ledc===null?'unknown (upload the new sketch)':P.ledc?'Automatic (follows solar)':'Manual'],['Green LED',gOn?'On':'Off'],['Red LED',rOn?'On':'Off'],['ESP32 LED vs policy',agree===null?'not compared':agree?'agrees':'differs: the sketch may not have the one-panel rule yet']],note:'Simulated flexible load: a red/green LED standing in for an EV charger. No real EV load is switched. The LED is driven by the ESP32; this page only shows it. Policy: the EV load is deferred when any panel is low and re-enabled only after the panels stay recovered.'};
+ return{t:mG?'Enabled (green)':mR?'Deferred (red)':'Unknown',k:mG?'ok':mR?'warn':'off',rows:[['Panels with low light',nl+' of 3'],['ESP32 energy state',P.es?P.es.replace(/_/g,' ').toLowerCase():'unknown (upload the new sketch)'],['Policy',EV_DEFER_ON_ANY_LOW?'defer if any panel is low':'defer below '+EV_MIN_V.toFixed(1)+' V'],['LED control',P.ledc===null?'unknown (upload the new sketch)':P.ledc?'Automatic (follows solar)':'Manual'],['Green LED',gOn?'On':'Off'],['Red LED',rOn?'On':'Off'],['ESP32 LED vs policy',agree===null?'not compared':agree?'agrees':'differs: the sketch may not have the one-panel rule yet']],note:'Simulated flexible load: a red/green LED standing in for an EV charger. No real EV load is switched. The LED is driven by the ESP32; this page only shows it. Policy: the EV load is deferred when any panel is low and re-enabled only after the panels stay recovered.'};
 }
 function protoSummary(){if(!pFresh())return'<b>Waiting for the ESP32</b><div class="note">Pick a part once data arrives. If nothing appears, close the Arduino Serial Monitor first.</div>';
  const n=P.panels.filter(p=>!p.low).length;return'<b>'+n+' of 3 panels have light</b><div class="note">Conveyor: '+(P.conv.run?'running':'stopped')+'. Battery charger relay: '+(P.relay.on?'on':'off')+'. Twin check: '+(TW.cur.verdict==='ok'?'validated':TW.cur.verdict==='bad'?'needs recalibration':'collecting data')+'. Click a part to see its readings.</div>';}
@@ -273,7 +277,7 @@ async function closePort(){keep=false;try{if(rd){await rd.cancel();rd.releaseLoc
  rd=wr=port=null;mode=(EMB&&!PQ)?'lab':'sim';renderCtl();renderUI();}
 $('conn').onclick=()=>{if(mode==='proto'){if(btMode){try{bdev.gatt.disconnect();}catch(e){}onBleDown();}else{keep=false;try{rd&&rd.cancel();}catch(e){}}}else connect(false);};
 $('connb').onclick=connectBLE;
-if('serial' in navigator&&(!EMB||PQ))setTimeout(()=>{if(mode!=='proto')connect(true);},400);
+if('serial' in navigator&&(!EMB||PQ)&&!MINI)setTimeout(()=>{if(mode!=='proto')connect(true);},400);
 function serStatus(){
  const box=$('logbox'),s=$('sst');box.hidden=mode!=='proto';
  if(mode!=='proto'){s.textContent=SER.err;return;}
@@ -441,7 +445,9 @@ function statFeed(id){
 window.SunShine={updateLab(l){labMode=l&&l.mode||'none';labAt=performance.now();S=fromLab(l);},
  update(r){if(EMB&&!PQ&&mode==='sim')mode='lab';if(mode==='proto')return;labMode='feed';labAt=performance.now();S=fromReading(r);},
  simulate(){if(mode==='proto')return;mode='sim';renderCtl();renderUI();}};
-window.addEventListener('message',e=>{if(e.source!==window.parent)return;const d=e.data;if(d&&d.type==='sunshine-reading'){window.SunShine.update(d.reading);return;}if(mode!=='lab')return;if(d&&d.type==='sunshine-lab')window.SunShine.updateLab(d.lab);});
+/* The thumbnail never opens the USB port (only one page can). It copies the Live prototype's readings, relayed by the parent page. */
+function protoMirror(d){if(d.off||!(d.age>=0)){if(mode==='proto'){mode='sim';P.at=0;}return;}const s=d.P||{};['panels','relay','conv','led','ledc','ledo','ina','es','evl','chg','sq'].forEach(k=>{if(s[k]!==undefined)P[k]=s[k];});P.at=performance.now()-d.age;mode='proto';}
+window.addEventListener('message',e=>{if(e.source!==window.parent)return;const d=e.data;if(MINI&&d&&d.type==='sunshine-proto-state'){protoMirror(d);return;}if(d&&d.type==='sunshine-reading'){window.SunShine.update(d.reading);return;}if(mode!=='lab')return;if(d&&d.type==='sunshine-lab')window.SunShine.updateLab(d.lab);});
 let last=performance.now(),acc=1;
 function frame(now){const dt=Math.max(0,Math.min(0.1,(now-last)/1000));last=now;
  try{if(mode==='sim')simStep(dt);
@@ -547,8 +553,8 @@ function stBanner(){
  if(live){const g=P.ledo.g!==null?P.ledo.g:P.led==='GREEN',r=P.ledo.r!==null?P.ledo.r:P.led==='RED';
   const mG=g&&!r,mR=r&&!g,txt=mG?'green (enabled)':mR?'red (deferred)':g&&r?'both on':'off/unknown',bad=held('ev',P.ledc!==false&&eg!==null&&(mG||mR)&&mG!==eg);
   parts.push('EV load (simulated LED): <em>'+txt+'</em>'+(P.ledc===false?' (manual)':bad?' <span class="wn">differs from policy</span>':''));
-  const rl=P.relay.on===null?'unknown':P.relay.on?'ON':'OFF',rbad=held('rl',c==='LOWSOLAR'&&P.relay.on===true&&P.relay.auto!==false);
-  parts.push('Charger relay: <em>'+rl+'</em>'+(P.relay.auto===false?' (manual)':rbad?' <span class="wn">policy: stop charging</span>':''));}
+  const rl=P.relay.on===null?'unknown':P.relay.on?'ON':'OFF',rbad=held('rl',(P.chg?P.chg==='STOPPED':c==='LOWSOLAR')&&P.relay.on===true&&P.relay.auto!==false);
+  parts.push('Charger relay: <em>'+rl+'</em>'+(P.relay.auto===false?' (manual)':rbad?' <span class="wn">policy: stop charging</span>':''));if(P.es)parts.push('ESP32 state: <em>'+P.es.replace(/_/g,' ').toLowerCase()+'</em>');}
  else if(c!=='NODATA'){parts.push('EV load (simulated): <em>'+(eg===null?'holding':eg?'enabled':'deferred')+'</em> by policy');parts.push('Charger: <em>'+(c==='LOWSOLAR'?'stop':'allowed')+'</em> by policy');}
   if(live){const t=performance.now();if(P.conv.run!==CVS.v){CVS.v=P.conv.run;CVS.at=t;}
    const stopAuto=CONV_AUTO_ALWAYS_RUN&&P.conv.auto===true&&P.conv.run===false&&t-CVS.at>3000;
@@ -587,6 +593,7 @@ function twEval(){const out={verdict:'wait',items:[],n:TW.S.length,at:Date.now()
  else{const ag=eu.filter(x=>x.g===(EV_DEFER_ON_ANY_LOW?x.nl===0:x.best>=EV_MIN_V)).length,sh=ag/eu.length;it.push({id:'ev',name:nm('ev'),exp:(EV_DEFER_ON_ANY_LOW?'green LED only when no panel is low':'green LED when best panel is at least '+EV_MIN_V.toFixed(1)+' V'),meas:Math.round(sh*100)+'% of readings agree',pct:sh*100,ok:sh>=TW.share,tol:'at least '+Math.round(TW.share*100)+'% agree'});}
  out.verdict=it.some(x=>x.ok===false)?'bad':it.some(x=>x.ok===true)?'ok':'wait';return out;}
 const twById=id=>mode==='proto'?TW.cur.items.find(x=>x.id===id):null;
+setInterval(()=>{try{if(EMB&&PQ&&!MINI&&window.parent!==window){const to=(location.origin==='null'||location.protocol==='file:')?'*':location.origin;window.parent.postMessage((mode==='proto'&&P.at>0)?{type:'sunshine-proto',P:P,age:performance.now()-P.at,bt:btMode}:{type:'sunshine-proto',off:true},to);}}catch(e){}},500);
 setInterval(()=>{try{twSample();TW.cur=twEval();if(EMB&&window.parent!==window){const to=location.origin==='null'?'*':location.origin;window.parent.postMessage({type:'sunshine-twin',twin:TW.cur},to);}}catch(e){}},1000);
 setInterval(()=>{try{renderUI();}catch(e){}},250);
 </script></body></html>
