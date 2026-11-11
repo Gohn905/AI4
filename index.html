@@ -402,6 +402,13 @@ main.fit .plrail .mr .mrsv{height:38px!important}
 #mbill .legend label{display:inline-flex;gap:5px;align-items:center;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 9px;background:#fff}
 #mbill .legend i{width:12px;height:4px;border-radius:2px;display:inline-block}
 @media(max-width:900px){#mbill .mbg{grid-template-columns:minmax(0,1fr)}#mbill .mbk{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Live replay top v2: 3D runs from the card's top-right corner; controls on one line */
+.lvtop{grid-template-columns:minmax(0,1fr) 330px}
+.lv3d{min-height:360px}
+.lvctl{flex-wrap:nowrap;gap:6px 10px}.lvctl label{white-space:nowrap;gap:4px}.lvctl select{padding:4px 6px;font-size:13px;max-width:140px}
+@media(max-width:1250px){.lvctl{flex-wrap:wrap}}
+@media(max-width:1100px){.lvtop{grid-template-columns:minmax(0,1fr)}.lv3d{min-height:260px}}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="liveTabBtn" data-rp="live" title="Play today forward and watch the optimiser re-plan, all on one page">Live replay</button></span><span class="sp"></span><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -647,7 +654,7 @@ function baseline(fc,c){const L0=fc.load.map((l,i)=>l+((fc.evb||[])[i]||0)),g=L0
  return finish({g,b:z,d:L0.map((l,i)=>Math.min(l,fc.pv[i])),ld:L0,sol:fc.pv,ch:z,fl:z,peak:c.mdH.length?Math.max(...c.mdH.map(h=>g[h])):0},c)}
 const optReq=(fc,c,m,bat)=>{const on=+F.evn>0,smart=on&&m.fx>0,r={load:on&&!smart?fc.load.map((l,i)=>l+((fc.evb||[])[i]||0)):fc.load,pv:fc.pv,rates:c.rates,md_rate_day:c.mdd,md_hours:c.mdHr,batt_kwh:bat,flex_share:on?0:(+F.flex||0)/100*m.fx,carbon_adder:0,grid_limit:+F.lim||0,hard_limit:true,wear:m.wr,eff:(+F.eff||90)/100,co2_allow:m.ca,soc_reserve:m.rs||0};if(smart)r.ev={chargers:+F.evn,kw:+F.evkw,energy_kwh:+F.eve,window:c.evw};return r};
 const getRun=(date,mode)=>memo('r|'+date+'|'+mode+'|'+hk(rkey()),async()=>{
- const fc=await getFc(date),c=ctx(date),ck='r|'+date+'|'+mode+'|'+hk(rkey());let hit=mode=='base'?null:pcGet(ck),off=fc.offline||0,r;
+ const fc=await getFc(date),c=ctx(date),ck='r|'+date+'|'+mode+'|'+hk(rkey())+'|'+hk([fc.pv,fc.load,fc.evb||0]);let hit=mode=='base'?null:pcGet(ck),off=fc.offline||0,r;
  if(mode=='base')r=baseline(fc,c);
  else{if(!hit){const m=MODES.find(x=>x.k==(mode=='prod'?'bal':mode));
    try{const o=await api('/api/optimise',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(optReq(fc,c,m,+F.bat||0))});
@@ -696,11 +703,12 @@ function drAnim(id){const e=drReg[id],svg=document.querySelector('svg[data-dr="'
  if(!prev||prev.sel===sel||prev.e===e||!svg.getClientRects().length||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))return;drTween(svg,prev.e,e)}
 function drTween(svg,a,b){const g=svg.querySelector('g');if(!g||!a.r||!b.r)return;const t0=performance.now(),D=700,ez=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2,
  mix=(p,q,t)=>q.map((v,i)=>{const o=p&&p[i]!=null?p[i]:v;return o+(v-o)*t}),keys=['g','b','d','sol','ld'];
- const frame=t=>{const r=Object.assign({},b.r),b0=Object.assign({},b.b0);keys.forEach(k=>{r[k]=mix(a.r[k],b.r[k],t)});r.peak=a.r.peak+(b.r.peak-a.r.peak)*t;b0.ld=mix(a.b0.ld,b.b0.ld,t);
+ const hA=drHi(a.r,a.b0),hB=drHi(b.r,b.b0);
+ const frame=t=>{const r=Object.assign({},b.r),b0=Object.assign({},b.b0);keys.forEach(k=>{r[k]=mix(a.r[k],b.r[k],t)});r.peak=a.r.peak+(b.r.peak-a.r.peak)*t;b0.ld=mix(a.b0.ld,b.b0.ld,t);r._hi=hA+(hB-hA)*t;
   drQuiet=true;let h;try{h=draw(r,b0,b.win,b.now,b.wide)}finally{drQuiet=false}const d=document.createElement('div');d.innerHTML=h;const ng=d.querySelector('svg>g');if(ng)g.innerHTML=ng.innerHTML};
  const step=n=>{if(!svg.isConnected)return;const t=Math.min(1,(n-t0)/D);frame(ez(t));if(t<1){requestAnimationFrame(step);return}
   frame(1)};
- requestAnimationFrame(step)}
+ frame(0);requestAnimationFrame(step)}
 const PLD={a:2,r:4,c:8,t:'micro'};let PLC=Object.assign({},PLD);try{Object.assign(PLC,JSON.parse(localStorage.getItem('plcfg')||'{}'))}catch(e){}
 const plCfg=()=>{const a=Math.max(1,Math.min(6,Math.round(+PLC.a)||PLD.a)),r=Math.max(1,Math.min(20,Math.round(+PLC.r)||PLD.r)),c=Math.max(1,Math.min(20,Math.round(+PLC.c)||PLD.c));return{a,r,c,per:r*c,all:a*r*c,tot:Math.min(240,a*r*c),t:['micro','opt','string'].includes(PLC.t)?PLC.t:'micro'}};
 function plOut(){const o=document.getElementById('pl_out');if(!o)return;const L=plCfg(),n=plN();
@@ -753,7 +761,8 @@ function pcCard(r,past,K){
   +`<g id="pcHov"><line id="pcLine" x1="${p.x.toFixed(1)}" x2="${p.x.toFixed(1)}" y1="${T}" y2="${H-B}" stroke="${col}" stroke-opacity=".5"/><circle id="pcHalo" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="11" fill="${col}" fill-opacity=".25"/><circle id="pcDot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="6" fill="${col}" stroke="#fff" stroke-width="2.5"/></g>`
   +xAxis(xf,H-B,h0,h1,st)+`</svg><div id="pcTip" class="pctip" style="left:${p.left}%;top:${p.top}%">${p.html}</div></div>`
   +`<p class="note">${live?'The part after the line is the prediction, corrected for what has been seen so far.':past?'Rebuilt from recorded weather, not from an inverter reading.':''} Smoothed between 30-minute values. Move over the chart to read a value.</p>`}
-function draw(r,b0,win,now,wide){const W=wide?1000:760,H=wide?320:290,L=54,B=30,T=10,bw=(W-L-8)/NS,hb=bw*S,ax=niceAxis(0,Math.max(...r.ld,...b0.ld,...r.sol,...r.g.map((g,h)=>g+r.b[h]+Math.max(r.sol[h],r.d[h])+Math.max(0,b0.ld[h]-r.ld[h])),1)*1.03),mx=ax.hi,y=v=>H-B-(v/mx)*(H-B-T);
+const drHi=(r,b0)=>niceAxis(0,Math.max(...r.ld,...b0.ld,...r.sol,...r.g.map((g,h)=>g+r.b[h]+Math.max(r.sol[h],r.d[h])+Math.max(0,b0.ld[h]-r.ld[h])),1)*1.03).hi;
+function draw(r,b0,win,now,wide){const W=wide?1000:760,H=wide?320:290,L=54,B=30,T=10,bw=(W-L-8)/NS,hb=bw*S,ax=(()=>{const h=r._hi||drHi(r,b0),a=niceAxis(0,h);a.hi=h;return a})(),mx=ax.hi,y=v=>H-B-(v/mx)*(H-B-T);
  let s='<defs><pattern id="mv" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--shift)" opacity=".30"/><rect width="2.5" height="6" fill="var(--shift)"/></pattern></defs>';
  s+=yGrid(ax,y,L,W-8)+yTitle(T,H-B,'kW');
  if(win)s+=`<rect x="${L+win[0]*hb}" y="${H-B+3}" width="${(win[1]-win[0])*hb}" height="3" fill="var(--grid)" opacity=".5"/>`;
@@ -768,7 +777,7 @@ function draw(r,b0,win,now,wide){const W=wide?1000:760,H=wide?320:290,L=54,B=30,
  if(now!=null&&typeof devMarks=='function')try{s+=devMarks(y,L,bw,H,B,T)}catch(e){}
  if(win&&r.peak>0)s+=`<line x1="${L+win[0]*hb}" x2="${L+win[1]*hb}" y1="${y(r.peak)}" y2="${y(r.peak)}" stroke="var(--grid)" stroke-dasharray="5 4"/><text x="${L+win[1]*hb-4}" y="${y(r.peak)-4}" text-anchor="end" font-size="10" fill="var(--grid)" stroke="#fff" stroke-width="3" paint-order="stroke">billed peak ${Math.round(r.peak)} kW</text>`;
  s+=`<text x="${L}" y="${H-2}" font-size="10" fill="var(--mute)">Blue strip under the time axis = where maximum demand is billed (ToU: 14:00 to 22:00 on weekdays; General: all day).</text>`;
- const id='d'+(++drN);if(!drQuiet){drReg[id]={r,b0,win,L,bw,now,wide};{const ks=Object.keys(drReg);if(ks.length>12)delete drReg[ks[0]]}setTimeout(()=>drAnim(id),0)}
+ const id='d'+(++drN);if(!drQuiet){drReg[id]={r,b0,win,L,bw,now,wide};{const ks=Object.keys(drReg);if(ks.length>12)delete drReg[ks[0]]}{let n=0;const go=()=>{if(!document.querySelector('svg[data-dr="'+id+'"]')&&++n<20){requestAnimationFrame(go);return}drAnim(id)};requestAnimationFrame(go)}}
  return `<div class="drw${now!=null||wide?' ov':''}${wide?' wide':''}"><svg data-dr="${id}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Supply split by source, every 30 minutes. Move over the chart to read the values."><g>${s}</g><rect class="drhl" x="0" y="${T}" width="${bw}" height="${H-B-T}" fill="#000" opacity=".07" display="none" pointer-events="none"/></svg><div class="drtip ph">${DRPH}</div></div><div class="legend"><span><i style="background:var(--solar)"></i>Solar used</span><span><i style="background:var(--bat)"></i>Battery</span><span><i style="background:var(--grid)"></i>Grid (incl. battery charging)</span><span><i style="background:none;border:1px dashed var(--solar)"></i>Unused solar</span><span><i style="background:repeating-linear-gradient(45deg,var(--shift) 0 2px,transparent 2px 5px);border:1px solid var(--shift)"></i>Work moved into this hour</span><span><i style="background:none;border:1px dashed var(--shift)"></i>Work moved out of this hour</span><span><i style="background:none;border-top:2px dashed var(--grid);height:0;width:14px"></i>Billed peak grid demand</span>${now!=null?'<span><b>Solid</b> = recorded, <b>faded</b> = predicted</span>':''}</div>`}
 
 function pcRender(){const p=lastPlan;if(cur==TODAY&&rtLast&&rtLast.q.p===p){const o=rtSeries(rtLast.j,rtLast.q);return pcCard(o.r,false,o.K)}return pcCard(p.r,cur<TODAY)}
@@ -1212,13 +1221,13 @@ window.addEventListener('message',e=>{const d=e.data;if(!d||d.type!='sunshine-pr
  if(LAMP.test)return;if(d.off||!d.P||!d.P.panels){LAMP.off=true;return}LAMP.off=false;LAMP.v=d.P.panels.map(p=>p.v==null?NaN:+p.v);LAMP.low=d.P.panels.map(p=>p.low===true?true:p.low===false?false:null);LAMP.at=Date.now()-(+d.age||0)});
 const lampFresh=()=>!LAMP.off&&Date.now()-LAMP.at<3500;
 function lampRatio(){if(!lampFresh())return null;const v=LAMP.v.filter(x=>isFinite(x));if(!v.length)return null;return Math.max(0,Math.min(1.2,v.reduce((a,b)=>a+b,0)/v.length/LAMP_FULL))}
-function liveCard(){const td=cur==TODAY;return `<div class="card lvpage" data-role="tech" data-tour="live"><div class="lvhead"><h2 style="margin:0">Live replay</h2><span class="badge amber">SIMULATION &middot; recommendation only</span><span class="note" style="margin:0">15-minute steps. Re-plans after each step. Nothing is controlled.</span></div>
-${td?`<div class="lvtop"><div class="lvtopl"><div class="lvctl"><label class="note">Strategy <select id="lvMd">${MODES.filter(m=>m.k!='prod').map(m=>`<option value="${m.k}"${m.k==(sel=='bal'?'bal':sel=='zero'?'zero':'cost')?' selected':''}>${m.n}</option>`).join('')}</select></label>
+function liveCard(){const td=cur==TODAY;return `<div class="card lvpage" data-role="tech" data-tour="live">
+${td?`<div class="lvtop"><div class="lvtopl"><div class="lvhead"><h2 style="margin:0">Live replay</h2><span class="badge amber">SIMULATION &middot; recommendation only</span><span class="note" style="margin:0">15-minute steps. Re-plans after each step. Nothing is controlled.</span></div><div class="lvctl"><label class="note">Strategy <select id="lvMd">${MODES.filter(m=>m.k!='prod').map(m=>`<option value="${m.k}"${m.k==(sel=='bal'?'bal':sel=='zero'?'zero':'cost')?' selected':''}>${m.n}</option>`).join('')}</select></label>
 <label class="note">Solar from <select id="lvSrc"><option value="lamp" selected>Prototype lamp</option><option value="slider">Slider (no board)</option><option value="sc">Scenario (no board)</option></select></label>
 <span id="lvScW" hidden><select id="lvSc">${Object.entries(ROSC).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join('')}</select></span>
 <label class="note">Start <select id="lvStart"><option value="12">06:00</option><option value="14">07:00</option><option value="16" selected>08:00</option><option value="20">10:00</option><option value="now">now</option></select></label>
 <label class="note">Until <select id="lvUntil"><option value="24">12:00</option><option value="30">15:00</option><option value="36" selected>18:00</option><option value="47">end of day</option></select></label>
-<label class="note">Step every <select id="lvSpd"><option value="s5">5 s</option><option value="s10" selected>10 s</option><option value="s20">20 s</option><option value="s40">40 s</option><option value="man">I press Next</option></select></label></div>
+<label class="note">Step every <select id="lvSpd"><option value="s1">1 s</option><option value="s2">2 s</option><option value="s5">5 s</option><option value="s10" selected>10 s</option><option value="s20">20 s</option><option value="s40">40 s</option><option value="man">I press Next</option></select></label></div>
 <div class="lpbox" id="lpBox"><div id="lpLamp"><div id="lpSt"></div><div id="lpV" class="note"></div></div>
 <label class="note" id="lpSl" hidden>Solar as share of forecast <input type="range" id="lvSl" min="0" max="120" value="100"> <b id="lvSlV">100%</b></label>
 </div>
@@ -1236,7 +1245,7 @@ ${td?`<div class="lvtop"><div class="lvtopl"><div class="lvctl"><label class="no
 <div class="bar"><label class="note">Measured data (CSV): <input type="file" id="lvFile" accept=".csv,text/csv"></label> <button data-lvt="1">Download CSV template</button></div>
 <p class="note">Columns: <code>load_kw</code> (site load, <b>without</b> EV charging) and <code>solar_kw</code> are required; optional <code>battery_kw</code> (discharge +, charging &minus;), <code>ev_kw</code>, <code>grid_kw</code>, <code>soc_kwh</code>. One row per 30 minutes from 00:00 today.</p>
 <div class="bar"><select id="lvNow"><option value="20">It is 10:00</option><option value="24">It is 12:00</option><option value="28" selected>It is 14:00</option><option value="32">It is 16:00</option></select> <button class="on" data-lv="1">Run one simulated replay (uses the scenario above)</button></div></details>`
-:`<p class="note"><b>Open today to use this.</b> It compares the forecast with what happened so far today.</p><span id="lvMsg" class="note"></span><div id="lvOut"></div>`}</div>`}
+:`<div class="lvhead"><h2 style="margin:0">Live replay</h2><span class="badge amber">SIMULATION &middot; recommendation only</span><span class="note" style="margin:0">15-minute steps. Re-plans after each step. Nothing is controlled.</span></div><p class="note"><b>Open today to use this.</b> It compares the forecast with what happened so far today.</p><span id="lvMsg" class="note"></span><div id="lvOut"></div>`}</div>`}
 function lpDraw(){const b=$('lpBox');if(!b||!$('lvSrc'))return;const src=$('lvSrc').value;
  $('lvScW').hidden=src!='sc';$('lpLamp').hidden=src!='lamp';$('lpSl').hidden=src!='slider';$('lpLd').hidden=src=='sc';
  if(src=='lamp'){const ok=lampFresh(),r=lampRatio();
@@ -1247,7 +1256,7 @@ function lpDraw(){const b=$('lpBox');if(!b||!$('lvSrc'))return;const src=$('lvSr
  if(fb){const fl=[2,1,0].filter(i=>pf.fault[i]);fb.hidden=!fl.length;if(fl.length){const t=fl.map(i=>'Panel '+(3-i)+' fault: '+LAMP.v[i].toFixed(1)+' V').join(' &middot; ');if(fb.dataset.t!==t){fb.dataset.t=t;fb.innerHTML='&#9888; '+t}}else fb.dataset.t=''}
  $('lvSlV').textContent=$('lvSl').value+'%';$('lvLdV').textContent=$('lvLd').value+'%'}
 setInterval(lpDraw,500);
-let lvSim=null;const LVSPD={s5:3,s10:1.5,s20:.75,s40:.375,man:0};   // simulated minutes per real second (one 15-minute step every 5/10/20/40 s)
+let lvSim=null;const LVSPD={s1:15,s2:7.5,s5:3,s10:1.5,s20:.75,s40:.375,man:0};   // simulated minutes per real second (one 15-minute step every 5/10/20/40 s)
 function lvStop(){if(lvSim&&lvSim.timer){clearInterval(lvSim.timer);lvSim.timer=0}}
 function lvHm(m){m=Math.max(0,Math.min(1440,Math.floor(m)));return p2(Math.floor(m/60))+':'+p2(m%60)}
 function lvStart0(){const v=$('lvStart').value;if(v=='now'){const d=new Date();return Math.max(30,Math.min(1410,d.getHours()*60+d.getMinutes()))}return +v*30}
