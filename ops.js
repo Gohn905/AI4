@@ -388,6 +388,10 @@ function plan(X, t, first) {
   else if (S.topup) {
     const cf = minCap(ctx, net, ctx.w0, ctx.w1, 1, X.socMin);
     X.cap = Math.max(cf, X.Mrun); X.Sreq = Math.min(1, minStartSoc(ctx, net, ctx.w0, ctx.w1, X.cap, X.socMin) + 0.03);
+    // insurance: the billed peak is set by ONE half-hour in the month, and a demand spike the forecast misses cannot be shaved
+    // with an empty battery. So every weekday the battery is topped up before the peak window, whatever the forecast says.
+    // Charge left unused is not lost: it carries over to the next day (only the ~10% round-trip loss applies when it is used).
+    X.Sreq = Math.max(X.Sreq, INSURE_SOC);
   } else {
     const ps = projectSoc(ctx, net, t, ctx.w0, X.soc);
     X.cap = Math.max(minCap(ctx, net, ctx.w0, ctx.w1, ps, X.socMin), X.Mrun);
@@ -399,6 +403,7 @@ function plan(X, t, first) {
   return X;
 }
 
+const INSURE_SOC = 0.95;
 /* Re-plan at the start of slot s (live mode). Returns a proposal if the cap moves materially. */
 function prepareSlot(X, s) {
   const S = X.strat;
