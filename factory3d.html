@@ -466,7 +466,7 @@ function statFeed(id){
  if(id==='line1')return{t:S.s1?'Running':'Idle',k:S.s1?'ok':'off',rows:[['Power source',S.power],['Speed',S.spd+'%']],note:'Essential production load. '+src};
  return{t:S.s2?'Charging':'Held back',k:S.s2?'ok':'warn',rows:[['Reason',S.act||'-']],note:'The planned EV charging. '+src};}
 window.SunShine={updateLab(l){labMode=l&&l.mode||'none';labAt=performance.now();S=fromLab(l);},
- update(r){if(EMB&&!PQ&&mode==='sim')mode='lab';if(mode==='proto')return;labMode='feed';labAt=performance.now();S=fromReading(r);},
+ update(r){if(EMB&&(!PQ||MINI)&&mode==='sim')mode='lab';/* a thumbnail with no ESP32 shows the parent page's replay; with the ESP32 it mirrors the real panels */if(mode==='proto')return;labMode='feed';labAt=performance.now();S=fromReading(r);},
  simulate(){if(mode==='proto')return;mode='sim';renderCtl();renderUI();}};
 /* The thumbnail never opens the USB port (only one page can). It copies the Live prototype's readings, relayed by the parent page. */
 function protoMirror(d){if(d.off||!(d.age>=0)){if(mode==='proto'){mode='sim';P.at=0;}return;}const s=d.P||{};['panels','relay','conv','led','ledc','ledo','ina','es','evl','chg','sq'].forEach(k=>{if(s[k]!==undefined)P[k]=s[k];});P.at=performance.now()-d.age;mode='proto';}
