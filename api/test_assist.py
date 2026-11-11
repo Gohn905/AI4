@@ -61,4 +61,17 @@ last = json.loads(msgs[-1]["content"])
 ok("the latest message comes first in the live turn and the place is sent", list(last)[0] == "message" and last["current"]["page"] == "detailed" and last["current"]["tab"] == "overview")
 ok("system rules: answer only the latest message, navigate only when asked", "ANSWER ONLY THE LATEST MESSAGE" in msgs[0]["content"] and "NAVIGATE ONLY WHEN ASKED" in msgs[0]["content"])
 
+# --- newer places and roles ---
+r = Q("open the forecast check", {"tab": "forecastcheck"}); ok("forecast check tab is accepted", r["navigate"] == {"tab": "forecastcheck"})
+r = Q("show me the daily plan", {"chart": "use"}); ok("'daily plan' keeps the chart move", r["navigate"] == {"chart": "use"})
+r = Q("compare all plans on one chart", {"chart": "all"}); ok("all-plans chart is accepted", r["navigate"] == {"chart": "all"})
+r = Q("where is my monthly bill?", {"open": "monthbill"}); ok("monthly bill is accepted", r["navigate"] == {"open": "monthbill"})
+r = Q("open the live replay", {"tab": "livereplay"}); ok("live replay tab is accepted", r["navigate"] == {"tab": "livereplay"})
+r = Q("show lowest carbon", {"strategy": "zero"}); ok("lowest-carbon stays lowest-carbon", r["navigate"] == {"strategy": "zero"})
+r = Q("switch to cost saving", {"strategy": "cost"}, {**CTX, "role": "operator"}); ok("operator cannot change the strategy", "navigate" not in r)
+r = Q("open advanced", {"tab": "advanced"}, {**CTX, "role": "approver"}); ok("approver cannot open Advanced", "navigate" not in r)
+seen = []
+a.assist({**REQ, "context": {**CTX, "role": "auditor"}}, lambda m: seen.append(m) or "{}")
+ok("role reaches the model", json.loads(seen[0][-1]["content"])["current"]["role"] == "auditor")
+
 print(f"\n{sum(res)}/{len(res)} passed"); raise SystemExit(0 if all(res) else 1)
