@@ -81,7 +81,10 @@ body.embed main{height:100vh;display:flex;flex-direction:column;max-width:none}
 .stbar .pill{font-size:11px;padding:0 8px;border-radius:999px;border:1px solid var(--c);color:var(--c);font-weight:600;white-space:nowrap}
 .stbar .s2{color:var(--mut);font-size:11.5px}.stbar .s2 em{font-style:normal;color:var(--fg)}.stbar .s2 .wn{color:#b45309;font-weight:650}
 .stbar .ovbar{position:static;font-size:11.5px}
+/* the solar status now sits on the connect row, not on top of the model */
+.cnx .stbar{position:static;flex:1 1 200px;max-width:none;min-width:0;padding:0 2px;text-shadow:none;pointer-events:auto;cursor:default}.cnx .stbar .s2,.cnx .stbar .ovbar{display:none}
 .cvwrap.stormy .lab{background:rgba(255,255,255,.74);border-radius:8px;padding:3px 8px}
+.cvwrap.grey .lab.on{background:rgba(255,255,255,.92);border-radius:8px;padding:5px 9px;box-shadow:0 1px 6px rgba(0,0,0,.12);text-shadow:none}
 .mini .stbar{display:none!important}
 #wr{padding:4px 8px;display:inline-flex;align-items:center}#wr.on{background:var(--line)}
 #tools{position:fixed;left:10px;bottom:46px;z-index:30;width:min(400px,calc(100% - 20px));max-height:calc(100% - 70px);overflow:auto;background:var(--btn);border:1px solid var(--line);border-radius:10px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.18)}#tools[hidden]{display:none}
@@ -90,11 +93,11 @@ body.embed main{height:100vh;display:flex;flex-direction:column;max-width:none}
 <h1>Sun Shine demo factory</h1>
 <p class="t">Click a part in the model, or pick one below, to see its status. Drag to rotate, scroll or pinch to zoom. The conveyor is a placeholder block at the assumed size, and the EV station stands separately on the right. Connect ESP32 (USB) shows your prototype in Chrome or Edge. Inside the lab page it shows the lab model.</p>
 <div class="tb" id="tb"><div class="r" id="chips"></div></div>
-<div class="cvwrap"><canvas id="cv"></canvas><svg class="hudsvg" id="hsvg" aria-hidden="true"></svg><div class="ovl" id="ovl"></div><div class="stbar off" id="stbar"><div class="s1"><i class="sdot"></i><b id="stName">Solar: waiting for data</b><span id="stTxt"></span><span class="pill" id="stSrc"></span><span class="pill" id="stCue" style="display:none"></span></div><div class="s2" id="stPol"></div><div class="ovbar" id="ovsum"></div></div>
+<div class="cvwrap"><canvas id="cv"></canvas><svg class="hudsvg" id="hsvg" aria-hidden="true"></svg><div class="ovl" id="ovl"></div>
 <div class="vc" id="vc"><div class="vcs"><div class="vcube" id="vcube"><div class="fF" data-v="3" title="Front view">Front</div><div class="fB" data-v="4" title="Back view (door)">Back</div><div class="fR" data-v="6" title="Right view">Right</div><div class="fL" data-v="5" title="Left view">Left</div><div class="fT" data-v="2" title="Top view">Top</div><div class="fD nb"></div></div></div></div>
 <div class="zoom" id="zoomb"><button id="zin" title="Zoom in" aria-label="Zoom in"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button><button class="vh" id="v1" title="Isometric view">Iso</button><button id="zout" title="Zoom out" aria-label="Zoom out"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button></div>
 <div class="dock"><div class="card" id="card"></div><div class="r" id="ctl"></div></div></div>
-<div class="r cnx" id="cnx"><button id="wr" type="button" title="Details and settings" aria-label="Details and settings"><svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5 5L3.5 17.5a1.8 1.8 0 0 0 2.5 2.5l6.2-6.2a4 4 0 0 0 5-5l-2.4 2.4-2.1-.6-.6-2.1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button><span class="badge off" id="src">Not connected</span><button id="conn">Connect ESP32 (USB)</button><button id="connb">Connect ESP32 (Wireless)</button></div>
+<div class="r cnx" id="cnx"><button id="wr" type="button" title="Details and settings" aria-label="Details and settings"><svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5 5L3.5 17.5a1.8 1.8 0 0 0 2.5 2.5l6.2-6.2a4 4 0 0 0 5-5l-2.4 2.4-2.1-.6-.6-2.1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button><span class="badge off" id="src">Not connected</span><button id="conn">Connect ESP32 (USB)</button><button id="connb">Connect ESP32 (Wireless)</button><div class="stbar off" id="stbar"><div class="s1"><i class="sdot"></i><b id="stName">Solar: waiting for data</b><span id="stTxt"></span><span class="pill" id="stSrc"></span><span class="pill" id="stCue" style="display:none"></span></div><div class="s2" id="stPol"></div><div class="ovbar" id="ovsum"></div></div></div>
 <div id="tools" hidden><div class="note" id="sst"></div>
 <div class="gl gldrive0"><b>Green light limits</b><div class="glr"><label>Green on at or above <input id="glOn" type="number" step="0.05" min="0.2" max="3.3"> V</label><label>Green off below <input id="glOff" type="number" step="0.05" min="0.1" max="3.2"> V</label></div><label class="gldrive"><input type="checkbox" id="glDrive"> Switch the green and red light from these limits</label><div class="note" id="glNote"></div><button id="glReset" type="button">Reset to 1.5 V / 1.8 V</button></div>
 <details id="logbox" hidden><summary>Serial log</summary><pre id="log" style="max-height:170px;overflow:auto;font-size:12px;background:var(--btn);border:1px solid var(--line);border-radius:8px;padding:8px;white-space:pre-wrap"></pre></details></div>
@@ -547,7 +550,8 @@ function weatherStep(dt,now){
  RN.visible=W.rain>.03;if(RN.visible){RN.material.opacity=.7*W.rain;for(let i=0;i<RN_N;i++){let y=RNP[i*6+1]-dt*230*(.8+((i*37)%10)/25);if(y<0)y+=190;RNP[i*6+1]=y;RNP[i*6+4]=y-9;}RNG.attributes.position.needsUpdate=true;}
  FP.forEach((p,i)=>{const f=W.fl[i],vis=f>.03;p.dots.forEach((d,j)=>{d.visible=vis;if(vis){const s=((now/1000*(.10+.22*f))+j/5+p.ph)%1,q=pathAt(p,s),sc=.5+.9*f;d.position.set(q[0],q[1],q[2]);d.scale.set(sc,sc,sc);}});});
  if(AMB)AMB.intensity=.6-.22*(1-W.sun);l1.intensity*=.55+.45*W.sun;
- const stormy=SOL.cur==='SEVERE'||SOL.cur==='LOWSOLAR';
+ const stormy=SOL.cur==='SEVERE'||SOL.cur==='LOWSOLAR',grey=stormy||SOL.cur==='DEGRADED';
+ if(grey!==W.grey){W.grey=grey;cw.classList.toggle('grey',grey);Object.values(TG).forEach(x=>{x.h=0;x.w=0;});dirty=true;}
  if(stormy!==W.stormy){W.stormy=stormy;cw.classList.toggle('stormy',stormy);Object.values(TG).forEach(x=>{x.h=0;x.w=0;});dirty=true;}}
 /* top-left banner: what state the panels are in, whether it is measured or simulated, and what the demo policy does with it */
 /* a mismatch is only shown once it has lasted 3 s, so the firmware's own hold times (EV green about 7 s after light returns, relay 2 s minimum) cannot cause a flash */
@@ -561,7 +565,7 @@ function stBanner(){
   $('stTxt').textContent=c==='NODATA'?'':(3-SOL.n)+' of 3 panels lit'+(nm.length&&(c==='DEGRADED'||c==='SEVERE')?' · '+nm.join(' + ')+(nm.length===1?' shaded':' low'):'')+(c==='RECOVERY'?' · confirming recovery':'');
   
  const sp=$('stSrc');sp.textContent=SOL.src==='measured'?'Measured (ESP32)':SOL.src==='simulated'?'Model':SOL.src?'Lab model':'';sp.style.display=SOL.src?'':'none';
- if(S&&S.mode==='feed'&&!stale()&&mode!=='proto'){el.className='stbar warn';$('stName').textContent='Reading from the Operations console';$('stTxt').textContent='not the ESP32 prototype';sp.textContent='Feed';sp.style.display='';$('stPol').innerHTML='The planner\'s schedule drawn on the model. <em>Never controls equipment.</em>';return;}
+ if(S&&S.mode==='feed'&&!stale()&&mode!=='proto'){el.className='stbar warn';$('stName').textContent='Reading from the Operations console';$('stTxt').textContent='not the ESP32 prototype';sp.textContent='Feed';sp.style.display='';$('stPol').innerHTML='The planner\'s schedule drawn on the model. <em>Never controls equipment.</em>';el.title=$('stPol').textContent;return;}
  const eg=evExpectGreen(),parts=[];
  if(live){const g=P.ledo.g!==null?P.ledo.g:P.led==='GREEN',r=P.ledo.r!==null?P.ledo.r:P.led==='RED';
   const mG=g&&!r,mR=r&&!g,txt=mG?'green (enabled)':mR?'red (deferred)':g&&r?'both on':'off/unknown',bad=held('ev',(P.ledc!==false||GL.drive)&&eg!==null&&(mG||mR)&&mG!==eg);
@@ -575,7 +579,7 @@ function stBanner(){
    else if(P.conv.run===false&&P.conv.auto===false)parts.push('Conveyor: <em>stopped manually</em>');
    else parts.push('Conveyor: <em>'+(P.conv.run?'running':'stopped')+'</em> (ESP32 report), never stopped by energy logic');}
   else parts.push('Conveyor: <em>protected</em>, never stopped by energy logic');
- $('stPol').innerHTML=parts.join(' · ');}
+ $('stPol').innerHTML=parts.join(' · ');el.title=$('stPol').textContent;}
 setInterval(()=>{try{stBanner();{const el=$('stbar');if(el&&!MINI){const calm=SOL.cur==='NORMAL'&&!(S&&S.mode==='feed')&&!el.querySelector('.wn');el.style.display=calm?'none':'';}}}catch(e){}},250);
 
 /* ===== Digital twin check (prototype mode) =====
