@@ -5,7 +5,7 @@
    The Owner can do all. These checks run in the browser only (see handoff notes: not enforced on a server). */
 (function (root) {
   'use strict';
-  var KEY = 'sundev_log', MAXN = 200;
+  var KEY = 'sundev_log', MAXN = 200, MAX_OPEN = 2;   // demo: never more than 2 open deviations at once
   var ACT = { ack: ['owner', 'operator'], investigate: ['owner', 'analyst'], resolve: ['owner', 'analyst'] };
   var NAME = { owner: 'Owner', analyst: 'Analyst', operator: 'Operator', approver: 'Approver', auditor: 'Auditor', system: 'System' };
   var TPL = {
@@ -25,7 +25,14 @@
   var listeners = [];
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function load() { try { var a = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function load() { try { var a = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(a) ? trim(a) : []; } catch (e) { return []; } }
+  function trim(a) {   // keep only the newest MAX_OPEN items open; older open ones are closed (kept in the log for the audit trail)
+    var open = a.filter(function (x) { return x.status !== 'closed'; });
+    var old = open.slice(0, Math.max(0, open.length - MAX_OPEN));
+    old.forEach(function (x) { x.status = 'closed'; x.hist.push({ at: stamp(), role: 'system', by: 'system', what: 'Closed automatically (demo limit)' }); });
+    if (old.length) save(a);
+    return a;
+  }
   function save(a) { try { localStorage.setItem(KEY, JSON.stringify(a.slice(-MAXN))); } catch (e) { } }
   function role() { return root.sunWho || 'owner'; }
   function person() { try { return typeof root.whoName === 'function' ? root.whoName() : 'this browser'; } catch (e) { return 'this browser'; } }
@@ -45,6 +52,7 @@
     add: function (e) {
       var a = load(), key = [e.day, e.fac, e.kind, e.dir || '', e.slot].join('|');
       if (a.some(function (x) { return x.key === key; })) return null;
+      if (a.filter(function (x) { return x.status !== 'closed'; }).length >= MAX_OPEN) return null;
       var t = (TPL[e.kind] || {}); t = t[e.dir] || t.any || { why: '', did: '', next: '' };
       var r = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), key: key, kind: e.kind, sev: e.sev || 'warn', title: e.title, start: e.start || '', day: e.day || '', fac: e.fac || '',
         size: sizeFrom(e.detail), sim: !!e.sim, detail: e.detail || '', why: t.why, did: t.did, next: t.next, source: e.source || '', status: 'open', recovered: '', at: stamp(), hist: [{ at: stamp(), role: 'system', by: 'system', what: 'Detected' }] };
@@ -107,8 +115,8 @@
     a.forEach(function (x) { n[x.status]++; });
     var open = n.open + n.acknowledged + n.investigating, rl = role(), mine = canDo('ack') || canDo('investigate') || canDo('resolve');
     var roleNote = rl === 'operator' ? 'You can acknowledge deviations.' : rl === 'analyst' ? 'You can investigate and resolve deviations.' : rl === 'owner' ? 'You can acknowledge, investigate and resolve.' : rl === 'approver' ? 'You read this before approving. Open items also show on the Approve card.' : 'Read-only: the whole record, with who did what and when.';
-    var shown = showAll ? a : a.slice(0, 5);
-    var body = a.length ? shown.map(entry).join('') + (a.length > 5 ? '<div class="dv-btns"><button data-dv="more">' + (showAll ? 'Show fewer' : 'Show all ' + a.length) + '</button></div>' : '')
+    var shown = showAll ? a : a.slice(0, MAX_OPEN);
+    var body = a.length ? shown.map(entry).join('') + (a.length > MAX_OPEN ? '<div class="dv-btns"><button data-dv="more">' + (showAll ? 'Show fewer' : 'Show all ' + a.length) + '</button></div>' : '')
       : '<p class="note" style="margin:6px 0">No deviations recorded yet. Open <b>Operations &rarr; Live replay</b> and press <b>Cloud front from now</b> or <b>Demand surge from now</b> to see one appear here.</p>' + (root.SunOps && root.SunOps.openLive ? '<button data-dv="live">Open live replay</button>' : '');
     var ex = (rl === 'owner' || rl === 'auditor' || rl === 'approver') && a.length ? '<button data-dv="export">Export log (JSON)</button>' : '';
     return '<div class="bar" style="margin:0 0 6px"><h2 style="margin:0">Deviations and off-track performance</h2><span class="sp"></span><span class="dv-chip ' + (open ? 'bad' : 'good') + '">' + (open ? open + ' open' : 'All clear') + '</span>' + ex + '</div>' +
