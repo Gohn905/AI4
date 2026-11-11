@@ -136,7 +136,7 @@ input[type=range]{accent-color:#F59E0B}
 .flg{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}.flg .lg{display:flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:13px}.flg .lg i{width:12px;height:12px;border-radius:3px;flex:none}.flg .lg b{font-variant-numeric:tabular-nums}.flg .lg em{font-style:normal;color:var(--mut)}
 .fst{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px}.fst>div{background:rgba(0,0,0,.035);border-radius:10px;padding:10px 12px}.fst small{display:block;color:var(--mut);font-size:12px;line-height:1.35}.fst b{display:block;font-size:22px;line-height:1.25;font-variant-numeric:tabular-nums}.fst .fl-h{color:var(--ink);font-size:13px;font-weight:650}
 .qrow{position:relative;padding-right:36px}.qrow>.qh{margin:0}.qrow>.qh>summary{position:absolute;right:0;top:0}.qrow .qb{margin-right:-36px}.qrow .qt>p{margin:6px 0}.qrow .qt{min-height:24px}
-.plwrap{transition:opacity .3s,filter .3s}.plfade{opacity:.4;filter:saturate(.5)}.plpred{display:inline-block;font-size:11px;font-weight:700;padding:1px 9px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--mut);vertical-align:middle}
+.plwrap{transition:opacity .3s,filter .3s}.plfade{opacity:.4;filter:saturate(.5)}#plGrid.plfade{opacity:.78;filter:saturate(.75)}.plpred{display:inline-block;font-size:11px;font-weight:700;padding:1px 9px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--mut);vertical-align:middle}
 .wxg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:14px}.wxt{display:flex;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}.wxt .ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:21px;flex:none}.wxt .ic.t{background:#FDE7D3}.wxt .ic.c{background:#E3ECF1}.wxt .ic.s{background:#FFF0C2}.wxt .ic.e{background:#E4F2DD}.wxt small{display:block;color:var(--mut);font-size:12px}.wxt b{display:block;font-size:21px;line-height:1.2;font-variant-numeric:tabular-nums}.wxt em{font-style:normal;color:var(--mut);font-size:12px}
 /* ---- phones: compact header, tidy date and strategy controls, scrollable tabs ---- */
 @media(max-width:640px){
@@ -404,11 +404,33 @@ main.fit .plrail .mr .mrsv{height:38px!important}
 @media(max-width:900px){#mbill .mbg{grid-template-columns:minmax(0,1fr)}#mbill .mbk{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* Live replay top v2: 3D runs from the card's top-right corner; controls on one line */
-.lvtop{grid-template-columns:minmax(0,1fr) 330px}
+.lvtop{grid-template-columns:minmax(0,1fr) clamp(260px,27%,360px)}
 .lv3d{min-height:360px}
-.lvctl{flex-wrap:nowrap;gap:6px 10px}.lvctl label{white-space:nowrap;gap:4px}.lvctl select{padding:4px 6px;font-size:13px;max-width:140px}
-@media(max-width:1250px){.lvctl{flex-wrap:wrap}}
+.lvctl{flex-wrap:nowrap;gap:6px 10px}.lvctl label{white-space:nowrap;gap:4px;flex:0 1 auto;min-width:0;display:inline-flex}.lvctl select{padding:4px 6px;font-size:13px;width:auto;min-width:76px;max-width:150px;flex:1 1 auto}
+@media(max-width:820px){.lvctl{flex-wrap:wrap}}
+
 @media(max-width:1100px){.lvtop{grid-template-columns:minmax(0,1fr)}.lv3d{min-height:260px}}
+
+/* strategy picker always at the card's top-right corner */
+.bar>.stratr,.cardhead>.stratr,h2.hasstrat>.stratr{margin-left:auto}
+#dpvT{margin-left:auto}
+
+
+/* Panel layout, monitoring-app style: modules coloured by output, on a dark roof */
+#plGrid.plwrap{gap:16px}
+#plGrid .pa{background:#1b2230;border-radius:12px;padding:10px 12px 12px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 2px 6px rgba(0,0,0,.15);width:auto}
+#plGrid .pal{display:block;color:#cbd5e1;font-size:12px;font-weight:700;margin:0 0 6px;letter-spacing:.03em}
+#plGrid .pg{grid-template-columns:repeat(var(--c,8),46px);gap:5px}
+.pm{position:relative;width:46px;height:68px;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;
+ background-image:repeating-linear-gradient(90deg,transparent 0 10.5px,rgba(255,255,255,.16) 10.5px 11.5px),repeating-linear-gradient(0deg,transparent 0 10.5px,rgba(255,255,255,.16) 10.5px 11.5px),linear-gradient(160deg,rgba(255,255,255,.18),rgba(255,255,255,0) 45%);
+ box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);transition:background-color .35s}
+.pm b{font-size:13px;line-height:1.1;text-shadow:0 1px 2px rgba(0,0,0,.55)}.pm small{font-size:9px;opacity:.8;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.pm.pmf{box-shadow:inset 0 0 0 2px #ff6b6b,0 0 0 2px #e24b4a;background-color:#7a2b33!important}
+.pm.z b{opacity:.7}
+.plleg{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:12px;color:var(--mut);margin:0 0 8px}
+.plramp{display:inline-block;width:140px;height:9px;border-radius:5px;background:linear-gradient(90deg,rgb(38,52,74),rgb(30,96,200),rgb(79,195,247))}
+.plk{display:inline-flex;align-items:center;gap:5px}.plk i{width:12px;height:12px;border-radius:2px;display:inline-block}.plk i.flk{background:#7a2b33;box-shadow:0 0 0 2px #e24b4a}
+@media(max-width:700px){#plGrid .pg{grid-template-columns:repeat(var(--c,8),minmax(0,1fr))}.pm{width:auto;height:54px}#plGrid .pa{width:100%}}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="liveTabBtn" data-rp="live" title="Play today forward and watch the optimiser re-plan, all on one page">Live replay</button></span><span class="sp"></span><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -722,20 +744,22 @@ setInterval(plTick,5000);
 function plGridHtml(r,t,fr,live){fr=fr||0;const pred=cur==TODAY&&t>plNow().t,n=plN(),Lc=plCfg(),T=Lc.tot,sv=(r.sol[t]||0)*(1-fr)+(r.sol[Math.min(NS-1,t+1)]||0)*fr,base=sv*1000/n,day=+cur.slice(8,10)+31*(+cur.slice(5,7)),out=[],w1=Math.min(13,T-1),w2=T>44?44:Math.floor(T*.7);
  for(let i=0;i<T;i++){let x=Math.sin((i+1)*127.1+day*311.7)*43758.5453;x-=Math.floor(x);let f=1+(x-.5)*.05;if(T>2&&i==w1)f=.78;if(T>3&&i==w2&&w2!=w1)f=.85;out.push(Math.round(Math.max(0,base*f)))}
  const med=[...out].sort((a,b)=>a-b)[Math.floor(T/2)];let fl=0;
- const tile=(v,i)=>{const f=med>30&&v<med*.9;if(f)fl++;const nm=String.fromCharCode(65+Math.floor(i/Lc.per))+(i%Lc.per+1);return `<div class="pn${f?' fl':''}${v<=0?' z':''}" title="Panel ${nm}: ${v} W"><i></i><b>${v}</b></div>`};
- const arr=(a,b,name)=>`<div class="pa"><div class="note" style="margin:0 0 4px"><b>${name}</b></div><div class="pg" style="--c:${Lc.c}">${out.slice(a,b).map((v,j)=>tile(v,a+j)).join('')}</div></div>`;
+ const rw=+(document.getElementById('cv_w')||{}).value||550,
+  ramp=k=>{const S0=[[38,52,74],[30,96,200],[79,195,247]],q=Math.max(0,Math.min(1,k))*2,i=Math.min(1,Math.floor(q)),u=q-i,a=S0[i],b=S0[i+1];return `rgb(${a.map((x,j)=>Math.round(x+(b[j]-x)*u)).join(',')})`};
+ const tile=(v,i)=>{const f=med>30&&v<med*.9;if(f)fl++;const nm=String.fromCharCode(65+Math.floor(i/Lc.per))+(i%Lc.per+1);return `<div class="pm${f?' pmf':''}${v<=0?' z':''}" style="background-color:${v<=0?'#3a4250':ramp(v/rw)}" title="Panel ${nm}: ${v} W"><b>${v}</b><small>${nm}</small></div>`};
+ const arr=(a,b,name)=>`<div class="pa"><span class="pal">${name}</span><div class="pg" style="--c:${Lc.c}">${out.slice(a,b).map((v,j)=>tile(v,a+j)).join('')}</div></div>`;
  let html='';for(let k=0;k*Lc.per<T;k++)html+=arr(k*Lc.per,Math.min(T,(k+1)*Lc.per),'Array '+String.fromCharCode(65+k));
  return{pred,html,info:`<b>${live?'Live '+clockTxt():tm(t)}</b>${pred?' <span class="plpred">Predicted</span>':''}: site solar ${N0(sv)} kW over ${N0(n)} panels, about ${N0(base)} W each. `+(fl?`<b style="color:#92400E">${fl} of the ${T} panels shown are more than 10% below the middle value (red).</b>`:`No panel shown is more than 10% below the middle value.`)}}
 function panelCard(r){if(!(+F.kwp>0))return `<div id="plBox"><p class="note">Enter a solar size under Facility to see the panel layout.</p></div>`;
  if(plDay!=cur){plDay=cur;plLive=cur==TODAY;plT=Math.max(0,r.sol.indexOf(Math.max(...r.sol)))}
  const live=plLive&&cur==TODAY,np=plNow();if(live)plT=np.t;
  const g=plGridHtml(r,plT,live?np.fr:0,live);
- return `<div id="plBox"><p class="note">Output of each panel in watts, like a monitoring app. Drag the slider or use the arrows to move through the day in 30-minute steps. On today, <b>Live</b> follows the clock, and panels after the current time are faded because they are predicted. Orange = normal, red = more than 10% below the middle value, grey = no sun.</p>
+ return `<div id="plBox"><p class="note">Watts per panel. Drag the slider to move through the day. <b>Live</b> follows the clock; later times are faded (predicted).</p>
  <div class="bar" style="margin:6px 0"><span class="note" style="margin:0">Time</span>${cur==TODAY?`<button data-pls="now" id="plNow" class="${live?'on':''}" title="Follow the clock">&#9679; Live</button>`:''}<button data-pls="-1" aria-label="30 minutes earlier" title="30 minutes earlier">&#9664;</button><input type="range" id="plSl" min="0" max="${NS-1}" step="1" value="${plT}" style="flex:1;min-width:160px" aria-label="Time of day, 30-minute steps"><button data-pls="1" aria-label="30 minutes later" title="30 minutes later">&#9654;</button></div>
- <div id="plInfo" class="note" style="margin:0 0 8px">${g.info}</div><div id="plGrid" class="plwrap${g.pred?' plfade':''}">${g.html}</div>
+ <div id="plInfo" class="note" style="margin:0 0 8px">${g.info}</div><div class="plleg"><span>0 W</span><i class="plramp"></i><span>${N0(+(document.getElementById('cv_w')||{}).value||550)} W</span><span class="plk"><i style="background:#3a4250"></i>No sun</span><span class="plk"><i class="flk"></i>More than 10% below the middle</span></div><div id="plGrid" class="plwrap${g.pred?' plfade':''}">${g.html}</div>
  <p class="note"><b>Demo values.</b> ${live?'Live follows the clock and refreshes every few seconds, but these ':'These '}are not meter readings: the site solar forecast is split evenly across ${N0(plN())} panels (${N0(+F.kwp)} kWp), with a small made-up spread and two made-up weak panels to show how a fault would look. ${plCfg().t=='string'?'<b>String inverter:</b> real per-panel readings do not exist with this setup, so this can only be a demo. ':''}Layout: ${plCfg().a} array${plCfg().a>1?'s':''} of ${plCfg().r} rows by ${plCfg().c} panels, set in Facility &amp; data. When the customer's per-panel data is loaded, it replaces these numbers.</p></div>`}
 function pcCard(r,past,K){
- const TY={sol:['Solar power',r.sol,'#F59E0B'],ld:['Site demand',r.ld,'#5B6360'],g:['Grid import (planned)',r.g,'#2b6cb0'],bat:['Battery (discharge +, charging \u2212)',r.b.map((v,i)=>v-r.ch[i]),'#16803D']};
+ const TY={sol:['Solar power',r.sol,'#F59E0B'],ld:['Site demand',r.ld,'#5B6360'],g:['Grid import',r.g,'#2b6cb0'],bat:['Battery',r.b.map((v,i)=>v-r.ch[i]),'#16803D']};
  if(!TY[pcType])pcType='sol';const [nm,vals,col]=TY[pcType],NW=typeof innerWidth=='number'&&innerWidth<640,W=NW?400:760,H=300,L=NW?48:54,R=12,T=14,B=30;
  let h0=0,h1=24;
  if(pcType=='sol'&&Math.max(...vals)>0.5){const f=vals.findIndex(v=>v>0.5),l=vals.length-1-[...vals].reverse().findIndex(v=>v>0.5);h0=Math.max(0,Math.floor(f/S)-1);h1=Math.min(24,Math.ceil((l+1)/S)+1);while(h1-h0<6){if(h0>0)h0--;if(h1-h0<6&&h1<24)h1++}}
@@ -1403,7 +1427,7 @@ function dayHtml(R,rows){
   limB=(L>0&&mxg>L+1?`<div class="ribbon warn"><b>GRID LIMIT NOT MET.</b> Highest grid import is ${N0(mxg)} kW, above the ${N0(L)} kW limit.${sel=='base'?' Pick a strategy to see whether it can be held.':' The battery and chargers cannot hold it, so this is the closest plan.'}</div>`:'')+(L>0&&sel!='base'&&mxb>L+1&&mxg<=L+1?`<div class="ribbon"><b>GRID LIMIT.</b> Solar only, the site would draw up to ${N0(mxb)} kW, above the ${N0(L)} kW limit. This plan holds it at or under ${N0(L)} kW.</div>`:'')+(+F.evn>0&&fc.evun>0.5?`<div class="ribbon warn"><b>EV CHARGING.</b> ${N0(fc.evun)} kWh of the EV demand cannot be delivered on this day: the chargers are closed or there are too few hours or too little power.</div>`:'');
  return rib+offB+limB+headCard(r,b,c,sv,past)+`${kpiRow(r,b,c,sv)}${costCard(r,b,sv,past)}${mini3dCard()}${actCard(r,b)}${window.SunDev?SunDev.card():''}${apCard()}
  ${flowCard(r,b)}
- <div class="card${past?'':' fcast'}" data-tour="chart" data-role="tech"><div class="plangrid"><div class="plmain"><div class="bar" style="margin-bottom:6px"><h2 id="chTitle" style="margin:0">${chT(past)}</h2>${stratChart()}<span class="sp"></span><span id="dpvT" class="uvsw"${chartTab=='use'?'':' hidden'}><span class="seg" role="group" aria-label="Daily plan view"><button data-uv="plan" class="${dpView=='plan'?'on':''}" aria-pressed="${dpView=='plan'}">${esc(NAMES[sel].replace('Optimiser: ',''))}</button><button data-uv="all" class="${dpView=='all'?'on':''}" aria-pressed="${dpView=='all'}">All plans</button></span></span></div>
+ <div class="card${past?'':' fcast'}" data-tour="chart" data-role="tech"><div class="plangrid"><div class="plmain"><div class="bar" style="margin-bottom:6px"><h2 id="chTitle" style="margin:0">${chT(past)}</h2>${stratChart()}<span id="dpvT" class="uvsw"${chartTab=='use'?'':' hidden'}><span class="seg" role="group" aria-label="Daily plan view"><button data-uv="plan" class="${dpView=='plan'?'on':''}" aria-pressed="${dpView=='plan'}">${esc(NAMES[sel].replace('Optimiser: ',''))}</button><button data-uv="all" class="${dpView=='all'?'on':''}" aria-pressed="${dpView=='all'}">All plans</button></span></span></div>
  <div id="ct_use"${chartTab=='use'?'':' hidden'}><div id="uv_plan"${dpView=='plan'?'':' hidden'}>${draw(r,b,c.win,null,1)}${miniRail(R,b)}</div><div id="uv_all"${dpView=='all'?'':' hidden'}>${(()=>{const sc=scenChart(R,b,c);return sc.chart+sc.bars})()}</div></div><div id="ct_wx"${chartTab=='wx'?'':' hidden'}>${fcCard(fc,past,fn)}</div><div id="ct_pc"${chartTab=='pc'?'':' hidden'}>${pcCard(r,past)}</div><div id="ct_pl"${chartTab=='pl'?'':' hidden'}>${panelCard(r)}</div>${cur==TODAY?`<div id="ct_rt"${chartTab=='rt'?'':' hidden'}>${rtShell()}</div>`:''}</div><div class="chside"><span id="chTabs">${cur==TODAY?`<button data-ct="rt" class="${chartTab=='rt'?'on':''}">Energy usage</button> `:''}<button data-ct="use" class="${chartTab=='use'?'on':''}" data-tp="${past?1:0}">Daily plan</button> <button data-ct="wx" class="${chartTab=='wx'?'on':''}">${past?'Recorded weather':'Predicted weather'}</button> <button data-ct="pc" class="${chartTab=='pc'?'on':''}">Power curve</button> <button data-ct="pl" class="${chartTab=='pl'?'on':''}">Panel layout</button></span></div></div></div>
  ${stratCards(R,b)}
  <div class="card" data-tour="compare" data-role="tech"><h2>Strategy comparison, ${parse(cur).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}</h2><div class="scroll"><table>${tbl}</table></div>
@@ -1449,7 +1473,7 @@ function ratesCard(){const t=tf(),k=F.volt+F.struct;
  Object.keys(TF).map(x=>`<tr class="${x==k?'sel':''}"><td>${TF[x].n}</td><td>${TF[x].ep}</td><td>${TF[x].eo}</td><td>${TF[x].ad||'&mdash;'}</td><td>${TF[x].cap||'&mdash;'}</td><td>${TF[x].net||'&mdash;'}</td><td>${TF[x].md||'&mdash;'}</td></tr>`).join('')+
  `</table></div></details><p class="note">Rates follow the TNB RP4 schedule (1 Jul 2025 to 31 Dec 2027). AFA changes every month, so enter the current value in My facility. Verify against your own bill on <a href="https://www.mytnb.com.my/" target="_blank" rel="noopener noreferrer">mytnb.com.my</a>.</p>`}
 
-const stratOn=()=>['rt','pc'].includes(chartTab);
+const stratOn=()=>chartTab=='rt'||(chartTab=='pc'&&(pcType=='g'||pcType=='bat'));
 function stratChart(mv){const k=['base',...MODES.map(m=>m.k)];return `<span class="stratr"${mv?' data-mv="1"':' id="chStrat"'}${mv||stratOn()?'':' hidden'}><b>Strategy</b><span class="bar" style="margin:0">${k.map(x=>`<button data-s2="${x}" aria-pressed="${x==sel}" class="${x==sel?'on':''}">${NAMES[x].replace('Optimiser: ','')}</button>`).join('')}</span><button data-why2="1" title="What does the optimiser decide?">?</button></span>`}
 function tabs(){const k=['base',...MODES.map(m=>m.k)];$('tabs').innerHTML=k.map(x=>`<button data-s="${x}" aria-pressed="${x==sel}" class="${x==sel?'on':''}">${NAMES[x].replace('Optimiser: ','')}</button>`).join('')}
 
@@ -1645,7 +1669,7 @@ $('bView').onclick=e=>{const b=e.target.closest('button');if(b){view=b.id.slice(
 $('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);$('dt').onchange=e=>{if(e.target.value){cur=e.target.value;render()}};
 $('out').addEventListener('pointermove',pcMove);$('out').addEventListener('pointermove',drMove);$('out').addEventListener('pointermove',snMove);
 $('out').addEventListener('input',e=>{if(e.target&&e.target.id=='plSl'&&lastPlan){plLive=false;plSync();plT=+e.target.value;const g=plGridHtml(lastPlan.r,plT);$('plGrid').innerHTML=g.html;$('plGrid').classList.toggle('plfade',!!g.pred);$('plInfo').innerHTML=g.info}});
-$('out').addEventListener('change',e=>{if(e.target&&e.target.id=='pcSel'){pcType=e.target.value;if(lastPlan&&$('ct_pc'))$('ct_pc').innerHTML=pcRender()}});
+$('out').addEventListener('change',e=>{if(e.target&&e.target.id=='pcSel'){pcType=e.target.value;if($('chStrat'))$('chStrat').hidden=!stratOn();if(lastPlan&&$('ct_pc'))$('ct_pc').innerHTML=pcRender()}});
 $('out').onkeydown=e=>{if((e.key=='Enter'||e.key==' ')&&e.target.closest&&e.target.closest('[data-go]')){e.preventDefault();e.target.closest('[data-go]').click()}};
 $('out').onclick=e=>{if(e.target.closest('[data-rtretry]')){rtLoad();return}const s2=e.target.closest('[data-s2]');if(s2){sel=s2.dataset.s2;render();return}if(e.target.closest('[data-why2]')){const w=$('why');w.hidden=!w.hidden;$('qbtn').setAttribute('aria-expanded',String(!w.hidden));return}const go=e.target.closest('[data-go]');if(go){if(role!='tech')setRole('tech');dtab=go.dataset.go;applyTab();window.scrollTo(0,0);return}
 const ct=e.target.closest('[data-ct]');if(ct){chartTab=ct.dataset.ct;rtDem=false;stratSync();if($('chStrat'))$('chStrat').hidden=!stratOn();const past=cur<TODAY;$('ct_use').hidden=chartTab!='use';if($('dpvT'))$('dpvT').hidden=chartTab!='use';$('ct_wx').hidden=chartTab!='wx';$('ct_pc').hidden=chartTab!='pc';$('ct_pl').hidden=chartTab!='pl';if($('ct_rt'))$('ct_rt').hidden=chartTab!='rt';
