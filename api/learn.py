@@ -71,7 +71,7 @@ def _day_ratio(fc, act, min_fc):
 def update(profile, load_fc, pv_fc, load_act, pv_act, alpha=0.15):
     """One full day of forecast and measurement -> new profile (the old one is not modified)."""
     n = len(load_fc)
-    if not all(len(a) == n for a in (pv_fc, load_act, pv_act)) or n not in (24, 48):
+    if not all(len(a) == n for a in (pv_fc, load_act, pv_act)) or n not in (24, 48, 96):
         raise ValueError("send 24 or 48 values for forecast and actual, load and solar")
     if not 0.01 <= alpha <= 0.5:
         raise ValueError("alpha must be between 0.01 and 0.5")
