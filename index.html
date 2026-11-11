@@ -452,6 +452,9 @@ main.fit .plrail .mr .mrsv{height:38px!important}
 .nostrat [data-s2]:not(.on),.nostrat #tabs [data-s]:not(.on){opacity:.45;cursor:not-allowed}.nostrat [data-sc]{cursor:default}
 .nostrat [data-s2],.nostrat #tabs [data-s]{pointer-events:none}
 .nostrat .stratr b::after{content:" \1F512";font-size:11px}
+
+/* Operations console: hidden from the header for the demo (still opens with #ops or from Shiny) */
+#sunOpsBtn,#sunopsEntry{display:none!important}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="liveTabBtn" data-rp="live" title="Play today forward and watch the optimiser re-plan, all on one page">Live replay</button></span><span class="sp"></span><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -1562,24 +1565,60 @@ async function warm(my){if(my!=tok||view=='month')return;const mon=addD(cur,-((p
   for(const m of ['base',d<TODAY?F.follow:sel]){if(my!=tok)return;try{await getRun(d,m)}catch(e){}}
   await new Promise(r=>setTimeout(r,120))}}
 
-const STEPS=[
- {s:'#roleSwitch',t:'Your role',x:'Each role sees and can use only what it needs: Analyst builds the plan, Operator runs the plant, Approver signs off, Auditor checks the record. The Owner can use everything and can switch between Brief and Detailed. All roles use the same numbers.'},
- {s:'#bView',t:'Day, week or month',x:'Brief always starts from today. Day, Week and Month change the period it covers.'},
- {s:'#dateCard',t:'Pick a day',x:'Use Yesterday, Today and Tomorrow, or the arrows and the date box. Day, Week and Month change the view. In Week and Month, tap a day to open it. Dashed boxes are forecasts.'},
- {s:'#tabs',t:'Choose a strategy',x:'Baseline is solar only. The three optimiser strategies plan the battery and the flexible equipment, with different limits on extra CO2. The ? button explains what the optimiser decides.'},
- {s:'[data-tour=ribbon]',t:'Forecast or recorded?',x:'On past days this banner says the weather is recorded, not predicted. Forecast cards have dashed borders.'},
- {s:'[data-tour=headline]',t:'Headline numbers and summary',x:'Saving per day, billed peak reduction and CO2, then a plain-English summary. Press Rewrite with AI for an AI-written version; every number in it is checked.'},
- {s:'[data-tour=kpi]',t:'The numbers behind it',x:'Cost without the plan, with the plan, what you save, the billed peak and how much solar is used.'},
- {s:'[data-tour=flow]',t:'Where the energy comes from',x:'Solar, battery and grid for the whole day, baseline against the plan, with self-consumption: how much of your solar is used on site.'},
- {s:'[data-tour=chart]',t:'Hour by hour',x:'Energy usage shows today\'s power every 30 minutes, recorded until now and predicted after. Daily plan shows the planned power for any day. Press Predicted weather to see the weather and solar forecast with its likely range.'},
- {s:'[data-tour=compare]',t:'Compare strategies',x:'Every strategy side by side: cost, saving, solar used, billed peak and CO2, with the cost of each extra kg of CO2.'},
- {s:'[data-tour=actions]',t:'What to do',x:'The schedule for the selected strategy: when to charge, when to discharge and when to run flexible equipment.'},
- {s:'[data-tour=schedule]',t:'Half-hourly schedule',x:'Every 30 minutes of the plan as numbers: battery, flexible load, grid import, solar and demand.'},
- {s:'[data-tour=approve]',t:'Approve and export',x:'Approve a plan to record who accepted it, then download the schedule as CSV or JSON for your operators. Nothing is sent to equipment: you stay in control.'},
- {s:'[data-tour=stress]',t:'Stress test',x:'Holds the schedule fixed and shows what happens if demand or sunshine differs from the forecast.'},
- {s:'#setup',t:'Set up your facility',x:'Enter it once: tariff and maximum demand from your bill (or upload meter readings), plus solar and battery sizes. The solar size helper turns panels into kWp and kWh.'},
- {s:'#chatBtn',t:'Ask Shiny',x:'Type what you need in plain words: describe your facility, open a day or week, switch strategy, or attach a meter CSV. It proposes, and you confirm before anything changes. Press "How we calculated this" inside Shiny for a plain explanation of every step, from weather to savings.'},
- {s:'#auth',t:'Keep your work',x:'Sign in to save your facility to your account and open it on any device.'}];
+/* Take the tour: one short tour per page. It tours the page you are on (Brief, each Detailed tab, Live replay). */
+const TOURS={
+ brief:[
+  {s:'#roleSwitch',t:'Pages',x:'Brief is the owner summary. Detailed has every chart and tab. Live replay plays today in 15-minute steps.'},
+  {s:'#bView',t:'Day, week or month',x:'Month shows the monthly bill against your real TNB bill.'},
+  {s:'#tabs',t:'Choose a strategy',x:'Baseline is solar only. Cost-saving, Balanced and Lowest-carbon are optimiser plans.'},
+  {s:'[data-tour=headline]',t:'Headline',x:'Saving per day, billed peak and CO2, with a plain-English summary.'},
+  {s:'[data-tour=kpi]',t:'Key numbers',x:'Cost, saving, billed peak and solar used.'},
+  {s:'[data-tour=flow]',t:'Where the energy comes from',x:'Solar, battery and grid for the day, baseline against the plan.'},
+  {s:'#chatBtn',t:'Ask Shiny',x:'Ask in plain words. Shiny can take you anywhere, switch strategy or read a meter CSV. You confirm changes.'}],
+ ov:[
+  {s:'#roleSwitch',t:'Your role',x:'Analyst plans, Operator runs, Approver signs off, Auditor checks. The menu on the right shows only what your role may use; an eye means view only.'},
+  {s:'#dateCard',t:'Day and strategy',x:'Pick a day and a strategy. Month view shows the monthly bill vs TNB.'},
+  {s:'[data-tour=ribbon]',t:'Forecast or recorded',x:'Tells you whether the day is predicted or recorded.'},
+  {s:'[data-tour=headline]',t:'Briefing',x:'Saving, billed peak and CO2 in one line. Rewrite with AI gives a checked AI version.'},
+  {s:'[data-tour=kpi]',t:'Key numbers',x:'Cost saving, billed peak, solar used and CO2.'},
+  {s:'[data-tour=devlog]',t:'Deviations',x:'Anything off the forecast is logged here. New ones also pop up above Ask Shiny.'},
+  {s:'#dtabs',t:'Menu',x:'Forecasts & energy, Digital twin, 3D and Settings.'}],
+ fc:[
+  {s:'[data-tour=chart]',t:'Charts',x:()=>({rt:'Energy usage: today every 30 minutes, recorded until now, predicted after.',use:'Daily plan: where each kW comes from. Switch to All plans to compare every strategy, with bars for cost, peak and CO2.',wx:'Predicted weather: the solar and demand forecast with its likely range.',pc:'Power curve: one value through the day. Pick the data type.',pl:'Panel layout: watts per panel. Red = more than 10% below the others.'})[chartTab]||'Hour by hour charts.'},
+  {s:'#dpvT',t:'One plan or all plans',x:'Switch between the selected plan and all plans on one chart.'},
+  {s:'.plrail',t:'Plan cards',x:'Each plan with its bill, saving, peak and CO2 vs no solar. Click one to open it.'},
+  {s:'#dtabs',t:'Other charts',x:'Energy usage, Daily plan, Predicted weather, Power curve and Panel layout.'}],
+ op:[
+  {s:'[data-tour=compare]',t:'Compare strategies',x:'Cost, saving, solar used, billed peak and CO2 for every strategy on the same day.'},
+  {s:'.hasstrat .stratr',t:'Strategy',x:'Change the strategy here. Operator and Auditor see it locked.'},
+  {s:'[data-tour=fair]',t:'Fair comparison',x:'Same inputs, four ways to run the day, so the saving is not just from the battery.'}],
+ pl:[
+  {s:'[data-tour=actions]',t:'Next steps',x:'When to charge, discharge and run flexible equipment.'},
+  {s:'[data-tour=schedule]',t:'Schedule',x:'Every 30 minutes of the plan as numbers.'},
+  {s:'[data-tour=approve]',t:'Approve and export',x:'Approver signs off and exports the schedule. Nothing is sent to equipment.'}],
+ fk:[
+  {s:'#fkPanel .fkhead',t:'On track?',x:'Compares today with the forecast every half-hour.'},
+  {s:'#fkPanel .fktiles',t:'So far today',x:'Solar, demand and grid import as a share of the forecast.'},
+  {s:'[data-tour=devlog]',t:'Deviation log',x:'Operator acknowledges, Analyst investigates and resolves.'}],
+ ad:[
+  {s:'[data-tour=sweep]',t:'Battery size sweep',x:'Re-plans the day with other battery sizes to show where more capacity stops paying.'},
+  {s:'[data-tour=stress]',t:'Stress test',x:'Keeps the plan fixed while demand or sunshine changes.'},
+  {s:'[data-tour=reopt]',t:'Re-optimisation',x:'Plan fixed vs re-planned during the day.'},
+  {s:'[data-tour=audit]',t:'Audit trail',x:'Who did what, and when.'}],
+ proto:[
+  {s:'#protoPanel',t:'Live prototype',x:'The 3D demo factory. Press Connect ESP32 to feed it the three real panels; cover a panel to see the change.'}],
+ fa:[
+  {s:'#setup',t:'Your facility',x:'Site, TNB bill and equipment. Upload meter readings to use your real demand.'}],
+ live:[
+  {s:'.lvctl',t:'Settings',x:'Strategy, solar source (prototype lamp or slider), start, end and step speed.'},
+  {s:'#lvGo',t:'Play',x:'Start, step or reset. Each 15-minute step reads, corrects the forecast and re-plans.'},
+  {s:'.lv3d',t:'3D demo factory',x:'Mirrors the ESP32 panels when connected, otherwise the replay.'},
+  {s:'#lvOut .lvwide',t:'Energy plan',x:'Where each kW comes from. Left of the line has happened, right is the new plan.'},
+  {s:'#lvOut .kpis',t:'Key numbers',x:'Forecast error and the saving from re-planning.'},
+  {s:'#lvOut .lvgrid',t:'Checks',x:'This interval, digital twin check, battery, solar, demand and grid import.'},
+  {s:'#lvLog',t:'Decisions',x:'What the optimiser decided at each step.'}]};
+let STEPS=TOURS.brief;
+const tourKey=()=>role!='tech'?'brief':(TOURS[dtab]?dtab:'ov');
 let tI=-1,autoTried=false;
 const tOK=i=>{const e=document.querySelector(STEPS[i].s);return !!(e&&e.getClientRects&&e.getClientRects().length)};
 function tPlace(){if(tI<0)return;const el=document.querySelector(STEPS[tI].s);if(!el)return;const r=el.getBoundingClientRect(),p=6,H=$('tourHole'),T=$('tourTip');
@@ -1591,13 +1630,13 @@ function tPlace(){if(tI<0)return;const el=document.querySelector(STEPS[tI].s);if
 function tShow(i,dir){dir=dir||1;while(i>=0&&i<STEPS.length&&!tOK(i))i+=dir;if(i<0||i>=STEPS.length){tEnd();return}
  tI=i;const st=STEPS[i];if(st.s=='#setup')$('setup').open=true;
  $('tourShade').hidden=$('tourHole').hidden=$('tourTip').hidden=false;
- $('tourTitle').textContent=st.t;$('tourText').textContent=st.x;{const vis=STEPS.map((x,j)=>tOK(j));$('tourCount').textContent=vis.slice(0,i+1).filter(Boolean).length+' of '+vis.filter(Boolean).length}
+ $('tourTitle').textContent=st.t;$('tourText').textContent=typeof st.x=='function'?st.x():st.x;{const vis=STEPS.map((x,j)=>tOK(j));$('tourCount').textContent=vis.slice(0,i+1).filter(Boolean).length+' of '+vis.filter(Boolean).length}
  $('tourBack').disabled=!STEPS.slice(0,i).some((x,j)=>tOK(j));$('tourNext').textContent=STEPS.slice(i+1).some((x,j)=>tOK(i+1+j))?'Next':'Done';
  const el=document.querySelector(st.s);if(el.scrollIntoView)el.scrollIntoView({block:'center',behavior:'smooth'});
  tPlace();setTimeout(tPlace,350);setTimeout(tPlace,800)}
 function tEnd(){tI=-1;$('tourShade').hidden=$('tourHole').hidden=$('tourTip').hidden=true;try{localStorage.setItem('tourDone','1')}catch(e){}}
 const tNext=()=>{if($('tourNext').textContent=='Done')tEnd();else tShow(tI+1,1)},tBack=()=>tShow(tI-1,-1);
-async function tStart(){tEnd();view='day';if(!(isWk(cur)&&cur>=TODAY&&cur<=MAX)||!document.querySelector('[data-tour=kpi]')){cur=isWk(cur)&&cur>=TODAY&&cur<=MAX?cur:([TODAY,addD(TODAY,1),addD(TODAY,2)].find(isWk)||TODAY);await render()}tShow(0,1)}
+async function tStart(){tEnd();STEPS=TOURS[tourKey()];if(dtab=='live'&&role=='tech'){tShow(0,1);return}view='day';if(!(isWk(cur)&&cur>=TODAY&&cur<=MAX)||!document.querySelector('[data-tour=kpi]')){cur=isWk(cur)&&cur>=TODAY&&cur<=MAX?cur:([TODAY,addD(TODAY,1),addD(TODAY,2)].find(isWk)||TODAY);await render()}tShow(0,1)}
 function maybeTour(){if(!$('roleGate').hidden)return;let seen=null;try{seen=localStorage.getItem('tourDone')}catch(e){}if(seen||tI>=0||autoTried)return;autoTried=true;setTimeout(()=>{if(tI<0&&document.querySelector('[data-tour=kpi]'))tStart()},900)}
 $('tourBtn').onclick=tStart;$('tourNext').onclick=tNext;$('tourBack').onclick=tBack;$('tourSkip').onclick=tEnd;
 document.onkeydown=e=>{if(tI<0){if(e.key=='Escape'){if(!$('chatPanel').hidden)chatOpen(false);if(!$('calcDrawer').hidden)$('calcDrawer').hidden=true}return}if(e.key=='Escape')tEnd();else if(e.key=='ArrowRight')tNext();else if(e.key=='ArrowLeft')tBack()};
