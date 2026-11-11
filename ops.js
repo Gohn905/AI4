@@ -1249,6 +1249,7 @@ function bodyOvw() {
     <label class="note">Strategy <select id="ov_strat">${stratOpts(OV.strat, ['cost', 'bal', 'zero'])}</select></label>
     <label class="note">Optimiser <select id="ov_mode"><option value="live" ${ST.sel.mode === 'live' ? 'selected' : ''}>Re-plan every interval</option><option value="plan" ${ST.sel.mode === 'plan' ? 'selected' : ''}>Day-ahead plan only</option></select></label></div></div>
   <div id="ov_k"></div>
+  <div class="card"><div class="bar" style="margin-top:0"><h2 style="margin:0">Month so far</h2><span class="note" id="ov_msl"></span><span class="sp"></span><button class="pri" data-act="ovms" data-v="play" id="ov_msb">&#9654; Play</button><button data-act="ovms" data-v="reset">Reset</button></div><div id="ov_ms"></div></div>
   <div class="card"><div class="bar" style="margin-top:0"><h2 style="margin:0">Energy performance</h2><span class="sp"></span><label class="note">Day <input type="date" id="ov_day" value="${ST.D.days[OV.day].date}" min="${ST.D.days[0].date}" max="${ST.D.days[ST.D.nD - 1].date}"></label></div><div id="ov_ep"></div></div>
   <div class="card"><div class="bar" style="margin-top:0"><h2 style="margin:0">Scenario comparison</h2><span class="note">${esc(p.label)} &middot; baseline = 100 &middot; &darr; lower is better</span><span class="sp"></span><span class="seg" role="group"><button data-act="ovsc" data-v="idx" class="${OV.sc === 'idx' ? 'on' : ''}">Index</button><button data-act="ovsc" data-v="val" class="${OV.sc === 'val' ? 'on' : ''}">Actual values</button></span></div><div id="ov_sc"></div></div>
   <div class="card"><h2>Monthly financial summary</h2><div id="ov_fin"></div></div>
@@ -1258,7 +1259,7 @@ function bodyOvw() {
     <label class="note">grid <input type="number" id="ov_tg" min="1" max="100" step="1" value="${Math.round(OV.thr.grid * 100)}" style="width:58px">%</label></div>
     <div class="grid g3" id="ov_fa"></div><div id="ov_an"></div></div>`;
 }
-function mountOvw() { ovSync(); ovKpis(); ovEnergy(); ovScen(); ovFin(); ovFa(); }
+function mountOvw() { ovSync(); ovKpis(); ovMs(); ovEnergy(); ovScen(); ovFin(); ovFa(); }
 
 /* 1. KPI cards: selected billing period, selected strategy against the baseline */
 function ovKpis() {
@@ -1338,7 +1339,39 @@ function ovFa() {
   an.sort((a, b) => a.s - b.s || a.k.localeCompare(b.k));
   $q('#ov_an').innerHTML = an.length ? `<h3>Flagged intervals (${an.length})</h3><div class="tw" style="max-height:260px"><table><tr><th>Time</th><th>Series</th><th>Expected, kW</th><th>Actual, kW</th><th>Deviation</th></tr>${an.map(x => `<tr class="ovan${OV.an && OV.an.k === x.k && OV.an.s === x.s ? ' ovsel' : ''}" data-act="ovan" data-v="${x.k}:${x.s}"><td>${D.days[d].date} ${tmS(x.s)}</td><td>${x.n}</td><td>${fmt0(x.ex)}</td><td>${fmt0(x.ac)}</td><td class="${Math.abs(x.pct) > .5 ? 'ovbad' : ''}">${Number.isFinite(x.pct) ? sgn(x.pct * 100, v => v.toFixed(1)) + '%' : 'n/a'}</td></tr>`).join('')}</table></div>` : '<p class="note">No interval over the thresholds on this day.</p>';
 }
+/* Month so far: replay this calendar month's past days (same month and days in the dataset year), baseline vs the optimiser, day by day */
+const MS = { k: -1, timer: 0, key: null };
+function msDays() {
+  const D = ST.D, now = new Date(), m = now.getMonth(), dd = now.getDate();
+  let ds = []; for (let d = 0; d < D.nD; d++) { const x = D.days[d]; if (x.month === m && +x.date.slice(8, 10) < dd) ds.push(d); }
+  if (!ds.length) { const ms = monthsOf(D), last = ms[ms.length - 1]; for (let d = last.d0; d <= last.d1; d++) ds.push(d); }
+  return ds;
+}
+function msStop() { if (MS.timer) { clearInterval(MS.timer); MS.timer = 0; } const b = $q('#ov_msb'); if (b) b.innerHTML = '&#9654; Play'; }
+function ovMs() {
+  const ctx = ST.ctx, D = ST.D, T = ctx.tariff, ds = msDays(), n = ds.length, k0 = OV.strat, R = Rof(k0), B = Rof('base'), key = ST.R + '|' + k0 + '|' + ds[0];
+  if (MS.key !== key) { MS.key = key; MS.k = n; }
+  const k = Math.max(1, Math.min(n, MS.k)), mdB = dailyMd(ctx, B), mdR = dailyMd(ctx, R), cB = new Float64Array(n).fill(NaN), cR = new Float64Array(n).fill(NaN);
+  let eB = 0, eR = 0, pB = 0, pR = 0;
+  for (let i = 0; i < n; i++) { const d = ds[i]; eB += dayEnergyRM(ctx, B, d); eR += dayEnergyRM(ctx, R, d); pB = Math.max(pB, mdB[d]); pR = Math.max(pR, mdR[d]); cB[i] = eB + pB * T.md; cR[i] = eR + pR * T.md; if (i === k - 1) break; }
+  const a = D.days[ds[0]].date, z = D.days[ds[k - 1]].date, sv = cB[k - 1] - cR[k - 1];
+  $q('#ov_msl').textContent = fmtD(a) + ' – ' + fmtD(z) + ' ' + z.slice(0, 4) + ' · ' + FACS[ST.fac].short + ' · ' + STRATS[k0].short;
+  const d = ds[k - 1], o = d * ctx.spd, ticks = []; for (let i = 0; i < n; i += Math.max(1, Math.round(n / 8))) ticks.push({ i, label: String(+D.days[ds[i]].date.slice(8, 10)) });
+  const kp = (v, l, t, sub, hl) => `<div class="kpi${hl ? ' hl' : ''}"><span>${l} ${tagH(t)}</span><b>${v}</b><span>${sub}</span></div>`;
+  $q('#ov_ms').innerHTML = `<div class="kpis">${kp('Day ' + k + ' of ' + n, dayLabel(d), 'S', '')}${kp(fmtRM(cR[k - 1]), 'Cost so far, ' + esc(STRATS[k0].short), 'E', 'baseline ' + fmtRM(cB[k - 1]))}${kp(fmtRM(sv), 'Saving so far', 'E', fmtPct(cB[k - 1] ? sv / cB[k - 1] : NaN), true)}${kp(fmt0(pR) + ' kW', 'Billed peak so far', 'S', 'baseline ' + fmt0(pB) + ' kW')}</div>
+    <div class="grid g2"><div><h3>Cost so far (RM) <span class="note">energy + maximum demand</span></h3><div id="ov_ms1"></div></div><div><h3>Grid import, ${esc(dayLabel(d))} <span class="note">kW</span></h3><div id="ov_ms2"></div></div></div>
+    <div class="legend"><label class="fix"><i style="background:repeating-linear-gradient(90deg,#6b7280 0 5px,transparent 5px 8px)"></i>Baseline</label><label class="fix"><i style="background:${STRATS[k0].color}"></i>${esc(STRATS[k0].short)}</label></div>`;
+  mount($q('#ov_ms1'), line({ n, w: 520, h: 240, series: [{ name: 'Baseline', color: '#6b7280', data: cB, dash: '6 4', w: 2, upTo: k }, { name: STRATS[k0].short, color: STRATS[k0].color, data: cR, w: 2.5, upTo: k }], xTicks: ticks, yFmt: x => 'RM ' + (x / 1000).toFixed(0) + 'k', tipFmt: fmtRM, tipTitle: i => dayLabel(ds[i]), yMax: niceMax(Math.max(...Array.from(cB).filter(Number.isFinite)) * 1.05) }));
+  mount($q('#ov_ms2'), line({ n: ctx.spd, w: 520, h: 240, series: [{ name: 'Baseline', color: '#6b7280', data: B.grid.subarray(o, o + ctx.spd), dash: '6 4', w: 2 }, { name: STRATS[k0].short, color: STRATS[k0].color, data: R.grid.subarray(o, o + ctx.spd), w: 2.5 }], xTicks: xTicksDay().filter((_, j) => j % 2 === 0), bands: isWeekday(D.days[d].dow) ? [{ a: ctx.w0, b: ctx.w1 }] : [], yLabel: 'kW', tipTitle: i => tmS(i) }));
+}
+function msPlay() {
+  if (MS.timer) { msStop(); return; }
+  const n = msDays().length; if (MS.k >= n) MS.k = 0;
+  const b = $q('#ov_msb'); if (b) b.innerHTML = '&#9208; Pause';
+  MS.timer = setInterval(() => { if (!ST.open || ST.tab !== 'ovw' || !$q('#ov_ms')) { msStop(); return; } MS.k++; ovMs(); if (MS.k >= n) msStop(); }, 700);
+}
 function ovClick(act, v) {
+  if (act === 'ovms') { if (v === 'play') msPlay(); else { msStop(); MS.k = 1; ovMs(); } return; }
   if (act === 'ovleg') { OV.ep[v] = !OV.ep[v]; ovEnergy(); }
   else if (act === 'ovsc') { OV.sc = v; render(); }
   else if (act === 'ovan') { const [k, s] = v.split(':'); OV.an = OV.an && OV.an.k === k && OV.an.s === +s ? null : { k, s: +s }; ovFa(); const c = $q('#ov_fa_' + k); if (c && OV.an) c.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
@@ -1604,7 +1637,7 @@ function readCfg() {
 function dayIdx(date) { return ST.D.days.findIndex(x => x.date === date); }
 function onClick(e) {
   const t = e.target.closest('[data-act]'); if (!t) return; const act = t.dataset.act, v = t.dataset.v;
-  if (/^ov(leg|sc|an)$/.test(act)) { ovClick(act, v); return; }
+  if (/^ov(leg|sc|an|ms)$/.test(act)) { ovClick(act, v); return; }
   if (act === 'role') { if (ST.role !== v) { ST.role = v; audit('role_switch', 'Now viewing as ' + ROLES[v].name); stopLive(); ST.tab = can('run') ? 'live' : 'appr'; } render(); }
   else if (act === 'fac') { if (ST.fac !== v) { stopLive(); if (ST.tab === 'fac') ST.tab = 'live'; audit('facility_switch', FACS[v].name); render(); loadPreset(v); } }
   else if (act === 'close') closeConsole();
