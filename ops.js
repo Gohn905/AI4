@@ -643,6 +643,11 @@ const CSS = `
 #sunopsEntry{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;border:1px solid #F0D98A;background:#FFF9E3}
 #sunopsEntry b{font-size:15px}#sunopsEntry .sp{flex:1}
 #sunopsEntry button.pri{background:var(--amb,#F59E0B);border-color:var(--amb,#F59E0B);font-weight:700}
+#sunops .ovtag{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.04em;padding:0 5px;border-radius:4px;vertical-align:1px}
+#sunops .legend label.fix{cursor:default}
+#sunops tr.ovsel td{background:#FFF7D6}
+#sunops tr.ovan{cursor:pointer}#sunops tr.ovan:hover td{background:#FFFBEA}
+#sunops td.ovbad{color:#B42318;font-weight:700}
 @media print{#sunops{display:none!important}}
 `;
 
@@ -700,16 +705,17 @@ function line(o) {                       // returns {html, meta}. o.n points; se
 function bars(o) {                       // grouped bars: labels[], series[{name,color,data}]
   const W = o.w || 820, H = o.h || 270, m = { l: 62, r: 14, t: 12, b: 34 }, iw = W - m.l - m.r, ih = H - m.t - m.b, n = o.labels.length;
   const vis = o.series.filter(s => !s.hidden);
-  let hi = 0; for (const s of vis) for (const v of s.data) if (Number.isFinite(v) && v > hi) hi = v; hi = niceMax(hi * 1.05);
+  let hi = 0; for (const s of vis) for (const v of s.data) if (Number.isFinite(v) && v > hi) hi = v; hi = o.yMax != null ? Math.max(o.yMax, hi) : niceMax(hi * 1.05);
   const Y = v => m.t + ih * (1 - v / hi); let g = '';
   for (let k = 0; k <= 4; k++) { const v = hi * k / 4, y = Y(v); g += `<line x1="${m.l}" x2="${W - m.r}" y1="${y}" y2="${y}" stroke="#E7E0CA"/><text x="${m.l - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="#5B6360">${o.yFmt ? o.yFmt(v) : fmt0(v)}</text>`; }
   const gw = iw / n, bw = Math.min(26, gw * 0.8 / Math.max(1, vis.length));
   for (let i = 0; i < n; i++) {
     const cx = m.l + gw * (i + 0.5);
-    vis.forEach((s, j) => { const v = s.data[i]; if (!Number.isFinite(v)) return; const x = cx - bw * vis.length / 2 + j * bw; g += `<rect x="${x}" y="${Y(v)}" width="${bw - 1}" height="${Math.max(0, m.t + ih - Y(v))}" fill="${s.color}" rx="2"><title>${esc(o.labels[i] + ' - ' + s.name + ': ' + (o.yFmt ? o.yFmt(v) : fmt0(v)))}</title></rect>`; });
+    vis.forEach((s, j) => { const v = s.data[i]; if (!Number.isFinite(v)) return; const x = cx - bw * vis.length / 2 + j * bw; g += `<rect x="${x}" y="${Y(v)}" width="${bw - 1}" height="${Math.max(0, m.t + ih - Y(v))}" fill="${s.color}" rx="2"><title>${esc(o.labels[i] + ' - ' + s.name + ': ' + (o.yFmt ? o.yFmt(v) : fmt0(v)))}</title></rect>`; if (o.values && bw >= 20) g += `<text x="${x + (bw - 1) / 2}" y="${Y(v) - 4}" text-anchor="middle" font-size="10" font-weight="700" fill="#252B2A">${o.yFmt ? o.yFmt(v) : fmt0(v)}</text>`; });
     g += `<text x="${cx}" y="${H - 14}" text-anchor="middle" font-size="11" fill="#5B6360">${esc(o.labels[i])}</text>`;
   }
   if (o.yLabel) g += `<text x="12" y="${m.t + ih / 2}" transform="rotate(-90 12 ${m.t + ih / 2})" text-anchor="middle" font-size="11" fill="#5B6360">${esc(o.yLabel)}</text>`;
+  for (const h of (o.hlines || [])) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(h.v)}" y2="${Y(h.v)}" stroke="${h.color || '#252B2A'}" stroke-dasharray="6 4" stroke-width="1.5"/>${h.label ? `<text x="${W - m.r - 4}" y="${Y(h.v) - 4}" text-anchor="end" font-size="11" fill="${h.color || '#252B2A'}">${esc(h.label)}</text>` : ''}`;
   return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.aria || 'bar chart')}"><rect width="${W}" height="${H}" fill="#fff"/>${g}</svg></div>`;
 }
 function mount(el, c) {                  // inject a line chart and wire the hover read-out
@@ -971,9 +977,9 @@ const dayLabel = d => DOWS[ST.D.days[d].dow] + ' ' + ST.D.days[d].date;
 const monthOpts = sel => monthsOf(ST.D).map((m, i) => `<option value="${i}" ${i === sel ? 'selected' : ''}>${MONTHS[m.month]} ${m.key.slice(0, 4)}</option>`).join('');
 const stratOpts = (sel, keys) => (keys || STRAT_ORDER).map(k => `<option value="${k}" ${k === sel ? 'selected' : ''}>${esc(STRATS[k].short)}</option>`).join('');
 const dis = ok => ok ? '' : 'disabled';
-const TABS = [['live', 'Play the day'], ['scen', 'Compare plans'], ['bill', 'Monthly bill vs TNB'], ['twin', 'Did the forecast hold?'], ['data', 'Data health'], ['appr', 'Approvals & audit'], ['fac', '3D factory'], ['set', 'Settings & data']];
+const TABS = [['ovw', 'Overview'], ['live', 'Play the day'], ['scen', 'Compare plans'], ['bill', 'Monthly bill vs TNB'], ['twin', 'Did the forecast hold?'], ['data', 'Data health'], ['appr', 'Approvals & audit'], ['fac', '3D factory'], ['set', 'Settings & data']];
 
-const TABGROUPS = [['', ['live', 'scen', 'bill', 'twin', 'data', 'appr', 'fac', 'set']]];
+const TABGROUPS = [['', ['ovw', 'live', 'scen', 'bill', 'twin', 'data', 'appr', 'fac', 'set']]];
 function shell() {
   return `<div class="sotop"><h1>Operations</h1><span class="tag" title="This console replays a facility dataset. It is separate from the ESP32 prototype on the Live prototype tab.">Planning simulation on a historical dataset. Not live, not the ESP32. Never controls equipment.</span><span class="sp"></span>
     <span class="role"><span class="note" style="margin:0">Facility</span><span class="seg" role="group" aria-label="Facility">${Object.keys(FACS).map(k => `<button data-act="fac" data-v="${k}" class="${ST.fac === k ? 'on' : ''}" title="${esc(FACS[k].name)}">${esc(FACS[k].short)} (${FACS[k].step})</button>`).join('')}</span></span></div>
@@ -993,9 +999,9 @@ function render() {
   const body = $q('#so_body');
   if (ST.tab === 'set') { body.innerHTML = bodySettings(); return; }
   if (ST.status !== 'ready') { body.innerHTML = loadingCard(); return; }
-  const fn = { live: bodyLive, scen: bodyScen, bill: bodyBill, twin: bodyTwin, data: bodyData, appr: bodyAppr, fac: bodyFactory }[ST.tab];
+  const fn = { ovw: bodyOvw, live: bodyLive, scen: bodyScen, bill: bodyBill, twin: bodyTwin, data: bodyData, appr: bodyAppr, fac: bodyFactory }[ST.tab];
   body.innerHTML = fn();
-  ({ live: mountLive, scen: mountScen, bill: mountBill, twin: mountTwin, data: mountData, appr: () => { }, fac: mountFactory }[ST.tab] || (() => { }))();
+  ({ ovw: mountOvw, live: mountLive, scen: mountScen, bill: mountBill, twin: mountTwin, data: mountData, appr: () => { }, fac: mountFactory }[ST.tab] || (() => { }))();
 }
 function renderApprovalsIfOpen() { if (ST.open && ST.tab === 'appr') render(); }
 
@@ -1201,6 +1207,153 @@ function mountScen() {
     $q('#sc_tbl').innerHTML = `<table>${head}<th>Peak charges, 12 months</th><th>Energy charges</th><th>Year total</th><th>vs baseline</th></tr>` +
       keys.map((k, i) => { let md = 0, en = 0; ms.forEach(m => { const s = periodKpi(ctx, Rof(k), m.d0, m.d1); md += s.mdRM; en += s.energyRM; }); return `<tr><td><i style="display:inline-block;width:10px;height:10px;background:${STRATS[k].color};border-radius:2px"></i> ${esc(STRATS[k].short)}</td><td>${fmtRM(md)}</td><td>${fmtRM(en)}</td><td><b>${fmtRM(tot[i])}</b></td><td>${k === 'base' ? '-' : sgn(tot[i] - bt, fmtRM) + ' (' + sgn((tot[i] - bt) / bt * 100, x => x.toFixed(1)) + '%)'}</td></tr>`; }).join('') + `</table><div class="note">${ms[0].d1 - ms[0].d0 < 30 ? '' : ''}The first week of January has no history to forecast from, so optimised plans are weaker there.</div>`;
   }
+}
+
+/* ======================= OVERVIEW (new tab): KPIs, energy performance, scenario comparison, billing periods, forecast vs actual =======================
+   Everything here reads results the console already computed (ST.R from runStrategy, periodKpi, forecastDay, twinDay).
+   Nothing is re-optimised and nothing is made up: an empty input stays empty. */
+const OVK = ['base', 'cost', 'bal', 'zero'];                                     // the four strategies compared
+const OV = Object.assign({ per: -1, day: -1, strat: 'cost', ep: { gridBase: false, batt: false, ev: false, fc: false }, sc: 'idx', an: null, run: {} },
+  HAS_DOM ? { billDay: LS.get('sunops_billday', 1), thr: LS.get('sunops_ovthr', null), run: LS.get('sunops_planrun', {}) } : {});
+if (!OV.thr) { const R = (typeof window !== 'undefined' && window.SunDevRules) || {}; OV.thr = { load: R.load || .10, pv: R.pv || .25, grid: R.grid || .15 }; }
+const TAGC = { M: ['MEASURED', '#116032', '#DDF3E4'], F: ['FORECAST', '#1E4FA3', '#DCE9FB'], S: ['SIMULATED', '#8A5A00', '#FFF0C2'], E: ['ESTIMATE', '#8A5A00', '#FFF0C2'] };
+const tagH = k => `<span class="ovtag" style="color:${TAGC[k][1]};background:${TAGC[k][2]}">${TAGC[k][0]}</span>`;
+const fmtD = s => { const [y, m, d] = s.split('-'); return +d + ' ' + MONTHS[+m - 1]; };
+
+/* billing periods: a new period starts on the bill day of each month (1 = calendar months) */
+function periodsOf(D, day) {
+  day = Math.max(1, Math.min(28, day | 0)); const out = []; let cur = null;
+  for (let d = 0; d < D.nD; d++) {
+    const dt = D.days[d].date, dm = +dt.slice(8, 10);
+    if (!cur || dm === day) { cur = { d0: d, d1: d, key: day === 1 ? dt.slice(0, 7) : dt }; out.push(cur); } else cur.d1 = d;
+  }
+  const dom = s => { const t = new Date(s + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() + 1); return t.getUTCDate(); };
+  out.forEach(p => { const a = D.days[p.d0].date, b = D.days[p.d1].date;
+    p.label = day === 1 ? MONTHS[+a.slice(5, 7) - 1] + ' ' + a.slice(0, 4) : fmtD(a) + ' – ' + fmtD(b) + ' ' + b.slice(0, 4); p.short = day === 1 ? MONTHS[+a.slice(5, 7) - 1] : fmtD(a);
+    p.partial = +a.slice(8, 10) !== day || dom(b) !== day; });
+  return out;
+}
+function ovPeriods() { if (!ST._ovp || ST._ovp.D !== ST.D || ST._ovp.day !== OV.billDay) ST._ovp = { D: ST.D, day: OV.billDay, list: periodsOf(ST.D, OV.billDay) }; return ST._ovp.list; }
+function ovSync() {
+  const ps = ovPeriods(); if (OV.day < 0 || OV.day >= ST.D.nD) OV.day = ST.sel.day;
+  if (OV.per < 0 || OV.per >= ps.length || OV.day < ps[OV.per].d0 || OV.day > ps[OV.per].d1) OV.per = Math.max(0, ps.findIndex(p => OV.day >= p.d0 && OV.day <= p.d1));
+  if (!['cost', 'bal', 'zero'].includes(OV.strat)) OV.strat = 'cost';
+}
+const ovKpi = (k, p) => periodKpi(ST.ctx, Rof(k), p.d0, p.d1);
+
+function bodyOvw() {
+  ovSync(); const ps = ovPeriods(), p = ps[OV.per];
+  return `<div class="card soft"><div class="bar">
+    <label class="note">Billing period <select id="ov_per">${ps.map((x, i) => `<option value="${i}" ${i === OV.per ? 'selected' : ''}>${esc(x.label)}${x.partial ? ' (partial)' : ''}</option>`).join('')}</select></label>
+    <label class="note">Bill starts on day <input type="number" id="ov_bday" min="1" max="28" step="1" value="${OV.billDay}" style="width:64px"></label>
+    <label class="note">Strategy <select id="ov_strat">${stratOpts(OV.strat, ['cost', 'bal', 'zero'])}</select></label>
+    <label class="note">Optimiser <select id="ov_mode"><option value="live" ${ST.sel.mode === 'live' ? 'selected' : ''}>Re-plan every interval</option><option value="plan" ${ST.sel.mode === 'plan' ? 'selected' : ''}>Day-ahead plan only</option></select></label></div></div>
+  <div id="ov_k"></div>
+  <div class="card"><div class="bar" style="margin-top:0"><h2 style="margin:0">Energy performance</h2><span class="sp"></span><label class="note">Day <input type="date" id="ov_day" value="${ST.D.days[OV.day].date}" min="${ST.D.days[0].date}" max="${ST.D.days[ST.D.nD - 1].date}"></label></div><div id="ov_ep"></div></div>
+  <div class="card"><div class="bar" style="margin-top:0"><h2 style="margin:0">Scenario comparison</h2><span class="note">${esc(p.label)} &middot; baseline = 100 &middot; &darr; lower is better</span><span class="sp"></span><span class="seg" role="group"><button data-act="ovsc" data-v="idx" class="${OV.sc === 'idx' ? 'on' : ''}">Index</button><button data-act="ovsc" data-v="val" class="${OV.sc === 'val' ? 'on' : ''}">Actual values</button></span></div><div id="ov_sc"></div></div>
+  <div class="card"><h2>Monthly financial summary</h2><div id="ov_fin"></div></div>
+  <div class="card"><div class="bar" style="margin-top:0"><h2 style="margin:0">Forecast vs actual</h2><span class="note">${esc(dayLabel(OV.day))}</span><span class="sp"></span>
+    <label class="note">Flag above: demand <input type="number" id="ov_tl" min="1" max="100" step="1" value="${Math.round(OV.thr.load * 100)}" style="width:58px">%</label>
+    <label class="note">solar <input type="number" id="ov_tp" min="1" max="100" step="1" value="${Math.round(OV.thr.pv * 100)}" style="width:58px">%</label>
+    <label class="note">grid <input type="number" id="ov_tg" min="1" max="100" step="1" value="${Math.round(OV.thr.grid * 100)}" style="width:58px">%</label></div>
+    <div class="grid g3" id="ov_fa"></div><div id="ov_an"></div></div>`;
+}
+function mountOvw() { ovSync(); ovKpis(); ovEnergy(); ovScen(); ovFin(); ovFa(); }
+
+/* 1. KPI cards: selected billing period, selected strategy against the baseline */
+function ovKpis() {
+  const p = ovPeriods()[OV.per], a = ovKpi('base', p), b = ovKpi(OV.strat, p), sv = a.totalRM - b.totalRM, nm = esc(STRATS[OV.strat].short);
+  const c = (v, l, t, sub, hl) => `<div class="kpi${hl ? ' hl' : ''}"><span>${l} ${tagH(t)}</span><b>${v}</b><span>${sub}</span></div>`;
+  $q('#ov_k').innerHTML = `<div class="kpis">${c(fmtRM(b.totalRM), 'Bill, ' + nm, 'E', 'baseline ' + fmtRM(a.totalRM))}${c(fmtRM(sv), 'Projected saving', 'E', fmtPct(a.totalRM ? sv / a.totalRM : NaN), true)}${c(fmt0(b.md) + ' kW', 'Peak demand', 'S', 'baseline ' + fmt0(a.md) + ' kW')}${c(fmt0(b.kwh) + ' kWh', 'Grid consumption', 'S', 'baseline ' + fmt0(a.kwh) + ' kWh')}${c(fmt0(b.pvKwh) + ' kWh', 'Solar generation', 'M', fmt0(b.solarUsed) + ' kWh used')}${c(fmt1(b.co2 / 1000) + ' t', 'CO&#8322;', 'S', 'baseline ' + fmt1(a.co2 / 1000) + ' t')}</div>`;
+}
+
+/* 2. Energy performance: demand, solar and grid import on one time axis (kW); battery, EV and forecast can be switched on */
+function ovEnergy() {
+  const ctx = ST.ctx, D = ST.D, spd = ctx.spd, d = OV.day, o = d * spd, R = Rof(OV.strat), B = Rof('base'), fl = D.flags, f = forecastDay(ctx, d), E = OV.ep;
+  const meas = a => Float64Array.from({ length: spd }, (_, s) => fl[o + s] ? NaN : a[o + s]);        // a missing reading is a gap, not a zero
+  const evAvail = D.ev.some(x => x > 0), nm = STRATS[OV.strat].short;
+  const S = [
+    { key: 'dem', name: 'Factory demand (measured)', color: '#252B2A', data: meas(D.load), w: 2 },
+    { key: 'pv', name: 'Solar generation (measured)', color: '#F59E0B', data: meas(D.pv), w: 2 },
+    { key: 'grid', name: 'Grid import, ' + nm + ' (simulated)', color: STRATS[OV.strat].color, data: R.grid.subarray(o, o + spd), w: 2.5 },
+    { key: 'gridBase', name: 'Grid import, baseline (simulated)', color: '#6b7280', data: B.grid.subarray(o, o + spd), w: 2, dash: '2 3', hidden: !E.gridBase },
+    { key: 'batt', name: 'Battery, ' + nm + ' (+ discharge, − charge)', color: '#16803D', data: R.batt.subarray(o, o + spd), w: 2, hidden: !E.batt },
+    { key: 'ev', name: 'EV load (measured)', color: '#b24fc9', data: meas(D.ev), w: 2, hidden: !E.ev || !evAvail },
+    { key: 'fc', name: 'Demand (forecast)', color: '#252B2A', data: f.L, w: 1.5, dash: '6 4', hidden: !E.fc },
+    { key: 'fc2', name: 'Solar (forecast)', color: '#F59E0B', data: f.P, w: 1.5, dash: '6 4', hidden: !E.fc }];
+  const bands = [], wd = isWeekday(D.days[d].dow); if (wd) bands.push({ a: ctx.w0, b: ctx.w1, label: 'Peak window' });
+  for (let s = 0; s < spd;) { if (fl[o + s]) { let j = s; while (j < spd && fl[o + j]) j++; bands.push({ a: s, b: j, fill: '#B42318', op: .10, label: 'No reading', text: '#B42318' }); s = j; } else s++; }
+  let lo = 0; if (E.batt) for (let s = 0; s < spd; s++) lo = Math.min(lo, R.batt[o + s]); if (lo < 0) lo = -niceMax(-lo);
+  const chip = (k, n, c, dash, on, ok) => `<label data-act="ovleg" data-v="${k}" class="${on ? '' : 'off'}" ${ok === false ? 'style="display:none"' : ''}><i style="background:${dash ? 'repeating-linear-gradient(90deg,' + c + ' 0 5px,transparent 5px 8px)' : c}"></i>${esc(n)}</label>`;
+  const el = $q('#ov_ep'); el.innerHTML = `<div class="legend"><label class="fix"><i style="background:#252B2A"></i>Factory demand ${tagH('M')}</label><label class="fix"><i style="background:#F59E0B"></i>Solar ${tagH('M')}</label><label class="fix"><i style="background:${STRATS[OV.strat].color}"></i>Grid import, ${esc(nm)} ${tagH('S')}</label>` +
+    chip('gridBase', 'Grid import, baseline', '#6b7280', 1, E.gridBase) + chip('batt', 'Battery', '#16803D', 0, E.batt) + chip('ev', 'EV load', '#b24fc9', 0, E.ev, evAvail) + chip('fc', 'Forecast', '#252B2A', 1, E.fc) + `</div><div id="ov_epc"></div>`;
+  mount($q('#ov_epc'), line({ n: spd, h: 300, yMin: lo, series: S, yLabel: 'kW', xTicks: xTicksDay(), bands, tipTitle: i => tmS(i) + ' - ' + tmS(i + 1), tipFmt: x => fmt0(x) + ' kW', hlines: lo < 0 ? [{ v: 0, color: '#BDB48F', dash: '1 0' }] : [], aria: 'Demand, solar and grid import on one day' }));
+}
+
+/* 3. Scenario comparison: one grouped bar chart, baseline-normalised index (lower is better for all four metrics) */
+const OVM = [['totalRM', 'Electricity cost', v => fmtRM(v)], ['co2', 'CO₂ emissions', v => fmt1(v / 1000) + ' t'], ['md', 'Maximum demand', v => fmt0(v) + ' kW'], ['kwh', 'Grid consumption', v => fmt0(v) + ' kWh']];
+function ovScen() {
+  const p = ovPeriods()[OV.per], K = {}; OVK.forEach(k => K[k] = ovKpi(k, p));
+  const el = $q('#ov_sc'), lg = `<div class="legend">${OVK.map(k => `<label class="fix"><i style="background:${k === 'base' ? '#9ca3af' : STRATS[k].color}"></i>${esc(STRATS[k].short)}</label>`).join('')}</div>`;
+  if (OV.sc === 'val') {
+    el.innerHTML = `<div class="tw"><table><tr><th>Metric ${tagH('S')}</th>${OVK.map(k => `<th>${esc(STRATS[k].short)}</th>`).join('')}</tr>${OVM.map(([m, n, f]) => `<tr><td>${n} &darr;</td>${OVK.map(k => `<td>${f(K[k][m])}${k === 'base' ? '' : ' <span class="note">(' + (K.base[m] ? fmt0(K[k][m] / K.base[m] * 100) : '-') + ')</span>'}</td>`).join('')}</tr>`).join('')}</table></div>`; return;
+  }
+  const series = OVK.map(k => ({ name: STRATS[k].short, color: k === 'base' ? '#9ca3af' : STRATS[k].color, data: OVM.map(([m]) => K.base[m] > 0 ? K[k][m] / K.base[m] * 100 : NaN) }));
+  el.innerHTML = bars({ labels: OVM.map(x => x[1] + ' ↓'), series, h: 290, yMax: 120, hlines: [{ v: 100 }], values: true, yFmt: x => fmt0(x), aria: 'Scenario index, baseline = 100' }) + lg;
+}
+
+/* 4. Monthly financial summary over billing periods */
+function ovFin() {
+  const ctx = ST.ctx, ps = ovPeriods(), k = OV.strat, el = $q('#ov_fin'), rows = ps.map(p => ({ p, a: ovKpi('base', p), b: ovKpi(k, p), act: ST.bills[p.key], run: !!OV.run[p.key] }));
+  const sel = rows[OV.per], prev = OV.per > 0 ? rows[OV.per - 1] : null;
+  const real = r => Number.isFinite(r.act) && r.run ? r.a.totalRM - r.act : NaN;
+  const tb = rows.map((r, i) => `<tr class="${i === OV.per ? 'ovsel' : ''}"><td>${esc(r.p.label)}${r.p.partial ? ' <span class="note">(partial)</span>' : ''}</td>
+    <td><input type="number" class="ovbill" data-k="${esc(r.p.key)}" min="0" step="1" value="${Number.isFinite(r.act) ? r.act : ''}" placeholder="RM" style="width:100px"></td>
+    <td>${fmtRM(r.a.totalRM)}</td><td>${fmtRM(r.b.totalRM)}</td><td>${fmtRM(r.a.totalRM - r.b.totalRM)}</td>
+    <td><input type="checkbox" class="ovrun" data-k="${esc(r.p.key)}" ${r.run ? 'checked' : ''} title="Plan was running in this period"></td><td>${Number.isFinite(real(r)) ? fmtRM(real(r)) : '-'}</td>
+    <td>${fmt0(r.b.kwh)}</td><td>${fmt0(r.b.md)}</td><td>${fmt0(r.b.pvKwh)}</td><td>${fmt1(r.b.co2 / 1000)}</td></tr>`).join('');
+  const cmp = prev ? [['Bill (' + STRATS[k].short + ')', x => x.b.totalRM, fmtRM], ['Actual TNB bill', x => x.act, fmtRM], ['Grid consumption, kWh', x => x.b.kwh, fmt0], ['Peak demand, kW', x => x.b.md, fmt0], ['Solar generation, kWh', x => x.b.pvKwh, fmt0], ['CO₂, t', x => x.b.co2 / 1000, fmt1]].map(([n, g, f]) => { const x = g(prev), y = g(sel); return `<tr><td>${n}</td><td>${Number.isFinite(x) ? f(x) : '-'}</td><td>${Number.isFinite(y) ? f(y) : '-'}</td><td>${Number.isFinite(x) && Number.isFinite(y) && x ? sgn((y - x) / x * 100, v => v.toFixed(1)) + '%' : '-'}</td></tr>`; }).join('') : '';
+  const hasAct = rows.some(r => Number.isFinite(r.act));
+  el.innerHTML = bars({ labels: ps.map(p => p.short), series: [{ name: 'Baseline estimate', color: '#9ca3af', data: rows.map(r => r.a.totalRM) }, { name: STRATS[k].short + ' estimate', color: STRATS[k].color, data: rows.map(r => r.b.totalRM) }].concat(hasAct ? [{ name: 'Actual TNB bill', color: '#252B2A', data: rows.map(r => Number.isFinite(r.act) ? r.act : NaN) }] : []), h: 230, yFmt: x => 'RM ' + (x / 1000).toFixed(0) + 'k', aria: 'Bill by billing period' }) +
+    `<div class="legend"><label class="fix"><i style="background:#9ca3af"></i>Baseline ${tagH('E')}</label><label class="fix"><i style="background:${STRATS[k].color}"></i>${esc(STRATS[k].short)} ${tagH('E')}</label>${hasAct ? `<label class="fix"><i style="background:#252B2A"></i>Actual TNB bill</label>` : ''}</div>
+    <div class="tw" style="margin-top:8px"><table><tr><th>Billing period</th><th>Actual TNB bill</th><th>Baseline ${tagH('E')}</th><th>${esc(STRATS[k].short)} ${tagH('E')}</th><th>Projected saving</th><th>Plan running</th><th>Realised saving</th><th>Grid kWh</th><th>Peak kW</th><th>Solar kWh</th><th>CO&#8322; t</th></tr>${tb}</table></div>
+    ${prev ? `<h3>${esc(sel.p.label)} vs ${esc(prev.p.label)}</h3><div class="tw"><table><tr><th></th><th>Previous</th><th>Selected</th><th>Change</th></tr>${cmp}</table></div>` : ''}`;
+}
+
+/* 5. Forecast vs actual for the selected day, with intervals over the threshold flagged and listed */
+function ovFa() {
+  const ctx = ST.ctx, D = ST.D, spd = ctx.spd, d = OV.day, o = d * spd, f = forecastDay(ctx, d), tw = twinDay(ctx, Rof(OV.strat), d), fl = D.flags;
+  const sets = [['load', 'Demand', f.L, D.load.subarray(o, o + spd), 'Forecast', 'Measured', '#252B2A'], ['pv', 'Solar', f.P, D.pv.subarray(o, o + spd), 'Forecast', 'Measured', '#F59E0B'], ['grid', 'Grid import', tw.pred, tw.act, 'Expected (twin)', 'Executed (simulated)', STRATS[OV.strat].color]];
+  const an = [];
+  const html = sets.map(([k, n, ex, ac, en, an2, col]) => {
+    const thr = OV.thr[k], mx = Math.max(...ex, ...ac), floor = Math.min(50, Math.max(3, .03 * mx)), act = new Float64Array(spd), mk = [];
+    for (let s = 0; s < spd; s++) {
+      const miss = fl[o + s] && k !== 'grid'; act[s] = miss ? NaN : ac[s]; if (miss) continue;
+      const dv = ac[s] - ex[s]; if (Math.abs(dv) > Math.max(thr * Math.abs(ex[s]), floor)) { an.push({ k, n, s, ex: ex[s], ac: ac[s], pct: ex[s] > 0 ? dv / ex[s] : NaN, en, an2 }); mk.push({ i: s, title: tmS(s) + ' ' + n }); }
+    }
+    return { k, n, html: `<div><h3>${n} <span class="note">kW</span></h3><div id="ov_fa_${k}"></div><div class="legend"><label class="fix"><i style="background:repeating-linear-gradient(90deg,${col} 0 5px,transparent 5px 8px)"></i>${en} ${tagH(k === 'grid' ? 'S' : 'F')}</label><label class="fix"><i style="background:${col}"></i>${an2} ${tagH(k === 'grid' ? 'S' : 'M')}</label></div></div>`, cfg: { n: spd, w: 440, h: 240, series: [{ name: en, color: col, data: ex, dash: '6 4', w: 1.5 }, { name: an2, color: col, data: act, w: 2.2 }], xTicks: xTicksDay().filter((_, j) => j % 2 === 0), markers: mk, yLabel: 'kW', tipTitle: i => tmS(i), aria: n + ' forecast vs actual' } };
+  });
+  $q('#ov_fa').innerHTML = html.map(x => x.html).join('');
+  html.forEach(x => { const sel = OV.an && OV.an.k === x.k ? [{ i: OV.an.s, color: '#B42318', label: tmS(OV.an.s) }] : []; mount($q('#ov_fa_' + x.k), line(Object.assign({}, x.cfg, { vlines: sel }))); });
+  an.sort((a, b) => a.s - b.s || a.k.localeCompare(b.k));
+  $q('#ov_an').innerHTML = an.length ? `<h3>Flagged intervals (${an.length})</h3><div class="tw" style="max-height:260px"><table><tr><th>Time</th><th>Series</th><th>Expected, kW</th><th>Actual, kW</th><th>Deviation</th></tr>${an.map(x => `<tr class="ovan${OV.an && OV.an.k === x.k && OV.an.s === x.s ? ' ovsel' : ''}" data-act="ovan" data-v="${x.k}:${x.s}"><td>${D.days[d].date} ${tmS(x.s)}</td><td>${x.n}</td><td>${fmt0(x.ex)}</td><td>${fmt0(x.ac)}</td><td class="${Math.abs(x.pct) > .5 ? 'ovbad' : ''}">${Number.isFinite(x.pct) ? sgn(x.pct * 100, v => v.toFixed(1)) + '%' : 'n/a'}</td></tr>`).join('')}</table></div>` : '<p class="note">No interval over the thresholds on this day.</p>';
+}
+function ovClick(act, v) {
+  if (act === 'ovleg') { OV.ep[v] = !OV.ep[v]; ovEnergy(); }
+  else if (act === 'ovsc') { OV.sc = v; render(); }
+  else if (act === 'ovan') { const [k, s] = v.split(':'); OV.an = OV.an && OV.an.k === k && OV.an.s === +s ? null : { k, s: +s }; ovFa(); const c = $q('#ov_fa_' + k); if (c && OV.an) c.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+}
+function ovChange(e) {
+  const id = e.target.id, v = e.target.value, cl = e.target.classList;
+  if (cl && cl.contains('ovbill')) { const x = parseFloat(v), k = e.target.dataset.k; if (Number.isFinite(x) && x >= 0) ST.bills[k] = x; else delete ST.bills[k]; LS.set('sunops_bills', ST.bills); audit('setting', 'Actual TNB bill for ' + k + (Number.isFinite(x) ? ' set to RM ' + x : ' cleared')); ovFin(); return true; }
+  if (cl && cl.contains('ovrun')) { const k = e.target.dataset.k; if (e.target.checked) OV.run[k] = 1; else delete OV.run[k]; LS.set('sunops_planrun', OV.run); ovFin(); return true; }
+  if (id === 'ov_per') { const p = ovPeriods()[+v]; OV.per = +v; if (OV.day < p.d0 || OV.day > p.d1) { OV.day = p.d0; for (let d = p.d0; d <= p.d1; d++) if (isWeekday(ST.D.days[d].dow)) { OV.day = d; break; } } OV.an = null; render(); return true; }
+  if (id === 'ov_day') { const d = dayIdx(v); if (d >= 0) { OV.day = d; OV.per = -1; OV.an = null; render(); } return true; }
+  if (id === 'ov_bday') { const x = Math.max(1, Math.min(28, parseInt(v, 10) || 1)); OV.billDay = x; LS.set('sunops_billday', x); OV.per = -1; render(); return true; }
+  if (id === 'ov_strat') { OV.strat = v; render(); return true; }
+  if (id === 'ov_mode') { ST.sel.mode = v; ST.live = null; render(); return true; }
+  if (id === 'ov_tl' || id === 'ov_tp' || id === 'ov_tg') { const x = parseFloat(v); if (Number.isFinite(x) && x > 0) { OV.thr[{ ov_tl: 'load', ov_tp: 'pv', ov_tg: 'grid' }[id]] = x / 100; LS.set('sunops_ovthr', OV.thr); OV.an = null; ovFa(); } return true; }
+  return false;
 }
 
 /* ======================= MONTHLY BILL ======================= */
@@ -1451,6 +1604,7 @@ function readCfg() {
 function dayIdx(date) { return ST.D.days.findIndex(x => x.date === date); }
 function onClick(e) {
   const t = e.target.closest('[data-act]'); if (!t) return; const act = t.dataset.act, v = t.dataset.v;
+  if (/^ov(leg|sc|an)$/.test(act)) { ovClick(act, v); return; }
   if (act === 'role') { if (ST.role !== v) { ST.role = v; audit('role_switch', 'Now viewing as ' + ROLES[v].name); stopLive(); ST.tab = can('run') ? 'live' : 'appr'; } render(); }
   else if (act === 'fac') { if (ST.fac !== v) { stopLive(); if (ST.tab === 'fac') ST.tab = 'live'; audit('facility_switch', FACS[v].name); render(); loadPreset(v); } }
   else if (act === 'close') closeConsole();
@@ -1477,6 +1631,7 @@ function onClick(e) {
   else if (act === 'cf_reset') { ST.cfg = { bat: Object.assign({}, DEFAULTS.bat), tariff: Object.assign({}, DEFAULTS.tariff), ef: DEFAULTS.ef, margin: 0.25, demandMode: 'auto' }; saveCfg(); ST.tab = 'live'; render(); recompute(); }
 }
 function onChange(e) {
+  if (ST.tab === 'ovw' && ST.status === 'ready' && ovChange(e)) return;
   const id = e.target.id, v = e.target.value; if (!id) return;
   if (id === 'up_file') { if (e.target.files[0]) handleUpload(e.target.files[0]); return; }
   if (id === 'lv_date') { const d = dayIdx(v); if (d >= 0) { ST.sel.day = d; liveStart(d); renderLiveButtons(); } }
