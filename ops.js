@@ -907,16 +907,18 @@ function liveStep() {
   return true;
 }
 const windowPeak = (g, X) => X.wd ? bp(g, 0, X.ctx.w0, X.ctx.w1, blockOf(X.ctx)).v : 0;
+const obsTag = L => (L.inject !== 'none' || (L.injs && L.injs.length)) ? 'simulated' : 'replay data';
+const devTxt = (exp, obs, tag) => 'Forecast ' + fmt0(exp) + ' kW, ' + tag + ' ' + fmt0(obs) + ' kW (' + (obs - exp >= 0 ? '+' : '-') + fmt0(Math.abs(obs - exp)) + ' kW, ' + fmt0(Math.abs(obs - exp) / Math.max(exp, 1) * 100) + '%)';
 function analyse(s) {
   const DEVR = (typeof window !== 'undefined' && window.SunDevRules) || { load: 0.2, pv: 0.25, grid: 0.15, run: 2 };
   const L = ST.live, X = L.X, f0 = X.f0, ctx = ST.ctx, pad = tmS(s);
   const ep = (name, flag, start) => { const e = L.dev[name]; if (flag) { e.n++; e.ok = 0; if (!e.on && e.n >= DEVR.run) { e.on = true; start(); } } else { e.ok++; e.n = 0; if (e.on && e.ok >= 2) { e.on = false; addAlert('ok', 'Back within tolerance', name === 'load' ? 'Demand is tracking the forecast again.' : name === 'pv' ? 'Solar is tracking the forecast again.' : 'Grid import is tracking the twin again.', s, name); } } };
   const dL = X.L[s] - f0.L[s], thL = Math.max(DEVR.load * f0.L[s], devFloor());
-  ep('load', Math.abs(dL) >= thL, () => addAlert('warn', 'Demand ' + (dL > 0 ? 'above' : 'below') + ' forecast', fmt0(Math.abs(dL)) + ' kW (' + fmt0(Math.abs(dL) / Math.max(f0.L[s], 1) * 100) + '%) for two intervals. Forecast corrected for the rest of the day; plan re-checked.', s - 1, 'load'));
+  ep('load', Math.abs(dL) >= thL, () => addAlert('warn', 'Demand ' + (dL > 0 ? 'above' : 'below') + ' forecast', devTxt(f0.L[s], X.L[s], obsTag(L)) + ' for ' + DEVR.run + ' readings in a row. Next: forecast corrected for the rest of the day and the plan re-checked. Essential site demand is not interrupted; flexible EV demand can be rescheduled.', s - 1, 'load'));
   const dP = X.P[s] - f0.P[s], thP = Math.max(DEVR.pv * f0.P[s], devFloor());
-  ep('pv', Math.abs(dP) >= thP, () => addAlert('warn', 'Solar ' + (dP > 0 ? 'above' : 'below') + ' forecast', fmt0(Math.abs(dP)) + ' kW (' + fmt0(Math.abs(dP) / Math.max(f0.P[s], 1) * 100) + '%) for two intervals. Forecast corrected for the rest of the day; plan re-checked.', s - 1, 'pv'));
+  ep('pv', Math.abs(dP) >= thP, () => addAlert('warn', 'Solar ' + (dP > 0 ? 'above' : 'below') + ' forecast', devTxt(f0.P[s], X.P[s], obsTag(L)) + ' for ' + DEVR.run + ' readings in a row. Next: forecast corrected for the rest of the day and the battery and flexible EV plan re-checked. Essential site demand is not interrupted.', s - 1, 'pv'));
   const pr = L.T.out.grid[s], ac = X.out.grid[s], thT = Math.max(DEVR.grid * Math.max(pr, 50), devFloor());
-  ep('twin', Math.abs(ac - pr) >= thT, () => addAlert('hi', 'Digital twin out of tolerance', 'Measured grid import is ' + fmt0(Math.abs(ac - pr)) + ' kW ' + (ac > pr ? 'above' : 'below') + ' what the twin expected. The plan is based on a forecast that is not holding today.', s - 1, 'twin'));
+  ep('twin', Math.abs(ac - pr) >= thT, () => addAlert('hi', 'Digital twin out of tolerance', 'Digital twin (calculated) ' + fmt0(pr) + ' kW, ' + obsTag(L) + ' ' + fmt0(ac) + ' kW (' + (ac - pr >= 0 ? '+' : '-') + fmt0(Math.abs(ac - pr)) + ' kW) grid import. The forecast behind the plan is not holding today. Next: review the corrected plan before approving any change.', s - 1, 'twin'));
   if (X.strat.bat && X.inWin(s) && X.soc <= X.socMin + 0.02 && X.out.net[s] > X.capApplied + 50 && !L.flags.empty) { L.flags.empty = true; addAlert('hi', 'Battery empty in the peak window', 'Demand is above the cap and no charge is left. The billed peak for this month may rise.', s, 'empty'); }
   if (X.strat.bat && X.inWin(s) && Number.isFinite(X.capApplied) && ac > X.capApplied + 25 && ac > L.flags.over + 50) { L.flags.over = ac; addAlert('hi', 'Grid import above the cap', fmt0(ac) + ' kW against a cap of ' + fmt0(X.capApplied) + ' kW. This sets a new running peak.', s, 'cap'); }
 }
@@ -1017,18 +1019,19 @@ function pickDays() {
   if (gap >= 0) p.list.push(['Meter dropout (repaired data)', gap + 1 < D.nD ? gap + 1 : gap]);
   ST.picks = p; return p;
 }
+const replayBanner = () => `<div class="warn" id="lv_mode"><b>HISTORICAL FACILITY DATA &mdash; DEMO REPLAY.</b> Replaying recorded ${ST.D.stepMin}-minute readings from "${esc(ST.D.name)}", one reading at a time. This is not a live ESP32 feed, and nothing here controls any equipment.</div><div class="note"><b>Essential site demand</b> is production load: the plan never interrupts it. <b>Flexible EV demand</b> can be deferred or rescheduled. <b>Battery charging</b> only happens when the forecast, reserve and cap rules allow it.</div>`;
 function bodyLive() {
   if (!ST.live) liveStart(ST.sel.day);
   const D = ST.D, L = ST.live, picks = pickDays().list;
   const a = can('run');
   return `<div class="card soft"><div class="bar">
-      <b>Replay a day, interval by interval.</b><span class="note" style="margin:0">The planner only sees readings up to "now", re-checks the plan as each ${ST.ctx.stepMin || ST.D.stepMin}-minute reading arrives, and flags anything that drifts from the forecast or the digital twin.</span></div>
+      <b>Replay a day, interval by interval.</b><span class="note" style="margin:0">The planner only sees readings up to "now", re-checks the plan as each ${ST.ctx.stepMin || ST.D.stepMin}-minute reading arrives, and flags anything that drifts from the forecast or the digital twin.</span></div>${replayBanner()}
     <div class="bar">
       <label class="note">Day <input type="date" id="lv_date" value="${D.days[L.d].date}" min="${D.days[0].date}" max="${D.days[D.nD - 1].date}" ${dis(a)}></label>
       <select id="lv_pick" ${dis(a)}><option value="">Jump to...</option>${picks.map(p => `<option value="${p[1]}">${esc(p[0])}: ${D.days[p[1]].date}</option>`).join('')}</select>
       <label class="note">Strategy <select id="lv_strat" ${dis(a)}>${stratOpts(ST.sel.strat, ['cost', 'bal', 'zero'])}</select></label>
       <label class="note">Planner <select id="lv_mode" ${dis(a)}><option value="live" ${ST.sel.mode === 'live' ? 'selected' : ''}>Re-plan every interval</option><option value="plan" ${ST.sel.mode === 'plan' ? 'selected' : ''}>Day-ahead plan only</option></select></label>
-      <label class="note">What-if <select id="lv_inj" ${dis(a)}><option value="none" ${L.inject === 'none' ? 'selected' : ''}>No disturbance (as recorded)</option><option value="cloud" ${L.inject === 'cloud' ? 'selected' : ''}>Cloud front 12:00-15:00 (solar x0.4)</option><option value="surge" ${L.inject === 'surge' ? 'selected' : ''}>Demand +25% 15:00-19:00</option><option value="both" ${L.inject === 'both' ? 'selected' : ''}>Both</option></select></label>
+      <label class="note">Simulated what-if <select id="lv_inj" ${dis(a)}><option value="none" ${L.inject === 'none' ? 'selected' : ''}>No disturbance (as recorded)</option><option value="cloud" ${L.inject === 'cloud' ? 'selected' : ''}>Cloud front 12:00-15:00 (solar x0.4)</option><option value="surge" ${L.inject === 'surge' ? 'selected' : ''}>Demand +25% 15:00-19:00</option><option value="both" ${L.inject === 'both' ? 'selected' : ''}>Both</option></select></label>
     </div>
     <div class="bar" id="lv_btns"></div>
     <div class="bar"><label class="note"><input type="checkbox" id="lv_req" ${L.require ? 'checked' : ''} ${dis(a)}> Require approver sign-off for plan changes (pauses the replay)</label></div>
@@ -1036,7 +1039,7 @@ function bodyLive() {
   <div id="lv_kpi" class="kpis"></div>
   <div class="live"><div>
     <div class="card"><h2>Grid import, demand and solar</h2><div class="legend" id="lv_leg1"></div><div id="lv_c1"></div></div>
-    <div class="grid g2"><div class="card"><h2>Battery charge</h2><div id="lv_c2"></div></div><div class="card"><h2>EV charging: as requested vs planned</h2><div id="lv_c3"></div></div></div>
+    <div class="grid g2"><div class="card"><h2>Battery charge (simulated by the planner, not measured)</h2><div id="lv_c2"></div></div><div class="card"><h2>Flexible EV demand: requested vs rescheduled</h2><div id="lv_c3"></div></div></div>
   </div><div>
     <div class="card" id="lv_pend_card"><h2>Approval</h2><div id="lv_pend"></div></div>
     <div class="card"><h2>How the plan changed as data arrived</h2><div class="feed" id="lv_hist"></div></div>
@@ -1086,18 +1089,18 @@ function drawLive() {
     { key: 'grid', name: 'Grid import (' + sty.short + ')', color: sty.color, data: X.out.grid, upTo: idx, w: 3, hidden: !vis.grid },
     { key: 'base', name: 'Grid import, baseline', color: '#6b7280', data: L.B.out.grid, upTo: idx, w: 2, hidden: !vis.base },
     { key: 'twin', name: 'Digital twin expected', color: '#2563eb', data: L.T.out.grid, dash: '6 4', w: 2, hidden: !vis.twin },
-    { key: 'dem', name: 'Site demand', color: '#252B2A', data: demand, w: 1.5, hidden: !vis.dem },
+    { key: 'dem', name: 'Essential + flexible EV demand', color: '#252B2A', data: demand, w: 1.5, hidden: !vis.dem },
     { key: 'sol', name: 'Solar', color: '#F59E0B', data: sol, w: 1.5, hidden: !vis.sol },
     { key: 'cap', name: 'Cap', color: '#B42318', data: capv, dash: '5 4', w: 1.5, hidden: !vis.cap },
     { key: 'fcd', name: 'Forecast demand', color: '#9ca3af', data: fdem, dash: '2 3', w: 1.5, hidden: !vis.fc },
     { key: 'fcs', name: 'Forecast solar', color: '#fcd34d', data: fsol, dash: '2 3', w: 1.5, hidden: !vis.fc }
   ];
-  $q('#lv_leg1').outerHTML = `<div class="legend" id="lv_leg1">${[['grid', 'Grid import', sty.color], ['base', 'Baseline', '#6b7280'], ['twin', 'Twin expected', '#2563eb'], ['dem', 'Demand', '#252B2A'], ['sol', 'Solar', '#F59E0B'], ['cap', 'Cap', '#B42318'], ['fc', 'Forecasts', '#9ca3af']].map(x => `<label data-act="leg1" data-v="${x[0]}" class="${vis[x[0]] === false ? 'off' : ''}"><i style="background:${x[2]}"></i>${x[1]}</label>`).join('')}</div>`;
+  $q('#lv_leg1').outerHTML = `<div class="legend" id="lv_leg1">${[['grid', 'Grid import', sty.color], ['base', 'Baseline', '#6b7280'], ['twin', 'Twin expected', '#2563eb'], ['dem', 'Essential + EV demand', '#252B2A'], ['sol', 'Solar', '#F59E0B'], ['cap', 'Cap', '#B42318'], ['fc', 'Forecasts', '#9ca3af']].map(x => `<label data-act="leg1" data-v="${x[0]}" class="${vis[x[0]] === false ? 'off' : ''}"><i style="background:${x[2]}"></i>${x[1]}</label>`).join('')}</div>`;
   const markers = L.alerts.filter(a => a.level === 'hi' || a.level === 'warn').map(a => ({ i: Math.max(0, a.slot), color: a.level === 'hi' ? '#B42318' : '#F59E0B', title: tmS(Math.max(0, a.slot)) + ' ' + a.title }));
   mount($q('#lv_c1'), line({ n: spd, h: 310, series: ser, yLabel: 'kW', bands: wd ? [{ a: ctx.w0, b: ctx.w1, label: 'Peak window: maximum demand is billed here' }] : [], xTicks: xTicksDay(), vlines: idx > 0 && idx < spd ? [{ i: idx - 1, label: 'now' }] : [], markers, tipTitle: i => tmS(i) + ' - ' + tmS(i + 1), aria: 'Grid import, demand and solar through the day' }));
   // chart 2
   const soc = new Float64Array(spd).fill(NaN); for (let s = 0; s < idx; s++) soc[s] = X.out.soc[s] * 100;
-  mount($q('#lv_c2'), line({ n: spd, h: 200, yMax: 100, yMin: 0, series: [{ name: 'Battery charge %', color: '#16803D', data: soc, fill: true, w: 2.5, fmt: v => fmt0(v) + '%' }], hlines: X.socMin > 0 ? [{ v: X.socMin * 100, label: 'reserve ' + fmt0(X.socMin * 100) + '%', color: '#92400E' }] : [], xTicks: xTicksDay(), yFmt: v => fmt0(v) + '%', bands: wd ? [{ a: ctx.w0, b: ctx.w1 }] : [], tipTitle: i => tmS(i + 1) }));
+  mount($q('#lv_c2'), line({ n: spd, h: 200, yMax: 100, yMin: 0, series: [{ name: 'Battery charge % (simulated)', color: '#16803D', data: soc, fill: true, w: 2.5, fmt: v => fmt0(v) + '%' }], hlines: X.socMin > 0 ? [{ v: X.socMin * 100, label: 'reserve ' + fmt0(X.socMin * 100) + '%', color: '#92400E' }] : [], xTicks: xTicksDay(), yFmt: v => fmt0(v) + '%', bands: wd ? [{ a: ctx.w0, b: ctx.w1 }] : [], tipTitle: i => tmS(i + 1) }));
   // chart 3
   const evo = Array.from(X.E0), evs = new Float64Array(spd).fill(NaN), evp = new Float64Array(spd).fill(NaN);
   for (let s = 0; s < idx; s++) evs[s] = X.out.ev[s]; for (let s = idx; s < spd; s++) evp[s] = X.evPlan[s];
@@ -1125,7 +1128,12 @@ function drawLive() {
   const why = $q('#lv_why');
   why.innerHTML = L.pending ? 'Waiting for an approver. Nothing is applied until the plan is approved.' : X.strat.bat ? (wd && idx < ctx.w1 ? `Holding grid import under <b>${Number.isFinite(X.capApplied) ? fmt0(X.capApplied) : '-'} kW</b> between 14:00 and 22:00, keeping about <b>${fmt0(X.Sreq * 100)}%</b> charge ready for it${X.strat.topup ? ', topping up from the grid just before the window only if solar has not filled the battery' : ''}. The cap is the lowest level the battery can hold given the corrected forecast, and never below this month's peak so far (${fmt0(X.Mrun)} kW), because shaving below it saves nothing.` : (wd ? 'The peak window has passed. The battery now keeps what tomorrow\'s window needs and serves load above that.' : 'No maximum demand is billed today. The battery keeps what the next weekday needs.')) : '';
   const sl = $q('#lv_seek'); if (sl) { sl.value = idx; if (sl.nextElementSibling) sl.nextElementSibling.textContent = tmS(Math.min(idx, spd)) + ' of 24:00'; }
-  const inj = $q('#lv_inj_note'); if (inj) inj.innerHTML = (L.inject !== 'none' || (L.injs && L.injs.length)) ? `<div class="warn"><b>SIMULATED DISTURBANCE.</b> The "recorded" solar or demand for this day has been altered to test the response${L.injs && L.injs.length ? ' (' + L.injs.map(j => (j.k === 'cloud' ? 'cloud front' : 'demand surge') + ' from ' + tmS(j.from)).join(', ') + ')' : ''}. It is not real data.</div>` : '';
+  const inj = $q('#lv_inj_note'); if (inj) {
+    const ks = new Set((L.injs || []).map(j => j.k)); if (L.inject === 'cloud' || L.inject === 'both') ks.add('cloud'); if (L.inject === 'surge' || L.inject === 'both') ks.add('surge');
+    const ttl = ks.has('cloud') && ks.has('surge') ? 'SIMULATED SOLAR DISTURBANCE AND DEMAND SURGE' : ks.has('cloud') ? 'SIMULATED SOLAR DISTURBANCE' : 'SIMULATED DEMAND SURGE';
+    const det = (L.injs || []).map(j => (j.k === 'cloud' ? 'solar x0.4 from ' : 'site demand +25% from ') + tmS(j.from)).join('; ');
+    inj.innerHTML = ks.size ? `<div class="warn"><b>${ttl} &mdash; NOT LIVE SENSOR DATA.</b> ${det ? 'Injected into this replay: ' + esc(det) + '. ' : ''}The recorded solar or demand for this day has been altered to test the response. "Forecast" values are predictions; "simulated" values are the altered replay.</div>` : '';
+  }
   if (L.done) { const gk = windowPeak(X.out.grid, X), bk = windowPeak(L.B.out.grid, L.B); feed.insertAdjacentHTML('afterbegin', `<div class="alert ok"><b>Day complete</b><small>Billed-window peak ${fmt0(gk)} kW vs ${fmt0(bk)} kW baseline. Energy cost saved ${fmtRM(costB - costX)}. Each kW of peak removed is worth RM ${T.md}/month if this day sets the month's peak.</small></div>`); }
 }
 
@@ -1211,7 +1219,7 @@ function mountBill() {
     row('Off-peak energy', fmt0(b.kwhOff) + ' kWh', (T.eo + T.afa).toFixed(2) + ' sen', a.kwhOff * (T.eo + T.afa) / 100, b.kwhOff * (T.eo + T.afa) / 100) +
     row('Maximum demand', fmt0(b.md) + ' kW (baseline ' + fmt0(a.md) + ')', 'RM ' + T.md.toFixed(2) + '/kW', a.mdRM, b.mdRM) +
     row('Retail charge', '', 'RM ' + T.retail, a.retailRM, b.retailRM) +
-    `<tr><td><b>Estimated total</b></td><td></td><td></td><td><b>${fmtRM(a.totalRM)}</b></td><td><b>${fmtRM(b.totalRM)}</b></td></tr><tr><td>Difference</td><td></td><td></td><td></td><td><b>${sgn(b.totalRM - a.totalRM, fmtRM)} (${sgn((b.totalRM - a.totalRM) / a.totalRM * 100, x => x.toFixed(1))}%)</b></td></tr></table><div class="note">Not included: KWTBB levy (1.6%), taxes, power-factor charges, AFA changes. Billed peak demand is the highest 30-minute average in the window, as TNB bills it.</div>`;
+    `<tr><td><b>Estimated total</b></td><td></td><td></td><td><b>${fmtRM(a.totalRM)}</b></td><td><b>${fmtRM(b.totalRM)}</b></td></tr><tr><td>Potential saving (estimate, not yet realised)</td><td></td><td></td><td></td><td><b>${sgn(b.totalRM - a.totalRM, fmtRM)} (${sgn((b.totalRM - a.totalRM) / a.totalRM * 100, x => x.toFixed(1))}%)</b></td></tr></table><div class="note">Not included: KWTBB levy (1.6%), taxes, power-factor charges, AFA changes. Billed peak demand is the highest 30-minute average in the window, as TNB bills it.</div>`;
   const upd = () => { const v = ST.bills[m.key]; const el = $q('#bl_var'); if (!el) return; el.innerHTML = Number.isFinite(v) ? `Model baseline ${fmtRM(a.totalRM)} vs your bill ${fmtRM(v)}: ${sgn(a.totalRM - v, fmtRM)} (${sgn((a.totalRM - v) / v * 100, x => x.toFixed(1))}%). Differences of a few percent are normal because of the items not modelled. A large gap means the data or the tariff does not match the site.` : 'Enter a bill to see how close the model baseline is. It is saved in this browser only.'; }; upd();
   const inp = $q('#bl_real'); if (inp) inp.oninput = () => { const x = parseFloat(inp.value); if (Number.isFinite(x)) ST.bills[m.key] = x; else delete ST.bills[m.key]; LS.set('sunops_bills', ST.bills); upd(); };
   const n = m.d1 - m.d0 + 1, mk = r => { const q = dailyMd(ctx, r), d = new Float64Array(n).fill(NaN); for (let i = 0; i < n; i++) if (isWeekday(D.days[m.d0 + i].dow)) d[i] = q[m.d0 + i]; return d; };
@@ -1380,7 +1388,7 @@ function bodyFactory() {
       <label class="note">Day <input type="date" id="lv_date" value="${D.days[L.d].date}" min="${D.days[0].date}" max="${D.days[D.nD - 1].date}" ${dis(a)}></label>
       <select id="lv_pick" ${dis(a)}><option value="">Jump to...</option>${picks.map(p => `<option value="${p[1]}">${esc(p[0])}: ${D.days[p[1]].date}</option>`).join('')}</select>
       <label class="note">Strategy <select id="lv_strat" ${dis(a)}>${stratOpts(ST.sel.strat, ['cost', 'bal', 'zero'])}</select></label>
-      <label class="note">What-if <select id="lv_inj" ${dis(a)}><option value="none" ${L.inject === 'none' ? 'selected' : ''}>As recorded</option><option value="cloud" ${L.inject === 'cloud' ? 'selected' : ''}>Cloud front 12:00-15:00</option><option value="surge" ${L.inject === 'surge' ? 'selected' : ''}>Demand +25% 15:00-19:00</option><option value="both" ${L.inject === 'both' ? 'selected' : ''}>Both</option></select></label></div>
+      <label class="note">Simulated what-if <select id="lv_inj" ${dis(a)}><option value="none" ${L.inject === 'none' ? 'selected' : ''}>As recorded</option><option value="cloud" ${L.inject === 'cloud' ? 'selected' : ''}>Cloud front 12:00-15:00</option><option value="surge" ${L.inject === 'surge' ? 'selected' : ''}>Demand +25% 15:00-19:00</option><option value="both" ${L.inject === 'both' ? 'selected' : ''}>Both</option></select></label></div>
     <div class="bar" id="lv_btns"></div>` : '';
   const hwCtl = m === 'hw' ? `<div class="bar"><label class="note">Feed address <input type="url" id="fac_url" value="${esc(FAC.url)}" placeholder="https://your-endpoint/latest" style="min-width:300px"></label><button class="pri" data-act="fac_connect">Connect</button></div>
     <div class="note">The address must return the reading as JSON (see below) and allow requests from this site (CORS). The ESP32 firmware and the Azure endpoint are still to be built.</div>` : '';
@@ -1390,7 +1398,7 @@ function bodyFactory() {
   <div class="card"><iframe id="fac_frame" src="factory3d.html?embed=1" title="Sun Shine demo factory" style="width:100%;height:740px;border:0;border-radius:10px;background:#fff" allowfullscreen></iframe>
     <div class="note">If this is blank, <code>factory3d.html</code> is not in the repo root next to <code>index.html</code>. The model loads three.js from cdnjs, so it needs internet.</div></div>
   <div class="card"><h2>How the replay drives the model</h2>
-    <div class="note"><b>Panels:</b> the planner's solar output as a share of the site's best output, shown as panel voltage (3.3 V = full sun, three panels with a small spread). <b>Battery:</b> the planned battery charge, shown as cell voltage (3.3 V empty to 4.2 V full) and charging when the plan charges it. <b>Conveyor:</b> production, running while site demand is above 40% of its usual high level, with the power source taken from the plan. <b>EV station:</b> the planned EV charging, with the reason. This is a visual of the planner's schedule on the organisers' data. It does not control any hardware, and the model's scale is a demo, not the site's size.</div>
+    <div class="note"><b>Panels:</b> the planner's solar output as a share of the site's best output, shown as panel voltage (3.3 V = full sun, three panels with a small spread). <b>Battery:</b> the planned battery charge, shown as cell voltage (3.3 V empty to 4.2 V full) and charging when the plan charges it. <b>Conveyor:</b> production, running while site demand is above 40% of its usual high level, with the power source taken from the plan. <b>EV station:</b> the planned EV charging, with the reason. Every value here is <b>simulated or calculated from the replay</b>, not measured: the battery percentage is the planner's simulated charge (not a measured state of charge), the conveyor follows the replayed site demand (the planner never stops production to save energy), and the EV station is an indicator of planned flexible EV demand. This is a visual of the planner's schedule on the organisers' data. It does not control any hardware, and the model's scale is a demo, not the site's size.</div>
     <details><summary>Reading being sent to the model</summary><pre class="mono" id="fac_json" style="white-space:pre-wrap"></pre></details>
     <div class="note">Same format for the hardware feed: <code>{"panels":[{"v":2.9},{"v":2.8},{"v":3.0}],"battery":{"v":3.95,"pct":72,"charging":true},"conveyor":{"running":true,"speed":80,"dir":"Forward","mode":"Solar"},"ev":{"charging":true,"reason":"Surplus solar"}}</code>. Send one at least every 12 seconds.</div></div>`;
 }
