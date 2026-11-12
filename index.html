@@ -492,6 +492,8 @@ main.fit .plrail .mr .mrsv{height:38px!important}
 .lvstat #lvRib{min-height:0;height:100%}
 .lvstat #lvRib .lvrb{margin:0;height:100%;box-sizing:border-box;display:block;line-height:26px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-line-clamp:unset;padding:6px 10px}
 .lvtop .lvhead{margin-bottom:2px}
+
+.lvfol{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--ink);margin-left:auto;white-space:nowrap}.lvfol[hidden]{display:none}.lvfol .note{font-weight:400;margin:0;max-width:260px;overflow:hidden;text-overflow:ellipsis}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="liveTabBtn" data-rp="live" title="Play today forward and watch the optimiser re-plan, all on one page">Live replay</button></span><span class="sp"></span><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -545,7 +547,7 @@ main.fit .plrail .mr .mrsv{height:38px!important}
 </div>
 <div class="card" id="protoPanel" data-role="tech" hidden>
 <h2 title="Reads the ESP32 over USB or Bluetooth and lets you control the relay, conveyor speed and LEDs. Press Connect ESP32 inside the model, then click a part. Needs Chrome or Edge. Close the Arduino Serial Monitor first. One connection at a time.">Live physical prototype &mdash; ESP32 readings</h2><div class="note" style="margin:-4px 0 6px">Cannot connect here? <a href="factory3d.html" target="_blank" rel="noopener">Open the factory in its own window</a>, then press Connect ESP32.</div>
-<iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1&amp;v=2026-11-12-k" allow="serial; bluetooth" title="Live 3D prototype" style="width:100%;height:calc(100vh - 150px);min-height:460px;border:0;border-radius:0;margin:0;background:transparent;display:block"></iframe>
+<iframe id="proto3d" src="factory3d.html?embed=1&amp;proto=1&amp;v=2026-11-12-fol" allow="serial; bluetooth" title="Live 3D prototype" style="width:100%;height:calc(100vh - 150px);min-height:460px;border:0;border-radius:0;margin:0;background:transparent;display:block"></iframe>
 
 </div>
 <div id="facPanel" data-role="tech" hidden>
@@ -948,7 +950,7 @@ const PERM={
  auditor:{see:null,act:['audit'],tabs:['ov','fc','op','pl','fk','ad','live','proto','fa']}
 };
 let who='owner';
-const PROTO='factory3d.html?embed=1&proto=1&v=2026-11-12-k';
+const PROTO='factory3d.html?embed=1&proto=1&v=2026-11-12-fol';
 const canSee=k=>{const P=PERM[who];return !P.see||P.see.includes(k)};
 const canAct=k=>{const P=PERM[who];return !P.act||P.act.includes(k)};
 function tabOk(t){const P=PERM[who];return !P.tabs||P.tabs.includes(t)}
@@ -1007,7 +1009,7 @@ function costCard(r,b,sv,past){const sb=sel=='base',w=b.cost>0?Math.min(100*r.co
  <div class="costbars"><div class="barlabel">Baseline</div><div class="barwrap"><div class="barfill base" style="width:100%"></div></div><div class="barvalue">${money(b.cost)}</div></div>
  <div class="costbars"><div class="barlabel">${sb?'Baseline':NAMES[sel].replace('Optimiser: ','')}</div><div class="barwrap"><div class="barfill opt" style="width:${w.toFixed(1)}%"></div></div><div class="barvalue">${money(r.cost)}</div></div>
  <div class="footnote"><span data-role="tech">Daily cost includes the monthly demand charge spread over 30 days. Check the tariff assumptions against your own bill.</span></div></div>`}
-function mini3dCard(){return `<div class="card mini3dcard" data-tour="mini3d" data-role="tech"><div class="mini3d" data-go="proto" role="button" tabindex="0" title="Open the Live prototype"><iframe src="factory3d.html?embed=1&amp;proto=1&amp;mini=1&amp;v=2026-11-12-k" tabindex="-1" loading="lazy" title="3D model of the demo factory"></iframe><span class="mini3dlbl">3D demo factory &middot; open Live prototype &rarr;</span></div></div>`}
+function mini3dCard(){return `<div class="card mini3dcard" data-tour="mini3d" data-role="tech"><div class="mini3d" data-go="proto" role="button" tabindex="0" title="Open the Live prototype"><iframe src="factory3d.html?embed=1&amp;proto=1&amp;mini=1&amp;v=2026-11-12-fol" tabindex="-1" loading="lazy" title="3D model of the demo factory"></iframe><span class="mini3dlbl">3D demo factory &middot; open Live prototype &rarr;</span></div></div>`}
 function ownerSteps(r,b){const cap=+F.bat||0,L=[],it=(i,t,p)=>`<div class="action"><div class="action-icon">${i}</div><div><strong>${t}</strong><p>${p}</p></div></div>`;
  if(sel=='base')return it('&#9788;','Pick a strategy','Choose one above to see the plan.');
  const c=rg(r.ch,1),d=rg(r.b,1),f=rg(r.fl,1);
@@ -1323,20 +1325,20 @@ const lampFresh=()=>!LAMP.off&&Date.now()-LAMP.at<3500;
 const lampUi=()=>lampFresh()||(LAMP.at>0&&Date.now()-LAMP.at<10000);
 function lampRatio(){if(!lampFresh())return null;const v=LAMP.v.filter(x=>isFinite(x));if(!v.length)return null;return Math.max(0,Math.min(1.2,v.reduce((a,b)=>a+b,0)/v.length/LAMP_FULL))}
 function liveCard(){const td=cur==TODAY;return `<div class="card lvpage" data-role="tech" data-tour="live">
-${td?`<div class="lvtop"><div class="lvtopl"><div class="lvhead"><h2 style="margin:0">Live replay</h2><span class="badge amber">SIMULATION &middot; recommendation only</span><span class="note" style="margin:0">15-minute steps. Re-plans after each step. Nothing is controlled.</span></div><div class="lvctl"><label class="note">Strategy <select id="lvMd">${MODES.filter(m=>m.k!='prod').map(m=>`<option value="${m.k}"${m.k==(sel=='bal'?'bal':sel=='zero'?'zero':'cost')?' selected':''}>${m.n}</option>`).join('')}</select></label>
+${td?`<div class="lvtop"><div class="lvtopl"><div class="lvhead"><h2 style="margin:0">Live replay</h2><span class="badge amber">SIMULATION &middot; recommendation only</span><span class="note" id="lvHn" style="margin:0">15-minute steps. Re-plans after each step. Nothing is controlled.</span></div><div class="lvctl"><label class="note">Strategy <select id="lvMd">${MODES.filter(m=>m.k!='prod').map(m=>`<option value="${m.k}"${m.k==(sel=='bal'?'bal':sel=='zero'?'zero':'cost')?' selected':''}>${m.n}</option>`).join('')}</select></label>
 <label class="note">Solar from <select id="lvSrc"><option value="lamp" selected>Prototype lamp</option><option value="slider">Slider (no board)</option><option value="sc">Scenario (no board)</option></select></label>
 <span id="lvScW" hidden><select id="lvSc">${Object.entries(ROSC).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join('')}</select></span>
 <label class="note">Start <select id="lvStart"><option value="12">06:00</option><option value="14">07:00</option><option value="16" selected>08:00</option><option value="20">10:00</option><option value="now">now</option></select></label>
 <label class="note">Until <select id="lvUntil"><option value="24">12:00</option><option value="30">15:00</option><option value="36" selected>18:00</option><option value="47">end of day</option></select></label>
 <label class="note">Step every <select id="lvSpd"><option value="s1">1 s</option><option value="s2">2 s</option><option value="s5">5 s</option><option value="s10" selected>10 s</option><option value="s20">20 s</option><option value="s40">40 s</option><option value="man">I press Next</option></select></label></div>
-<div class="lvproto"><div class="lpbox" id="lpBox"><div id="lpLamp"><div id="lpSt"></div><div id="lpV" class="note"></div></div>
+<div class="lvproto"><div class="lpbox" id="lpBox"><div id="lpLamp"><div id="lpSt"></div><div id="lpV" class="note"></div></div><label class="lvfol" id="lvFol" hidden title="Sends the plan to the prototype: EV light green or red, battery charger relay on or off. Never the conveyor. Back to the ESP32's own rules on Pause, Reset or end of run."><input type="checkbox" id="lvFolC"> Prototype follows the plan <span id="lvFolS" class="note"></span></label>
 <label class="note" id="lpSl" hidden>Solar as share of forecast <input type="range" id="lvSl" min="0" max="120" value="100"> <b id="lvSlV">100%</b></label>
 </div><div id="lvPanels" class="pchs" hidden></div></div>
 <div class="lvrun"><div id="lvTime" class="lvtime"><span class="lvt">08:00</span> <span class="badge amber">SIMULATED CLOCK</span> <span class="note">ready</span></div>
 <button class="on" id="lvGo" data-lvs="go">&#9654; Start</button><button data-lvs="next">Next step</button><button data-lvs="reset">Reset</button><button data-lvs="report">Report</button><span class="sp"></span><div id="lvEv" class="lvev" hidden></div></div>
 <div class="barwrap" style="margin:6px 0 6px"><div class="barfill" id="lvProg" style="width:33.3%;background:var(--amb)"></div></div>
 <div class="lvstat"><div class="lvalerts"><div id="lvFault" class="lvfault" role="alert" hidden></div><div id="lvDev" class="lvfault lvdev" role="alert" hidden></div></div><div id="lvRib"></div></div></div>
-<div class="lv3d"><iframe id="lv3d" src="factory3d.html?embed=1&amp;proto=1&amp;mini=1&amp;v=2026-11-12-m" tabindex="-1" title="3D model of the demo factory"></iframe><span class="mini3dlbl">3D demo factory</span></div></div>
+<div class="lv3d"><iframe id="lv3d" src="factory3d.html?embed=1&amp;proto=1&amp;mini=1&amp;v=2026-11-12-fol" tabindex="-1" title="3D model of the demo factory"></iframe><span class="mini3dlbl">3D demo factory</span></div></div>
 <span id="lvMsg" class="note"></span><div id="lvOut" style="margin-top:8px"></div>
 <div class="lvbox" style="margin-top:12px"><h3 class="sec" style="margin-top:0">Decisions so far</h3><div id="lvEnd"></div><ul id="lvLog" class="lvlog"><li class="note" style="border:0;background:none;padding:0">Press <b>Start</b>: each step's decision appears here.</li></ul></div>
 <p class="note" style="margin:8px 0 0">${lrnStat()} <button data-lrc="1">Forget what was learned</button></p>
@@ -1345,8 +1347,9 @@ ${td?`<div class="lvtop"><div class="lvtopl"><div class="lvhead"><h2 style="marg
 <div class="bar"><label class="note">Measured data (CSV): <input type="file" id="lvFile" accept=".csv,text/csv"></label> <button data-lvt="1">Download CSV template</button></div>
 <p class="note">Columns: <code>load_kw</code> (site load, <b>without</b> EV charging) and <code>solar_kw</code> are required; optional <code>battery_kw</code> (discharge +, charging &minus;), <code>ev_kw</code>, <code>grid_kw</code>, <code>soc_kwh</code>. One row per 30 minutes from 00:00 today.</p>
 <div class="bar"><select id="lvNow"><option value="20">It is 10:00</option><option value="24">It is 12:00</option><option value="28" selected>It is 14:00</option><option value="32">It is 16:00</option></select> <button class="on" data-lv="1">Run one simulated replay (uses the scenario above)</button></div></details>`
-:`<div class="lvhead"><h2 style="margin:0">Live replay</h2><span class="badge amber">SIMULATION &middot; recommendation only</span><span class="note" style="margin:0">15-minute steps. Re-plans after each step. Nothing is controlled.</span></div><p class="note"><b>Open today to use this.</b> It compares the forecast with what happened so far today.</p><span id="lvMsg" class="note"></span><div id="lvOut"></div>`}</div>`}
+:`<div class="lvhead"><h2 style="margin:0">Live replay</h2><span class="badge amber">SIMULATION &middot; recommendation only</span><span class="note" id="lvHn" style="margin:0">15-minute steps. Re-plans after each step. Nothing is controlled.</span></div><p class="note"><b>Open today to use this.</b> It compares the forecast with what happened so far today.</p><span id="lvMsg" class="note"></span><div id="lvOut"></div>`}</div>`}
 function lpDraw(){const b=$('lpBox');if(!b||!$('lvSrc'))return;const src=$('lvSrc').value;
+ {const fo=$('lvFol'),can=src=='lamp'&&lampUi()&&!!PERM[who].hw&&canAct('live');if(fo){fo.hidden=!can;if(!can&&LVF.on){LVF.on=false;$('lvFolC').checked=false;lvFolRelease()}}}
  $('lvScW').hidden=src!='sc';$('lpLamp').hidden=src!='lamp';$('lpSl').hidden=src!='slider';$('lpLd').hidden=src=='sc';
  if(src=='lamp'){const ok=lampUi(),r=lampRatio();
   $('lpSt').innerHTML=ok?'<span class="badge" style="background:#DDF3E4;color:#05603A">PROTOTYPE CONNECTED</span>':'<span class="badge amber">NO PROTOTYPE DATA</span> <span class="note">Open the <b>3D</b> tab, press <b>Connect ESP32</b>, then come back here.</span>';
@@ -1357,7 +1360,7 @@ function lpDraw(){const b=$('lpBox');if(!b||!$('lvSrc'))return;const src=$('lvSr
  $('lvSlV').textContent=$('lvSl').value+'%';$('lvLdV').textContent=$('lvLd').value+'%'}
 setInterval(lpDraw,500);
 let lvSim=null;const LVSPD={s1:15,s2:7.5,s5:3,s10:1.5,s20:.75,s40:.375,man:0};   // simulated minutes per real second (one 15-minute step every 5/10/20/40 s)
-function lvStop(){if(lvSim&&lvSim.timer){clearInterval(lvSim.timer);lvSim.timer=0}}
+function lvStop(){if(lvSim&&lvSim.timer){clearInterval(lvSim.timer);lvSim.timer=0;if(LVF.on)lvFolRelease('paused: back to the ESP32\'s own rules')}}
 function lvHm(m){m=Math.max(0,Math.min(1440,Math.floor(m)));return p2(Math.floor(m/60))+':'+p2(m%60)}
 function lvStart0(){const v=$('lvStart').value;if(v=='now'){const d=new Date();return Math.max(30,Math.min(1410,d.getHours()*60+d.getMinutes()))}return +v*30}
 function lvDraw(){const s=lvSim,el=$('lvTime');if(!el)return;
@@ -1376,7 +1379,7 @@ function lvGo(){const s=lvSim;
 function lvNext(){if(!lvSim||lvSim.done)lvInit();const s=lvSim;if(s.timer||s.busy)return;
  const k=s.last<0?s.k0:s.last+1;if(k>s.end){s.done=true;lvEnd();lvDraw();return}
  s.t=k*60/LVS;$('lvMsg').textContent='';lvStep(k);lvDraw()}
-function lvReset(){lvStop();lvSim=null;if($('lvRib'))$('lvRib').innerHTML='';$('lvLog').innerHTML='';$('lvEnd').innerHTML='';$('lvOut').innerHTML='';$('lvMsg').textContent='';lvDraw();lvPreview()}
+function lvReset(){lvStop();lvFolRelease();lvSim=null;if($('lvEv'))$('lvEv').hidden=true;if($('lvRib'))$('lvRib').innerHTML='';$('lvLog').innerHTML='';$('lvEnd').innerHTML='';$('lvOut').innerHTML='';$('lvMsg').textContent='';lvDraw();lvPreview()}
 function lvTick(){const s=lvSim;if(!s||!s.timer)return;if(!$('lvTime')){lvStop();return}
  if(s.busy){lvDraw();return}                      // the clock waits while the server plans, so the time shown is the time of the data
  if(s.last>=s.end){s.done=true;lvStop();lvEnd();lvDraw();return}
@@ -1413,13 +1416,30 @@ function lvEvChip(j){const el=$('lvEv');if(!el)return;const s=lvSim,on=+F.evn>0,
  const k=j.now_step,fl=j.series.new_flex,h=k*24/fl.length,inW=h>=w[0]&&h<w[1],cur_=fl[k]||0;
  const st=s.evMsg=='held'?['held','EV held','solar low']:s.evMsg=='closing'?['on','EV charging','window closing']:!inW?['off','EV off','outside window']:cur_>0.5?['on','EV charging',N0(cur_)+' kW']:['wait','EV waiting','planned later'];
  el.hidden=false;el.className='lvev '+st[0];el.innerHTML='<b>'+st[1]+'</b><span>'+st[2]+'</span>'}
+/* Follow the plan: the Live replay drives the prototype's EV light and battery charger relay through the 3D page that owns the
+   ESP32 link (proto3d). The conveyor is never commanded. On Pause, Reset, end of run, unticking or leaving the page, both go back
+   to AUTO so the ESP32's own solar rules take over again. */
+const LVF={on:false,led:null,relay:null,n:0,wait:{},msg:''};
+function lvFolSend(c){const f=$('proto3d');if(!f||!f.contentWindow)return Promise.resolve({ok:false,why:'the 3D prototype page is not loaded'});const id=++LVF.n;
+ return new Promise(res=>{LVF.wait[id]=res;setTimeout(()=>{if(LVF.wait[id]){delete LVF.wait[id];res({ok:false,why:'no answer from the 3D page'})}},3000);
+  f.contentWindow.postMessage({type:'sunshine-cmd',id,c},(location.origin==='null'||location.protocol==='file:')?'*':location.origin)})}
+window.addEventListener('message',e=>{const d=e.data,f=$('proto3d');if(!d||d.type!=='sunshine-cmd-ack'||!f||e.source!==f.contentWindow)return;const r=LVF.wait[d.id];if(r){delete LVF.wait[d.id];r(d)}});
+function lvFolShow(){const h=$('lvHn');if(h)h.textContent='15-minute steps. Re-plans after each step. '+(LVF.on?'Prototype follows the plan: EV light and charger only, never the conveyor.':'Nothing is controlled.');const s=$('lvFolS');if(!s)return;s.textContent=LVF.on?(LVF.msg||'waiting for the first step'):''}
+async function lvFolApply(j){if(!LVF.on||!j||!j.series)return;const sr=j.series,k=j.now_step,ev=(sr.new_flex||[])[k]||0,ch=(sr.new_ch||[])[k]||0;
+ const led=(lvSim&&lvSim.evMsg=='held')||ev<=0.5?'LED RED':'LED GREEN',rel=ch>0.5?'RELAY ON':'RELAY OFF',out=[];
+ if(led!==LVF.led){const r=await lvFolSend(led);if(r.ok)LVF.led=led;else out.push(r.why)}
+ if(rel!==LVF.relay){const r=await lvFolSend(rel);if(r.ok)LVF.relay=rel;else if(!r.retry)out.push(r.why)}
+ LVF.msg=out.length?'not sent: '+out[0]:'EV light '+(LVF.led=='LED GREEN'?'green':'red')+', charger '+(LVF.relay=='RELAY ON'?'on':'off');lvFolShow()}
+async function lvFolRelease(why){if(LVF.led==null&&LVF.relay==null)return;LVF.led=LVF.relay=null;await lvFolSend('LED AUTO');await lvFolSend('RELAY AUTO');LVF.msg=why||'back to the ESP32\'s own rules';lvFolShow()}
+document.addEventListener('change',e=>{if(e.target&&e.target.id=='lvFolC'){LVF.on=e.target.checked;if(LVF.on){LVF.msg='';lvFolShow();if(lvSim&&lvSim.lastJ&&lvSim.timer)lvFolApply(lvSim.lastJ)}else lvFolRelease()}});
+window.addEventListener('pagehide',()=>{if(LVF.led!=null||LVF.relay!=null){lvFolSend('LED AUTO');lvFolSend('RELAY AUTO')}});
 async function lvStep(k){const s=lvSim,q=sameReq($('lvMd')?$('lvMd').value:null);if(!q)return;s.busy=true;const lp=lrnFine(),Q=liveQ(q);
  try{let body;
   if(s.src=='sc')body={replay:{now_step:k,scenario:ROSC[s.sc][1]}};
   else{if(!lvFinish(k)){lvStop();return}const fc=Q.fc,ix=Array.from({length:k},(_,t)=>t);lvEvRule(k);body={now:{load:ix.map(t=>fc.load[t]*s.ldr[t]),pv:ix.map(t=>fc.pv[t]*s.pvr[t])}};if(s.evx&&s.evx.length>=k)body.now.ev_kw=s.evx.slice(0,k).map(v=>+(+v||0).toFixed(2))}
   const t0=performance.now();lvPrevTok++;const j=await api('/api/replan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},Q.req,lp?{learned:lp}:{},body))});
   if(lvSim!==s||!$('lvOut'))return;
-  s.last=k;s.lastJ=j;lvLast=j;liveRender(j,q,performance.now()-t0);lvLogAdd(j);lvEvChip(j);if(s.last>=s.end&&!s.timer){s.done=true;lvEnd()}}
+  s.last=k;s.lastJ=j;lvLast=j;liveRender(j,q,performance.now()-t0);lvLogAdd(j);lvEvChip(j);lvFolApply(j);if(s.last>=s.end&&!s.timer){s.done=true;lvEnd()}}
  catch(e){if(lvSim===s){lvStop();if($('lvMsg'))$('lvMsg').textContent='Paused: '+e.message+' Press Resume to continue.'}}
  finally{s.busy=false;lvDraw()}}
 function lvLogAdd(j){const s=lvSim,c=j.correction,ex=j.expected,pv=c.pv_ratio,ld=c.load_ratio,dp=pv==null?0:Math.abs(pv-1),dl=ld==null?0:Math.abs(ld-1),off=dp>.15||dl>.1;let t;
@@ -1454,7 +1474,7 @@ async function lvAi(){const d=lvSim&&lvSim.rep,t=$('lvAiTxt');if(!d||!t)return;t
  try{const j=await api('/api/explain',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({kind:'replay'},d))});
   t.innerHTML=(j.source=='ai'?'<span class="badge">AI</span> ':'<span class="badge">Template</span> ')+esc(j.text)+(j.note?' <span class="note">('+esc(j.note)+')</span>':'')}
  catch(e){t.textContent='The review is not available right now ('+e.message+'). Sign in to use AI.'}}
-function lvEnd(){const s=lvSim,j=s&&s.lastJ;if(!j||!$('lvEnd'))return;lvReport();const rp=$('lvEnd').innerHTML;const fe=j.forecast_error,l=j.learned&&j.learned.applied;
+function lvEnd(){lvFolRelease('run finished: back to the ESP32\'s own rules');const s=lvSim,j=s&&s.lastJ;if(!j||!$('lvEnd'))return;lvReport();const rp=$('lvEnd').innerHTML;const fe=j.forecast_error,l=j.learned&&j.learned.applied;
  $('lvEnd').innerHTML=rp+`<div class="ribbon past"><b>RUN COMPLETE (simulated).</b> Average forecast error: solar ${N0(fe.pv.mae_kw)} kW, load ${N0(fe.load.mae_kw)} kW.${l?` Without learning it would have been solar ${N0(j.forecast_error_raw.pv.mae_kw)} kW, load ${N0(j.forecast_error_raw.load.mae_kw)} kW.`:''}</div>
  <p class="note" style="margin:6px 0">${lrnStat()} Let the system learn from this run, then press <b>Run again</b>: the forecast is corrected before the day starts. It only helps for an error that <b>repeats</b> (for example the lamp held at about half brightness every step); a one-off dip is not worth learning and would make tomorrow&rsquo;s forecast worse. Hours after the run ended count as &ldquo;as forecast&rdquo;.</p><button class="on" data-lvl="1">Learn from this run</button> <span id="lvLrn" class="note"></span>`}
 async function lvLearn(){const s=lvSim,p=lastPlan;if(!s||!p)return;const m=$('lvLrn');m.textContent='Learning...';const fc=p.b.fc,al=fc.load.slice(),ap=fc.pv.slice();
