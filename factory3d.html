@@ -470,6 +470,21 @@ window.SunShine={updateLab(l){labMode=l&&l.mode||'none';labAt=performance.now();
  simulate(){if(mode==='proto')return;mode='sim';renderCtl();renderUI();}};
 /* The thumbnail never opens the USB port (only one page can). It copies the Live prototype's readings, relayed by the parent page. */
 function protoMirror(d){if(d.off||!(d.age>=0)){if(mode==='proto'){mode='sim';P.at=0;}return;}const s=d.P||{};['panels','relay','conv','led','ledc','ledo','ina','es','evl','chg','sq'].forEach(k=>{if(s[k]!==undefined)P[k]=s[k];});P.at=performance.now()-d.age;mode='proto';}
+/* Plan-follow bridge (Live replay). Only these commands, never the conveyor. Only the page that owns the link (proto, not mini),
+   only when a board is connected and the viewer may control hardware. The relay changes at most every 5 s (the firmware has no
+   guard for manual relay commands). Every request is answered so the main page can show what really happened. */
+const FOLLOW_OK=['LED GREEN','LED RED','LED AUTO','RELAY ON','RELAY OFF','RELAY AUTO'];let FOLLOW=false,FOLLOW_RELAY_AT=0;
+async function followCmd(c){
+ if(!FOLLOW_OK.includes(c))return{ok:false,why:'command not allowed'};
+ if(MINI||mode!=='proto')return{ok:false,why:'no prototype connected'};
+ if(!(wr||(btMode&&brx)))return{ok:false,why:'no prototype connected'};
+ if(document.body.classList.contains('ro'))return{ok:false,why:'your role cannot control the prototype'};
+ if(c.startsWith('RELAY')&&c!=='RELAY AUTO'){const n=Date.now();if(n-FOLLOW_RELAY_AT<5000)return{ok:false,why:'relay changed less than 5 s ago',retry:true};FOLLOW_RELAY_AT=n}
+ FOLLOW=!c.endsWith('AUTO');
+ await cmd(c);return{ok:true};}
+window.addEventListener('message',async e=>{if(e.source!==window.parent)return;const d=e.data;if(!d||d.type!=='sunshine-cmd')return;
+ let r;try{r=await followCmd(String(d.c||''))}catch(x){r={ok:false,why:x.message}}
+ try{window.parent.postMessage({type:'sunshine-cmd-ack',id:d.id,c:d.c,...r},location.origin==='null'?'*':location.origin)}catch(x){}});
 window.addEventListener('message',e=>{if(e.source!==window.parent)return;const d=e.data;if(MINI&&d&&d.type==='sunshine-proto-state'){protoMirror(d);return;}if(d&&d.type==='sunshine-reading'){window.SunShine.update(d.reading);return;}if(mode!=='lab')return;if(d&&d.type==='sunshine-lab')window.SunShine.updateLab(d.lab);});
 let last=performance.now(),acc=1;
 function frame(now){const dt=Math.max(0,Math.min(0.1,(now-last)/1000));last=now;
@@ -632,7 +647,7 @@ setInterval(()=>{try{twSample();TW.cur=twEval();if(EMB&&window.parent!==window){
  $('glReset').onclick=()=>{GL.on=2.3;GL.off=2.0;GL.st=[null,null,null];GL.drive=false;fill();glSave();if(mode==='proto'&&!ro())cmd('LED AUTO');gN.textContent='Back to the sketch\'s own limits.';};
  setInterval(()=>{try{
   if(!T.hidden&&document.activeElement!==gOn&&document.activeElement!==gOff){const v=P.panels.map((q,i)=>'Panel '+(i+1)+': '+(isFinite(q.v)?q.v.toFixed(2)+' V '+(q.low===true?'(low)':q.low===false?'(lit)':''):'no data'));if(mode==='proto'&&pFresh())gN.textContent='Now: '+v.join(' | ');}
-  if(!GL.drive||mode!=='proto'||!pFresh()||ro())return;
+  if(FOLLOW||!GL.drive||mode!=='proto'||!pFresh()||ro())return;
   const nLow=P.panels.filter(q=>q.low===true).length,want=EV_DEFER_ON_ANY_LOW?nLow===0:nLow<3,t=performance.now();
   if(want!==GL.sent||t-GL.sentAt>5000){cmd(want?'LED GREEN':'LED RED');GL.sent=want;GL.sentAt=t;}
  }catch(e){}},500);})();
