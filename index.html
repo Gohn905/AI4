@@ -479,6 +479,19 @@ main.fit .plrail .mr .mrsv{height:38px!important}
 @media(max-width:1350px){.lvrun .lvt{font-size:30px}.lvrun .lvtime .badge{font-size:10px;padding:2px 6px}.lvrun>button{padding:7px 11px}}
 #lvTime{display:flex;flex-wrap:nowrap;align-items:center;gap:6px;white-space:nowrap}#lvTime .note{margin:0}
 @media(max-width:1350px){#lvTime .lvstep{display:none}}
+
+/* Live replay top v4: compact, so the Energy plan chart fits on the same screen */
+.lvproto{min-height:62px;margin:4px 0 6px}
+.lvproto .lpbox{padding:4px 10px}
+.lvproto .lvpn{width:72px}.lvproto .lvpc{height:22px}.lvproto .lvpc em{line-height:22px;font-size:10.5px}.lvproto .lvpn b{font-size:14px;padding-top:1px}.lvproto .lvpn i{padding-bottom:2px}
+.lvrun{min-height:48px}
+.lvstat{height:40px;position:relative;overflow:hidden}
+.lvstat .lvalerts{min-height:0;display:flex;gap:8px;height:100%}.lvstat .lvalerts>.lvfault{margin:0;padding:6px 12px;font-size:14px;display:flex;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lvstat .lvalerts:not(:has(.lvfault:not([hidden]))){display:none}
+.lvstat:has(.lvfault:not([hidden])) #lvRib{display:none}
+.lvstat #lvRib{min-height:0;height:100%}
+.lvstat #lvRib .lvrb{margin:0;height:100%;box-sizing:border-box;display:block;line-height:26px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-line-clamp:unset;padding:6px 10px}
+.lvtop .lvhead{margin-bottom:2px}
 </style></head><body><header class="top"><div class="brand"><span class="sunmark">&#9788;</span>Sun Shine<span class="brole" aria-hidden="true">-</span><select id="whoSel" aria-label="Your role" title="Your role decides what you can see and use. With a work sign-in the role is set for you."><option value="owner">Owner</option><option value="analyst">Analyst</option><option value="operator">Operator</option><option value="approver">Approver</option><option value="auditor">Auditor</option></select></div><span id="roleSwitch" class="rs" role="group" aria-label="Role and view"><span id="viewSw"><button data-rp="owner">Brief</button><button data-rp="tech">Detailed</button></span><button id="liveTabBtn" data-rp="live" title="Play today forward and watch the optimiser re-plan, all on one page">Live replay</button></span><span class="sp"></span><button id="tourBtn">Take the tour</button><span id="auth" class="note"></span></header>
 <div id="storeWarn" class="notice" role="alert" hidden></div>
 <main id="app" data-role="owner">
@@ -1153,8 +1166,8 @@ function lvHline(g,v,col,txt,dash){const {y}=g,yy=y(v).toFixed(1);return `<line 
 const lvSvg=(H,lbl,body)=>`<svg viewBox="0 0 ${LVW} ${H}" role="img" aria-label="${esc(lbl)}">${body}</svg>`;
 const lvLeg=a=>'<div class="legend">'+a.map(([c,t,d])=>`<span><i style="background:${d?'none':c};${d?'border-top:2px dashed '+c+';height:0;border-radius:0;vertical-align:3px':''}"></i>${t}</span>`).join('')+'</div>';
 /* 1. Energy plan: where each kW comes from (solar, battery, grid), battery charging below zero, total demand as a line */
-function lvPlanChart(s,k,c,P,lim){LVW=1250;try{return lvPlanChart0(s,k,c,P,lim)}finally{LVW=520}}
-function lvPlanChart0(s,k,c,P,lim){const H=370,T=14,B=26,bw=(LVW-54-12)/LN,ld=s.new_ld,
+function lvPlanChart(s,k,c,P,lim){LVW=1400;try{return lvPlanChart0(s,k,c,P,lim)}finally{LVW=520}}
+function lvPlanChart0(s,k,c,P,lim){const H=300,T=14,B=26,bw=(LVW-54-12)/LN,ld=s.new_ld,
   up=rngL().map(t=>s.new_pv_used[t]+s.new_dis[t]+s.new_grid[t]),g=lvAx(H,T,B,-Math.max(...s.new_ch,0)*1.05,Math.max(...up,...ld,...P,1)*1.05),{y,xf}=g,f=lvFrame(H,T,B,g,k,'kW');
  let b='';if(c.win)b+=`<rect x="${xf(c.win[0])}" y="${T}" width="${xf(c.win[1])-xf(c.win[0])}" height="${H-B-T}" fill="var(--grid)" opacity=".05"/>`;
  rngL().forEach(t=>{const x=(54+t*bw+.6).toFixed(1),w=(bw-1.2).toFixed(1),op=t<k?1:.45;let base=0;
@@ -1222,7 +1235,7 @@ function liveRender(j,q,ms){LN=j.steps;LSx=LN/24;const fe=j.forecast_error,ex=j.
  const over=n.limit_violation_steps>0&&lim>0?`<div class="ribbon warn"><b>GRID LIMIT.</b> Even the new plan is expected to exceed ${N0(lim)} kW for ${hrsL(n.limit_violation_steps)} (highest ${N0(n.max_grid_kw)} kW).</div>`:'';
  const R=window.SunDevRules||{pv:.25,load:.2};try{if(typeof DEV!='undefined')DEV.lp=Math.max(0,...s.forecast_load)}catch(e){}
  const rib=j.preview?'<b>PREVIEW.</b> Forecast plan at '+now+'. Press <b>Start</b> to play the day.':lvRep(j)?'<b>LIVE REPLAY.</b> Simulated clock, up to '+now+'. Before '+tmL(lvSim.k0)+' the forecast stands in. After that, solar is '+(lvSim.src=='lamp'?'your prototype lamp (panel voltage &divide; '+LAMP_FULL.toFixed(1)+' V = share of forecast)':'the slider')+' and demand is the forecast times the demand slider. The rest of the day is a corrected forecast. Not metered; nothing is controlled.':`<b>${j.simulated?'SIMULATED REPLAY.':'MEASURED DATA.'}</b> Up to ${now}. ${j.simulated?'The day so far is the forecast with simulated deviations; it is not measured.':'The rest of the day is a corrected forecast, not a measurement.'}`;
- const rbH=`<div class="ribbon lvrb${j.simulated?'':' past'}">${rib}</div>`;if($('lvRib'))$('lvRib').innerHTML=rbH;
+ const rbH=`<div class="ribbon lvrb${j.simulated?'':' past'}" title="${esc(rib.replace(/<[^>]+>/g,''))}">${rib}</div>`;if($('lvRib'))$('lvRib').innerHTML=rbH;
  $('lvOut').innerHTML=`${$('lvRib')?'':rbH}${over}
  ${dq.warn?`<div class="ribbon warn"><b>CHECK YOUR DATA.</b> Your grid readings differ from what the other readings imply by ${N0(dq.grid_gap_kw)} kW on average (${N0(dq.grid_gap_pct_of_load)}% of load). Check units, timezone and whether load includes EV charging.</div>`:''}
  ${j.learned&&j.learned.applied?`<p class="note" style="margin:6px 0"><b>Learning applied.</b> The forecast was first corrected with what was learned over ${j.learned.days} day${j.learned.days==1?'':'s'}. Average error since midnight: solar ${N0(fe.pv.mae_kw)} kW (raw ${N0(j.forecast_error_raw.pv.mae_kw)} kW), load ${N0(fe.load.mae_kw)} kW (raw ${N0(j.forecast_error_raw.load.mae_kw)} kW).</p>`:''}
@@ -1321,8 +1334,8 @@ ${td?`<div class="lvtop"><div class="lvtopl"><div class="lvhead"><h2 style="marg
 </div><div id="lvPanels" class="pchs" hidden></div></div>
 <div class="lvrun"><div id="lvTime" class="lvtime"><span class="lvt">08:00</span> <span class="badge amber">SIMULATED CLOCK</span> <span class="note">ready</span></div>
 <button class="on" id="lvGo" data-lvs="go">&#9654; Start</button><button data-lvs="next">Next step</button><button data-lvs="reset">Reset</button><button data-lvs="report">Report</button><span class="sp"></span><div id="lvEv" class="lvev" hidden></div></div>
-<div class="lvalerts"><div id="lvFault" class="lvfault" role="alert" hidden></div><div id="lvDev" class="lvfault lvdev" role="alert" hidden></div></div>
-<div class="barwrap" style="margin:8px 0 4px"><div class="barfill" id="lvProg" style="width:33.3%;background:var(--amb)"></div></div><div id="lvRib"></div></div>
+<div class="barwrap" style="margin:6px 0 6px"><div class="barfill" id="lvProg" style="width:33.3%;background:var(--amb)"></div></div>
+<div class="lvstat"><div class="lvalerts"><div id="lvFault" class="lvfault" role="alert" hidden></div><div id="lvDev" class="lvfault lvdev" role="alert" hidden></div></div><div id="lvRib"></div></div></div>
 <div class="lv3d"><iframe id="lv3d" src="factory3d.html?embed=1&amp;proto=1&amp;mini=1&amp;v=2026-11-12-m" tabindex="-1" title="3D model of the demo factory"></iframe><span class="mini3dlbl">3D demo factory</span></div></div>
 <span id="lvMsg" class="note"></span><div id="lvOut" style="margin-top:8px"></div>
 <div class="lvbox" style="margin-top:12px"><h3 class="sec" style="margin-top:0">Decisions so far</h3><div id="lvEnd"></div><ul id="lvLog" class="lvlog"><li class="note" style="border:0;background:none;padding:0">Press <b>Start</b>: each step's decision appears here.</li></ul></div>
